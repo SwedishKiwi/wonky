@@ -25,7 +25,11 @@ enum DriveChangeKind implements _isc.SerializableModel {
   /// Deleted forever, or the caller lost access.
   removed,
   shared,
-  unshared;
+  unshared,
+
+  /// (v2) The watcher's storage counters changed (debounced 1 s);
+  /// `DriveChange.storage` carries the new usage (Drive 03 §3).
+  storageChanged;
 
   static DriveChangeKind fromJson(String name) {
     switch (name) {
@@ -47,6 +51,8 @@ enum DriveChangeKind implements _isc.SerializableModel {
         return DriveChangeKind.shared;
       case 'unshared':
         return DriveChangeKind.unshared;
+      case 'storageChanged':
+        return DriveChangeKind.storageChanged;
       default:
         throw ArgumentError(
           'Value "$name" cannot be converted to "DriveChangeKind"',

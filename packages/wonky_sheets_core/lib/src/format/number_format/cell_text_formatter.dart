@@ -1,10 +1,11 @@
+import 'package:wonky_numfmt/wonky_numfmt.dart';
+
 import '../../content/cell_content.dart';
 import '../../engine_bridge/value_bridge.dart';
 import '../../formula/model/workbook_view.dart';
 import '../../formula/values/format_hint.dart';
 import '../../formula/values/fvalue.dart';
 import 'number_formatter.dart';
-import 'presets.dart';
 
 /// Displays cells' effective values with their effective number format in
 /// the spreadsheet locale (06 §5.9, §5.11): the grid, clipboard, exports, MCP

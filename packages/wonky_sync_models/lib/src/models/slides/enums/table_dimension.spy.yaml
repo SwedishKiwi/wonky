@@ -1,0 +1,6 @@
+### Dimension of a slide table axis (Slides 02 §3.6).
+enum: TableDimension
+serialized: byName
+values:
+  - row
+  - column

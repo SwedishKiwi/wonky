@@ -7,9 +7,9 @@ import 'dart:ui' as ui;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:wonky_sheets/features/charts/render/chart_painter.dart';
-import 'package:wonky_sheets/features/charts3d/gpu/flutter_scene_renderer.dart';
 import 'package:wonky_sheets_core/model.dart';
+import 'package:wonky_charts_flutter/wonky_charts_flutter.dart';
+import 'package:wonky_charts_flutter/gpu.dart';
 
 /// GPU vs software tuning check of 3D charts (08 §23.5, §23.7): the same
 /// scene is rendered by the `flutter_scene` backend and by the core

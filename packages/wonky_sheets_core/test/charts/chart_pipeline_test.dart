@@ -22,12 +22,12 @@ void main() {
     test(
       'when building it then data, scene and warnings come back together',
       () {
-        final built = ChartPipeline.build(
+        final built = SheetsChartPipeline.build(
           spec: spec,
           model: model,
           values: ModelCellSource(model),
           size: testChartSize,
-          theme: ChartPipeline.exportTheme(model),
+          theme: SheetsChartPipeline.exportTheme(model),
           measurer: const ApproxTextMeasurer(),
         );
 
@@ -42,7 +42,11 @@ void main() {
     );
 
     test('when resolving then the spreadsheet locale formats the labels', () {
-      final data = ChartPipeline.resolve(spec, model, ModelCellSource(model));
+      final data = SheetsChartPipeline.resolve(
+        spec,
+        model,
+        ModelCellSource(model),
+      );
 
       expect(data.domain.labels.first, 'Jan');
     });
@@ -50,7 +54,7 @@ void main() {
     test(
       'when exporting SVG then it is a well-formed document with every column',
       () {
-        final svg = ChartPipeline.exportSvg(
+        final svg = SheetsChartPipeline.exportSvg(
           spec: spec,
           model: model,
           values: ModelCellSource(model),
@@ -71,7 +75,7 @@ void main() {
     );
 
     test('when exporting SVG then the output matches the golden', () {
-      final svg = ChartPipeline.exportSvg(
+      final svg = SheetsChartPipeline.exportSvg(
         spec: spec,
         model: model,
         values: ModelCellSource(model),
@@ -82,7 +86,7 @@ void main() {
     });
 
     test('when exporting PDF then a PDF document is made', () async {
-      final bytes = await ChartPipeline.exportPdf(
+      final bytes = await SheetsChartPipeline.exportPdf(
         spec: spec,
         model: model,
         values: ModelCellSource(model),
@@ -95,7 +99,7 @@ void main() {
     });
 
     test('when exporting PNG at 2× then the image is twice the chart size', () {
-      final bytes = ChartPipeline.exportPng(
+      final bytes = SheetsChartPipeline.exportPng(
         spec: spec,
         model: model,
         values: ModelCellSource(model),
@@ -114,7 +118,7 @@ void main() {
     test(
       'when printing then chart objects get a scene of the printed size',
       () {
-        final sceneFor = ChartPipeline.printSceneFor(
+        final sceneFor = SheetsChartPipeline.printSceneFor(
           model,
           ModelCellSource(model),
         );
@@ -138,7 +142,7 @@ void main() {
     test(
       'when exporting PNG with the dark theme then the background is dark',
       () {
-        final bytes = ChartPipeline.exportPng(
+        final bytes = SheetsChartPipeline.exportPng(
           spec: spec,
           model: model,
           values: ModelCellSource(model),

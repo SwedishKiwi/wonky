@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:serverpod_database/serverpod_database.dart';
 import 'package:uuid/uuid.dart';
 
@@ -16,6 +18,19 @@ enum OfflineSyncPeerMode {
   /// Adopts the space set announced by the authoritative peer.
   follower,
 }
+
+/// Selects which of the user's shared member spaces an authoritative sync
+/// session cycles (patch OS-8).
+///
+/// Called with the user's shared member spaces (never the implicit personal
+/// space, which every session keeps) whenever the session re-resolves its
+/// membership — at the start and at the top of every data-loop cycle — and
+/// returns the subset to sync. Spaces it leaves out are neither announced to
+/// the follower nor accepted from it, exactly as if the user were not a member
+/// for this session. The callback may cache its decisions; it is invoked with
+/// the current membership every time so a decision can change between cycles.
+typedef OfflineSyncSpaceFilter =
+    FutureOr<Iterable<UuidValue>> Function(List<UuidValue> spaceIds);
 
 /// De-duplicates [spaceIds] and sorts them by UUID string so both peers iterate
 /// spaces in the same deterministic order.
@@ -59,18 +74,30 @@ class OfflineSyncSpaceState {
   /// Creates a space session for [_userId] acting in [_mode] against [_session].
   ///
   /// [_peerNodeId] is the remote peer's CRDT node, learned from its connect
-  /// handshake before this session is constructed.
+  /// handshake before this session is constructed. [spaceFilter] (patch OS-8)
+  /// narrows an authoritative peer's membership; a follower adopts whatever
+  /// the authoritative peer announces, so it cannot take one.
   OfflineSyncSpaceState(
     this._session, {
     required this._userId,
     required this._mode,
     required this._peerNodeId,
-  });
+    OfflineSyncSpaceFilter? spaceFilter,
+  }) : _spaceFilter = spaceFilter {
+    if (spaceFilter != null && _mode != OfflineSyncPeerMode.authoritative) {
+      throw ArgumentError.value(
+        spaceFilter,
+        'spaceFilter',
+        'Only an authoritative peer can filter its spaces',
+      );
+    }
+  }
 
   final DatabaseSession _session;
   final UuidValue _userId;
   final OfflineSyncPeerMode _mode;
   final UuidValue _peerNodeId;
+  final OfflineSyncSpaceFilter? _spaceFilter;
 
   /// Session-lived space manager. Reused across cycles so its in-memory cache
   /// of already-materialized spaces survives, sparing a follower a per-cycle
@@ -248,11 +275,37 @@ class OfflineSyncSpaceState {
   Future<List<OfflineSyncSpaceGrant>> _resolveLocalGrants() async {
     switch (_mode) {
       case OfflineSyncPeerMode.authoritative:
-        return OfflineSyncSpaceMembership.memberGrants(_session, _userId);
+        final grants = await OfflineSyncSpaceMembership.memberGrants(
+          _session,
+          _userId,
+        );
+        return _filterGrants(grants);
       case OfflineSyncPeerMode.follower:
         await _spaceManager.getOrCreate(_userId);
         return const [];
     }
+  }
+
+  /// Applies the [OfflineSyncSpaceFilter] (patch OS-8) to [grants]: the
+  /// personal space always stays, shared spaces stay when the filter keeps them.
+  Future<List<OfflineSyncSpaceGrant>> _filterGrants(
+    List<OfflineSyncSpaceGrant> grants,
+  ) async {
+    final filter = _spaceFilter;
+    if (filter == null) return grants;
+    final shared = [
+      for (final grant in grants)
+        if (grant.uuidSpaceId.uuid != _userId.uuid) grant.uuidSpaceId,
+    ];
+    final kept = shared.isEmpty
+        ? const <String>{}
+        : {for (final spaceId in await filter(shared)) spaceId.uuid};
+    return [
+      for (final grant in grants)
+        if (grant.uuidSpaceId.uuid == _userId.uuid ||
+            kept.contains(grant.uuidSpaceId.uuid))
+          grant,
+    ];
   }
 
   /// Resolves the ordered lockstep spaces cycled this round.

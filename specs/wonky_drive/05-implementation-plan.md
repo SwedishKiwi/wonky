@@ -153,6 +153,70 @@ wave 4   D-16 Write/Sheets · D-17 Storage page · D-18 integration · (Slides S
   development database; server, Write and Sheets test suites green (no behavior change);
   `file_types_test.dart` covers every category and the extension → language table; a test
   deserializes every new enum value through the client.
+- **As built (contracts for D-4, D-5, D-8–D-17 and Slides):**
+  - *Migration* `20261014223419475-m8-drive-contracts` (additive only): `drive_item` +
+    `attachmentBytes`, `kindMask` (bit `1 << DriveItemKind.index`), `mimeType`,
+    `fileCategory`, `uploadState`, `fileMetaJson`, `previewFileId`, index
+    `drive_item_upload_idx (uploadState, createdAt)` for `drive.expireUploads`; tables
+    `user_storage` and `storage_reservation` (both `serverOnly`, Drive 03 §4.1; extra index
+    `storage_reservation_expiry_idx`); `space_reservation.kind` / `space_subscription.kind`
+    (`SpaceKind {spreadsheet, deck}`, default `spreadsheet`; the subscription's
+    `spreadsheetItemId` column keeps its name and holds the deck item for `deck`);
+    `user_preferences` + `slidesDefaults`, `slidesPresenter` (Slides 10 A-10-4; the last-used
+    export options live under `slidesDefaults.exportOptions`), `driveDefaults` (all `'{}'`),
+    merged key by key by `user.updatePreferences` (`UserPreferencesPatch` has the three keys).
+  - *Protocol* (non-table): `FileUploadRequest` / `FileUploadStart` / `FileUploadProgress`,
+    `UploadConflictMode {keepBoth, replace, fail}`, `FileCategory`, `FileUploadState`,
+    `StorageListFilter {kinds, trashedOnly, minCountedBytes, notOpenedSince}`
+    (`drive.listByStorage`), `QuotaExceededDetails {neededBytes, availableBytes, quotaBytes,
+    chargedUserId, chargedUserName, isCaller, reason}` — the `detailsJson` of
+    `WonkyErrorCode.quotaExceeded` (`reason` is a string because `import` is a reserved enum
+    value; server constants `QuotaReason`; build errors with `Errors.quotaExceeded(details)`).
+    `StorageUsage` gains every field of Drive 03 §3 with defaults (old payloads still parse).
+    `DriveItemView` + `attachmentBytes`, `countedBytes`, the file fields. `DriveListFilter` +
+    `fileCategories`, `foldersContaining`; `DriveSearchFilters` + `fileCategories`;
+    `TemplateView.sizeBytes`; `ServerLimits.{maxFileUploadBytes, quotaBytesPerUser}`.
+    `DriveChange.storage` carries the usage of a `storageChanged` event, whose `itemUuid` is the
+    nil UUID. `ActivityType.uploaded` (Drive 02 §3.3) and `NotificationKind.storage` (payload
+    `message` shown verbatim when present).
+  - *Endpoints* (`DriveEndpoint`): `registerPresentation`, `createFileUpload`,
+    `completeFileUpload`, `cancelFileUpload`, `fileUploadStatus`, `convertFile`,
+    `fileContentUrl(itemUuid, {download})`, `updateFileMeta`, `listByStorage(filter, cursor,
+    limit)` throw `unavailable` until D-8/D-9; `checkRoom(bytes, itemUuid?)` works (charges the
+    item owner when `itemUuid` is given, Viewer+ required) and `storageUsage` runs through
+    `StorageService.instance.usage`.
+  - *Server storage* (`platform/storage/storage_service.dart`): `StorageService` (static
+    `instance`) with `reserve`, `commitReservation`, `releaseReservation`, `checkRoom`,
+    `setItemSize`, `addAttachment`, `onTrash`, `onRestore`, `onDelete`, `onOwnerChange`,
+    `usage` — named arguments and an optional `Transaction`; `PassThroughStorageService` never
+    refuses, keeps the v1 `bytesUsed` and fills the v2 breakdown from `drive_item`. Config
+    (`WonkyConfig`): `files.maxFileUploadBytes`, `drive.{quotaBytesPerUser, warnAtPercent,
+    maxPendingUploadsPerUser}`, `files.{uploadsPerHour, uploadBytesPerDay}`.
+  - *Versions*: `minClientVersion` and `serverVersion` 2.0.0 (configs and defaults); the apps'
+    `WONKY_VERSION` default is 2.0.0, so v1 web clients get the reload toast.
+  - *`wonky_core/files.dart`*: `FileTypeCategory` (names = `FileCategory`), `ConvertTarget
+    {write, sheets}`, `FileTypes` (`categoryOf(mime, fileName:)`, `extensionOf` incl.
+    `spy.yaml`/`tar.gz`, `mimeTypesByExtension`, `textExtensions`, `languagesByExtension`,
+    `languageOf`, `convertTargetOf`, `convertibleExtensions`, `isTextMimeType`,
+    `isRenderableImage`, `isActive`) and `formatStorageBytes` ("12.4 MB", "820 KB").
+  - *Shell*: `WonkyAppKind {drive, write, sheets, slides}` with `productName`, `editorKind`,
+    `devOrigin` (8100/8101/8102/8104), `urlScheme`, `forItemKind(kind, current:)`,
+    `itemPathFor(kind, uuid)` (`/d/`, `/s/`, `/p/`, `/file/`; folders `/drive/` until D-10's
+    `/f/`), `ownerOfPath(path)`; `AppUrls.apps` always has four entries; `openItem`/`openPath`
+    route every kind to its app. `WonkyAppConfig`: `primaryKind` is nullable (Drive),
+    `appName` defaults to `app.productName`, `homeScope` (null = v1 home until D-16),
+    `homeNav` (`HomeNavSpec.appHome` / `.drive`), `appSettingsSections` (empty until D-12),
+    `newItemRoute` (`NewItemRouteHandler`, default `createItem`; null for Drive) and
+    `importRoute` (`ImportRouteHandler`, null) with `NewItemRequest` / `ImportRouteRequest`
+    query parsers (`config/home_scope.dart`). `HomeScope.all()` / `HomeScope.kind(k)` expose
+    `listKinds`, `searchKinds`, `foldersContaining`, `newKinds`, `managesFolders`,
+    `uploadsFiles`, `showsTypeFilter`, `showsTemplateStrip`, `lists(k)`. `StorageController`
+    (`ValueListenable<StorageUsage?>`, `refresh`, `stale`; `StorageController.none()` is
+    installed as `ShellServices.storage` until D-11) and `StorageUsageChecks`
+    (`usedFraction`, `isWarning`, `fits`). `package:wonky_app/testing.dart`: `FakeStorage`
+    (`used`, `usageOf`, `emit`), `CommandTestHarness(storage:)`, `TestAppConfig(app:,
+    scope:)`. `shell.account.switchApp {app}` accepts the four apps (no argument: Write ⇄
+    Sheets until D-10's *Open ▸*).
 
 **D-2 · Extract `wonky_code` + `wonky_code_flutter`** (Slides 07 §2.1, Write 04 §15.5)
 - Scope: `CodeLanguages`, `SyntaxToken`, `ScopeClassifier`, palettes (`SyntaxPalette`,
@@ -195,6 +259,20 @@ v2 review Q27)
 - Acceptance: vendored suite + patch tests green; a server test creates a `deck` space for a
   member and asserts the Sheets replica never receives its rows; Sheets sync harness and offline
   merge fuzzer green.
+- **As built:** engine patch OS-8 (`spaceFilter`, a batch `OfflineSyncSpaceFilter`; personal space
+  always kept; authoritative only) in `third_party/serverpod_offline_sync` (`PATCHES.md`).
+  Server `platform/spaces/`: `SpaceService` (moved from `sheets/spaces/`, every method kind-aware:
+  `reserveSpaces(kind:)`, `createSpace(kind:)`, `useReservation(kind:)` (throws on a reservation of
+  another kind), `subscribe(kind:)` → `SpaceSubscribeGrant`, `unsubscribe(kind:)`,
+  `ensureSubscribed(kind:)`, `touchSubscription`/`setPinned`/`mirrorMembership`/`ensureWriter`
+  for spreadsheets and presentations, `evictInactive` per kind, `maxActiveSpaces(kind)`,
+  `spaceOf(item, kind:)`), `SpaceKinds` (item kind ↔ space kind, `recorded`, `of`;
+  unrecorded = spreadsheet), `SpaceKindFilter`, `SpaceSync.sync(kind:)`. Sheets:
+  `sheets/spaces/sheets_spaces.dart` (`SheetsSpaces`: the `sheets.*` space endpoints with
+  `SubscribeResult`/`SpaceStats`), `SheetsSyncService.sync` → `SpaceSync` with `spreadsheet`.
+  Config `slides.maxActiveSpacesPerUser` (`WonkyConfig.maxActiveDecksPerUser`, 30). No client
+  change (suite 12 §2.6 as built). For SL-5: `SlidesEndpoint` wraps `SpaceService` with
+  `kind: deck` and `slidesSync` calls `SpaceSync.sync(kind: deck)`.
 
 **D-5 · Drive app scaffold, serving, root redirect, CI** — web-build token
 - Scope: `wonky_drive` package (§1; `DriveAppConfig` with an empty Storage route), workspace
@@ -213,6 +291,23 @@ v2 review Q27)
   cookie; `/drive/` serves the Drive build with the SPA fallback; `config.json` lists four apps;
   the release web build of Drive boots, shares the sign-in with `/write/` and shows the (still
   unscoped) home.
+- **As built:** `wonky_server/lib/src/web/web_apps.dart` (`webApps = [drive, write, sheets,
+  slides]`, `rootRedirectTarget`); `server.dart` registers `config.json`, `FlutterRoute` and
+  `sqliteAssetAlias` per entry (an unbuilt app, e.g. Slides, gets the build-instructions page);
+  `AppConfigWidget(apps: Map)`; `RootRedirectRoute` → `/write/` (cookie ignored; the shell may
+  still set `wonky_last_app`). `flutter_build`: posix builds every `../wonky_<app>` that has a
+  `pubspec.yaml` in parallel (logs per app, printed on failure, exit 1 if any fails); Windows
+  builds them one after another with the same guard. `flutter_apps: drive` (8100); `slides`
+  joins with SL-1. `allowedOrigins` (and `wonky.mcp.allowedOrigins`) list 8082 + the four dev
+  ports; the bundled `assets/config.json` of Drive, Write and Sheets list all four apps.
+  `wonky_drive`: `DriveAppConfig` (brand `#0284c7`, `WonkyProduct.drive` logo,
+  `HomeScope.all()`, `/file/:uuid` → `FilePreviewScreen` placeholder, `/storage` →
+  `StorageScreen` placeholder, both a `DrivePendingPage` with *Back to Drive* =
+  `shell.nav.home`), ARB l10n (`DriveLocalizations`, `en` + generated `en_XA`), web folder with
+  the Drive product icon (favicon, 192/512, manifest) and the sqlite files (for the upload queue
+  store of D-13). No desktop folders (web only). CI needs no new rows: analyze, format and the
+  test matrix iterate over the workspace members. `tool/check_dependencies.dart`: rule for
+  `wonky_drive` (suite 01 §2.1) and the family rule generalized to Write/Sheets/Slides/Drive.
 
 ### 4.3 Wave 2 — services, shell, remaining extractions
 
@@ -228,6 +323,14 @@ v2 review Q27)
 - Provides: the contracts of Slides 12 §5.1–5.2 under those names.
 - Acceptance: Sheets core/app suites, the multi-client sync harness and the offline merge
   fuzzer green; dependency check (pure half Flutter-free) passes.
+- As built: the contracts of Slides 12 §5.1–5.2 were updated to the implemented API
+  (`SyncTxAdapter.apply` takes the `spaceId`; Sheets' cell rule is the `ColumnwiseInserts`
+  hook; `SyncTableSet`, `RowPatch`, `RowsUndoEntry`/`RowsUndoHandler`; client session building
+  blocks `SpaceWriteQueue`, `JournalIngestion`, `SpaceOpening`; per-user lifecycle
+  `ReplicaInstallation` + `ReplicaOfflineProvider`). Sheets keeps its names as bindings
+  (`SheetsReplica`, `SheetsWriter`, `SheetsSyncController`, `SheetsRemote`, `SheetsSessionHost`,
+  `RemotePatch`, `SheetsRowsUndoEntry/Handler`; core: `ChangeSummary`, `MutationPlan` typedef,
+  `SheetsUndo` replacing direct `UndoInverter` calls). Server writers unchanged (TODO.md).
 
 **D-7 · Extract `wonky_rich_text`, `wonky_fonts`, `wonky_spellcheck`** (v2 review Q4, Q23)
 - Scope: Delta inline schema/attribute keys, normalizer and the Markdown inline codec pieces
@@ -252,6 +355,59 @@ v2 review Q27)
 - Acceptance: every endpoint of Drive 02 per role (`forEachRole`); ≥ 40 sniffer vectors incl.
   spoofed extensions and polyglots; download headers; `kindMask` property test (random
   create/move/trash/restore/delete sequences ≡ full recompute); upload expiry.
+- **As built (contracts for D-9, D-13, D-14, D-15 and Slides):**
+  - *Services*: `platform/drive/drive_file_service.dart` (`DriveFileService.createUpload`,
+    `completeUpload`, `cancelUpload`, `status`, `contentUrl`, `updateMeta`, `convert`,
+    `copyFile`, `expireUploads`, `uploadUrl(session, actor, itemUuid)` → `{url, expiresAt}` of
+    the `PUT` route for MCP `drive.create_upload` (D-15), `downloadUrl`, `mergeServerMeta`);
+    `drive_presentations.dart` (`DrivePresentations.register`, kind-aware
+    `SpaceService.useReservation(kind: deck)` + `touchSubscription`); `kind_masks.dart`
+    (`KindMasks.bit/has/refreshChain/refreshSubtree/computeAll/recomputeAll`);
+    `drive_file_filters.dart` (upload visibility, `fileCategories`, `foldersContaining`).
+    `DriveService.insertItem/parentFor/afterCreate` are the public wrappers other drive
+    services use; `drive.get`, `list`, `search` and `watch` hide `uploading` items from
+    everyone but the uploader (search never shows them).
+  - *Quota calls*: `createFileUpload` → `StorageService.reserve(userId, fileUuid, itemId,
+    bytes, reason: upload)` in the insert transaction; `completeFileUpload` →
+    `commitReservation(fileUuid, actual)` **first**, then D-8 writes `sizeBytes = actual`
+    itself (the pass-through commit is a no-op; D-9's commit may set the same value); cancel,
+    failure and expiry → `releaseReservation(fileUuid)`; file copies → `checkRoom(reason:
+    copy)` then `setItemSize(copy, n)` (the copy is inserted with size 0); `convertFile` →
+    `checkRoom(reason: convert, bytes: file size)` before the import pipeline (the import's own
+    size hook is D-9's). A refused commit (`quotaExceeded`) fails the upload (bytes deleted).
+  - *Limits*: pending uploads (`maxPendingUploadsPerUser`, counted from `uploading` items),
+    `uploadsPerHour` and `uploadBytesPerDay` counted from `driveFile` StoredFile rows of the
+    last hour/day; cancelled and failed uploads keep their StoredFile row (detached, `failed`,
+    `expiresAt` +1 day, removed by `files.cleanup`) so they still count.
+  - *Sniffing*: `platform/files/file_type_sniffer.dart` (`FileTypeSniffer.sniff(bytes,
+    fileName:, tail:)` → `SniffResult{mimeType, encoding}`); own signatures first (incl. OOXML by
+    local + central-directory part names, ODF `mimetype`, EPUB, JAR, iWork, OLE2 family by
+    extension), then the `mime` package; the text check also accepts **Latin-1** (no NUL, < 1 %
+    control bytes; `encoding: latin1`), and active markup (HTML/SVG/XML) is detected from the
+    content only. Completion records `fileMetaJson {encoding, lines}` for text.
+  - *Names*: `FileNames.sanitize` (also strips U+200E/F, U+061C and BOM), `ascii`,
+    `numbered` ("Keep both" → `name (1).ext`, case-insensitive against ready items),
+    `contentDisposition`. `UploadConflictMode.replace` answers `unavailable` (P2);
+    `chunked: true` is ignored (whole-file description, P1).
+  - *URLs*: preview URLs are storage signed URLs served as `application/octet-stream`
+    attachments; downloads are `GET /files/d/:fileUuid/:name?t=` (`FileRoutes`, registered in
+    `server.dart`), which re-checks access and `nonEditorsCanExport` per request, answers
+    `HEAD`, and adds `Referrer-Policy: no-referrer` to the suite 13 §6 headers.
+    `PUT /files/upload/:fileUuid?t=` takes the whole body (413 beyond the declared size, 501 for
+    `Content-Range`; token only — session auth comes with P1 chunks). Tokens
+    (`FileUrlTokens`): HMAC-SHA256, key = password `fileUrlSecret`, else derived from
+    `jwtHmacSha512PrivateKey`/`serviceSecret`.
+  - *Previews*: `FilePreviewFutureCall.generate(itemId)` (scheduled through the replaceable
+    `FilePreviewService.schedule`); `FilePreviews.render` in an isolate with a 10 s limit:
+    ≤ 50 MP, EXIF orientation baked, EXIF/ICC/text stripped, preview ≤ 2048 px and a
+    cover-cropped 400 × 300 thumbnail, PNG when the image has alpha else JPEG 85; also on
+    copies; meta `{width, height}` even when the image is too large to decode.
+  - *kindMask*: bit `1 << DriveItemKind.index`; a subfolder contributes its own mask plus the
+    folder bit; files count only when `ready`. Maintained in the transaction of create
+    (`_insertItem`), move (old and new chain), trash, restore (whole subtree), purge and upload
+    completion; `drive.recomputeKindMasks` and `drive.expireUploads` run in the daily
+    maintenance job.
+  - *Copies*: `drive.copy` of a file copies the stored object server-side (Drive 02 §10).
 
 **D-9 · Server: storage quota service and enforcement** (Drive 03) — starts with spike S-D3
 - Scope: `StorageService` implementation, reservations, `quotaExceeded`; enforcement hooks in
@@ -264,6 +420,11 @@ v2 review Q27)
   `sheets/changelog`, `platform/{sharing,drive}`.
 - Acceptance: Drive 03 §7.2 table row by row; parallel reservation race (`Future.wait`); AC-D3.2,
   D3.4–D3.7 server parts; reconcile property test; backfill idempotent and resumable.
+- **As built:** see [Drive 03 §11](03-storage-quota.md#11-as-built-d-9) — `DbStorageService` is
+  the installed service (structural callbacks recount owners after the change), estimators via
+  `ContentSizes` (S-D3: index-driven via `crdt_data_rows`, 5-minute cadence confirmed), backfill
+  at every start for users without a reconciled row, nightly `wonky.storageReconcile`,
+  `drive.listByStorage`, `storageChanged` on `drive.watch`, MCP `quota_exceeded`.
 
 **D-10 · Shell v2: homes, left menu, routes, *Report a bug*** — web-build token
 - Scope: `HomeScope` in `DriveHomeScreen`/`DriveController` (kind filter, folder rule via
@@ -281,6 +442,27 @@ v2 review Q27)
   builder test (fields, 2,000-character fallback, no ids/emails); existing shell tests green
   with the compatibility default; in the release build, Write's home lists all kinds as before
   until D-16.
+- **As built:** `DriveController`/`DriveHomeScreen` read `config.homeScope` (null = v1):
+  app homes list `[kind, folder]` with `foldersContaining: kind` in folder views and `[kind]` in
+  Recent/Offline/Trash, hide the type chip, item drags and the template-less Drive parts, title
+  `/` *Recent*, show *Open in Wonky Drive* (`shell.nav.openInDrive {folderUuid?}`; without an
+  argument the current folder or the matching Drive view) and search their kind with a "Search
+  all of Wonky Drive" row; Drive (`HomeScope.all`) starts at *All types* with Presentations and
+  *Files ▸* Images/PDFs/Text & code/Audio/Videos/Archives/Other (`fileCategories`), New menu
+  folder / upload / document / spreadsheet / presentation / template. `HomeSidebar` (apps,
+  *+ New*, `homeNav`, bottom section) replaces `DriveSidebar`; drawer below 768 px. Routes:
+  `/f/:uuid` (`/drive/:uuid` redirects; `WonkyAppKind.itemPathFor(folder)` = `/f/`),
+  `/my-files` ⇄ `/my-drive`, `/new` (`NewItemRoutePage`, replaces the route with the editor;
+  absent when `newItemRoute` is null), `/import` (`ImportRoutePage`, when `importRoute` is set),
+  `/settings/app[/:section]` (redirects to the v1 sections until D-12). Commands
+  `shell.help.reportBug`, `shell.nav.openInDrive`, `shell.settings.openApp {section?}`,
+  `shell.storage.open`; `shell.file.new {kind: presentation}`; cross-kind *New* goes through the
+  target app's `/new`. Account menu: app settings, Wonky Work settings, *Open ▸* four apps.
+  Editor title row bug button (≥ 640 px); Help menu *Report a bug* replaces *Report a problem*.
+  Test helpers: `FakeCrossApp` (installed by `CommandTestHarness`, `h.crossApp`), the fake
+  drive computes the `kindMask` rule and `fileCategories`. Not done here (TODO.md): server
+  `help.bugReportUrl`, server folder links, Tools menu settings entries (D-12), Drive template
+  kind tabs.
 
 ### 4.4 Wave 3 — user-facing features
 
@@ -292,6 +474,14 @@ v2 review Q27)
 - Owns: `packages/wonky_app/lib/src/storage/`.
 - Acceptance: widget tests + light/dark goldens of meter, banner and every dialog variant;
   banner disappears live on a fake `storageChanged`.
+- **As built:** see [Drive 03 §12](03-storage-quota.md#12-as-built-d-11). API for D-13, D-16,
+  D-17 and Slides: `services.storageChecks.ensureRoom(bytes, reason: QuotaReasons.image, item:)`
+  before image inserts / imports / copies, `services.storageChecks.fittingUploads(sizes)` before
+  Drive uploads (indices that may start), `services.quotaErrors.present(error)` in `catch`
+  blocks outside commands (true = handled, skip your own message), `services.storage.report(
+  usage)` with the usage of byte-adding results, `StorageMeter(large: true)` for the Storage
+  page and Settings, `StorageBanner(place: StorageBannerPlace.editor, item:)` in custom editor
+  frames. `QuotaErrorPresenter` is attached to the dispatcher, so commands need nothing.
 
 **D-12 · Settings split** (suite 04 §4)
 - Scope: settings frame with the app group and the Wonky Work group; `/settings/:section` and
@@ -303,6 +493,20 @@ v2 review Q27)
   `wonky_sheets/lib/features/settings/`, `wonky_server/lib/src/platform/users/` (code).
 - Acceptance: J-D6 as a widget test per app; old `/settings/write` redirects; every setting
   command still invocable via `ui.invoke_command`.
+- **As built:** see [suite 04 §4.2 "As built (D-12)"](../04-auth-and-accounts.md#42-settings-screen).
+  Shell: `SettingsScreen(area:)`, `settingsRoutes`, `SettingsHandoffPage`,
+  `legacySettingsTarget`, `workSettingsSectionIds`, `settingsBackTarget` (exported from
+  `wonky_app.dart`); new sections `SecuritySection`, `StorageSection` (D-11's `StorageMeter`);
+  keyboard groups + scoped *Reset all*; Tools menu `tools.preferences` = app settings +
+  `tools.workSettings`; `Mod+,` → `shell.settings.openApp`; `PreferencesController`
+  `driveDefaults`/`slidesDefaults`/`slidesPresenter`; `WonkyAppConfig.settingsSections` and
+  `sheetsSettings` removed. Apps: Write `features/settings/` (4 sections, `write.prefs.
+  setDefaultLayout/setExportFormat/resetPageSetup/removeDictionaryWord`), Sheets
+  `features/settings/` (`defaults`, `sheets.prefs.set`), Drive `features/settings/` (stub section
+  `drive` for D-17). The server's `UserPreferences` columns and key-wise merge were already done
+  by D-1 (no server change). For D-17: replace `DriveSettingsSection` and add `drive.prefs.set`
+  on `PreferencesController.setDriveDefault`. For Slides: `appSettingsSections` +
+  `setSlidesDefault`/`setSlidesPresenter`.
 
 **D-13 · Drive: uploads, drops, downloads, *Open with*** — web-build token; starts with spike
 S-D2
@@ -314,6 +518,47 @@ S-D2
   upload store in `packages/wonky_app/lib/src/data/` (additive).
 - Acceptance: J-D2 (upload parts), J-D3 (pre-check dialog, forced-upload refusal), J-D8 in the
   release build; `UploadPanel` state goldens; queue survives a reload (OPFS).
+- **As built:** `wonky_drive/lib/features/uploads/`: `UploadQueue` (`ChangeNotifier`, 3 in
+  parallel FIFO, states `queued/waitingForNetwork/starting/uploading/verifying/done/failed/
+  cancelled`, failures `network/outOfStorage/tooLarge/folderGone/rateLimited/notSaved/other`;
+  network failures retried 2 s → 10 min ±20 % up to 8 times, then "Failed — network error";
+  an incomplete upload (`invalidArgument` at completion) or a refused failed item (`conflict`
+  at creation) restarts once with **new item/file uuids**; manual *Retry* keeps the ids only
+  after network/rate-limit failures; batch progress and time left after 2 s), `UploadStore`
+  (`SqliteUploadStore` on `drive_<userUuid>.db` via `LocalDatabases.open`, table
+  `local_pending_upload` with the 02 §4.1 columns + `batch_id`, `parent_name`, `volatile`,
+  `error_kind`, `result_json`; `MemoryUploadStore` fallback/tests), `UploadApi` /
+  `ServerUploadApi` (`drive.createFileUpload/completeFileUpload/cancelFileUpload`,
+  `namesIn` for conflicts) and `ByteSender` (spike S-D2: the web `http` client — and so
+  Serverpod's `FileUploader` — buffers the body and reports no upload progress, so the web
+  sends the upload description itself with an `XMLHttpRequest` and `upload.onprogress`
+  (binary and multipart descriptions); desktop counts the `FileUploader` stream),
+  `UploadPlan` / `filesThatFit` (02 §3.2 pre-checks: size against
+  `ServerLimits.maxFileUploadBytes`, quota against the cached `StorageUsage` minus queued
+  bytes — fails open while unknown/calculating, names), dialogs (`WonkyDialogSpec`:
+  *Not enough storage for all files* / *You're out of storage* with *Upload the files that
+  fit* · *Manage storage* · *Cancel*; *Upload options* with *Keep both* · *Skip* · *Cancel* —
+  *Replace* is P2; *Cancel N uploads?*), `UploadPanel` + `UploadPanelLayer` (mounted by
+  `DriveAppConfig.wrap`; 360 px card bottom-right / full width minus 16 px below 768 px,
+  pill when collapsed, live-region header, per-row actions and footer, arrow keys between
+  rows), `UploadHost` (per-shell queue following `currentUser`, staged files, panel state,
+  announcements, `beforeunload` guard), `DriveUploadHandler` (`ImportHandler`: `file_picker`
+  for *File upload…*, drops → `drive.upload.files`). Commands (`lib/commands/
+  upload_commands.dart`): `drive.upload.files {staged, parentUuid?}` (undoable batch on the
+  shell stack, `UploadBatchUndoEntry`/`UploadUndoHandler`: undo cancels running uploads and
+  trashes uploaded files and created folders, redo restores them and restarts the cancelled
+  ones), `drive.upload.cancel/cancelAll/retry {uploadId, toMyDrive?}/retryAll/remove/
+  clearFinished/togglePanel`. Folder drops are in M8: dropped directories (web
+  `webkitGetAsEntry` through `desktop_drop`) are recreated with `drive.createFolder` before
+  their files are queued (online only); the folder *picker* (`drive.upload.folder`) stays P1.
+  Shell (additive): `ImportFile.{lastModified, folderPath}`; the drive home's drop handler
+  uploads every file type in `HomeScope.uploadsFiles` homes, hit-tests folder rows/cards
+  (`osDropFolderTarget`, `DriveOsDropScope`) so a drop on a folder uploads into it with the
+  overlay "Upload to Designs" / "Drop files to upload to Team"; uploading rows show
+  "Uploading…"; *Upload files* in empty My Drive/folders; `shell.drive.upload {parentUuid?}`
+  (`Shift+U`, stays enabled offline in Drive); `WonkyAppConfig.itemMenuCommands` →
+  Drive's item menu shows *Preview*, *Open with Wonky Write/Sheets* and *Download* for files
+  (reusing D-14's `drive.file.*` commands) instead of *Open*.
 
 **D-14 · Drive: file previews** — starts with spike S-D1
 - Scope: `FilePreviewScreen` (`/file/:uuid`), image viewer, PDF viewer (S-D1 library,
@@ -323,6 +568,25 @@ S-D2
 - Acceptance: each viewer tested with a valid and a malformed fixture (truncated PNG, broken
   PDF, binary named `.txt`) → error state, not a crash; light/dark goldens; preview budgets of
   suite 11 §2 measured on the fixtures.
+- **As built:** `wonky_drive/lib/features/preview/`: `FilePreviewScreen` (`/file/:uuid`, top bar,
+  viewer bar, ‹ ›, trashed banner with *Restore*, details panel = the shell's
+  `DriveDetailsPanel`, now exported; overlay below 768 px), `FilePreviewController` (phases
+  loading / uploading (polls `drive.fileUploadStatus` every 3 s) / ready / offline / tooLarge /
+  failed / notFound / notAFile (redirects to the item's app); problems imageBroken, pdfBroken,
+  pdfPassword, pdfUnavailable, notText), `FilePreviewHost` (per-shell collaborators, 100 MB
+  `PreviewByteCache`, the active preview), `FilePreviewApi` / `ServerFilePreviewApi`
+  (`drive.fileContentUrl`, `file.getUrl` for the server preview image, `http` GET with a
+  50 MB cap, `drive.updateFileMeta` for the PDF page count), `PreviewType` (viewer by the sniffed
+  MIME type; active types only as text), viewers `ImageViewer`, `PdfViewer` +
+  `PdfDocumentState` + `PrintingPdfRasterizer` (S-D1: `printing` + self-hosted pdf.js, 02 §6.3),
+  `TextFileViewer` (`CodeView`, `PreviewTokenizer`), `CsvTableViewer`, `UnsupportedFileView`,
+  `FileCategoryIcon`; `PlatformFileDownloader` (web: hidden `<a download>` via `dart:js_interop`,
+  same tab; desktop: not yet). Commands (`preview_commands.dart`, registered by
+  `DriveAppConfig.commands`): `drive.file.preview` (`Space`, drive scope), `drive.file.openWith`
+  (→ `<app>/import?file=`), `drive.file.download` (`{uuids}` or the open preview),
+  `drive.preview.next/previous/zoomIn/zoomOut/zoomFit/zoomActual/rotate/goToPage/toggleWrap/
+  copyAll/close` in the `drivePreview` key scope (inactive in text fields). D-13 and D-17 reuse
+  these ids. `wonky_core/files.dart` gained `CsvSniffer`.
 
 **D-15 · MCP & AI for Drive** (Drive 01 §3, suite 09)
 - Scope: `drive.upload_file`, `drive.create_upload`/`drive.complete_upload`,
@@ -331,6 +595,15 @@ S-D2
 - Owns: `wonky_core/lib/mcp/drive_tools.dart`, `wonky_server/lib/src/platform/mcp/drive_tool_handlers.dart`,
   `wonky_drive/lib/mcp/`.
 - Acceptance: J-D9 as an MCP integration test through `/mcp`; tool schemas validated.
+- **As built:** see [suite 09 §4 "As built (D-15)"](../09-mcp.md#4-shared-headless-tools) —
+  `DriveTools.{uploadFile, createUpload, completeUpload, downloadFile, convertFile,
+  getStorage}`, `McpSchemas.{kinds, fileCategory, storage}`, `UiDriveTools` (+
+  `McpToolCatalog.drive`), `McpScope.{slidesRead, slidesEdit}` (server `allowedScopes`,
+  Settings › Developer labels); server `DriveFileToolHandlers`, `DriveMcpContent`
+  (`wonky://file/<uuid>`, `wonky://drive/storage`), `storage` in byte-adding results, snake_case
+  `quota_exceeded` details, `ui.drive.*` relays (`app: drive`). Deviations: `drive.create_presentation`
+  waits for SL-40 (headless deck); the Drive assistant (P1) is M11 (Slides 12 §1); the
+  `wonky_drive/lib/mcp/` handlers are D-17.
 
 ### 4.5 Wave 4 — adaptations and integration
 
@@ -342,6 +615,24 @@ S-D2
 - Owns: `wonky_write/lib/{config,features/{import,images}}/`, `wonky_sheets/lib/{config,features/{import,images,import_export}}/`.
 - Acceptance: J-D5, J-D7; Write and Sheets suites green; an image insert over quota shows the
   owner dialog (AC-D3.3, widget level).
+- **As built:** `WriteAppConfig`/`SheetsAppConfig.homeScope = HomeScope.kind(document /
+  spreadsheet)` (app-home menu, template strip, folder rule, *Open in Wonky Drive* follow);
+  `/new` = the shell default (`createItem`; Sheets offline-first); `importRoute` =
+  `importDriveFileAsDocument` (Write: `drive.convertFile` directly, no options dialog — Write has
+  none) / `importDriveFileAsSpreadsheet` (Sheets: bytes via `drive.fileContentUrl`, the import
+  dialog with *Create new spreadsheet* only, then `drive.convertFile` with `optionsJson`); both
+  pre-check the file size (`ensureRoom(reason: convert)`) and show the *Out of storage* dialog
+  for a refused conversion; test seams `WriteDriveFileApi` / `DriveFileImportApi`. Shell (small,
+  additive): File › New ▸ *Presentation*; app-home New menu *Import file…*; empty homes name the
+  app and kind (`emptyAppHomeTitle/Body`); `ImportRoutePage`/`NewItemRoutePage` exported, cancel
+  → `CrossAppNavigator.historyBack()` (browser back to Drive), errors stay in the app.
+  Image uploads refused on quota (both apps, direct and queued): "Not uploaded — out of storage"
+  with *Retry* / *Remove* (Write `ImageUploadPhase.outOfStorage`; Sheets
+  `ImageOutOfStorageOverlay`), kept on the device and not retried automatically
+  (`PendingUploads.refused/isOutOfStorage/retry`, `SheetsPendingUploads.isOutOfStorage/retry/
+  cancel`). Server folder links (MCP `urlOf`, notification emails) → `/drive/f/<uuid>` (emails
+  also link presentations and files). The Help menu, title-row bug button, storage banner and
+  quota pre-checks of image inserts/imports were already provided by D-10/D-11.
 
 **D-17 · Drive: Storage page, settings, commands**
 - Scope: Storage page (`/storage`: breakdown, largest items, trash, versions, *Free up space*),
@@ -351,6 +642,21 @@ S-D2
   uploads), `wonky_drive/lib/mcp/` (UI handlers).
 - Acceptance: Storage page goldens light/dark; every Drive command passes execute → undo → redo
   where undoable; J-D10 server part green.
+- **As built:** see [03 §13](03-storage-quota.md#13-as-built-d-17) (Storage page) and
+  [04 §8–9, §13](04-screens-menus.md#8-drive-settings-settingsapp) (settings, commands, tools).
+  `wonky_drive/lib/features/storage/` (`StorageScreen` in the home frame, `StoragePageController`,
+  `StorageFilter` = type filters + the *Free up space* filters, `StorageApi` /
+  `ServerStorageApi` on `drive.listByStorage`, `StorageHost`), `features/settings/`
+  (`DriveSettingsSection`, `DriveSettings` keys/defaults/validators), `commands/drive_commands.dart`
+  (`drive.view.setLayout/sort/toggleFoldersOnTop`, `drive.prefs.set`, `drive.storage.show
+  {filter}`), `mcp/ui_drive_tools.dart` (`UiDriveToolHandlers`, `DriveAppConfig.mcpUiTools`).
+  *Convert uploads* is built (02 §7.3 as built). `drive.file.download` got `Mod+Shift+D` and
+  downloads the selected files outside a preview. Shell (additive): `ShellServices.driveView`,
+  Drive's per-device view keys + `driveDefaults` in `DriveController` (`applyViewPrefs`,
+  `selectIds(focus:)`), `WonkyAppConfig.listItemName`, `HomeSidebar.activeDestination`, exports
+  of `DriveController`, `WonkyTopBar`, `itemMenuEntries`; `FakeUserRepository` merges
+  `driveDefaults`. `wonky_ui`: `WonkyStackedBar`. J-D10's server part is
+  `storage_enforcement_test.dart` (AC-D3.6, D-9).
 
 **D-18 · M8 integration** — web-build token
 - Scope: backfill dry run on a production copy (S-D3 numbers recorded in Drive 03 §2),

@@ -26,12 +26,15 @@ String mcpScopeLabel(WonkyAppLocalizations l, String scope) => switch (scope) {
   McpScope.writeEdit => l.mcpScopeWriteEdit,
   McpScope.sheetsRead => l.mcpScopeSheetsRead,
   McpScope.sheetsEdit => l.mcpScopeSheetsEdit,
+  McpScope.slidesRead => l.mcpScopeSlidesRead,
+  McpScope.slidesEdit => l.mcpScopeSlidesEdit,
   McpScope.scriptsRun => l.mcpScopeScriptsRun,
   McpScope.uiControl => l.mcpScopeUiControl,
   _ => scope,
 };
 
-/// Default scopes of new tokens (Sheets is not available yet).
+/// Default scopes of new tokens. (v2) The `slides:*` scopes are offered but
+/// off by default until the `slides.*` tools exist (Slides SL-40).
 const mcpDefaultScopes = [
   McpScope.driveRead,
   McpScope.driveWrite,

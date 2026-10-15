@@ -55,6 +55,7 @@ indexes:
   drive_item_parent_idx: { fields: parentId }
   drive_item_owner_idx: { fields: ownerId, trashedAt }
   drive_item_content_idx: { fields: contentRef }
+  drive_item_upload_idx: { fields: uploadState, createdAt }   # (v2) drive.expireUploads
 ```
 
 ```yaml

@@ -45,6 +45,23 @@ class FileEndpoint extends Endpoint {
   Future<FileUrlView> getUrl(Session session, UuidValue fileUuid) async =>
       FileService.getUrl(session, await UserService.actorOf(session), fileUuid);
 
+  /// (v2, Slides 03 A-03-3) Copies an image the caller can read into
+  /// [targetItemUuid] as [newFileUuid] (idempotent on [newFileUuid];
+  /// quota of the target's owner). Errors: notFound, forbidden,
+  /// quotaExceeded, conflict.
+  Future<FileUrlView> copyToItem(
+    Session session,
+    UuidValue sourceFileUuid,
+    UuidValue newFileUuid,
+    UuidValue targetItemUuid,
+  ) async => FileService.copyToItem(
+    session,
+    await UserService.actorOf(session),
+    sourceFileUuid: sourceFileUuid,
+    newFileUuid: newFileUuid,
+    targetItemUuid: targetItemUuid,
+  );
+
   Future<List<FileUrlView>> getUrls(
     Session session,
     List<UuidValue> fileUuids,

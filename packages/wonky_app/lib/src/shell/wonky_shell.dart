@@ -30,6 +30,7 @@ import '../document/document_controller.dart';
 import '../l10n/wonky_app_localizations.dart';
 import '../mcp_bridge/mcp_bridge_scope.dart';
 import '../routing/router.dart';
+import '../storage/live_storage_controller.dart';
 import 'overlays/shell_overlays.dart';
 import 'shell_services.dart';
 import '../undo/undo_service.dart';
@@ -143,6 +144,14 @@ class WonkyShell extends StatefulWidget {
       connectivity: connectivity,
       deviceStore: device,
       client: wc.client,
+      // Drive 03 §6 (D-11): usage from `drive.storageUsage`, live from
+      // `storageChanged` events, cached per user for offline display.
+      storage: LiveStorageController(
+        fetch: remoteDrive.storageUsage,
+        checkRoom: (bytes, itemUuid) =>
+            api.guard((c) => c.drive.checkRoom(bytes, itemUuid)),
+        cache: () => services.userStore,
+      ),
     );
     return services;
   }
@@ -229,6 +238,12 @@ class _WonkyShellState extends State<WonkyShell> {
       s.emitDriveChange,
       onConnected: s.refreshDrive,
     );
+    final storage = s.storage;
+    if (storage is LiveStorageController) {
+      unawaited(
+        storage.start(changes: s.driveChanges, refreshSignal: s.driveRefresh),
+      );
+    }
     _undoSub ??= s.undo.outcomes.listen((_) => s.registry.notifyStateChanged());
     await widget.config.onSignedIn(s);
   }
@@ -236,6 +251,8 @@ class _WonkyShellState extends State<WonkyShell> {
   Future<void> _beforeSignOut() async {
     await widget.config.onSigningOut(s);
     await s.supervisor.cancelAll();
+    final storage = s.storage;
+    if (storage is LiveStorageController) storage.stop();
     s.undo.clearAll();
     s.currentUser.value = null;
     _signedInSetup = false;

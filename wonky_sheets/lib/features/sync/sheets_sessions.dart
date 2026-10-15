@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_client/wonky_client.dart';
 import 'package:intl/intl.dart' show NumberFormat;
@@ -13,15 +12,18 @@ import '../formatting/sheets_user_defaults.dart';
 import '../model/local_view_state.dart';
 import '../model/memory_workbook_session.dart';
 import '../model/workbook_session.dart';
+import 'package:wonky_sync_kit_flutter/wonky_sync_kit_flutter.dart'
+    show
+        ReplicaInstallation,
+        ReplicaOfflineProvider,
+        SyncConnectivity,
+        offlineStorageLimited;
+
 import 'replica_recovery.dart';
 import 'replica_recovery_ui.dart';
-import 'replica_path_io.dart'
-    if (dart.library.js_interop) 'replica_path_web.dart'
-    as platform;
 import 'sheets_remote.dart';
 import 'sheets_replica.dart';
 import 'sheets_sync_controller.dart';
-import 'storage_mode.dart';
 import 'synced_workbook_session.dart' show ViewportHint;
 
 export 'sheets_sync_controller.dart'
@@ -146,12 +148,7 @@ abstract final class SheetsData {
   }) async {
     final inst = _installations[services];
     if (inst == null) return null;
-    if (inst.controller != null) return inst.controller;
-    try {
-      return await inst.next.future.timeout(timeout);
-    } on TimeoutException {
-      return null;
-    }
+    return inst.ready(timeout);
   }
 
   /// Creates a spreadsheet: locally in a reserved space (works offline),
@@ -211,140 +208,91 @@ abstract final class SheetsData {
   }
 }
 
-class _ShellConnectivity implements SheetsConnectivity {
-  _ShellConnectivity(this.service) : _online = ValueNotifier(service.online) {
-    service.addListener(_sync);
-  }
+/// The Sheets data layer of one signed-in shell: the shared kit's
+/// [ReplicaInstallation] with the Sheets replica, remote, cell cap (web
+/// without OPFS), offline provider and recovery download.
+class _Installation
+    extends ReplicaInstallation<SheetsReplica, SheetsSyncController> {
+  _Installation(super.services, SheetsReplicaOpener? open, this._remote)
+    : super(opener: open);
 
-  final ConnectivityService service;
-  final ValueNotifier<bool> _online;
-
-  void _sync() => _online.value = service.online;
-
-  @override
-  ValueListenable<bool> get online => _online;
-
-  @override
-  void reportFailure() => service.reportFailure();
-
-  @override
-  void reportSuccess() => service.reportSuccess();
-
-  void dispose() {
-    service.removeListener(_sync);
-    _online.dispose();
-  }
-}
-
-class _Installation {
-  _Installation(this.services, this._open, this._remote);
-
-  final ShellServices services;
-  final SheetsReplicaOpener? _open;
   final SheetsRemote Function()? _remote;
+  ReplicaOfflineProvider? _provider;
+  bool _limited = false;
 
-  SheetsSyncController? controller;
-  String? _user;
-  Completer<SheetsSyncController> next = Completer();
-  _ShellConnectivity? _connectivity;
-  AppLifecycleListener? _lifecycle;
-  Future<void> _switching = Future.value();
-  _SheetsOfflineProvider? _provider;
+  @override
+  String? get directory => SheetsData.directoryOverride;
 
-  void attach() {
-    services.currentUser.addListener(_onUser);
-    _lifecycle = AppLifecycleListener(
-      onShow: () => controller?.setVisible(true),
-      onResume: () => controller?.setVisible(true),
-      onHide: () => controller?.setVisible(false),
-    );
-    _onUser();
+  @override
+  String get name => 'Sheets';
+
+  @override
+  String fileNameFor(String user) => SheetsReplica.fileNameFor(user);
+
+  @override
+  Future<SheetsReplica> openReplicaAt(
+    Client client,
+    String path,
+    UuidValue user,
+  ) => SheetsReplica.open(
+    client: client,
+    path: path,
+    userUuid: user,
+    isDebugMode: kDebugMode,
+  );
+
+  /// Spreadsheets with unsynced writes are offered as a download (12 §2.5).
+  @override
+  Future<VoidCallback?> readRecovery(String path) async {
+    final recovery = await ReplicaRecovery.read(path);
+    if (recovery == null || recovery.isEmpty) return null;
+    return () => offerRecoveryDownload(services, recovery);
   }
 
-  Future<void> detach() async {
-    services.currentUser.removeListener(_onUser);
-    _lifecycle?.dispose();
-    _user = null;
-    await (_switching = _switching.then((_) => _close()));
-  }
-
-  void _onUser() {
-    final user = services.me?.uuid.uuid;
-    if (user == _user) return;
-    _user = user;
-    _switching = _switching.then((_) async {
-      await _close();
-      if (user != null && user == _user) await _openFor(user);
-    });
-  }
-
-  Future<void> _close() async {
-    final c = controller;
-    controller = null;
-    if (_provider != null) {
-      OfflineStorage.of(services).unregister(_provider!);
-      _provider!.dispose();
-      _provider = null;
-    }
-    if (c != null) await c.close();
-    _connectivity?.dispose();
-    _connectivity = null;
-    if (next.isCompleted) next = Completer();
-  }
-
-  /// *Clear local data*: deletes the replica (desktop) or empties every
-  /// table (web, where databases can't be deleted), then starts over with
-  /// a fresh replica that re-syncs. Unsynced changes are lost.
-  Future<void> _reset(String user) => _switching = _switching.then((_) async {
-    final c = controller;
-    if (c == null || _user != user) return;
-    if (kIsWeb) {
-      await c.stop();
-      final tables = await c.replica.db.unsafeQuery(
-        "SELECT name FROM sqlite_master WHERE type = 'table' "
-        "AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'serverpod_migration%'",
-      );
-      for (final t in tables) {
-        await c.replica.db.unsafeExecute('DELETE FROM "${t[0]}"');
-      }
-    }
-    await _close();
-    await platform.deleteReplica(
-      SheetsReplica.fileNameFor(user),
-      SheetsData.directoryOverride,
-    );
-    if (_user == user) await _openFor(user);
-  });
-
-  Future<SheetsReplica> _openReplica(UuidValue user) async {
-    if (_open != null) return _open(user);
+  @override
+  Future<SheetsSyncController?> createController(
+    SheetsReplica replica,
+    SyncConnectivity connectivity,
+  ) async {
     final client = services.client;
-    if (client == null) throw StateError('No client');
-    final name = SheetsReplica.fileNameFor(user.uuid);
-    Future<SheetsReplica> open() async => SheetsReplica.open(
-      client: client,
-      path: await platform.replicaPath(name, SheetsData.directoryOverride),
-      userUuid: user,
-      isDebugMode: kDebugMode,
+    final remote =
+        _remote?.call() ?? (client == null ? null : ClientSheetsRemote(client));
+    if (remote == null) return null;
+    // Web without OPFS keeps the database in memory (IndexedDB fallback):
+    // cap the cells kept on the device and say so (12 intro).
+    _limited = await offlineStorageLimited();
+    final views = LocalViewStateStore(services.userStore);
+    return SheetsSyncController(
+      replica: replica,
+      remote: remote,
+      connectivity: connectivity,
+      cellCap: _limited ? SheetsData.limitedStorageCells : null,
+      lastOpened: views.lastOpened,
+      maintenanceStore: services.userStore,
     );
-    try {
-      return await open();
-    } catch (e, st) {
-      // The replica can be re-synced: move it aside (kept for recovery on
-      // desktop) and start over. Spreadsheets with unsynced writes are
-      // offered as a download first (12 §2.5).
-      debugPrint('Opening the Sheets replica failed, resetting it: $e\n$st');
-      final path = await platform.replicaPath(
-        name,
-        SheetsData.directoryOverride,
-      );
-      final recovery = await ReplicaRecovery.read(path);
-      await platform.moveReplicaAside(name, SheetsData.directoryOverride);
-      if (recovery != null && !recovery.isEmpty) {
-        offerRecoveryDownload(services, recovery);
-      }
-      return open();
-    }
+  }
+
+  @override
+  void started(SheetsSyncController c) {
+    final user = c.replica.userUuid.uuid;
+    final provider = _provider = ReplicaOfflineProvider(
+      c,
+      () => reset(user),
+      id: 'sheets',
+      kind: DriveItemKind.spreadsheet,
+      warning: _limited ? _limitedWarning() : null,
+    );
+    if (_limited) unawaited(_announceLimitedStorage());
+    OfflineStorage.of(services).register(provider);
+  }
+
+  @override
+  void closing(SheetsSyncController c) {
+    final provider = _provider;
+    if (provider == null) return;
+    OfflineStorage.of(services).unregister(provider);
+    provider.dispose();
+    _provider = null;
   }
 
   OfflineWarning _limitedWarning() {
@@ -371,110 +319,5 @@ class _Installation {
       description: w.description,
       duration: const Duration(seconds: 12),
     );
-  }
-
-  Future<void> _openFor(String user) async {
-    try {
-      final uuid = UuidValue.fromString(user);
-      final replica = await _openReplica(uuid);
-      if (_user != user) {
-        await replica.close();
-        return;
-      }
-      final client = services.client;
-      final remote =
-          _remote?.call() ??
-          (client == null ? null : ClientSheetsRemote(client));
-      if (remote == null) {
-        await replica.close();
-        return;
-      }
-      final connectivity = _connectivity = _ShellConnectivity(
-        services.connectivity,
-      );
-      // Web without OPFS keeps the database in memory (IndexedDB
-      // fallback): cap the cells kept on the device and say so (12 intro).
-      final limited = await offlineStorageLimited();
-      final views = LocalViewStateStore(services.userStore);
-      final c = SheetsSyncController(
-        replica: replica,
-        remote: remote,
-        connectivity: connectivity,
-        cellCap: limited ? SheetsData.limitedStorageCells : null,
-        lastOpened: views.lastOpened,
-        maintenanceStore: services.userStore,
-      );
-      controller = c;
-      _provider = _SheetsOfflineProvider(
-        c,
-        () => _reset(user),
-        warning: limited ? _limitedWarning() : null,
-      );
-      if (limited) unawaited(_announceLimitedStorage());
-      OfflineStorage.of(services).register(_provider!);
-      c.start();
-      if (!next.isCompleted) next.complete(c);
-    } catch (e, st) {
-      debugPrint('Starting Sheets sync failed: $e\n$st');
-    }
-  }
-}
-
-/// Sheets' entry in Settings › Offline & storage and the drive's offline
-/// badges: spreadsheets on the device, spaces with unsynced writes.
-class _SheetsOfflineProvider extends ChangeNotifier
-    implements OfflineDataProvider {
-  _SheetsOfflineProvider(this.controller, this.onClear, {this.warning}) {
-    controller.cycles.addListener(_refresh);
-    _refresh();
-  }
-
-  final SheetsSyncController controller;
-  final Future<void> Function() onClear;
-
-  /// "Offline storage is limited in this browser" (IndexedDB fallback).
-  final OfflineWarning? warning;
-  Set<String> _local = const {};
-  OfflineUsage _usage = OfflineUsage.empty;
-  bool _disposed = false;
-
-  @override
-  String get id => 'sheets';
-
-  @override
-  bool? isAvailableOffline(DriveItemView item) {
-    if (item.kind != DriveItemKind.spreadsheet) return null;
-    final space = item.contentRef?.uuid ?? item.uuid.uuid;
-    return _local.contains(space);
-  }
-
-  @override
-  OfflineUsage get usage => _usage;
-
-  Future<void> _refresh() async {
-    final r = controller.replica;
-    if (r.isClosed || _disposed) return;
-    try {
-      final sheets = await Spreadsheet.db.find(r.session);
-      final dirty = await r.dirtySpaces();
-      if (_disposed) return;
-      _local = {for (final s in sheets) s.id.uuid};
-      _usage = OfflineUsage(
-        documents: _local.length,
-        pendingChanges: dirty.length,
-        warnings: [?warning],
-      );
-      notifyListeners();
-    } catch (_) {}
-  }
-
-  @override
-  Future<void> clear() => onClear();
-
-  @override
-  void dispose() {
-    _disposed = true;
-    controller.cycles.removeListener(_refresh);
-    super.dispose();
   }
 }

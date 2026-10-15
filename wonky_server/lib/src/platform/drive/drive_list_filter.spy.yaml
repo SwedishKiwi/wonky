@@ -5,3 +5,9 @@ fields:
   ### Null = all kinds.
   kinds: List<DriveItemKind>?
   owner: DriveOwnerFilter, default=anyone
+  ### (v2) Files only: restrict `file` items to these categories (Drive's
+  ### type chip). Null = all categories.
+  fileCategories: List<FileCategory>?
+  ### (v2) App homes: folders are returned only if their `kindMask` has this
+  ### kind (suite 05 §3.2). Null = every folder.
+  foldersContaining: DriveItemKind?

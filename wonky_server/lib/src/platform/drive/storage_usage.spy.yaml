@@ -1,7 +1,33 @@
+### The caller's storage (Drive 03 §3): `drive.storageUsage()`, the
+### `storageChanged` drive event and the result of byte-adding endpoints.
+### Bytes count the owner's items incl. trash (Drive 03 §2).
 class: StorageUsage
 fields:
+  ### (v1 meaning changed in v2) Counted usage incl. trash (Drive 03 §2 only).
   bytesUsed: int
+  ### Item counts (non-trashed).
   documents: int
   spreadsheets: int
   folders: int
   files: int
+  ### (v2) The user's quota (config default or per-user override).
+  quotaBytes: int, default=52428800
+  ### (v2) Open reservations of pending uploads (Drive 03 §5).
+  reservedBytes: int, default=0
+  ### (v2) max(0, quotaBytes - bytesUsed - reservedBytes).
+  availableBytes: int, default=0
+  ### (v2) bytesUsed > quotaBytes.
+  overQuota: bool, default=false
+  ### (v2) Breakdown of non-trashed items incl. their attachments.
+  documentsBytes: int, default=0
+  spreadsheetsBytes: int, default=0
+  presentationsBytes: int, default=0
+  filesBytes: int, default=0
+  ### (v2) All trashed items.
+  trashBytes: int, default=0
+  presentations: int, default=0
+  ### (v2) min(availableBytes, wonky.files.maxFileUploadBytes).
+  maxFileUploadBytes: int, default=0
+  ### (v2) The storage backfill for this user hasn't finished (Drive 03 §9):
+  ### meters show "Calculating storage…" and enforcement fails open.
+  calculating: bool, default=false

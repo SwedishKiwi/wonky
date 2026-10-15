@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wonky_app/testing.dart';
+import 'package:wonky_app/src/settings/settings_catalog.dart';
 import 'package:wonky_app/src/settings/settings_screen.dart';
 
 import '../support/screen_pump.dart';
@@ -23,18 +24,8 @@ void main() {
   });
   tearDown(() => h.dispose());
 
-  const sections = [
-    'account',
-    'appearance',
-    'language',
-    'keyboard',
-    'write',
-    'ai',
-    'ai-providers',
-    'developer',
-    'offline',
-    'about',
-  ];
+  // Every Wonky Work section (suite 04 §4.1).
+  const sections = workSettingsSectionIds;
 
   // Contrast failures of the shared theme (wonky_ui), not of the screens.
   const themeContrastIssues = <String>{};

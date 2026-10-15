@@ -1,0 +1,24 @@
+### (v2) Category of an uploaded file (`DriveItemKind.file`) for icons,
+### filters and the preview viewer (Drive 02 §1.2). Derived on the server from
+### the sniffed MIME type; the table is `wonky_core/lib/files/file_types.dart`.
+enum: FileCategory
+serialized: byName
+values:
+  ### jpeg, png, gif, webp, bmp (previewed); heic/tiff/svg (not rendered).
+  - image
+  - pdf
+  ### text/* and known source/data extensions.
+  - text
+  ### Previewed in P2.
+  - audio
+  ### Never previewed.
+  - video
+  ### zip, tar, gz, 7z, rar.
+  - archive
+  ### docx, odt, rtf, doc, pages (convertible ones offer Open with Write).
+  - document
+  ### xlsx, xls, ods, csv, tsv, numbers (convertible ones offer Open with Sheets).
+  - spreadsheet
+  ### pptx, odp, key (download only).
+  - presentation
+  - other

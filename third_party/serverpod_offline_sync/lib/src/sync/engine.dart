@@ -20,7 +20,7 @@ import 'exceptions.dart';
 import 'integrity_violation.dart';
 import 'space_state.dart';
 
-export 'space_state.dart' show OfflineSyncPeerMode;
+export 'space_state.dart' show OfflineSyncPeerMode, OfflineSyncSpaceFilter;
 
 /// Callback function for when a merge is successful.
 typedef OfflineSyncOnMergeSuccess =
@@ -258,6 +258,10 @@ class OfflineSyncEngine {
   /// When [once] is true the loop may run an extra cycle after handshakes
   /// complete so merge data can flow; then it closes symmetrically. Continuous
   /// mode loops with [_continuousSyncInterval] between idle cycles.
+  ///
+  /// [spaceFilter] (patch OS-8, authoritative peers only) narrows the shared
+  /// spaces this session syncs to the ones it keeps; the personal space is
+  /// always synced. Without it every member space is synced.
   Stream<OfflineSyncStreamEvent> sync(
     DatabaseSession session, {
     required UuidValue userId,
@@ -265,7 +269,15 @@ class OfflineSyncEngine {
     required OfflineSyncPeerMode mode,
     bool once = false,
     OfflineSyncOnMergeSuccess? onMergeSuccess,
+    OfflineSyncSpaceFilter? spaceFilter,
   }) async* {
+    if (spaceFilter != null && mode != OfflineSyncPeerMode.authoritative) {
+      throw ArgumentError.value(
+        spaceFilter,
+        'spaceFilter',
+        'Only an authoritative peer can filter its spaces',
+      );
+    }
     // Idle timeouts are a continuous-only affordance: they let an idle cycle
     // settle into an empty batch without closing the stream. A `once` session
     // is strictly lockstep — every batch ends with a [OfflineSyncEndOfBatch] and
@@ -297,6 +309,7 @@ class OfflineSyncEngine {
         userId: userId,
         mode: mode,
         peerNodeId: peerConnect.localNodeId,
+        spaceFilter: spaceFilter,
       );
 
       await spaces.reconcile();

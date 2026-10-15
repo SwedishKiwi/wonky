@@ -7,17 +7,21 @@ import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_core/wonky_core.dart' hide ActorKind;
 import 'package:wonky_ui/wonky_ui.dart';
 
+import '../branding/product_icon.dart';
 import '../commands/keymap_service.dart';
 import '../commands/shell_commands/general_commands.dart';
+import '../config/home_scope.dart';
 import '../config/wonky_app_config.dart';
 import '../data/api.dart';
 import '../l10n/wonky_app_localizations.dart';
 import '../menus/menu_resolver.dart';
 import '../shell/shell_services.dart';
+import '../storage/storage_banner.dart';
 import 'details_panel.dart';
+import 'drive_format.dart';
 import 'drive_controller.dart';
 import 'drive_location.dart';
-import 'drive_sidebar.dart';
+import 'home_sidebar.dart';
 import 'item_actions.dart';
 import 'template_gallery.dart';
 import 'top_bar.dart';
@@ -54,6 +58,11 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
   bool _sidebarOpen = true;
   bool _dropping = false;
 
+  /// The folder row/card an OS file drag hovers (Drive: drops upload
+  /// into it, Drive 04 §3.5).
+  final _osDropFolder = ValueNotifier<UuidValue?>(null);
+  String? _osDropFolderName;
+
   ShellServices get s => widget.services;
 
   @override
@@ -83,6 +92,7 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
     );
     if (s.driveSearchFocus == _searchFocus) s.driveSearchFocus = null;
     c.dispose();
+    _osDropFolder.dispose();
     _listFocus.dispose();
     _searchFocus.dispose();
     _sidebarFocus.dispose();
@@ -91,8 +101,14 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
   }
 
   String _title(WonkyAppLocalizations l) => switch (widget.location.kind) {
-    DriveLocationKind.home => l.navHome,
-    DriveLocationKind.myDrive => l.navMyDrive,
+    // App homes call `/` *Recent* (suite 03 §3.3).
+    DriveLocationKind.home =>
+      s.config.homeScope?.kind != null ? l.navRecent : l.navHome,
+    DriveLocationKind.myDrive => homeNavLabel(
+      l,
+      HomeNavDestination.myFiles,
+      scope: s.config.homeScope,
+    ).$2,
     DriveLocationKind.folder => c.folder?.name ?? '',
     DriveLocationKind.shared => l.navShared,
     DriveLocationKind.starred => l.navStarred,
@@ -102,23 +118,90 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
     DriveLocationKind.search => l.searchResultsFor(widget.location.query ?? ''),
   };
 
-  Future<void> _onDrop(DropDoneDetails d) async {
-    setState(() => _dropping = false);
-    final handler = s.config.importHandler;
-    if (handler == null || !c.canCreateHere) return;
+  /// Whether this home uploads any file (Drive) instead of importing its
+  /// convertible types.
+  bool get _uploadsFiles => s.config.homeScope?.uploadsFiles ?? false;
+
+  void _onDragUpdated(DropEventDetails d) {
+    if (!_uploadsFiles) return;
+    final folder = osDropFolderAt(context, d.globalPosition);
+    if (_osDropFolder.value == folder?.uuid) return;
+    setState(() {
+      _osDropFolder.value = folder?.uuid;
+      _osDropFolderName = folder?.name;
+    });
+  }
+
+  void _endDrag() => setState(() {
+    _dropping = false;
+    _osDropFolder.value = null;
+    _osDropFolderName = null;
+  });
+
+  /// Drop overlay text: "Upload to Designs" over a folder row, else
+  /// "Drop files to upload to Team" (Drive 04 §3.5).
+  String _dropLabel(WonkyAppLocalizations l) {
+    if (!_uploadsFiles) return l.dropToUpload;
+    final hovered = _osDropFolderName;
+    if (hovered != null) return l.dropUploadToFolder(hovered);
+    final target =
+        c.folder?.name ??
+        homeNavLabel(
+          l,
+          HomeNavDestination.myFiles,
+          scope: s.config.homeScope,
+        ).$2;
+    return l.dropToUploadInto(target);
+  }
+
+  /// Files of a drop; folders (Drive) become [ImportFile.folderPath]s.
+  Future<List<ImportFile>> _dropFiles(
+    List<DropItem> items,
+    ImportHandler handler,
+  ) async {
     final files = <ImportFile>[];
-    for (final f in d.files) {
+    Future<void> add(DropItem f, List<String> path) async {
+      if (f is DropItemDirectory) {
+        if (!_uploadsFiles) return;
+        for (final child in f.children) {
+          await add(child, [...path, f.name]);
+        }
+        return;
+      }
       final name = f.name;
       final ext = name.contains('.') ? name.split('.').last.toLowerCase() : '';
-      if (!handler.extensions.contains(ext)) continue;
+      if (!_uploadsFiles && !handler.extensions.contains(ext)) return;
+      DateTime? modified;
+      try {
+        modified = await f.lastModified();
+      } on Object {
+        modified = null;
+      }
       files.add(
         ImportFile(
           name: name,
           bytes: await f.readAsBytes(),
           mimeType: f.mimeType,
+          lastModified: modified,
+          folderPath: path,
         ),
       );
     }
+
+    for (final f in items) {
+      await add(f, const []);
+    }
+    return files;
+  }
+
+  Future<void> _onDrop(DropDoneDetails d) async {
+    final folder = _uploadsFiles
+        ? osDropFolderAt(context, d.globalPosition)
+        : null;
+    _endDrag();
+    final handler = s.config.importHandler;
+    if (handler == null || (folder == null && !c.canCreateHere)) return;
+    final files = await _dropFiles(d.files, handler);
     if (!mounted) return;
     if (files.isEmpty) {
       s.toasts.show(WonkyAppLocalizations.of(context).importUnsupported);
@@ -129,7 +212,7 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
         context,
         s,
         files,
-        parentUuid: c.folder?.uuid,
+        parentUuid: folder?.uuid ?? c.folder?.uuid,
       );
       for (final v in items) {
         s.emitDriveChange(
@@ -144,6 +227,39 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
     }
   }
 
+  /// Below `md` the left menu is a drawer (Drive 04 §2).
+  Future<void> _openDrawer() => showShadSheet<void>(
+    context: context,
+    side: ShadSheetSide.left,
+    barrierLabel: WonkyAppLocalizations.of(context).actionClose,
+    builder: (sheetContext) => ShadSheet(
+      key: const ValueKey<String>('home.drawer'),
+      closeIcon: ShadIconButton.ghost(
+        key: const ValueKey<String>('home.drawer.close'),
+        width: 32,
+        height: 32,
+        iconSize: 16,
+        semanticLabel: WonkyAppLocalizations.of(sheetContext).actionClose,
+        icon: const Icon(LucideIcons.x),
+        onPressed: () => Navigator.of(sheetContext).maybePop(),
+      ),
+      scrollable: false,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(maxWidth: HomeSidebar.width + 8),
+      child: SizedBox(
+        height: MediaQuery.sizeOf(sheetContext).height,
+        child: Padding(
+          padding: const EdgeInsets.only(top: 40),
+          child: HomeSidebar(
+            services: s,
+            location: widget.location,
+            onNavigate: () => Navigator.of(sheetContext).pop(),
+          ),
+        ),
+      ),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     final l = WonkyAppLocalizations.of(context);
@@ -151,19 +267,26 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
     final width = MediaQuery.sizeOf(context).width;
     final narrow = width < 768;
     final sidebarVisible = _sidebarOpen && !narrow;
+    final scope = s.config.homeScope;
     final main = ListenableBuilder(
       listenable: c,
       builder: (context, _) {
         final showTemplates =
-            widget.location.kind == DriveLocationKind.home ||
-            (widget.location.kind == DriveLocationKind.myDrive);
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (showTemplates) TemplateStrip(services: s),
-            _Header(controller: c, services: s, title: _title(l)),
-            Expanded(child: _body(context, l)),
-          ],
+            (scope?.showsTemplateStrip ?? true) &&
+            (widget.location.kind == DriveLocationKind.home ||
+                widget.location.kind == DriveLocationKind.myDrive);
+        return LayoutBuilder(
+          // Short windows (phones in landscape, 360 px drawers) skip the
+          // template strip: *+ New ▸ From template…* stays.
+          builder: (context, box) => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (showTemplates && box.maxHeight >= 560)
+                TemplateStrip(services: s),
+              _Header(controller: c, services: s, title: _title(l)),
+              Expanded(child: _body(context, l)),
+            ],
+          ),
         );
       },
     );
@@ -180,13 +303,16 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
                 services: s,
                 searchFocus: _searchFocus,
                 initialQuery: widget.location.query,
-                onToggleSidebar: () =>
-                    setState(() => _sidebarOpen = !_sidebarOpen),
+                onToggleSidebar: narrow
+                    ? _openDrawer
+                    : () => setState(() => _sidebarOpen = !_sidebarOpen),
                 // Search starts where the content does (sidebar + the
                 // content's 20 px inset).
-                contentStart: sidebarVisible ? DriveSidebar.width + 20 : null,
+                contentStart: sidebarVisible ? HomeSidebar.width + 20 : null,
               ),
             ),
+            // Drive 03 §6.2: ≥ 90 % and over quota (not dismissible here).
+            StorageBanner(services: s),
             Expanded(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -194,7 +320,7 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
                   if (sidebarVisible)
                     Focus(
                       focusNode: _sidebarFocus,
-                      child: DriveSidebar(
+                      child: HomeSidebar(
                         services: s,
                         location: widget.location,
                       ),
@@ -228,12 +354,17 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
                         child: DropTarget(
                           onDragEntered: (_) =>
                               setState(() => _dropping = true),
-                          onDragExited: (_) =>
-                              setState(() => _dropping = false),
+                          onDragUpdated: _onDragUpdated,
+                          onDragExited: (_) => _endDrag(),
                           onDragDone: _onDrop,
                           child: Stack(
                             children: [
-                              Positioned.fill(child: main),
+                              Positioned.fill(
+                                child: DriveOsDropScope(
+                                  hovered: _osDropFolder,
+                                  child: main,
+                                ),
+                              ),
                               if (_dropping)
                                 Positioned.fill(
                                   child: IgnorePointer(
@@ -248,7 +379,11 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
                                       ),
                                       child: Center(
                                         child: Text(
-                                          l.dropToUpload,
+                                          _dropLabel(l),
+                                          key: const ValueKey<String>(
+                                            'drive.dropOverlay',
+                                          ),
+                                          textAlign: TextAlign.center,
                                           style: theme.textTheme.large,
                                         ),
                                       ),
@@ -330,7 +465,19 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
         l.emptyFolderTitle,
         l.emptyFolderBody,
       ),
-      _ => (EmptyIllustration.documents, l.emptyHomeTitle, l.emptyHomeBody),
+      // (v2) Scoped homes name the app and its kind (D-16).
+      _ => switch (s.config.homeScope) {
+        null => (
+          EmptyIllustration.documents,
+          l.emptyHomeTitle,
+          l.emptyHomeBody,
+        ),
+        final scope => (
+          EmptyIllustration.documents,
+          l.emptyAppHomeTitle(s.config.appName),
+          l.emptyAppHomeBody(scope.kind?.name ?? 'all'),
+        ),
+      },
     };
     final r = MenuResolver(s);
     final newEntry = r.commandEntry(
@@ -338,6 +485,14 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
       'shell.file.new',
       key: 'empty.new',
     );
+    // Drive: *Upload files* in My Drive and folders (Drive 04 §3.8).
+    final uploadEntry =
+        _uploadsFiles &&
+            c.canCreateHere &&
+            (widget.location.kind == DriveLocationKind.folder ||
+                widget.location.kind == DriveLocationKind.myDrive)
+        ? r.commandEntry(context, 'shell.drive.upload', key: 'empty.upload')
+        : null;
     return WonkyEmptyState(
       key: const ValueKey<String>('drive.empty'),
       illustration: ill,
@@ -352,6 +507,13 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
             leading: const Icon(LucideIcons.plus, size: 16),
             onPressed: newEntry.onSelected,
             child: Text(newEntry.label),
+          ),
+        if (uploadEntry != null)
+          ShadButton.outline(
+            key: const ValueKey<String>('drive.empty.upload'),
+            leading: const Icon(LucideIcons.upload, size: 16),
+            onPressed: uploadEntry.onSelected,
+            child: Text(uploadEntry.label),
           ),
       ],
     );
@@ -417,6 +579,13 @@ class _Header extends StatelessWidget {
                     ),
                   ),
           ),
+          if (c.scope?.kind != null)
+            _OpenInDriveButton(
+              compact: MediaQuery.sizeOf(context).width < 640,
+              onPressed: () => run('shell.nav.openInDrive', {
+                if (c.folder != null) 'folderUuid': c.folder!.uuid.uuid,
+              }),
+            ),
           if (c.location.isTrash && c.items.isNotEmpty)
             ShadButton.outline(
               key: const ValueKey<String>('drive.emptyTrash'),
@@ -536,16 +705,77 @@ class _Header extends StatelessWidget {
         ),
       );
     } else {
-      String typeLabel(DriveTypeFilter t) => switch (t) {
+      String typeLabel(DriveTypeFilter t, [FileCategory? cat]) => switch (t) {
         DriveTypeFilter.primary =>
           services.config.primaryKind == DriveItemKind.document
               ? l.typeDocuments
               : l.typeSpreadsheets,
         DriveTypeFilter.documents => l.typeDocuments,
         DriveTypeFilter.spreadsheets => l.typeSpreadsheets,
+        DriveTypeFilter.presentations => l.typePresentations,
         DriveTypeFilter.folders => l.typeFolders,
+        DriveTypeFilter.files =>
+          cat == null ? l.typeFiles : fileCategoryLabel(l, cat),
         DriveTypeFilter.all => l.typeAll,
       };
+      final scope = c.scope;
+      // The v1 type list; Wonky Drive lists every kind and file subtypes.
+      List<WonkyMenuEntry> typeEntries() => scope?.isAll ?? false
+          ? [
+              for (final t in const [
+                DriveTypeFilter.all,
+                DriveTypeFilter.folders,
+                DriveTypeFilter.documents,
+                DriveTypeFilter.spreadsheets,
+                DriveTypeFilter.presentations,
+              ])
+                WonkyMenuRadioItem(
+                  label: typeLabel(t),
+                  selected: c.typeFilter == t,
+                  onSelected: () => c.setTypeFilter(t),
+                ),
+              WonkyMenuSubmenu(
+                label: l.typeFiles,
+                children: [
+                  WonkyMenuRadioItem(
+                    label: l.typeAllFiles,
+                    selected:
+                        c.typeFilter == DriveTypeFilter.files &&
+                        c.fileCategory == null,
+                    onSelected: () => c.setTypeFilter(DriveTypeFilter.files),
+                  ),
+                  const WonkyMenuSeparator(),
+                  for (final cat in filterFileCategories)
+                    WonkyMenuRadioItem(
+                      label: fileCategoryLabel(l, cat),
+                      selected:
+                          c.typeFilter == DriveTypeFilter.files &&
+                          c.fileCategory == cat,
+                      onSelected: () =>
+                          c.setTypeFilter(DriveTypeFilter.files, category: cat),
+                    ),
+                ],
+              ),
+            ]
+          : [
+              for (final t in const [
+                DriveTypeFilter.primary,
+                DriveTypeFilter.documents,
+                DriveTypeFilter.spreadsheets,
+                DriveTypeFilter.folders,
+                DriveTypeFilter.all,
+              ])
+                if (!(t == DriveTypeFilter.primary &&
+                    (services.config.primaryKind == DriveItemKind.document
+                            ? DriveTypeFilter.documents
+                            : DriveTypeFilter.spreadsheets) ==
+                        t))
+                  WonkyMenuRadioItem(
+                    label: typeLabel(t),
+                    selected: c.typeFilter == t,
+                    onSelected: () => c.setTypeFilter(t),
+                  ),
+            ];
       String ownerLabel(DriveOwnerFilter o) => switch (o) {
         DriveOwnerFilter.anyone => l.ownerAnyone,
         DriveOwnerFilter.me => l.ownerMeFilter,
@@ -583,23 +813,14 @@ class _Header extends StatelessWidget {
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
-              chip(
-                'type',
-                typeLabel(c.typeFilter),
-                () => [
-                  for (final t in DriveTypeFilter.values)
-                    if (!(t == DriveTypeFilter.primary &&
-                        (services.config.primaryKind == DriveItemKind.document
-                                ? DriveTypeFilter.documents
-                                : DriveTypeFilter.spreadsheets) ==
-                            t))
-                      WonkyMenuRadioItem(
-                        label: typeLabel(t),
-                        selected: c.typeFilter == t,
-                        onSelected: () => c.setTypeFilter(t),
-                      ),
-                ],
-              ),
+              // App homes list only their kind: no type chip (suite 03
+              // §3.3).
+              if (scope == null || scope.showsTypeFilter)
+                chip(
+                  'type',
+                  typeLabel(c.typeFilter, c.fileCategory),
+                  typeEntries,
+                ),
               chip(
                 'owner',
                 ownerLabel(c.ownerFilter),
@@ -680,7 +901,8 @@ class _Breadcrumb extends StatelessWidget {
     final theme = ShadTheme.of(context);
     Widget crumb(String label, String? folderUuid, {bool last = false}) =>
         DragTarget<DriveDragData>(
-          onWillAcceptWithDetails: (_) => !last,
+          onWillAcceptWithDetails: (_) =>
+              !last && (services.config.homeScope?.managesFolders ?? true),
           onAcceptWithDetails: (d) =>
               dropIntoFolder(services, d.data, folderUuid),
           builder: (context, cand, _) => last
@@ -691,7 +913,9 @@ class _Breadcrumb extends StatelessWidget {
                       ? theme.colorScheme.selection
                       : null,
                   onPressed: () => services.router.go(
-                    folderUuid == null ? '/my-drive' : '/drive/$folderUuid',
+                    folderUuid == null
+                        ? services.config.homeNav.myFilesRoute
+                        : '/f/$folderUuid',
                   ),
                   child: Text(
                     label,
@@ -706,7 +930,14 @@ class _Breadcrumb extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          crumb(l.navMyDrive, null),
+          crumb(
+            homeNavLabel(
+              l,
+              HomeNavDestination.myFiles,
+              scope: services.config.homeScope,
+            ).$2,
+            null,
+          ),
           for (final p in controller.path) ...[
             const Icon(LucideIcons.chevronRight, size: 16),
             crumb(p.name, p.uuid.uuid),
@@ -716,6 +947,46 @@ class _Breadcrumb extends StatelessWidget {
             crumb(f.name, f.uuid.uuid, last: true),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// *Open in Wonky Drive* (app homes, suite 03 §3.3): a ghost button with
+/// the Drive product icon in the header row; icon only on narrow widths.
+class _OpenInDriveButton extends StatelessWidget {
+  const _OpenInDriveButton({required this.onPressed, this.compact = false});
+
+  final VoidCallback onPressed;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = WonkyAppLocalizations.of(context);
+    const icon = WonkyProductIcon(
+      WonkyProduct.drive,
+      size: 16,
+      semanticLabel: '',
+    );
+    if (compact) {
+      return ShadTooltip(
+        builder: (_) => Text(l.cmdOpenInDrive),
+        child: ShadIconButton.ghost(
+          key: const ValueKey<String>('drive.openInDrive'),
+          semanticLabel: l.cmdOpenInDrive,
+          icon: icon,
+          onPressed: onPressed,
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.only(right: 4),
+      child: ShadButton.ghost(
+        key: const ValueKey<String>('drive.openInDrive'),
+        size: ShadButtonSize.sm,
+        leading: icon,
+        onPressed: onPressed,
+        child: Text(l.cmdOpenInDrive),
       ),
     );
   }

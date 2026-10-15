@@ -209,6 +209,7 @@ List<Command<CommandArgs>> fileCommands(ShellServices s) => [
         }
         return okIf(change != null, l.reasonNotAvailable);
       } catch (e) {
+        if (s.quotaErrors.present(e)) return const CommandResult.cancelled();
         return CommandResult.failed(errorMessage(e));
       }
     },
@@ -546,6 +547,9 @@ List<Command<CommandArgs>> insertCommands(ShellServices s) => [
         l: writeL10nOf(s),
       );
       if (picked.isEmpty) return const CommandResult.cancelled();
+      if (!await imagesFitStorage(s, picked)) {
+        return const CommandResult.cancelled();
+      }
       return insertPickedImages(d, picked);
     },
   ),
@@ -694,6 +698,9 @@ List<Command<CommandArgs>> insertCommands(ShellServices s) => [
         l: writeL10nOf(s),
       );
       if (picked.isEmpty || nodeId == null) {
+        return const CommandResult.cancelled();
+      }
+      if (!await imagesFitStorage(s, picked)) {
         return const CommandResult.cancelled();
       }
       final src = d.images.startUpload(picked.single);

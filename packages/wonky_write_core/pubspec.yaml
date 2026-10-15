@@ -14,14 +14,19 @@ dependencies:
   crypto: ^3.0.7
   dart_quill_delta: ^9.6.0
   diff_match_patch: ^0.4.1
-  highlight: ^0.7.0
   html: ^0.15.7
   image: ^4.12.0
   markdown: ^7.3.1
   pdf: ^3.13.1
   uuid: ^4.6.0
+  wonky_code:
+    path: ../wonky_code
   wonky_core:
     path: ../wonky_core
+  wonky_fonts:
+    path: ../wonky_fonts
+  wonky_rich_text:
+    path: ../wonky_rich_text
   xml: ^7.0.1
 
 dev_dependencies:

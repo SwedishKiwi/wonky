@@ -1,0 +1,17 @@
+name: wonky_rich_text
+description: "Wonky Work shared rich text (pure Dart): the Delta inline schema and attribute keys, Delta helpers, link policy, character rules, a schema-parameterized body normalizer and the inline Markdown codec, shared by Write and Slides."
+publish_to: none
+
+environment:
+  sdk: '^3.12.2'
+
+resolution: workspace
+
+dependencies:
+  collection: ^1.19.1
+  dart_quill_delta: ^9.6.0
+  markdown: ^7.3.1
+
+dev_dependencies:
+  lints: '>=3.0.0 <7.0.0'
+  test: ^1.25.5

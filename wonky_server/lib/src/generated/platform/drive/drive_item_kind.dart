@@ -15,7 +15,13 @@ import 'package:serverpod/serverpod.dart' as _is;
 enum DriveItemKind implements _is.SerializableModel {
   folder,
   document,
-  spreadsheet;
+  spreadsheet,
+
+  /// (v2) A Wonky Slides deck: one offline-sync space (Slides 02 §9).
+  presentation,
+
+  /// (v2) An uploaded file (Drive 02 §1): bytes in a `driveFile` StoredFile.
+  file;
 
   static DriveItemKind fromJson(String name) {
     switch (name) {
@@ -25,6 +31,10 @@ enum DriveItemKind implements _is.SerializableModel {
         return DriveItemKind.document;
       case 'spreadsheet':
         return DriveItemKind.spreadsheet;
+      case 'presentation':
+        return DriveItemKind.presentation;
+      case 'file':
+        return DriveItemKind.file;
       default:
         throw ArgumentError(
           'Value "$name" cannot be converted to "DriveItemKind"',

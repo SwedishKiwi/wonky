@@ -99,7 +99,7 @@ createFileUpload ──► uploading ──(bytes in storage, completeFileUpload
 |-------------|-------|---------|
 | *New ▸ File upload* | Drive left menu, Drive empty-area context menu | `shell.drive.upload` |
 | *New ▸ Folder upload* (P1) | same | `drive.upload.folder` |
-| Drag files (or folders, P1) from the OS onto the list, a folder row, a tree node or a breadcrumb | Drive home | — (drop handler → `drive.upload.files {files, parentUuid}`) |
+| Drag files or folders from the OS onto the list or a folder row/card (tree nodes and breadcrumbs: P1) | Drive home | — (drop handler → `drive.upload.files {staged, parentUuid}`) |
 | Paste files from the clipboard (P1, browsers that expose files) | Drive home | `shell.edit.paste` (contributed by the home) |
 | MCP `drive.upload_file` / `drive.create_upload` | headless | suite 09 §4 |
 
@@ -108,9 +108,13 @@ it accepts only the app's convertible types and creates items of the app's kind 
 behavior, suite 05 §3.1). Dropping a non-importable file on an app home shows the toast
 "Wonky Write can't open "photos.zip". Upload it in Wonky Drive instead. [Open Wonky Drive]".
 
-A batch has at most 500 files; folder uploads (P1) recreate the folder structure under the
+A batch has at most 500 files; folder uploads recreate the folder structure under the
 target folder (folders are created with `drive.createFolder` before their files are queued;
-empty folders are created too).
+online only). **As built (D-13):** *dropped* folders are in M8 (the web drop's
+`webkitGetAsEntry` tree through `desktop_drop`); empty dropped folders are not created, and the
+folder *picker* (`drive.upload.folder`, `webkitdirectory`) stays P1. The files of a drop or
+pick are staged in the app and `drive.upload.files` receives the stage id (bytes can't travel in
+command arguments).
 
 ### 3.2 Client pre-checks (before anything is sent)
 
@@ -122,9 +126,11 @@ empty folders are created too).
    *Cancel*. The server stays authoritative (§3.3).
 3. **Name conflicts**: if a ready item with the same name (case-insensitive) exists in the
    target folder, the *Upload options* dialog asks "Keep both" (default; the new file gets
-   " (1)" before the extension) or "Replace" (P2, uploads a new version, §9). The dialog is
+   " (1)" before the extension), "Skip" (those files aren't uploaded) or "Replace" (P2, uploads
+   a new version, §9; not offered until then). The dialog is
    skipped when the Drive setting *Ask when uploaded files have the same name* is off (then
-   Keep both).
+   Keep both), and for MCP/AI invocations (Keep both; a batch over quota uploads the files that
+   fit).
 4. **Empty files** (0 bytes) are allowed.
 
 ### 3.3 Server calls
@@ -220,13 +226,17 @@ Drive app:
 - Runs **3 uploads in parallel** (FIFO), keeps per-file state: `queued`, `waitingForNetwork`,
   `starting`, `uploading(bytesSent)`, `verifying`, `done(item)`, `failed(reason, retryable)`,
   `cancelled`.
-- Progress comes from the `FileUploader` byte stream (web: XHR progress through the uploader;
-  desktop: stream counting). Throughput and time left are shown after 2 s of data.
+- Progress: **spike S-D2** found that the web `http` client — and so Serverpod's
+  `FileUploader` — buffers the request body and reports no upload progress; the web client
+  therefore sends the upload description (binary or multipart) itself with an
+  `XMLHttpRequest` and `upload.onprogress`; desktop counts the `FileUploader` byte stream.
+  Throughput and time left are shown after 2 s of data.
 - *Cancel* calls `cancelFileUpload` (releases the reservation); *Retry* re-runs from
   `createFileUpload` (idempotent).
 - Leaving the Drive app (navigating to Write, closing the tab) while uploads run asks
-  "Uploads in progress — leave and continue later?" (web `beforeunload` prompt; in-app
-  navigation shows a `ShadDialog`). Queued and interrupted uploads continue on the next start
+  "Uploads in progress — leave and continue later?" (web `beforeunload` prompt). **As built
+  (D-13):** cross-app navigation is a full page load, so the browser's own `beforeunload`
+  prompt covers it too; there is no separate `ShadDialog`. Queued and interrupted uploads continue on the next start
   of the Drive app (§4); there is no background upload while the app is closed.
 - Each queue change is written to the local store first (§4.1), so a reload restores the panel.
 
@@ -253,6 +263,15 @@ IndexedDB fallback; larger files are stored only when OPFS is available (suite 1
 the IndexedDB fallback a larger file is held in memory only and its row is marked
 `volatile`: the panel shows "Keep this tab open until the upload finishes"; after a reload such
 rows show "Add the file again — it wasn't saved on this device." with *Choose file*.
+
+**As built (D-13, S-D2):** the store lives in `wonky_drive` (`SqliteUploadStore`, not in
+`wonky_app/lib/src/data/`: only Drive uploads files; Write keeps its image table), the file is
+`drive_<userUuid>.db` (the user's uuid, like Write's cache), and the table is
+`local_pending_upload` with the columns above plus `batch_id`, `parent_name`, `volatile`,
+`error_kind` and `result_json`. OPFS is detected like the Sheets replica does (secure context,
+`FileSystemFileHandle`, a working `navigator.storage.getDirectory()`). Finished rows are dropped
+at the next start; interrupted uploads (starting/uploading/verifying) are queued again with the
+same ids (idempotent).
 
 ### 4.2 Offline queueing
 
@@ -298,7 +317,10 @@ first 4 KB of the stored object:
    MP3/ID3, Ogg, WAV, FLAC, MP4/M4A `ftyp`).
 2. If no signature matches: **text check** — valid UTF-8 (or UTF-16 with BOM) without NUL bytes
    in the sample → `text/plain` (or a specific text type from the extension: `text/markdown`,
-   `text/csv`, `application/json`, source code types — the list in `file_types.dart`).
+   `text/csv`, `application/json`, source code types — the list in `file_types.dart`). Bytes
+   that are not UTF-8 but have no NUL and fewer than 1 % control bytes are text too, with
+   encoding Latin-1 (§6.4 "Shown as Latin-1"). HTML, SVG and XML are recognized from the
+   **content** (`<!doctype html`, `<html`, `<script`, `<svg`, `<?xml` …), never from the name.
 3. Otherwise `application/octet-stream`.
 
 The **declared** type (browser/OS, client) and the extension never override a sniffed binary
@@ -322,7 +344,8 @@ under `drive/<ownerUuid>/<fileUuid>/`.
   (single window; suite 03 §1). It is also `DriveAppConfig.itemPath`, so the shell's item route,
   the quick switcher, links in notifications and share-link landings all open it. Opening a
   file from an app context (e.g. a search result in Write) navigates to Drive (same tab).
-- Bytes are loaded with `drive.fileContentUrl(uuid)` → signed URL (15 min) → `http` GET into
+- Bytes are loaded with `drive.fileContentUrl(uuid)` → signed URL (15 min; served as an
+  `application/octet-stream` attachment, never inline) → `http` GET into
   memory (`Uint8List`), cached per `(fileUuid)` in an in-memory LRU (100 MB) for prev/next
   browsing. Images use the server preview (§6.2) when the original is over 4 MB.
 - States: loading (skeleton + spinner after 300 ms), *still uploading* ("This file is still
@@ -330,6 +353,11 @@ under `drive/<ownerUuid>/<fileUuid>/`.
   load the preview. [Retry] [Download]"), offline ("Previews aren't available offline." — unless
   the bytes are in the cache), too large to preview ("Preview isn't available for files over
   …; [Download]").
+- *As built (D-14):* ‹ › and ←/→ step through the ready files of the **file's folder** (sorted
+  by name); the home does not yet hand its visible list (search results, starred…) to the
+  preview (TODO.md). *Close* returns to the last non-preview location of the shell history with
+  the file selected. The cache key is the item's `contentRef` (or the preview image's
+  `previewFileId`), so a reopened or offline file shows from memory.
 - Viewers with *Viewer/Commenter* role on an item whose owner turned off
   `nonEditorsCanExport` see the preview but no Download (advisory: the bytes reach the client
   for the preview; suite 06 §1).
@@ -355,6 +383,21 @@ under `drive/<ownerUuid>/<fileUuid>/`.
 - Library: `printing`'s `Printing.raster` (already used by Write/Sheets for print preview; pdf.js
   on web — must be **self-hosted** in `web/` because the apps are cross-origin isolated, suite
   13 §3 — and PDFium on desktop). Spike S-D1 (05) confirms; alternative `pdfrx` (PDFium WASM).
+- **Decided (S-D1, D-14):** `printing` + self-hosted pdf.js. No new dependency, no 4–5 MB PDFium
+  WASM in the bundle, and pdf.js is fetched only when a PDF is opened; `pdfrx` stays the fallback
+  if pdf.js proves too slow on the 100-page budget (suite 11 §2). Recipe: `wonky_drive/web/pdfjs/`
+  holds `pdf.min.mjs`, `pdf.worker.min.mjs`, `cmaps/`, `LICENSE` and `VERSION` of `pdfjs-dist`
+  (the version `printing` targets, 6.2.108), installed by `wonky_drive/tool/fetch_pdfjs.sh`;
+  `web/index.html` sets `window.dartPdfJsBaseUrl = new URL('pdfjs/', document.baseURI).href`,
+  which `printing` uses instead of its CDN. The server serves `.mjs` as `text/javascript` (`mime`)
+  with the COOP/COEP headers of the app, so the module and its worker load same-origin. Before
+  the first raster the client `HEAD`s `pdfjs/pdf.min.mjs` (a missing file would leave `printing`'s
+  loader locked); when it is missing the viewer shows "PDF previews aren't available here.
+  Download the file to view it." Pages are scanned once at 12 dpi (page sizes and placeholders,
+  stopping at 300 pages) and the visible pages ± 2 are rendered sharp at 96 dpi × zoom × device
+  pixel ratio (a second raster stream, so the first page is sharp before the scan ends). 100 %
+  zoom is 1 pt = 4/3 px. An `/Encrypt` trailer (or a pdf.js password error) gives the
+  password state.
 - Viewer: vertical continuous scroll, page indicator "3 / 24", go to page (`Mod+G`), zoom
   (fit width default, 25–400 %), page thumbnails strip (P1), white paper pages with shadow in
   both themes. Encrypted PDFs: "This PDF is password-protected. Download it to open it."
@@ -375,8 +418,16 @@ under `drive/<ownerUuid>/<fileUuid>/`.
 - Markdown is shown as source (with *Open with Wonky Write* to get it rendered); HTML, SVG and
   XML are shown as source and never rendered.
 - CSV/TSV (P1): a *Table* / *Text* toggle; the table shows the first 1,000 rows in a simple
-  virtualized table (`ShadTable`), parsed with the Sheets CSV rules (delimiter sniffing in
-  `wonky_core/lib/files/csv_sniffer.dart`, no type conversion).
+  virtualized table (a fixed-row-height list with a row-number column — `ShadTable` is not
+  virtualized), parsed with the Sheets CSV rules (delimiter sniffing in
+  `wonky_core/lib/files/csv_sniffer.dart`, `CsvSniffer`, no type conversion).
+- As built (D-14): files up to 50,000 characters are highlighted with the shared default
+  tokenizer (TextMate, then highlight.js); longer ones with highlight.js, and only their first
+  250,000 characters (≈ 5,000 lines; the rest stays plain). The copied TextMate engine is
+  superlinear on large inputs (≈ 0.7 s for 100 K characters, ≈ 19 s for 500 K on the VM), which
+  would freeze the page; highlight.js stays linear (1 MB file: decode 3 ms + highlight ≈ 180 ms
+  on the VM, `preview_budget_test.dart`). Bytes that look binary (NUL bytes or > 1 % control
+  characters) show "This file can't be shown as text" instead of garbage.
 
 ### 6.5 Audio (P2)
 
@@ -443,6 +494,14 @@ spreadsheet". Server-side pipeline only (`drive.import` with an `importSource` u
 **Decided (v2 review, Q13):** Drive does **not** convert by default — it keeps the original
 (what users expect from "upload"); converting is one click away (*Open with*), and this setting
 exists for people who want Google's old "convert uploads" behavior.
+
+As built (D-17): the upload queue converts after `drive.completeFileUpload`
+(`UploadQueue.convertTo`, set by `UploadHost` from the setting and `FileTypes.convertTargetOf`):
+`drive.convertFile` into a document or spreadsheet next to the file, then the uploaded file is
+trashed and deleted forever, and the task's result is the new item (the batch undo trashes it;
+the row reads "Converted to a spreadsheet" and opens the item in its app). A failed conversion
+keeps the file and shows "notes.docx couldn't be converted. It was kept as a file." This is a
+client-side sequence, not the server-side `importSource` import (TODO.md).
 
 ## 8. Downloads
 

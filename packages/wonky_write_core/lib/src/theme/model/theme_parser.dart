@@ -1,7 +1,7 @@
 /// Parsing and semantic validation of theme JSON (06 §2.7).
 library;
 
-import '../../fonts/font_registry.dart';
+import 'package:wonky_fonts/wonky_fonts.dart';
 import 'catalog.dart';
 import 'color_ref.dart';
 import 'json_util.dart';

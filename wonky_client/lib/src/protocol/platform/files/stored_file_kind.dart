@@ -26,7 +26,15 @@ enum StoredFileKind implements _isc.SerializableModel {
 
   /// Version snapshots (Sheets).
   snapshot,
-  scriptBytecode;
+  scriptBytecode,
+
+  /// (v2) The bytes of a `file` drive item; access follows the item
+  /// (`itemId` set). Counted (Drive 03 §2).
+  driveFile,
+
+  /// (v2) Server-made preview image of a file item (Drive 02 §6.2); not
+  /// counted, deleted with the item.
+  preview;
 
   static StoredFileKind fromJson(String name) {
     switch (name) {
@@ -44,6 +52,10 @@ enum StoredFileKind implements _isc.SerializableModel {
         return StoredFileKind.snapshot;
       case 'scriptBytecode':
         return StoredFileKind.scriptBytecode;
+      case 'driveFile':
+        return StoredFileKind.driveFile;
+      case 'preview':
+        return StoredFileKind.preview;
       default:
         throw ArgumentError(
           'Value "$name" cannot be converted to "StoredFileKind"',

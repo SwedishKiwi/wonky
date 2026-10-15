@@ -238,7 +238,7 @@ class _ChartEditorPanelState extends State<ChartEditorPanel> {
     final out = <_Column>[];
     final d = spec.data;
     for (var ri = 0; ri < d.ranges.length; ri++) {
-      final g = d.ranges[ri];
+      final g = GridRange.fromRef(d.ranges[ri]);
       final sheet = ed.model.sheet(g.sheetId);
       final rr = sheet?.resolve(g);
       if (sheet == null || rr == null) continue;
@@ -316,10 +316,10 @@ class _ChartEditorPanelState extends State<ChartEditorPanel> {
     final data = c.data;
     final variant = variantOf(spec);
     final suggestions = [
-      for (final s in ChartInsert.suggestions(ed, d.ranges))
+      for (final s in ChartInsert.suggestions(ed, d.gridRanges))
         variantOfSuggestion(s),
     ];
-    final rangeA1 = ChartInsert.a1Of(ed, d.ranges).join(', ');
+    final rangeA1 = ChartInsert.a1Of(ed, d.gridRanges).join(', ');
     if (_rangeFor != '${o.id}|$rangeA1') {
       _rangeFor = '${o.id}|$rangeA1';
       _rangeText = rangeA1;
@@ -391,7 +391,8 @@ class _ChartEditorPanelState extends State<ChartEditorPanel> {
                 ed,
                 ChartInsert.rangesFromA1(ed, [text]),
               ).join(', ');
-              if (a1 == ChartInsert.a1Of(ed, c.spec.data.ranges).join(', ')) {
+              if (a1 ==
+                  ChartInsert.a1Of(ed, c.spec.data.gridRanges).join(', ')) {
                 return;
               }
               _run('sheets.chart.setDataRanges', {
@@ -703,13 +704,15 @@ class _ChartEditorPanelState extends State<ChartEditorPanel> {
 
   String _firstLetter(ChartDataSpec d) {
     if (d.ranges.isEmpty) return 'A';
-    final rr = ed.model.sheet(d.ranges.first.sheetId)?.resolve(d.ranges.first);
+    final first = GridRange.fromRef(d.ranges.first);
+    final rr = ed.model.sheet(first.sheetId)?.resolve(first);
     return rr == null ? 'A' : ColumnLetters.fromIndex(rr.rect.left);
   }
 
   int _firstRow(ChartDataSpec d) {
     if (d.ranges.isEmpty) return 1;
-    final rr = ed.model.sheet(d.ranges.first.sheetId)?.resolve(d.ranges.first);
+    final first = GridRange.fromRef(d.ranges.first);
+    final rr = ed.model.sheet(first.sheetId)?.resolve(first);
     return rr == null ? 1 : rr.rect.top + 1;
   }
 

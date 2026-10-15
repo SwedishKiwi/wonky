@@ -460,6 +460,24 @@ abstract class SheetsLocalizations {
   /// **'Search'**
   String get settingsSearch;
 
+  /// Sheets settings section (suite 04 §4, Sheets 04 §11.24).
+  ///
+  /// In en, this message translates to:
+  /// **'Defaults'**
+  String get sheetsSettingsDefaults;
+
+  /// No description provided for @sheetsSettingsNewSpreadsheets.
+  ///
+  /// In en, this message translates to:
+  /// **'New spreadsheets'**
+  String get sheetsSettingsNewSpreadsheets;
+
+  /// Command (MCP, settings screen) that changes one Sheets setting.
+  ///
+  /// In en, this message translates to:
+  /// **'Change a Sheets setting'**
+  String get cmdSheetsPrefsSet;
+
   /// No description provided for @sheetsSettingsNewHint.
   ///
   /// In en, this message translates to:
@@ -7774,6 +7792,36 @@ abstract class SheetsLocalizations {
   /// **'Import failed'**
   String get importFailed;
 
+  /// Error of /import?file= (Drive's Open with ▸ Wonky Sheets) without a connection.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline. Connect to the internet to open this file in Wonky Sheets.'**
+  String get importRouteOffline;
+
+  /// No description provided for @importRouteNotAFile.
+  ///
+  /// In en, this message translates to:
+  /// **'This item isn\'t an uploaded file.'**
+  String get importRouteNotAFile;
+
+  /// No description provided for @importRouteUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Wonky Sheets can\'t open “{fileName}”.'**
+  String importRouteUnsupported(String fileName);
+
+  /// No description provided for @importRouteUploading.
+  ///
+  /// In en, this message translates to:
+  /// **'“{fileName}” is still uploading. Try again when the upload has finished.'**
+  String importRouteUploading(String fileName);
+
+  /// No description provided for @importRouteDownloadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The file could not be loaded from Wonky Drive.'**
+  String get importRouteDownloadFailed;
+
   /// No description provided for @importSummaryTitle.
   ///
   /// In en, this message translates to:
@@ -12135,6 +12183,24 @@ abstract class SheetsLocalizations {
   /// In en, this message translates to:
   /// **'Image uploading…'**
   String get imageUploading;
+
+  /// Overlay of an image whose background upload was refused because the storage quota is full (Drive 03 §6.3).
+  ///
+  /// In en, this message translates to:
+  /// **'Not uploaded — out of storage'**
+  String get imageNotUploadedOutOfStorage;
+
+  /// No description provided for @imageRetryUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get imageRetryUpload;
+
+  /// No description provided for @imageRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get imageRemove;
 
   /// No description provided for @objectMenuCopyChart.
   ///

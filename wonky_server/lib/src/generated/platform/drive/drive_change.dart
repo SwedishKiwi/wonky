@@ -14,6 +14,7 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:wonky_server/src/generated/protocol.dart' as _il4umwa0;
 import '../../platform/drive/drive_change_kind.dart' as _ijkkpwz4;
 import '../../platform/drive/drive_item_view.dart' as _ivpffrb8;
+import '../../platform/drive/storage_usage.dart' as _ibv4vztx;
 
 /// A live drive change for the watching user (`drive.watch`).
 abstract class DriveChange
@@ -22,12 +23,14 @@ abstract class DriveChange
     required this.kind,
     required this.itemUuid,
     this.item,
+    this.storage,
   });
 
   factory DriveChange({
     required _ijkkpwz4.DriveChangeKind kind,
     required _is.UuidValue itemUuid,
     _ivpffrb8.DriveItemView? item,
+    _ibv4vztx.StorageUsage? storage,
   }) = _DriveChangeImpl;
 
   factory DriveChange.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -43,15 +46,28 @@ abstract class DriveChange
           : _il4umwa0.Protocol().deserialize<_ivpffrb8.DriveItemView>(
               jsonSerialization['item'],
             ),
+      storage: jsonSerialization['storage'] == null
+          ? null
+          : _il4umwa0.Protocol().deserialize<_ibv4vztx.StorageUsage>(
+              jsonSerialization['storage'],
+            ),
     );
   }
 
   _ijkkpwz4.DriveChangeKind kind;
 
+  /// The changed item. (v2) For [DriveChangeKind.storageChanged] the nil
+  /// UUID (00000000-0000-0000-0000-000000000000): the change is the
+  /// caller's storage, not an item.
   _is.UuidValue itemUuid;
 
-  /// The item as the watcher sees it; null for [DriveChangeKind.removed].
+  /// The item as the watcher sees it; null for [DriveChangeKind.removed]
+  /// and [DriveChangeKind.storageChanged].
   _ivpffrb8.DriveItemView? item;
+
+  /// (v2) The watcher's new usage; set only for
+  /// [DriveChangeKind.storageChanged] (Drive 03 §3).
+  _ibv4vztx.StorageUsage? storage;
 
   /// Returns a shallow copy of this [DriveChange]
   /// with some or all fields replaced by the given arguments.
@@ -60,6 +76,7 @@ abstract class DriveChange
     _ijkkpwz4.DriveChangeKind? kind,
     _is.UuidValue? itemUuid,
     _ivpffrb8.DriveItemView? item = const _UndefinedDriveChange$item(),
+    _ibv4vztx.StorageUsage? storage = const _UndefinedDriveChange$storage(),
   });
   @override
   Map<String, dynamic> toJson() {
@@ -68,6 +85,7 @@ abstract class DriveChange
       'kind': kind.toJson(),
       'itemUuid': itemUuid.toJson(),
       if (item != null) 'item': item?.toJson(),
+      if (storage != null) 'storage': storage?.toJson(),
     };
   }
 
@@ -78,6 +96,7 @@ abstract class DriveChange
       'kind': kind.toJson(),
       'itemUuid': itemUuid.toJson(),
       if (item != null) 'item': item?.toJsonForProtocol(),
+      if (storage != null) 'storage': storage?.toJsonForProtocol(),
     };
   }
 
@@ -92,15 +111,22 @@ class _UndefinedDriveChange$item extends _is.UndefinedSentinel
   const _UndefinedDriveChange$item();
 }
 
+class _UndefinedDriveChange$storage extends _is.UndefinedSentinel
+    implements _ibv4vztx.StorageUsage {
+  const _UndefinedDriveChange$storage();
+}
+
 class _DriveChangeImpl extends DriveChange {
   _DriveChangeImpl({
     required _ijkkpwz4.DriveChangeKind kind,
     required _is.UuidValue itemUuid,
     _ivpffrb8.DriveItemView? item,
+    _ibv4vztx.StorageUsage? storage,
   }) : super._(
          kind: kind,
          itemUuid: itemUuid,
          item: item,
+         storage: storage,
        );
 
   /// Returns a shallow copy of this [DriveChange]
@@ -111,11 +137,15 @@ class _DriveChangeImpl extends DriveChange {
     _ijkkpwz4.DriveChangeKind? kind,
     _is.UuidValue? itemUuid,
     _ivpffrb8.DriveItemView? item = const _UndefinedDriveChange$item(),
+    _ibv4vztx.StorageUsage? storage = const _UndefinedDriveChange$storage(),
   }) {
     return DriveChange(
       kind: kind ?? this.kind,
       itemUuid: itemUuid ?? this.itemUuid,
       item: item is _is.UndefinedSentinel ? this.item?.copyWith() : item,
+      storage: storage is _is.UndefinedSentinel
+          ? this.storage?.copyWith()
+          : storage,
     );
   }
 }

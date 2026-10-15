@@ -43,6 +43,14 @@ class SheetsImportHandler implements ImportHandler {
     final created = <(UuidValue, String)>[];
     final problems = <String>[];
     var warnings = 0;
+    // Drive 03 §7.2: client-side pre-check of the imported bytes (the
+    // server checks again; offline imports aren't blocked).
+    if (!await services.storageChecks.ensureRoom(
+      files.fold<int>(0, (n, f) => n + f.bytes.length),
+      reason: QuotaReasons.import,
+    )) {
+      return const [];
+    }
     for (final f in files) {
       final file = ImportFileData(
         name: f.name,
@@ -68,6 +76,8 @@ class SheetsImportHandler implements ImportHandler {
         created.add((r.uuid, r.name));
         warnings += r.report.warnings.length;
       } catch (e) {
+        // Out of storage: the dialog explains it; the rest won't fit either.
+        if (services.quotaErrors.present(e)) break;
         problems.add('${f.name}: ${errorMessage(e)}');
       }
     }

@@ -1,0 +1,28 @@
+### (v2) Storage counters of a user (Drive 03 §4.1). Maintained
+### transactionally by `StorageService`; reconciled nightly from the source
+### rows.
+class: UserStorage
+table: user_storage
+serverOnly: true
+fields:
+  userId: int, relation(parent=user_profile, onDelete=Cascade)
+  ### Σ counted size of owned items (incl. trash).
+  usedBytes: int, default=0
+  ### Σ open reservations.
+  reservedBytes: int, default=0
+  documentsBytes: int, default=0
+  spreadsheetsBytes: int, default=0
+  presentationsBytes: int, default=0
+  filesBytes: int, default=0
+  trashBytes: int, default=0
+  ### Null = the config default (`wonky.drive.quotaBytesPerUser`).
+  quotaBytesOverride: int?
+  ### Set/cleared when usedBytes crosses the quota.
+  overQuotaSince: DateTime?
+  ### Null until the first reconcile/backfill (Drive 03 §9).
+  reconciledAt: DateTime?
+  updatedAt: DateTime
+indexes:
+  user_storage_user_idx:
+    fields: userId
+    unique: true

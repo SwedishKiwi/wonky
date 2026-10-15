@@ -159,6 +159,9 @@ abstract final class AccountService {
     'write:edit',
     'sheets:read',
     'sheets:edit',
+    // (v2) Slides 11 §2.4.
+    'slides:read',
+    'slides:edit',
     'scripts:run',
     'ui:control',
   };

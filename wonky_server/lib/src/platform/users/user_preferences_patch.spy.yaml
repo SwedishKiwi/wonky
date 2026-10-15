@@ -10,5 +10,11 @@ fields:
   keymapOverrides: String?
   writeDefaults: String?
   sheetsDefaults: String?
+  ### (v2)
+  slidesDefaults: String?
+  ### (v2)
+  slidesPresenter: String?
+  ### (v2)
+  driveDefaults: String?
   notificationSettings: String?
   aiEnabled: bool?

@@ -136,6 +136,11 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   }
 
   @override
+  String activityUploaded(String who) {
+    return '$who uploaded this';
+  }
+
+  @override
   String get addShortcutAction => 'Add shortcut';
 
   @override
@@ -288,15 +293,14 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get authSignIn => 'Sign in';
 
   @override
-  String get authSignInSubtitle =>
-      'One account for Wonky Write and Wonky Sheets.';
+  String get authSignInSubtitle => 'One account for every Wonky Work app.';
 
   @override
   String get authSignInTitle => 'Sign in';
 
   @override
   String get authSignUpSubtitle =>
-      'Create one account for Wonky Write and Wonky Sheets.';
+      'Create one account for every Wonky Work app.';
 
   @override
   String get authSignUpTitle => 'Create your account';
@@ -379,6 +383,11 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get cmdAddShortcut => 'Add shortcut to Drive';
 
   @override
+  String cmdAppSettings(String app) {
+    return '$app settings';
+  }
+
+  @override
   String get cmdAssistant => 'Assistant';
 
   @override
@@ -454,6 +463,9 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get cmdMakeCopy => 'Make a copy';
 
   @override
+  String get cmdManageStorage => 'Manage storage';
+
+  @override
   String get cmdMove => 'Move';
 
   @override
@@ -491,6 +503,9 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
 
   @override
   String get cmdOpenFile => 'Open…';
+
+  @override
+  String get cmdOpenInDrive => 'Open in Wonky Drive';
 
   @override
   String get cmdOpenPanel => 'Open panel';
@@ -535,6 +550,9 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
 
   @override
   String get cmdReply => 'Reply';
+
+  @override
+  String get cmdReportBug => 'Report a bug';
 
   @override
   String get cmdReportProblem => 'Report a problem';
@@ -606,6 +624,9 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
 
   @override
   String get cmdWhatsNew => 'What\'s new';
+
+  @override
+  String get cmdWorkSettings => 'Wonky Work settings';
 
   @override
   String get cmdZoom => 'Zoom';
@@ -848,6 +869,22 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get emptyHomeTitle => 'Welcome to your drive';
 
   @override
+  String emptyAppHomeTitle(String appName) {
+    return 'Welcome to $appName';
+  }
+
+  @override
+  String emptyAppHomeBody(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'spreadsheet': 'Create a spreadsheet or open one shared with you.',
+      'presentation': 'Create a presentation or open one shared with you.',
+      'all': 'Create a document, spreadsheet or presentation, or upload files.',
+      'other': 'Create a document or open one shared with you.',
+    });
+    return '$_temp0';
+  }
+
+  @override
   String get emptyOfflineBody =>
       'Use “Make available offline” on files you need without a connection.';
 
@@ -917,6 +954,12 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get expandFolders => 'Expand folders';
 
   @override
+  String get externalLinkOpen => 'Open';
+
+  @override
+  String get externalLinkTitle => 'Open external link?';
+
+  @override
   String get feedbackDescription =>
       'Tell us what happened or what you\'d like to see.';
 
@@ -940,6 +983,27 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
 
   @override
   String get feedbackTitle => 'Report a problem';
+
+  @override
+  String get fileCategoryArchives => 'Archives';
+
+  @override
+  String get fileCategoryAudio => 'Audio';
+
+  @override
+  String get fileCategoryImages => 'Images';
+
+  @override
+  String get fileCategoryOther => 'Other files';
+
+  @override
+  String get fileCategoryPdfs => 'PDFs';
+
+  @override
+  String get fileCategoryText => 'Text & code';
+
+  @override
+  String get fileCategoryVideo => 'Videos';
 
   @override
   String get folderTree => 'Folders';
@@ -991,7 +1055,13 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get kindDocument => 'Document';
 
   @override
+  String get kindFile => 'File';
+
+  @override
   String get kindFolder => 'Folder';
+
+  @override
+  String get kindPresentation => 'Presentation';
 
   @override
   String get kindSpreadsheet => 'Spreadsheet';
@@ -1034,7 +1104,13 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get menuFile => 'File';
 
   @override
+  String get menuFileUpload => 'File upload';
+
+  @override
   String get menuHelp => 'Help';
+
+  @override
+  String get menuImportFile => 'Import file…';
 
   @override
   String get menuMakeCopy => 'Make a copy';
@@ -1049,7 +1125,13 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get menuNewDocument => 'Document';
 
   @override
+  String get menuNewPresentation => 'Presentation';
+
+  @override
   String get menuNewSpreadsheet => 'Spreadsheet';
+
+  @override
+  String get menuOpenApp => 'Open';
 
   @override
   String get menuPanels => 'Panels';
@@ -1105,10 +1187,16 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get nameVersionTitle => 'Name this version';
 
   @override
+  String get navApps => 'Apps';
+
+  @override
   String get navHome => 'Home';
 
   @override
   String get navMyDrive => 'My Drive';
+
+  @override
+  String get navMyFiles => 'My files';
 
   @override
   String get navOffline => 'Offline';
@@ -1121,6 +1209,9 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
 
   @override
   String get navStarred => 'Starred';
+
+  @override
+  String get navStorage => 'Storage';
 
   @override
   String get navTrash => 'Trash';
@@ -1185,6 +1276,9 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String notifShared(String who, String item) {
     return '$who shared $item with you';
   }
+
+  @override
+  String get notifStorage => 'Your Wonky Work storage needs attention';
 
   @override
   String notifSuggestion(String who, String item) {
@@ -1382,6 +1476,10 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get replyPlaceholder => 'Reply or add others with @';
 
   @override
+  String get reportBugNote =>
+      'Issues on GitHub are public: don\'t include private content.';
+
+  @override
   String get requestAccessDescription =>
       'The owner will be notified and can share the file with you.';
 
@@ -1421,6 +1519,20 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
 
   @override
   String get roleViewer => 'Viewer';
+
+  @override
+  String get routeCreating => 'Creating…';
+
+  @override
+  String get routeImportInvalid => 'This link doesn\'t name a file to import.';
+
+  @override
+  String get routeImporting => 'Importing…';
+
+  @override
+  String searchAllDrive(String query) {
+    return 'Search all of Wonky Drive for “$query”';
+  }
 
   @override
   String searchFor(String query) {
@@ -1526,7 +1638,7 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get settingsNotifications => 'Notifications';
 
   @override
-  String get settingsOffline => 'Offline & storage';
+  String get settingsOffline => 'Offline & device data';
 
   @override
   String get settingsOfflineHint =>
@@ -1546,6 +1658,64 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get settingsReduceMotionHint => 'Turns off non-essential animations.';
 
   @override
+  String get settingsAccountProfile => 'Account & profile';
+
+  @override
+  String settingsOpeningOtherApp(String settings) {
+    return 'Opening $settings…';
+  }
+
+  @override
+  String get settingsOtherApps => 'Settings of other apps';
+
+  @override
+  String get settingsSectionPicker => 'Settings section';
+
+  @override
+  String get settingsStorage => 'Storage';
+
+  @override
+  String get settingsStorageDocuments => 'Documents';
+
+  @override
+  String get settingsStorageFiles => 'Files';
+
+  @override
+  String get settingsStorageLoading => 'Loading storage…';
+
+  @override
+  String get settingsStorageManage => 'Manage storage in Wonky Drive';
+
+  @override
+  String get settingsStoragePresentations => 'Presentations';
+
+  @override
+  String get settingsStorageQuota => 'Your storage';
+
+  @override
+  String get settingsStorageQuotaHint => 'One quota for all Wonky Work apps.';
+
+  @override
+  String get settingsStorageSpreadsheets => 'Spreadsheets';
+
+  @override
+  String get settingsStorageTrash => 'Trash';
+
+  @override
+  String get settingsStorageUnavailable =>
+      'Storage usage isn\'t available right now.';
+
+  @override
+  String get settingsStorageWhatCounts => 'What counts';
+
+  @override
+  String get settingsStorageWhatCountsBody =>
+      'Documents, spreadsheets, presentations, uploaded files and images in your files, including the trash. Version history, thumbnails and exports don\'t count. Files shared with you count against their owner\'s storage.';
+
+  @override
+  String get shortcutsGroupShared => 'Shared';
+
+  @override
   String get settingsSaved => 'Saved';
 
   @override
@@ -1556,7 +1726,7 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
 
   @override
   String get settingsSignOutHint =>
-      'Signs you out of Wonky Write and Wonky Sheets on this device.';
+      'Signs you out of Wonky Work on this device.';
 
   @override
   String get settingsTheme => 'Theme';
@@ -1765,9 +1935,128 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get sortSize => 'File size';
 
   @override
+  String storageMeterValue(String usage, int percent) {
+    return '$usage, $percent percent';
+  }
+
+  @override
   String storageUsed(String size) {
     return '$size used';
   }
+
+  @override
+  String storageUsedOf(String used, String quota) {
+    return '$used of $quota used';
+  }
+
+  @override
+  String storageUsedOfOver(String used, String quota) {
+    return '$used of $quota used — over quota';
+  }
+
+  @override
+  String get storageCalculating => 'Calculating storage…';
+
+  @override
+  String get storageMeterTooltip =>
+      'Storage is shared by Wonky Drive, Write, Sheets and Slides.';
+
+  @override
+  String get storageMeterTooltipOffline =>
+      'Storage is shared by Wonky Drive, Write, Sheets and Slides. (offline)';
+
+  @override
+  String storageBannerWarning(String used, String quota) {
+    return 'You\'ve used $used of your $quota storage.';
+  }
+
+  @override
+  String get storageBannerOver =>
+      'You\'re out of storage. You can keep editing, but you can\'t upload files, add images, import, or make copies until you free up space.';
+
+  @override
+  String get storageBannerDismiss => 'Dismiss';
+
+  @override
+  String get quotaOwnTitle => 'You\'re out of storage';
+
+  @override
+  String quotaOwnBody(String needed, String available, String quota) {
+    return 'This needs $needed, but you have $available left of your $quota. Free up space in Wonky Drive by deleting files you no longer need and emptying the trash.';
+  }
+
+  @override
+  String quotaOwnBodyUnknown(String available, String quota) {
+    return 'You have $available left of your $quota. Free up space in Wonky Drive by deleting files you no longer need and emptying the trash.';
+  }
+
+  @override
+  String quotaOwnerTitle(String owner) {
+    return '$owner is out of storage';
+  }
+
+  @override
+  String quotaOwnerImageBody(String kind, String owner) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'spreadsheet':
+          'Images added to this spreadsheet count against the owner\'s storage. Ask $owner to free up space, or add the image to a spreadsheet you own.',
+      'presentation':
+          'Images added to this presentation count against the owner\'s storage. Ask $owner to free up space, or add the image to a presentation you own.',
+      'other':
+          'Images added to this document count against the owner\'s storage. Ask $owner to free up space, or add the image to a document you own.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String quotaOwnerBody(String owner) {
+    return 'Content added to this file counts against the owner\'s storage. Ask $owner to free up space first.';
+  }
+
+  @override
+  String get quotaBatchTitle => 'Not enough storage for all files';
+
+  @override
+  String quotaBatchBody(int count, String needed, String available) {
+    return 'These $count files need $needed, but you have $available left. Upload the files that fit, or free up space first.';
+  }
+
+  @override
+  String get quotaBatchFit => 'Upload the files that fit';
+
+  @override
+  String quotaTransferTitle(String name) {
+    return '$name doesn\'t have enough storage';
+  }
+
+  @override
+  String quotaTransferBody(String name, String needed, String item) {
+    return '$name needs $needed free to take ownership of “$item”. Ask them to free up space first.';
+  }
+
+  @override
+  String get quotaTransferAcceptTitle => 'You don\'t have enough storage';
+
+  @override
+  String quotaTransferAcceptBody(String item, String needed, String available) {
+    return 'Taking ownership of “$item” needs $needed, but you have $available left.';
+  }
+
+  @override
+  String get quotaTooLargeTitle => 'This file is too large';
+
+  @override
+  String quotaTooLargeBody(String max) {
+    return 'Files can be at most $max.';
+  }
+
+  @override
+  String quotaTooLargeNowBody(String max) {
+    return 'Files can be at most $max right now, because that\'s how much storage you have left.';
+  }
+
+  @override
+  String get quotaItemFallback => 'this item';
 
   @override
   String get strengthEmpty => 'Enter a password';
@@ -1929,10 +2218,19 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get typeAll => 'All types';
 
   @override
+  String get typeAllFiles => 'All files';
+
+  @override
   String get typeDocuments => 'Documents';
 
   @override
+  String get typeFiles => 'Files';
+
+  @override
   String get typeFolders => 'Folders';
+
+  @override
+  String get typePresentations => 'Presentations';
 
   @override
   String get typeSpreadsheets => 'Spreadsheets';
@@ -2281,11 +2579,12 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   }
 
   @override
-  String get mcpScopeDriveRead => 'Drive: read (list, search, export)';
+  String get mcpScopeDriveRead =>
+      'Drive: read (list, search, export, download files, storage)';
 
   @override
   String get mcpScopeDriveWrite =>
-      'Drive: write (create, rename, move, trash, share)';
+      'Drive: write (create, rename, move, trash, share, upload and convert files)';
 
   @override
   String get mcpScopeWriteRead => 'Documents: read';
@@ -2299,6 +2598,12 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
 
   @override
   String get mcpScopeSheetsEdit => 'Spreadsheets: edit';
+
+  @override
+  String get mcpScopeSlidesRead => 'Presentations: read';
+
+  @override
+  String get mcpScopeSlidesEdit => 'Presentations: edit';
 
   @override
   String get mcpScopeScriptsRun => 'Scripts: run';
@@ -2467,6 +2772,19 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   @override
   String get badgePendingCreate =>
       'Created offline. It is added to your Drive when you\'re back online.';
+
+  @override
+  String dropToUploadInto(String folder) {
+    return 'Drop files to upload to $folder';
+  }
+
+  @override
+  String dropUploadToFolder(String folder) {
+    return 'Upload to $folder';
+  }
+
+  @override
+  String get driveItemUploading => 'Uploading…';
 }
 
 /// The translations for English (`en_XA`).
@@ -2598,6 +2916,11 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   @override
   String activityUnshared(String who) {
     return '[$who ŕéɱöṽéð åççéšš one t]';
+  }
+
+  @override
+  String activityUploaded(String who) {
+    return '[$who ûþļöåðéð ţĥîš one t]';
   }
 
   @override
@@ -2759,14 +3082,14 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get authSignInSubtitle =>
-      '[Öñé åççöûñţ ƒöŕ Ŵöñķý Ŵŕîţé åñð Ŵöñķý Šĥééţš. one two three]';
+      '[Öñé åççöûñţ ƒöŕ éṽéŕý Ŵöñķý Ŵöŕķ åþþ. one two thr]';
 
   @override
   String get authSignInTitle => '[Šîĝñ îñ one]';
 
   @override
   String get authSignUpSubtitle =>
-      '[Çŕéåţé öñé åççöûñţ ƒöŕ Ŵöñķý Ŵŕîţé åñð Ŵöñķý Šĥééţš. one two three fo]';
+      '[Çŕéåţé öñé åççöûñţ ƒöŕ éṽéŕý Ŵöñķý Ŵöŕķ åþþ. one two three]';
 
   @override
   String get authSignUpTitle => '[Çŕéåţé ýöûŕ åççöûñţ one tw]';
@@ -2851,6 +3174,11 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String get cmdAddShortcut => '[Åðð šĥöŕţçûţ ţö Ðŕîṽé one two]';
 
   @override
+  String cmdAppSettings(String app) {
+    return '[$app šéţţîñĝš one]';
+  }
+
+  @override
   String get cmdAssistant => '[Åššîšţåñţ one]';
 
   @override
@@ -2926,6 +3254,9 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String get cmdMakeCopy => '[Ṁåķé å çöþý one]';
 
   @override
+  String get cmdManageStorage => '[Ṁåñåĝé šţöŕåĝé one t]';
+
+  @override
   String get cmdMove => '[Ṁöṽé on]';
 
   @override
@@ -2963,6 +3294,9 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get cmdOpenFile => '[Öþéñ… on]';
+
+  @override
+  String get cmdOpenInDrive => '[Öþéñ îñ Ŵöñķý Ðŕîṽé one tw]';
 
   @override
   String get cmdOpenPanel => '[Öþéñ þåñéļ one]';
@@ -3007,6 +3341,9 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get cmdReply => '[Ŕéþļý on]';
+
+  @override
+  String get cmdReportBug => '[Ŕéþöŕţ å ƀûĝ one]';
 
   @override
   String get cmdReportProblem => '[Ŕéþöŕţ å þŕöƀļéɱ one t]';
@@ -3079,6 +3416,9 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get cmdWhatsNew => '[Ŵĥåţ\'š ñéŵ one]';
+
+  @override
+  String get cmdWorkSettings => '[Ŵöñķý Ŵöŕķ šéţţîñĝš one tw]';
 
   @override
   String get cmdZoom => '[Žööɱ on]';
@@ -3328,6 +3668,22 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String get emptyHomeTitle => '[Ŵéļçöɱé ţö ýöûŕ ðŕîṽé one two]';
 
   @override
+  String emptyAppHomeTitle(String appName) {
+    return '[Ŵéļçöɱé ţö $appName one]';
+  }
+
+  @override
+  String emptyAppHomeBody(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'spreadsheet': 'Çŕéåţé å šþŕéåðšĥééţ öŕ öþéñ öñé šĥåŕéð ŵîţĥ ýöû.',
+      'presentation': 'Çŕéåţé å þŕéšéñţåţîöñ öŕ öþéñ öñé šĥåŕéð ŵîţĥ ýöû.',
+      'all': 'Çŕéåţé å ðöçûɱéñţ, šþŕéåðšĥééţ öŕ þŕéšéñţåţîöñ, öŕ ûþļöåð ƒîļéš.',
+      'other': 'Çŕéåţé å ðöçûɱéñţ öŕ öþéñ öñé šĥåŕéð ŵîţĥ ýöû.',
+    });
+    return '[$_temp0 one two three four five six seven eight nine ten one two three]';
+  }
+
+  @override
   String get emptyOfflineBody =>
       '[Ûšé “Ṁåķé åṽåîļåƀļé öƒƒļîñé” öñ ƒîļéš ýöû ñééð ŵîţĥöûţ å çöññéçţîöñ. one two three four fi]';
 
@@ -3398,6 +3754,12 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String get expandFolders => '[Éẋþåñð ƒöļðéŕš one t]';
 
   @override
+  String get externalLinkOpen => '[Öþéñ on]';
+
+  @override
+  String get externalLinkTitle => '[Öþéñ éẋţéŕñåļ ļîñķ? one tw]';
+
+  @override
   String get feedbackDescription =>
       '[Ţéļļ ûš ŵĥåţ ĥåþþéñéð öŕ ŵĥåţ ýöû\'ð ļîķé ţö šéé. one two three]';
 
@@ -3421,6 +3783,27 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get feedbackTitle => '[Ŕéþöŕţ å þŕöƀļéɱ one t]';
+
+  @override
+  String get fileCategoryArchives => '[Åŕçĥîṽéš one]';
+
+  @override
+  String get fileCategoryAudio => '[Åûðîö on]';
+
+  @override
+  String get fileCategoryImages => '[Îɱåĝéš one]';
+
+  @override
+  String get fileCategoryOther => '[Öţĥéŕ ƒîļéš one]';
+
+  @override
+  String get fileCategoryPdfs => '[ÞÐƑš on]';
+
+  @override
+  String get fileCategoryText => '[Ţéẋţ & çöðé one]';
+
+  @override
+  String get fileCategoryVideo => '[Ṽîðéöš one]';
 
   @override
   String get folderTree => '[Ƒöļðéŕš one]';
@@ -3473,7 +3856,13 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String get kindDocument => '[Ðöçûɱéñţ one]';
 
   @override
+  String get kindFile => '[Ƒîļé on]';
+
+  @override
   String get kindFolder => '[Ƒöļðéŕ one]';
+
+  @override
+  String get kindPresentation => '[Þŕéšéñţåţîöñ one t]';
 
   @override
   String get kindSpreadsheet => '[Šþŕéåðšĥééţ one]';
@@ -3517,7 +3906,13 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String get menuFile => '[Ƒîļé on]';
 
   @override
+  String get menuFileUpload => '[Ƒîļé ûþļöåð one]';
+
+  @override
   String get menuHelp => '[Ĥéļþ on]';
+
+  @override
+  String get menuImportFile => '[Îɱþöŕţ ƒîļé… one]';
 
   @override
   String get menuMakeCopy => '[Ṁåķé å çöþý one]';
@@ -3532,7 +3927,13 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String get menuNewDocument => '[Ðöçûɱéñţ one]';
 
   @override
+  String get menuNewPresentation => '[Þŕéšéñţåţîöñ one t]';
+
+  @override
   String get menuNewSpreadsheet => '[Šþŕéåðšĥééţ one]';
+
+  @override
+  String get menuOpenApp => '[Öþéñ on]';
 
   @override
   String get menuPanels => '[Þåñéļš one]';
@@ -3588,10 +3989,16 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String get nameVersionTitle => '[Ñåɱé ţĥîš ṽéŕšîöñ one tw]';
 
   @override
+  String get navApps => '[Åþþš on]';
+
+  @override
   String get navHome => '[Ĥöɱé on]';
 
   @override
   String get navMyDrive => '[Ṁý Ðŕîṽé one]';
+
+  @override
+  String get navMyFiles => '[Ṁý ƒîļéš one]';
 
   @override
   String get navOffline => '[Öƒƒļîñé one]';
@@ -3604,6 +4011,9 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get navStarred => '[Šţåŕŕéð one]';
+
+  @override
+  String get navStorage => '[Šţöŕåĝé one]';
 
   @override
   String get navTrash => '[Ţŕåšĥ on]';
@@ -3669,6 +4079,10 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String notifShared(String who, String item) {
     return '[$who šĥåŕéð $item ŵîţĥ ýöû one t]';
   }
+
+  @override
+  String get notifStorage =>
+      '[Ýöûŕ Ŵöñķý Ŵöŕķ šţöŕåĝé ñééðš åţţéñţîöñ one two thre]';
 
   @override
   String notifSuggestion(String who, String item) {
@@ -3870,6 +4284,10 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String get replyPlaceholder => '[Ŕéþļý öŕ åðð öţĥéŕš ŵîţĥ @ one two]';
 
   @override
+  String get reportBugNote =>
+      '[Îššûéš öñ ĜîţĤûƀ åŕé þûƀļîç: ðöñ\'ţ îñçļûðé þŕîṽåţé çöñţéñţ. one two three four]';
+
+  @override
   String get requestAccessDescription =>
       '[Ţĥé öŵñéŕ ŵîļļ ƀé ñöţîƒîéð åñð çåñ šĥåŕé ţĥé ƒîļé ŵîţĥ ýöû. one two three fou]';
 
@@ -3909,6 +4327,21 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get roleViewer => '[Ṽîéŵéŕ one]';
+
+  @override
+  String get routeCreating => '[Çŕéåţîñĝ… one]';
+
+  @override
+  String get routeImportInvalid =>
+      '[Ţĥîš ļîñķ ðöéšñ\'ţ ñåɱé å ƒîļé ţö îɱþöŕţ. one two thre]';
+
+  @override
+  String get routeImporting => '[Îɱþöŕţîñĝ… one]';
+
+  @override
+  String searchAllDrive(String query) {
+    return '[Šéåŕçĥ åļļ öƒ Ŵöñķý Ðŕîṽé ƒöŕ “$query” one two th]';
+  }
 
   @override
   String searchFor(String query) {
@@ -4014,7 +4447,7 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String get settingsNotifications => '[Ñöţîƒîçåţîöñš one t]';
 
   @override
-  String get settingsOffline => '[Öƒƒļîñé & šţöŕåĝé one tw]';
+  String get settingsOffline => '[Öƒƒļîñé & ðéṽîçé ðåţå one two]';
 
   @override
   String get settingsOfflineHint =>
@@ -4035,6 +4468,66 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
       '[Ţûŕñš öƒƒ ñöñ-éššéñţîåļ åñîɱåţîöñš. one two thre]';
 
   @override
+  String get settingsAccountProfile => '[Åççöûñţ & þŕöƒîļé one tw]';
+
+  @override
+  String settingsOpeningOtherApp(String settings) {
+    return '[Öþéñîñĝ $settings… one]';
+  }
+
+  @override
+  String get settingsOtherApps => '[Šéţţîñĝš öƒ öţĥéŕ åþþš one two]';
+
+  @override
+  String get settingsSectionPicker => '[Šéţţîñĝš šéçţîöñ one tw]';
+
+  @override
+  String get settingsStorage => '[Šţöŕåĝé one]';
+
+  @override
+  String get settingsStorageDocuments => '[Ðöçûɱéñţš one]';
+
+  @override
+  String get settingsStorageFiles => '[Ƒîļéš on]';
+
+  @override
+  String get settingsStorageLoading => '[Ļöåðîñĝ šţöŕåĝé… one tw]';
+
+  @override
+  String get settingsStorageManage =>
+      '[Ṁåñåĝé šţöŕåĝé îñ Ŵöñķý Ðŕîṽé one two t]';
+
+  @override
+  String get settingsStoragePresentations => '[Þŕéšéñţåţîöñš one t]';
+
+  @override
+  String get settingsStorageQuota => '[Ýöûŕ šţöŕåĝé one]';
+
+  @override
+  String get settingsStorageQuotaHint =>
+      '[Öñé ǫûöţå ƒöŕ åļļ Ŵöñķý Ŵöŕķ åþþš. one two th]';
+
+  @override
+  String get settingsStorageSpreadsheets => '[Šþŕéåðšĥééţš one t]';
+
+  @override
+  String get settingsStorageTrash => '[Ţŕåšĥ on]';
+
+  @override
+  String get settingsStorageUnavailable =>
+      '[Šţöŕåĝé ûšåĝé îšñ\'ţ åṽåîļåƀļé ŕîĝĥţ ñöŵ. one two three]';
+
+  @override
+  String get settingsStorageWhatCounts => '[Ŵĥåţ çöûñţš one]';
+
+  @override
+  String get settingsStorageWhatCountsBody =>
+      '[Ðöçûɱéñţš, šþŕéåðšĥééţš, þŕéšéñţåţîöñš, ûþļöåðéð ƒîļéš åñð îɱåĝéš îñ ýöûŕ ƒîļéš, îñçļûðîñĝ ţĥé ţŕåšĥ. Ṽéŕšîöñ ĥîšţöŕý, ţĥûɱƀñåîļš åñð éẋþöŕţš ðöñ\'ţ çöûñţ. Ƒîļéš šĥåŕéð ŵîţĥ ýöû çöûñţ åĝåîñšţ ţĥéîŕ öŵñéŕ\'š šţöŕåĝé. one two three four five six seven eight nine ten one two three fo]';
+
+  @override
+  String get shortcutsGroupShared => '[Šĥåŕéð one]';
+
+  @override
   String get settingsSaved => '[Šåṽéð on]';
 
   @override
@@ -4045,7 +4538,7 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get settingsSignOutHint =>
-      '[Šîĝñš ýöû öûţ öƒ Ŵöñķý Ŵŕîţé åñð Ŵöñķý Šĥééţš öñ ţĥîš ðéṽîçé. one two three four]';
+      '[Šîĝñš ýöû öûţ öƒ Ŵöñķý Ŵöŕķ öñ ţĥîš ðéṽîçé. one two three]';
 
   @override
   String get settingsTheme => '[Ţĥéɱé on]';
@@ -4258,9 +4751,129 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String get sortSize => '[Ƒîļé šîžé one]';
 
   @override
+  String storageMeterValue(String usage, int percent) {
+    return '[$usage, $percent þéŕçéñţ one]';
+  }
+
+  @override
   String storageUsed(String size) {
     return '[$size ûšéð on]';
   }
+
+  @override
+  String storageUsedOf(String used, String quota) {
+    return '[$used öƒ $quota ûšéð one]';
+  }
+
+  @override
+  String storageUsedOfOver(String used, String quota) {
+    return '[$used öƒ $quota ûšéð — öṽéŕ ǫûöţå one tw]';
+  }
+
+  @override
+  String get storageCalculating => '[Çåļçûļåţîñĝ šţöŕåĝé… one two]';
+
+  @override
+  String get storageMeterTooltip =>
+      '[Šţöŕåĝé îš šĥåŕéð ƀý Ŵöñķý Ðŕîṽé, Ŵŕîţé, Šĥééţš åñð Šļîðéš. one two three four]';
+
+  @override
+  String get storageMeterTooltipOffline =>
+      '[Šţöŕåĝé îš šĥåŕéð ƀý Ŵöñķý Ðŕîṽé, Ŵŕîţé, Šĥééţš åñð Šļîðéš. (öƒƒļîñé) one two three four fi]';
+
+  @override
+  String storageBannerWarning(String used, String quota) {
+    return '[Ýöû\'ṽé ûšéð $used öƒ ýöûŕ $quota šţöŕåĝé. one two t]';
+  }
+
+  @override
+  String get storageBannerOver =>
+      '[Ýöû\'ŕé öûţ öƒ šţöŕåĝé. Ýöû çåñ ķééþ éðîţîñĝ, ƀûţ ýöû çåñ\'ţ ûþļöåð ƒîļéš, åðð îɱåĝéš, îɱþöŕţ, öŕ ɱåķé çöþîéš ûñţîļ ýöû ƒŕéé ûþ šþåçé. one two three four five six seven eight]';
+
+  @override
+  String get storageBannerDismiss => '[Ðîšɱîšš one]';
+
+  @override
+  String get quotaOwnTitle => '[Ýöû\'ŕé öûţ öƒ šţöŕåĝé one two]';
+
+  @override
+  String quotaOwnBody(String needed, String available, String quota) {
+    return '[Ţĥîš ñééðš $needed, ƀûţ ýöû ĥåṽé $available ļéƒţ öƒ ýöûŕ $quota. Ƒŕéé ûþ šþåçé îñ Ŵöñķý Ðŕîṽé ƀý ðéļéţîñĝ ƒîļéš ýöû ñö ļöñĝéŕ ñééð åñð éɱþţýîñĝ ţĥé ţŕåšĥ. one two three four five six seven eig]';
+  }
+
+  @override
+  String quotaOwnBodyUnknown(String available, String quota) {
+    return '[Ýöû ĥåṽé $available ļéƒţ öƒ ýöûŕ $quota. Ƒŕéé ûþ šþåçé îñ Ŵöñķý Ðŕîṽé ƀý ðéļéţîñĝ ƒîļéš ýöû ñö ļöñĝéŕ ñééð åñð éɱþţýîñĝ ţĥé ţŕåšĥ. one two three four five six seve]';
+  }
+
+  @override
+  String quotaOwnerTitle(String owner) {
+    return '[$owner îš öûţ öƒ šţöŕåĝé one t]';
+  }
+
+  @override
+  String quotaOwnerImageBody(String kind, String owner) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'spreadsheet':
+          'Îɱåĝéš åððéð ţö ţĥîš šþŕéåðšĥééţ çöûñţ åĝåîñšţ ţĥé öŵñéŕ\'š šţöŕåĝé. Åšķ $owner ţö ƒŕéé ûþ šþåçé, öŕ åðð ţĥé îɱåĝé ţö å šþŕéåðšĥééţ ýöû öŵñ.',
+      'presentation':
+          'Îɱåĝéš åððéð ţö ţĥîš þŕéšéñţåţîöñ çöûñţ åĝåîñšţ ţĥé öŵñéŕ\'š šţöŕåĝé. Åšķ $owner ţö ƒŕéé ûþ šþåçé, öŕ åðð ţĥé îɱåĝé ţö å þŕéšéñţåţîöñ ýöû öŵñ.',
+      'other':
+          'Îɱåĝéš åððéð ţö ţĥîš ðöçûɱéñţ çöûñţ åĝåîñšţ ţĥé öŵñéŕ\'š šţöŕåĝé. Åšķ $owner ţö ƒŕéé ûþ šþåçé, öŕ åðð ţĥé îɱåĝé ţö å ðöçûɱéñţ ýöû öŵñ.',
+    });
+    return '[$_temp0 one two three four five six seven eight nine ten one two three four five six seven eight nine ten one two three fo]';
+  }
+
+  @override
+  String quotaOwnerBody(String owner) {
+    return '[Çöñţéñţ åððéð ţö ţĥîš ƒîļé çöûñţš åĝåîñšţ ţĥé öŵñéŕ\'š šţöŕåĝé. Åšķ $owner ţö ƒŕéé ûþ šþåçé ƒîŕšţ. one two three four five six]';
+  }
+
+  @override
+  String get quotaBatchTitle => '[Ñöţ éñöûĝĥ šţöŕåĝé ƒöŕ åļļ ƒîļéš one two th]';
+
+  @override
+  String quotaBatchBody(int count, String needed, String available) {
+    return '[Ţĥéšé $count ƒîļéš ñééð $needed, ƀûţ ýöû ĥåṽé $available ļéƒţ. Ûþļöåð ţĥé ƒîļéš ţĥåţ ƒîţ, öŕ ƒŕéé ûþ šþåçé ƒîŕšţ. one two three four five s]';
+  }
+
+  @override
+  String get quotaBatchFit => '[Ûþļöåð ţĥé ƒîļéš ţĥåţ ƒîţ one two]';
+
+  @override
+  String quotaTransferTitle(String name) {
+    return '[$name ðöéšñ\'ţ ĥåṽé éñöûĝĥ šţöŕåĝé one two t]';
+  }
+
+  @override
+  String quotaTransferBody(String name, String needed, String item) {
+    return '[$name ñééðš $needed ƒŕéé ţö ţåķé öŵñéŕšĥîþ öƒ “$item”. Åšķ ţĥéɱ ţö ƒŕéé ûþ šþåçé ƒîŕšţ. one two three four f]';
+  }
+
+  @override
+  String get quotaTransferAcceptTitle =>
+      '[Ýöû ðöñ\'ţ ĥåṽé éñöûĝĥ šţöŕåĝé one two t]';
+
+  @override
+  String quotaTransferAcceptBody(String item, String needed, String available) {
+    return '[Ţåķîñĝ öŵñéŕšĥîþ öƒ “$item” ñééðš $needed, ƀûţ ýöû ĥåṽé $available ļéƒţ. one two three]';
+  }
+
+  @override
+  String get quotaTooLargeTitle => '[Ţĥîš ƒîļé îš ţöö ļåŕĝé one two]';
+
+  @override
+  String quotaTooLargeBody(String max) {
+    return '[Ƒîļéš çåñ ƀé åţ ɱöšţ $max. one tw]';
+  }
+
+  @override
+  String quotaTooLargeNowBody(String max) {
+    return '[Ƒîļéš çåñ ƀé åţ ɱöšţ $max ŕîĝĥţ ñöŵ, ƀéçåûšé ţĥåţ\'š ĥöŵ ɱûçĥ šţöŕåĝé ýöû ĥåṽé ļéƒţ. one two three four five]';
+  }
+
+  @override
+  String get quotaItemFallback => '[ţĥîš îţéɱ one]';
 
   @override
   String get strengthEmpty => '[Éñţéŕ å þåššŵöŕð one t]';
@@ -4424,10 +5037,19 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String get typeAll => '[Åļļ ţýþéš one]';
 
   @override
+  String get typeAllFiles => '[Åļļ ƒîļéš one]';
+
+  @override
   String get typeDocuments => '[Ðöçûɱéñţš one]';
 
   @override
+  String get typeFiles => '[Ƒîļéš on]';
+
+  @override
   String get typeFolders => '[Ƒöļðéŕš one]';
+
+  @override
+  String get typePresentations => '[Þŕéšéñţåţîöñš one t]';
 
   @override
   String get typeSpreadsheets => '[Šþŕéåðšĥééţš one t]';
@@ -4783,11 +5405,11 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get mcpScopeDriveRead =>
-      '[Ðŕîṽé: ŕéåð (ļîšţ, šéåŕçĥ, éẋþöŕţ) one two thr]';
+      '[Ðŕîṽé: ŕéåð (ļîšţ, šéåŕçĥ, éẋþöŕţ, ðöŵñļöåð ƒîļéš, šţöŕåĝé) one two three four]';
 
   @override
   String get mcpScopeDriveWrite =>
-      '[Ðŕîṽé: ŵŕîţé (çŕéåţé, ŕéñåɱé, ɱöṽé, ţŕåšĥ, šĥåŕé) one two three fo]';
+      '[Ðŕîṽé: ŵŕîţé (çŕéåţé, ŕéñåɱé, ɱöṽé, ţŕåšĥ, šĥåŕé, ûþļöåð åñð çöñṽéŕţ ƒîļéš) one two three four five]';
 
   @override
   String get mcpScopeWriteRead => '[Ðöçûɱéñţš: ŕéåð one t]';
@@ -4801,6 +5423,12 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get mcpScopeSheetsEdit => '[Šþŕéåðšĥééţš: éðîţ one tw]';
+
+  @override
+  String get mcpScopeSlidesRead => '[Þŕéšéñţåţîöñš: ŕéåð one two]';
+
+  @override
+  String get mcpScopeSlidesEdit => '[Þŕéšéñţåţîöñš: éðîţ one two]';
 
   @override
   String get mcpScopeScriptsRun => '[Šçŕîþţš: ŕûñ one]';
@@ -4972,4 +5600,17 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   @override
   String get badgePendingCreate =>
       '[Çŕéåţéð öƒƒļîñé. Îţ îš åððéð ţö ýöûŕ Ðŕîṽé ŵĥéñ ýöû\'ŕé ƀåçķ öñļîñé. one two three four f]';
+
+  @override
+  String dropToUploadInto(String folder) {
+    return '[Ðŕöþ ƒîļéš ţö ûþļöåð ţö $folder one two]';
+  }
+
+  @override
+  String dropUploadToFolder(String folder) {
+    return '[Ûþļöåð ţö $folder one]';
+  }
+
+  @override
+  String get driveItemUploading => '[Ûþļöåðîñĝ… one]';
 }

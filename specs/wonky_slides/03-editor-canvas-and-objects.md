@@ -548,6 +548,69 @@ Inspector › Link (or Mod+K with an element selected): *URL*, *Slide* (picker),
 (external URLs use the external-link confirm of suite 03 §1 — not in an audience view: they
 open on the presenter's screen, 10). The editor shows a small link badge on hover.
 
+### 6.10 As built (SL-10): rendering rules of the element kinds
+
+The scene builder (`SlideSceneBuilder`, core) draws every kind from the resolved rows; these
+rules are normative for all renderers (canvas, thumbnails, presenting, PDF):
+
+- **Theme defaults** (05 §2.7): unset `fillJson`/`strokeJson`/`textStyleJson` take the
+  theme's `shapeStyle` entry of the kind (`text`, `shape`, `line`, `icon`) at render time —
+  nothing is baked into rows, so changing the theme restyles default objects. The kind default
+  box text properties sit *under* the element's (and placeholder chain's) values.
+- **Text** (§6.1): insets default to `[8, 16, 8, 16]` su when the chain sets none; auto-fit
+  defaults are `resize` for text boxes and `shrink` for shapes; anchors default to `top` (text)
+  and `middle` (shapes). `resize` grows the box downwards and `wrap: false` sizes the box to
+  its text — both as *derived frames* on the scene (`SlideScene.frames`), which selection
+  chrome uses. Flipped shapes keep their text readable (the text is not mirrored). Field
+  placeholders (slide number, footer) use the paragraph attributes of the layout definition.
+  Super/subscript runs are scaled to 65 %; the Flutter engine does not raise/lower them yet
+  (the core engine records `baselineShift`).
+- **Shapes** (§6.3): `ShapeLibrary` has all 70 keys of the table, each with outline parts
+  (cube/cylinder/ribbon faces are shaded ±15–20 % in OKLCH lightness; brackets, `arc` and
+  callout lines are stroke-only parts), adjusts (`dataJson.adjust`, values clamped; angles of
+  `arc`/`pie`/`chord`/`blockArc` are `start`/`end` turn fractions; callout tails are
+  `tipX`/`tipY` fractions of the frame, may lie outside it), handle tracks for the adjust
+  handles, the text rectangle and connection sites (`top`, `right`, `bottom`, `left`, `center`
+  + indexed geometry sites such as polygon corners, star points, arrow tips, callout tips).
+  `textBounds` is `{x, y, w, h}` in fractions of the frame. `custom` paths are SVG path data
+  in a 0..1000 box (`M L H V C S Q T A Z`).
+- **Lines and connectors** (§6.4): `connect.elementId` is the base-62 element id (a dashed
+  UUID is accepted); glued endpoints are derived from the target's current frame (rotation and
+  flips applied) and fall back to the stored point when the target is gone. Elbow routes pick
+  the cheapest axis-aligned candidate (L, Z, around-the-boxes and between-the-boxes routes;
+  length + 2 × clearance per bend) whose inner segments avoid both glued shapes inflated by
+  24 su and whose first/last segments leave along the sites' directions; `waypoints` are
+  joined orthogonally. Curved routes are one cubic with control points 40 % of the distance
+  (≥ 24 su) out along the site directions. Arrowheads (`triangle`, `stealth`, `open`,
+  `diamond`, `circle`; `bar` draws as `open` until P1) are separate scene nodes of length
+  `max(3 × width, 6) × {s 0.75, m 1, l 1.5}`, and the shaft is trimmed under filled heads.
+  Routes are exposed on the scene (`SlideScene.routes`) for endpoint handles and hit tests.
+- **Images** (§6.5): `crop` fractions map onto the natural size (a downscaled upload maps its
+  natural pixels onto the decoded ones); `mask` uses the shape library's fill path;
+  adjustments are one 4×5 color matrix (`ImageAdjust`, Flutter `ColorFilter.matrix`
+  convention, offsets 0..255) and `adjust.blur` is a blur sigma in su. A stroke draws over the
+  image along the mask (or frame).
+- **Tables** (§6.6): columns with a `size` keep their proportions and are scaled to the frame
+  width (null sizes share the rest); rows grow to fit their text (+ cell padding), merged
+  cells add their extra need to their last row, and the grown height is a derived frame.
+  Theme areas (05 §2.8) apply in the order cell fill ▸ header/total ▸ bands ▸ first column ▸
+  body; theme borders skip the inside of merges; cell borders (`"width|style|color"`,
+  `dashed`/`dotted` accepted) draw on top; the theme radius clips the table.
+- **Icons** (§6.7): drawn as glyphs of an icon font through `SlideIconSource` (the app maps
+  Lucide names to its icon font, SL-14; emoji use the emoji family), colored with the stroke
+  color; an unknown glyph draws a neutral rounded frame.
+- **Code and charts** (§6.8): code uses `BasicCodeLayout` until SL-26 (state per scene
+  purpose — edit: the inspector's state, thumbnails/print: the last; tokens of the shared
+  tokenizer, theme palette and mono font, a monospace grid auto-fitted to the box between 8
+  and 40 su, line numbers, a title bar, the theme's corner radius and code shadow). Charts are
+  laid out by a `ChartSceneSource` (SL-27/SL-32); without one a placeholder card with three
+  bars in the chart palette is drawn.
+- **Effects**: shadows are blurred silhouettes of the element (blur radius → sigma ÷ 2), glow
+  is a zero-offset shadow with spread, `blur` a layer blur.
+- **Hit testing** (`SceneHitTest`, core): topmost element whose *drawn* content is under the
+  point (fills by containment, strokes and lines within the tolerance, text line boxes, image
+  masks); the canvas may still prefer the frame for text boxes (§3.2).
+
 ---
 
 ## 7. Element groups

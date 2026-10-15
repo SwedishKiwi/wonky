@@ -12,6 +12,7 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _ida;
 import 'package:serverpod/serverpod.dart' as _is;
+import '../../sheets/models/space_kind.dart' as _in1d3ohj;
 import '../../sheets/models/subscription_reason.dart' as _ixa5hb2h;
 
 /// The server-managed active set: membership doubles as subscription.
@@ -22,17 +23,20 @@ abstract class SpaceSubscription
     required this.userId,
     required this.spreadsheetItemId,
     required this.spaceUuid,
+    _in1d3ohj.SpaceKind? kind,
     required this.reason,
     required this.lastUsedAt,
     bool? pinned,
     this.reasonExpiresAt,
-  }) : pinned = pinned ?? false;
+  }) : kind = kind ?? _in1d3ohj.SpaceKind.spreadsheet,
+       pinned = pinned ?? false;
 
   factory SpaceSubscription({
     int? id,
     required int userId,
     required int spreadsheetItemId,
     required _is.UuidValue spaceUuid,
+    _in1d3ohj.SpaceKind? kind,
     required _ixa5hb2h.SubscriptionReason reason,
     required DateTime lastUsedAt,
     bool? pinned,
@@ -47,6 +51,9 @@ abstract class SpaceSubscription
       spaceUuid: _is.UuidValueJsonExtension.fromJson(
         jsonSerialization['spaceUuid'],
       ),
+      kind: jsonSerialization['kind'] == null
+          ? null
+          : _in1d3ohj.SpaceKind.fromJson((jsonSerialization['kind'] as String)),
       reason: _ixa5hb2h.SubscriptionReason.fromJson(
         (jsonSerialization['reason'] as String),
       ),
@@ -73,9 +80,14 @@ abstract class SpaceSubscription
 
   int userId;
 
+  /// The drive item of the space: a spreadsheet, or (v2) a presentation for
+  /// [kind] deck (the column keeps its v1 name).
   int spreadsheetItemId;
 
   _is.UuidValue spaceUuid;
+
+  /// (v2) Space kind; active-set limits apply per kind (suite 12 §2.6).
+  _in1d3ohj.SpaceKind kind;
 
   _ixa5hb2h.SubscriptionReason reason;
 
@@ -97,6 +109,7 @@ abstract class SpaceSubscription
     int? userId,
     int? spreadsheetItemId,
     _is.UuidValue? spaceUuid,
+    _in1d3ohj.SpaceKind? kind,
     _ixa5hb2h.SubscriptionReason? reason,
     DateTime? lastUsedAt,
     bool? pinned,
@@ -110,6 +123,7 @@ abstract class SpaceSubscription
       'userId': userId,
       'spreadsheetItemId': spreadsheetItemId,
       'spaceUuid': spaceUuid.toJson(),
+      'kind': kind.toJson(),
       'reason': reason.toJson(),
       'lastUsedAt': lastUsedAt.toJson(),
       'pinned': pinned,
@@ -158,6 +172,7 @@ class _SpaceSubscriptionImpl extends SpaceSubscription {
     required int userId,
     required int spreadsheetItemId,
     required _is.UuidValue spaceUuid,
+    _in1d3ohj.SpaceKind? kind,
     required _ixa5hb2h.SubscriptionReason reason,
     required DateTime lastUsedAt,
     bool? pinned,
@@ -167,6 +182,7 @@ class _SpaceSubscriptionImpl extends SpaceSubscription {
          userId: userId,
          spreadsheetItemId: spreadsheetItemId,
          spaceUuid: spaceUuid,
+         kind: kind,
          reason: reason,
          lastUsedAt: lastUsedAt,
          pinned: pinned,
@@ -182,6 +198,7 @@ class _SpaceSubscriptionImpl extends SpaceSubscription {
     int? userId,
     int? spreadsheetItemId,
     _is.UuidValue? spaceUuid,
+    _in1d3ohj.SpaceKind? kind,
     _ixa5hb2h.SubscriptionReason? reason,
     DateTime? lastUsedAt,
     bool? pinned,
@@ -192,6 +209,7 @@ class _SpaceSubscriptionImpl extends SpaceSubscription {
       userId: userId ?? this.userId,
       spreadsheetItemId: spreadsheetItemId ?? this.spreadsheetItemId,
       spaceUuid: spaceUuid ?? this.spaceUuid,
+      kind: kind ?? this.kind,
       reason: reason ?? this.reason,
       lastUsedAt: lastUsedAt ?? this.lastUsedAt,
       pinned: pinned ?? this.pinned,
@@ -220,6 +238,13 @@ class SpaceSubscriptionUpdateTable
     _is.UuidValue value,
   ) => _is.ColumnValue(
     table.spaceUuid,
+    value,
+  );
+
+  _is.ColumnValue<_in1d3ohj.SpaceKind, _in1d3ohj.SpaceKind> kind(
+    _in1d3ohj.SpaceKind value,
+  ) => _is.ColumnValue(
+    table.kind,
     value,
   );
 
@@ -263,6 +288,12 @@ class SpaceSubscriptionTable extends _is.Table<int?> {
       'spaceUuid',
       this,
     );
+    kind = _is.ColumnEnum(
+      'kind',
+      this,
+      _is.EnumSerialization.byName,
+      hasDefault: true,
+    );
     reason = _is.ColumnEnum(
       'reason',
       this,
@@ -287,9 +318,14 @@ class SpaceSubscriptionTable extends _is.Table<int?> {
 
   late final _is.ColumnInt userId;
 
+  /// The drive item of the space: a spreadsheet, or (v2) a presentation for
+  /// [kind] deck (the column keeps its v1 name).
   late final _is.ColumnInt spreadsheetItemId;
 
   late final _is.ColumnUuid spaceUuid;
+
+  /// (v2) Space kind; active-set limits apply per kind (suite 12 §2.6).
+  late final _is.ColumnEnum<_in1d3ohj.SpaceKind> kind;
 
   late final _is.ColumnEnum<_ixa5hb2h.SubscriptionReason> reason;
 
@@ -306,6 +342,7 @@ class SpaceSubscriptionTable extends _is.Table<int?> {
     userId,
     spreadsheetItemId,
     spaceUuid,
+    kind,
     reason,
     lastUsedAt,
     pinned,

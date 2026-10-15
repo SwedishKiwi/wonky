@@ -1,0 +1,6 @@
+# Test tags (specs/15 §3).
+tags:
+  property: {}
+  golden: {}
+  slow: {}
+  e2e: {}

@@ -21,6 +21,14 @@ import '../generated/protocol.dart';
 final class SyncedTableSpec<T extends TableRow<UuidValue>> {
   const SyncedTableSpec._(this.table, this._fromJson);
 
+  /// The spec of the generated [table] whose rows decode with [fromJson]
+  /// (e.g. `SyncedTableSpec<Deck>.of(Deck.t, Deck.fromJson)`): how other
+  /// apps' table sets (`SyncTableSet` of `wonky_sync_kit`) are built.
+  const SyncedTableSpec.of(
+    Table<UuidValue> table,
+    T Function(Map<String, dynamic> json) fromJson,
+  ) : this._(table, fromJson);
+
   /// The generated table.
   final Table<UuidValue> table;
   final T Function(Map<String, dynamic> json) _fromJson;
@@ -256,7 +264,8 @@ SyncedTableSpec<T> _spec<T extends TableRow<UuidValue>>(
 ) => SyncedTableSpec<T>._(table, fromJson);
 
 /// All synced tables of Wonky Sheets (`database: sync`), by name, in
-/// dependency order (parents first).
+/// dependency order (parents first). Slides' tables are
+/// `SlidesSyncedTables`.
 abstract final class SyncedTables {
   /// Specs in dependency order (parents first): apply inserts in this order,
   /// deletes in reverse.

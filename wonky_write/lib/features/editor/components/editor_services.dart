@@ -13,6 +13,11 @@ enum ImageUploadPhase {
 
   /// The upload failed (Retry / Remove).
   failed,
+
+  /// The server refused the upload because the storage quota is full
+  /// (Drive 03 §6.3): "Not uploaded — out of storage" with Retry / Remove;
+  /// the local bytes stay on this device.
+  outOfStorage,
 }
 
 @immutable

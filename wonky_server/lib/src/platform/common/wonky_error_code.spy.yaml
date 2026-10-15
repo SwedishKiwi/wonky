@@ -24,3 +24,6 @@ values:
   - unavailable
   ### A concurrent operation holds the lock; retry later.
   - busy
+  ### (v2) Not enough storage for a byte-adding operation (Drive 03 §7.1);
+  ### `detailsJson` is a [QuotaExceededDetails].
+  - quotaExceeded

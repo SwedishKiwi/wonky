@@ -52,8 +52,8 @@ re-exports all of them.
 
 ### Formatting, number formats, input, fill
 - `EffectiveFormatResolver` (in `format_resolver.dart`) works out a cell's effective format; themes, banding and borders sit alongside it.
-- Number formats:
-  - `NumberFormatter` formats a value with a pattern and locale, including section colors.
+- Number formats (the pattern engine is the shared package `wonky_numfmt`, re-exported here):
+  - `NumberFormatter` formats a cell value with a pattern and locale, including section colors (on `wonky_numfmt`'s `NumberPatternFormatter`).
   - `CellTextFormatter` gives the display text of a cell's effective value.
   - `NumberFormatPresets` holds the menu and toolbar presets.
   - `DecimalsAdjuster` handles the decimal-places steps; `NumberFormatParser` / `NumberFormatInfo` validate and classify patterns.
@@ -75,12 +75,14 @@ re-exports all of them.
   - `PivotDataLookup.lookup` implements GETPIVOTDATA.
 
 ### Charts and objects
-- `ChartPipeline` is the one entry point for charts:
-  - `resolve` turns a spec and data into `ChartData`.
-  - `build` produces a `ChartBuild`: the data plus a `ChartScene` for the Flutter painter.
+- The chart engine (spec, `ChartData`, layout, scene, 3D, SVG/PDF/PNG renderers, stats, describer) is the shared package `wonky_charts`; `model.dart` re-exports it (08 §24).
+- `SheetsChartPipeline` is the Sheets entry point for charts:
+  - `resolve` turns a spec and the workbook's cells into `ChartData` (`ChartDataResolver`).
+  - `build` produces a `ChartBuild`: the data plus a `ChartScene` for the Flutter painter (`wonky_charts_flutter`).
   - `exportSvg`, `exportPdf` and `exportPng` export a chart; `printSceneFor` supplies charts to the print renderer.
-- `ChartSpec` and `ChartSpecSchema` (spec and validation), `ChartRecommender`, `ChartDescriber` (accessibility text), `SparklineRenderer`.
-- Renderers: `SvgChartRenderer`, `PdfChartRenderer`, `RasterChartRenderer`. Supply a `TextMeasurer` for layout.
+  - Without a workbook, `ChartPipeline` (`wonky_charts`) lays out and exports resolved `ChartData`.
+- `ChartDataSpec.ranges` are opaque `DataRangeRef`s holding GridRange JSON: `GridRange.fromRef` / `toRef`, `spec.data.gridRanges`, `ranges.toRefs()`. `SpreadsheetTheme` is the charts' `ChartThemeSource`.
+- Sheets-only chart parts: `ChartRecommender`, `HeaderDetection`, `SparklineRenderer`, `ImageSpec` (objects).
 - Objects:
   - `ObjectAnchor` and `ObjectPlacement` position objects.
   - `ObjectGeometry`, `GridSnap` and `SmartGuides` handle move, resize and snapping.

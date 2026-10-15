@@ -23,7 +23,10 @@ abstract class ServerLimits
     required this.maxImageUploadBytes,
     required this.maxImportUploadBytes,
     required this.scriptTimeoutMs,
-  });
+    int? maxFileUploadBytes,
+    int? quotaBytesPerUser,
+  }) : maxFileUploadBytes = maxFileUploadBytes ?? 52428800,
+       quotaBytesPerUser = quotaBytesPerUser ?? 52428800;
 
   factory ServerLimits({
     required int maxCellsPerSpreadsheet,
@@ -33,6 +36,8 @@ abstract class ServerLimits
     required int maxImageUploadBytes,
     required int maxImportUploadBytes,
     required int scriptTimeoutMs,
+    int? maxFileUploadBytes,
+    int? quotaBytesPerUser,
   }) = _ServerLimitsImpl;
 
   factory ServerLimits.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -47,6 +52,8 @@ abstract class ServerLimits
       maxImageUploadBytes: jsonSerialization['maxImageUploadBytes'] as int,
       maxImportUploadBytes: jsonSerialization['maxImportUploadBytes'] as int,
       scriptTimeoutMs: jsonSerialization['scriptTimeoutMs'] as int,
+      maxFileUploadBytes: jsonSerialization['maxFileUploadBytes'] as int?,
+      quotaBytesPerUser: jsonSerialization['quotaBytesPerUser'] as int?,
     );
   }
 
@@ -64,6 +71,14 @@ abstract class ServerLimits
 
   int scriptTimeoutMs;
 
+  /// (v2) Cap for one uploaded Drive file (`wonky.files.maxFileUploadBytes`,
+  /// Drive 02 §3.2).
+  int maxFileUploadBytes;
+
+  /// (v2) Default storage quota per user (`wonky.drive.quotaBytesPerUser`,
+  /// Drive 03 §1).
+  int quotaBytesPerUser;
+
   /// Returns a shallow copy of this [ServerLimits]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
@@ -75,6 +90,8 @@ abstract class ServerLimits
     int? maxImageUploadBytes,
     int? maxImportUploadBytes,
     int? scriptTimeoutMs,
+    int? maxFileUploadBytes,
+    int? quotaBytesPerUser,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -87,6 +104,8 @@ abstract class ServerLimits
       'maxImageUploadBytes': maxImageUploadBytes,
       'maxImportUploadBytes': maxImportUploadBytes,
       'scriptTimeoutMs': scriptTimeoutMs,
+      'maxFileUploadBytes': maxFileUploadBytes,
+      'quotaBytesPerUser': quotaBytesPerUser,
     };
   }
 
@@ -101,6 +120,8 @@ abstract class ServerLimits
       'maxImageUploadBytes': maxImageUploadBytes,
       'maxImportUploadBytes': maxImportUploadBytes,
       'scriptTimeoutMs': scriptTimeoutMs,
+      'maxFileUploadBytes': maxFileUploadBytes,
+      'quotaBytesPerUser': quotaBytesPerUser,
     };
   }
 
@@ -119,6 +140,8 @@ class _ServerLimitsImpl extends ServerLimits {
     required int maxImageUploadBytes,
     required int maxImportUploadBytes,
     required int scriptTimeoutMs,
+    int? maxFileUploadBytes,
+    int? quotaBytesPerUser,
   }) : super._(
          maxCellsPerSpreadsheet: maxCellsPerSpreadsheet,
          maxActiveSpacesPerUser: maxActiveSpacesPerUser,
@@ -127,6 +150,8 @@ class _ServerLimitsImpl extends ServerLimits {
          maxImageUploadBytes: maxImageUploadBytes,
          maxImportUploadBytes: maxImportUploadBytes,
          scriptTimeoutMs: scriptTimeoutMs,
+         maxFileUploadBytes: maxFileUploadBytes,
+         quotaBytesPerUser: quotaBytesPerUser,
        );
 
   /// Returns a shallow copy of this [ServerLimits]
@@ -141,6 +166,8 @@ class _ServerLimitsImpl extends ServerLimits {
     int? maxImageUploadBytes,
     int? maxImportUploadBytes,
     int? scriptTimeoutMs,
+    int? maxFileUploadBytes,
+    int? quotaBytesPerUser,
   }) {
     return ServerLimits(
       maxCellsPerSpreadsheet:
@@ -153,6 +180,8 @@ class _ServerLimitsImpl extends ServerLimits {
       maxImageUploadBytes: maxImageUploadBytes ?? this.maxImageUploadBytes,
       maxImportUploadBytes: maxImportUploadBytes ?? this.maxImportUploadBytes,
       scriptTimeoutMs: scriptTimeoutMs ?? this.scriptTimeoutMs,
+      maxFileUploadBytes: maxFileUploadBytes ?? this.maxFileUploadBytes,
+      quotaBytesPerUser: quotaBytesPerUser ?? this.quotaBytesPerUser,
     );
   }
 }

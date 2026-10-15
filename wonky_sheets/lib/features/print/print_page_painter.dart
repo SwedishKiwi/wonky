@@ -7,8 +7,9 @@ import 'package:wonky_sheets_core/formula.dart'
     show CellSource, ColumnLetters, GridRect;
 import 'package:wonky_sheets_core/model.dart';
 import 'package:wonky_sheets_core/model.dart' as core show RichText;
+import 'package:wonky_charts_flutter/wonky_charts_flutter.dart'
+    show ChartScenePainter;
 
-import '../charts/render/chart_painter.dart' show ChartScenePainter;
 import 'print_fonts.dart';
 
 /// Inputs shared by every page painter of one preview (11 §7.5).
@@ -36,7 +37,7 @@ class PrintPaintContext {
   final String date;
   final String time;
 
-  /// Chart scenes at a printed size (`ChartPipeline.printSceneFor`).
+  /// Chart scenes at a printed size (`SheetsChartPipeline.printSceneFor`).
   final ChartScene? Function(EmbeddedObjectRecord, double, double)? chartScene;
 
   /// Decoded images by file UUID (missing ones paint a placeholder).

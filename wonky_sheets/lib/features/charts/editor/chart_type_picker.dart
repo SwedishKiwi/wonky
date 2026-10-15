@@ -3,9 +3,9 @@ import 'dart:math' as math;
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_sheets_core/model.dart';
+import 'package:wonky_charts_flutter/wonky_charts_flutter.dart';
 
 import '../../../l10n/sheets_l10n.dart';
-import '../../charts3d/icons/chart3d_glyph.dart';
 
 /// A chart type with its preset variant (stacking, doughnut hole, smooth
 /// lines) as offered by the type picker (08 §8.3).

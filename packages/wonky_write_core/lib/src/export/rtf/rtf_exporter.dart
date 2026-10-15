@@ -6,7 +6,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import '../../delta/embeds.dart';
-import '../../fonts/font_registry.dart';
+import 'package:wonky_fonts/wonky_fonts.dart';
 import '../../import/import_support.dart' show MonospaceFonts;
 import '../../ir/doc_tree.dart';
 import '../../layout/page_setup.dart';

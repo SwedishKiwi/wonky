@@ -411,7 +411,7 @@ extension _ChartEditorMore on _ChartEditorPanelState {
         label: l.chartEditorKeyValueCell,
         child: CommitTextField(
           keyName: 'scoreKeyRef',
-          value: a1(s.keyValueRef),
+          value: a1(s.keyValueRange),
           placeholder: l.chartEditorFromDataRange,
           onCommit: (v) => commit('keyValueRef', v),
         ),
@@ -420,7 +420,7 @@ extension _ChartEditorMore on _ChartEditorPanelState {
         label: l.chartEditorBaselineCell,
         child: CommitTextField(
           keyName: 'scoreBaselineRef',
-          value: a1(s.baselineRef),
+          value: a1(s.baselineRange),
           placeholder: l.chartEditorFromDataRange,
           onCommit: (v) => commit('baselineRef', v),
         ),

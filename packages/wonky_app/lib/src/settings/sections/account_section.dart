@@ -10,8 +10,9 @@ import '../../shell/form_dialog.dart';
 import '../../shell/shell_services.dart';
 import '../settings_screen.dart';
 
-/// Settings › Account (suite 04 §4.1): display name, email, password
-/// (reset flow), sign out, delete account (type-to-confirm).
+/// Wonky Work settings › Account & profile (suite 04 §4.1): avatar, display
+/// name, email and, at the bottom, delete account (type-to-confirm). The
+/// password and sign-out moved to `SecuritySection`.
 class AccountSection extends StatefulWidget {
   const AccountSection({super.key, required this.services});
 
@@ -169,33 +170,6 @@ class _AccountSectionState extends State<AccountSection> {
                       child: Text(l.actionSave),
                     ),
                   ],
-                ),
-              ],
-            ),
-            SettingsGroup(
-              title: l.settingsSecurity,
-              children: [
-                SettingsRow(
-                  label: l.authPassword,
-                  description: l.settingsPasswordHint,
-                  control: ShadButton.outline(
-                    key: const ValueKey<String>('settings.account.password'),
-                    onPressed: () async {
-                      await s.auth.signOut();
-                      s.router.go('/reset');
-                    },
-                    child: Text(l.settingsChangePassword),
-                  ),
-                ),
-                SettingsRow(
-                  label: l.cmdSignOut,
-                  description: l.settingsSignOutHint,
-                  control: ShadButton.outline(
-                    key: const ValueKey<String>('settings.account.signOut'),
-                    onPressed: () =>
-                        s.dispatcher.invoke('shell.account.signOut'),
-                    child: Text(l.cmdSignOut),
-                  ),
                 ),
               ],
             ),

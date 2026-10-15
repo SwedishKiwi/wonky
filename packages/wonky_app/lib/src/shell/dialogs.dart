@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:shad/shad.dart';
@@ -37,6 +38,48 @@ Future<bool> confirmDialog(
     ),
   );
   return r?.buttonId == 'confirm';
+}
+
+/// The choice in [confirmExternalLink].
+enum ExternalLinkChoice { open, copy, cancel }
+
+/// The external-link confirm popover of suite 03 §1: "Open external link?
+/// github.com" with an optional [note], *Open* / *Copy link* / *Cancel*.
+/// *Open* opens [url] in the system browser (a new browser tab on the web:
+/// external content only), *Copy link* copies it. MCP-operable
+/// (`dialog.externalLink`).
+Future<ExternalLinkChoice> confirmExternalLink(
+  BuildContext context,
+  ShellServices s, {
+  required String url,
+  String? note,
+}) async {
+  final l = WonkyAppLocalizations.of(context);
+  final host = Uri.tryParse(url)?.host ?? '';
+  final r = await showWonkyFormDialog(
+    context,
+    WonkyDialogSpec(
+      title: l.externalLinkTitle,
+      description: [if (host.isNotEmpty) host else url, ?note].join(' — '),
+      dialogKey: 'dialog.externalLink',
+      buttons: [
+        DialogButtonSpec(id: 'cancel', label: l.actionCancel),
+        DialogButtonSpec(id: 'copy', label: l.cmdCopyLink),
+        DialogButtonSpec(id: 'open', label: l.externalLinkOpen, primary: true),
+      ],
+    ),
+  );
+  switch (r?.buttonId) {
+    case 'open':
+      await s.crossApp.openExternal(url);
+      return ExternalLinkChoice.open;
+    case 'copy':
+      await Clipboard.setData(ClipboardData(text: url));
+      s.toasts.show(l.toastLinkCopied);
+      return ExternalLinkChoice.copy;
+    default:
+      return ExternalLinkChoice.cancel;
+  }
 }
 
 /// A single text field dialog (rename, new folder, name version).
@@ -220,6 +263,7 @@ String activityText(WonkyAppLocalizations l, ActivityEventView e) {
     ActivityType.trashed => l.activityTrashed(who),
     ActivityType.restored => l.activityRestored(who),
     ActivityType.exported => l.activityExported(who),
+    ActivityType.uploaded => l.activityUploaded(who),
   };
 }
 

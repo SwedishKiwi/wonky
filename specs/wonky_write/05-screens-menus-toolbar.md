@@ -32,7 +32,7 @@ every control is a `CommandButton`/`CommandMenuItem` bound to a command id (suit
 | Screen | Route | Owner spec | Notes |
 |--------|-------|-----------|-------|
 | Home / Drive views | `/`, `/f/:uuid` (v2; `/drive/:uuid` redirects), `/my-files`, `/shared`, `/starred`, `/recent`, `/offline`, `/trash`, `/search` | suite 05 §3, suite 03 §3.3 | (v2) **Only documents** (and folders that contain documents); left menu with the four apps, *Write settings*, *Wonky Work settings*, *Report a bug*, storage meter; *Open in Wonky Drive*; Write template strip; *Import file…* for `.md/.txt/.html/.docx/.odt/.rtf` |
-| New / import (v2) | `/new?folder=&template=`, `/import?file=<fileItemUuid>` | suite 03 §2, Drive 02 §7.2 | Creates a document (offline-capable) or imports a Drive file with the import dialog (07), then opens the editor |
+| New / import (v2) | `/new?folder=&template=`, `/import?file=<fileItemUuid>` | suite 03 §2, Drive 02 §7.2 | Creates a document (offline-capable) or imports a Drive file (07), then opens the editor. As built (D-16): `/import` runs `drive.convertFile` on the stored file (Write has no import options dialog; the import banner shows the warnings when the document opens); Cancel / *Out of storage* go back to Drive (`history.back`), errors stay in Write with a toast (`features/import/import_route.dart`) |
 | Template gallery | `/templates` | suite 05 §3.1 | Built-in document templates, each with its own Write theme: Meeting notes, Project brief, Letter, Weekly report, Lecture notes, To-do list, Recipe, Story draft (plus Blank) |
 | **Document editor** | `/d/:uuid` (`?heading=`, `?comment=`, `?suggestion=`, `?version=`) | **this spec §3–§19** | Main screen |
 | Version history | `/d/:uuid/history` | [08](08-comments-suggestions-history.md), suite 07 §5 | Full-screen compare; read-only `SuperReader` |
@@ -254,6 +254,7 @@ Write behaviour noted.
 |------|---------|-------|-----------|--------------|
 | New ▸ Document *(shell)* | `shell.file.new {kind: document}` | — | — (⌘⌥N in Drive only) | `online` or offline-capable |
 | New ▸ Spreadsheet *(shell)* | `shell.file.new {kind: spreadsheet}` | — | — | (navigates to Sheets) |
+| New ▸ Presentation *(shell, v2)* | `shell.file.new {kind: presentation}` | — | — | (opens Wonky Slides' `/new` in this tab) |
 | New ▸ From template… *(shell)* | `shell.file.newFromTemplate` | — | — | always |
 | Open… *(shell)* | `shell.file.open` (quick switcher) | ⌘O | Ctrl+O | always |
 | Import into new document… *(shell)* | `shell.file.import {kind: document}` | — | — | `online` |
@@ -654,6 +655,16 @@ developer, offline & device data, storage) are under *Wonky Work settings*.
 
 Each is a `write.prefs.*` / `shell.settings.*` command; values stay in
 `UserPreferences.writeDefaults`.
+
+As built (D-12, `wonky_write/lib/features/settings/`): *Editor* = groups *Typing* (Markdown
+shortcuts, smart quotes, auto-pair, autolink, copy as Markdown) and *Display* (spelling underlines
+`write.spell.toggle`, selection toolbar, default mode `write.prefs.setDefaultMode`); *Page &
+export* = default layout (`write.prefs.setDefaultLayout {layout}`, key `pageless`), the default
+page setup saved by *Page setup › Set as default* with *Reset* (`write.prefs.resetPageSetup`),
+default export format (`write.prefs.setExportFormat {format}`: md, html, pdf, docx, odt, txt);
+*Spelling* = *Ignore words in UPPERCASE* (`write.spell.toggleIgnoreUppercase`) and the personal
+dictionary (remove = `write.prefs.removeDictionaryWord {word}`). New documents don't apply the
+default layout/page setup yet and exports don't preselect the default format (TODO.md).
 
 ## 14. Empty, loading and error states
 

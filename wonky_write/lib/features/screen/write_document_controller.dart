@@ -460,6 +460,9 @@ class WriteDocumentController extends DocumentController {
   late final WriteImageServices images = WriteImageServices(
     files: services.repositories.files,
     documentUuid: itemUuid,
+    // Drive 03 §6.3: the *Out of storage* dialog (own or owner variant).
+    onQuotaExceeded: (e) =>
+        services.quotaErrors.present(e, reason: QuotaReasons.image),
   );
 
   // ---- DocumentController contract ----

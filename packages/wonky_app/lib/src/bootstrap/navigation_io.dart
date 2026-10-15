@@ -17,3 +17,9 @@ void reloadPage() {}
 
 /// Sets the `wonky_last_app` cookie (web only).
 void rememberLastApp(String app) {}
+
+/// No browser on desktop.
+String? userAgent() => null;
+
+/// Desktop has no browser history.
+bool historyBack() => false;

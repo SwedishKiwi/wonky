@@ -67,7 +67,9 @@ class CachedDriveRepository extends ChangeNotifier implements DriveRepository {
   /// still queued.
   bool isPendingCreate(UuidValue itemUuid) => queue.ops.any(
     (o) =>
-        (o.kind == 'createDocument' || o.kind == 'registerSpreadsheet') &&
+        (o.kind == 'createDocument' ||
+            o.kind == 'registerSpreadsheet' ||
+            o.kind == 'registerPresentation') &&
         (o.args['itemUuid'] == itemUuid.uuid ||
             o.args['spaceUuid'] == itemUuid.uuid),
   );
@@ -109,7 +111,10 @@ class CachedDriveRepository extends ChangeNotifier implements DriveRepository {
     DriveSort s,
   ) =>
       'folder:${folderUuid?.uuid ?? 'root'}:${f.view.name}:${f.owner.name}:'
-      '${f.kinds?.map((k) => k.name).join(',') ?? '*'}:${s.field.name}:${s.descending}:${s.foldersFirst}';
+      '${f.kinds?.map((k) => k.name).join(',') ?? '*'}:${s.field.name}:${s.descending}:${s.foldersFirst}'
+      // (v2) app homes and Drive's file filter list different items.
+      '${f.foldersContaining == null ? '' : ':in=${f.foldersContaining!.name}'}'
+      '${f.fileCategories == null ? '' : ':cat=${f.fileCategories!.map((c) => c.name).join(',')}'}';
 
   @override
   Future<DriveListPage> list({
@@ -396,6 +401,32 @@ class CachedDriveRepository extends ChangeNotifier implements DriveRepository {
     ),
   );
 
+  @override
+  Future<DriveItemView> registerPresentation({
+    required UuidValue spaceUuid,
+    UuidValue? parentUuid,
+    required String name,
+  }) => _write(
+    'registerPresentation',
+    {'spaceUuid': spaceUuid.uuid, 'parentUuid': parentUuid?.uuid, 'name': name},
+    () async {
+      final v = await remote.registerPresentation(
+        spaceUuid: spaceUuid,
+        parentUuid: parentUuid,
+        name: name,
+      );
+      cache.insertIntoFolderLists(v);
+      return v;
+    },
+    () => _optimisticItem(
+      spaceUuid,
+      DriveItemKind.presentation,
+      name,
+      parentUuid,
+      spaceUuid,
+    ),
+  );
+
   DriveItemView _optimisticItem(
     UuidValue uuid,
     DriveItemKind kind,
@@ -445,9 +476,12 @@ class CachedDriveRepository extends ChangeNotifier implements DriveRepository {
             connectivity.reportFailure();
             break;
           }
-          if (op.kind == 'createDocument' && op.args['parentUuid'] != null) {
+          if ((op.kind == 'createDocument' ||
+                  op.kind == 'registerPresentation') &&
+              op.args['parentUuid'] != null) {
             // The folder went away (or became read-only) while offline: the
-            // document still has to exist, so create it in My Drive.
+            // document (or the deck created offline) still has to exist, so
+            // create it in My Drive.
             await queue.replaceFirst(
               PendingDriveOp(
                 id: op.id,
@@ -511,6 +545,14 @@ class CachedDriveRepository extends ChangeNotifier implements DriveRepository {
             name: a['name']! as String,
           ),
         ]);
+      case 'registerPresentation':
+        cache.put([
+          await remote.registerPresentation(
+            spaceUuid: u('spaceUuid'),
+            parentUuid: uOpt('parentUuid'),
+            name: a['name']! as String,
+          ),
+        ]);
     }
   }
 
@@ -544,6 +586,21 @@ class CachedDriveRepository extends ChangeNotifier implements DriveRepository {
     UuidValue? templateUuid,
   }) => _online(() async {
     final v = await remote.createSpreadsheet(
+      parentUuid: parentUuid,
+      name: name,
+      templateUuid: templateUuid,
+    );
+    cache.insertIntoFolderLists(v);
+    return v;
+  });
+
+  @override
+  Future<DriveItemView> createPresentation({
+    UuidValue? parentUuid,
+    required String name,
+    UuidValue? templateUuid,
+  }) => _online(() async {
+    final v = await remote.createPresentation(
       parentUuid: parentUuid,
       name: name,
       templateUuid: templateUuid,

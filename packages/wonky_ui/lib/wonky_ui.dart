@@ -26,6 +26,7 @@ export 'src/widgets/scroll_area/scroll_area.dart';
 export 'src/widgets/shimmer/loading_shimmer.dart';
 export 'src/widgets/shortcut_recorder/shortcut_recorder.dart';
 export 'src/widgets/split_view/split_view.dart';
+export 'src/widgets/stacked_bar/wonky_stacked_bar.dart';
 export 'src/widgets/status_bar/status_bar.dart';
 export 'src/widgets/sync_status/sync_status.dart';
 export 'src/widgets/table_size_picker/table_size_picker.dart';

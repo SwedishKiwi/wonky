@@ -6,7 +6,7 @@ import '../../platform/common/models.dart';
 import '../../platform/users/user_service.dart';
 import '../images/sheets_image_proxy.dart';
 import '../sheets_service.dart';
-import '../spaces/space_service.dart';
+import '../spaces/sheets_spaces.dart';
 
 /// Online-only Sheets operations (suite 12 §2, Sheets 10, 12 §2.5).
 class SheetsEndpoint extends Endpoint {
@@ -15,7 +15,7 @@ class SheetsEndpoint extends Endpoint {
 
   /// Reserves up to [count] (≤ 5) empty spaces for offline creation.
   Future<List<UuidValue>> reserveSpaces(Session session, int count) async =>
-      SpaceService.reserveSpaces(
+      SheetsSpaces.reserveSpaces(
         session,
         await UserService.actorOf(session),
         count,
@@ -26,14 +26,14 @@ class SheetsEndpoint extends Endpoint {
   Future<SubscribeResult> subscribe(
     Session session,
     UuidValue itemUuid,
-  ) async => SpaceService.subscribe(
+  ) async => SheetsSpaces.subscribe(
     session,
     await UserService.actorOf(session),
     itemUuid,
   );
 
   Future<void> unsubscribe(Session session, UuidValue itemUuid) async =>
-      SpaceService.unsubscribe(
+      SheetsSpaces.unsubscribe(
         session,
         await UserService.actorOf(session),
         itemUuid,
@@ -43,7 +43,7 @@ class SheetsEndpoint extends Endpoint {
   Future<List<UuidValue>> ensureSubscribed(
     Session session,
     List<UuidValue> spaces,
-  ) async => SpaceService.ensureSubscribed(
+  ) async => SheetsSpaces.ensureSubscribed(
     session,
     await UserService.actorOf(session),
     spaces,
@@ -51,7 +51,7 @@ class SheetsEndpoint extends Endpoint {
 
   /// Row counts for download progress.
   Future<SpaceStats> spaceStats(Session session, UuidValue itemUuid) async =>
-      SpaceService.statsFor(
+      SheetsSpaces.statsFor(
         session,
         await UserService.actorOf(session),
         itemUuid,

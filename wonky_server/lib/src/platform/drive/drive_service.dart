@@ -6,7 +6,9 @@ import 'package:wonky_core/wonky_core.dart' show Role;
 import 'package:wonky_write_core/wonky_write_core.dart' show Delta, DeltaUtils;
 
 import '../../sheets/spaces/space_copier.dart';
-import '../../sheets/spaces/space_service.dart';
+import '../../slides/spaces/deck_copies.dart';
+import '../../slides/spaces/slides_decks.dart';
+import '../spaces/space_service.dart';
 import '../../sheets/spaces/spreadsheet_factory.dart';
 import '../../sheets/spaces/sheets_create_defaults.dart';
 import '../../sheets/sync/sheets_sync_service.dart';
@@ -26,8 +28,14 @@ import '../comments/comment_copier.dart';
 import '../files/file_service.dart';
 import '../sharing/access_service.dart';
 import '../sharing/acl_events.dart';
+import '../storage/content_sizes.dart';
+import '../storage/storage_hooks.dart';
+import '../storage/storage_service.dart';
 import 'drive_events.dart';
+import 'drive_file_service.dart';
+import 'drive_file_filters.dart';
 import 'drive_views.dart';
+import 'kind_masks.dart';
 import 'templates/builtin_templates.dart';
 import '../cluster/cluster_bus.dart';
 
@@ -52,6 +60,8 @@ abstract final class DriveService {
       uuid,
       Role.viewer,
     );
+    // (v2) Uploads in progress are only visible to their uploader.
+    if (!DriveFileFilters.listable(item, actor.userId)) throw Errors.notFound();
     return DriveViews.one(session, actor.userId, item, role: role);
   }
 
@@ -232,6 +242,12 @@ abstract final class DriveService {
     }
 
     candidates = _applyFilters(candidates, filter.kinds, filter.owner, me);
+    candidates = DriveFileFilters.apply(
+      candidates,
+      me,
+      categories: filter.fileCategories,
+      foldersContaining: filter.foldersContaining,
+    );
     final roles = await AccessService.rolesFor(session, me, candidates);
     candidates = [
       for (final c in candidates)
@@ -384,15 +400,26 @@ abstract final class DriveService {
       for (final id in ids)
         if (byId[id] != null) byId[id]!,
     ];
-    ordered = _applyFilters(ordered, filters.kinds, filters.owner, actor.userId)
-        .where(
-          (i) =>
-              (filters.modifiedAfter == null ||
-                  i.modifiedAt.isAfter(filters.modifiedAfter!)) &&
-              (filters.modifiedBefore == null ||
-                  i.modifiedAt.isBefore(filters.modifiedBefore!)),
-        )
-        .toList();
+    ordered =
+        DriveFileFilters.apply(
+              _applyFilters(
+                ordered,
+                filters.kinds,
+                filters.owner,
+                actor.userId,
+              ),
+              actor.userId,
+              categories: filters.fileCategories,
+              search: true,
+            )
+            .where(
+              (i) =>
+                  (filters.modifiedAfter == null ||
+                      i.modifiedAt.isAfter(filters.modifiedAfter!)) &&
+                  (filters.modifiedBefore == null ||
+                      i.modifiedAt.isBefore(filters.modifiedBefore!)),
+            )
+            .toList();
     final roles = await AccessService.rolesFor(session, actor.userId, ordered);
     var views = await DriveViews.build(
       session,
@@ -449,6 +476,10 @@ abstract final class DriveService {
     UuidValue? contentRef,
     String? description,
     Transaction? transaction,
+    String? mimeType,
+    FileCategory? fileCategory,
+    FileUploadState? uploadState,
+    String? fileMetaJson,
   }) async {
     final now = nowUtc();
     final item = await DriveItem.db.insertRow(
@@ -459,7 +490,10 @@ abstract final class DriveService {
         // `registerSpreadsheet` reached the server.
         uuid:
             uuid ??
-            (kind == DriveItemKind.spreadsheet ? contentRef : null) ??
+            (kind == DriveItemKind.spreadsheet ||
+                    kind == DriveItemKind.presentation
+                ? contentRef
+                : null) ??
             const Uuid().v7obj(),
         kind: kind,
         name: normalizeItemName(name),
@@ -471,6 +505,10 @@ abstract final class DriveService {
         createdById: actor.userId,
         modifiedAt: now,
         modifiedById: actor.userId,
+        mimeType: mimeType,
+        fileCategory: fileCategory,
+        uploadState: uploadState,
+        fileMetaJson: fileMetaJson,
       ),
       transaction: transaction,
     );
@@ -490,8 +528,67 @@ abstract final class DriveService {
         item,
         transaction: transaction,
       );
+      // (v2) Folder kind masks (suite 05 §3.2).
+      if (KindMasks.counts(item)) {
+        await KindMasks.refreshChain(
+          session,
+          parent.id,
+          transaction: transaction,
+        );
+      }
     }
     return item;
+  }
+
+  /// [_insertItem] for the other drive services (files, presentations).
+  static Future<DriveItem> insertItem(
+    Session session,
+    Actor actor, {
+    required DriveItemKind kind,
+    required String name,
+    DriveItem? parent,
+    UuidValue? uuid,
+    UuidValue? contentRef,
+    String? description,
+    Transaction? transaction,
+    String? mimeType,
+    FileCategory? fileCategory,
+    FileUploadState? uploadState,
+    String? fileMetaJson,
+  }) => _insertItem(
+    session,
+    actor,
+    kind: kind,
+    name: name,
+    parent: parent,
+    uuid: uuid,
+    contentRef: contentRef,
+    description: description,
+    transaction: transaction,
+    mimeType: mimeType,
+    fileCategory: fileCategory,
+    uploadState: uploadState,
+    fileMetaJson: fileMetaJson,
+  );
+
+  /// [_parentFor] for the other drive services.
+  static Future<DriveItem?> parentFor(
+    Session session,
+    Actor actor,
+    UuidValue? parentUuid, {
+    Transaction? transaction,
+  }) => _parentFor(session, actor, parentUuid, transaction: transaction);
+
+  /// [_afterCreate] for the other drive services.
+  static Future<void> afterCreate(
+    Session session,
+    Actor actor,
+    DriveItem item, {
+    Map<String, Object?> summary = const {},
+    ActivityType type = ActivityType.created,
+  }) async {
+    await ActivityService.log(session, item.id!, actor, type, summary: summary);
+    await DriveEvents.notify(session, item, DriveChangeKind.created);
   }
 
   static Future<void> _afterCreate(
@@ -599,6 +696,15 @@ abstract final class DriveService {
     } else if (initialMarkdown != null && initialMarkdown.isNotEmpty) {
       content = WriteContent.fromMarkdown(initialMarkdown).delta;
     }
+    // (v2) Quota (Drive 03 §7.2): blank documents are always allowed.
+    if (content != null) {
+      await StorageHooks.checkCaller(
+        session,
+        actor,
+        DocumentSize.of(content),
+        templateUuid != null ? QuotaReason.template : QuotaReason.import,
+      );
+    }
     final docUuid = documentUuid ?? const Uuid().v7obj();
     final item = await session.db.transaction((tx) async {
       final parent = await _parentFor(
@@ -630,14 +736,17 @@ abstract final class DriveService {
         language: language,
         transaction: tx,
       );
-      if (content != null) {
+      if (content case final content?) {
         await DriveItem.db.updateRow(
           session,
-          item.copyWith(
-            searchText: DocumentStore.searchText(content),
-            sizeBytes: utf8.encode(DeltaUtils.text(content)).length,
-          ),
-          columns: (t) => [t.searchText, t.sizeBytes],
+          item.copyWith(searchText: DocumentStore.searchText(content)),
+          columns: (t) => [t.searchText],
+          transaction: tx,
+        );
+        await StorageService.instance.setItemSize(
+          session,
+          item,
+          DocumentSize.of(content),
           transaction: tx,
         );
       }
@@ -738,6 +847,17 @@ abstract final class DriveService {
     }
     // Validate the parent before creating a space.
     await _parentFor(session, actor, parentUuid);
+    // (v2) Quota of a template copy (Drive 03 §7.2); blank: always allowed.
+    if (templateItem != null || (builtin?.sheets.isNotEmpty ?? false)) {
+      await StorageHooks.checkCaller(
+        session,
+        actor,
+        templateItem != null
+            ? templateItem.sizeBytes + templateItem.attachmentBytes
+            : StorageHooks.sheetsEstimate(builtin!.sheets),
+        QuotaReason.template,
+      );
+    }
     final UuidValue space;
     if (templateItem != null) {
       space = await session.offlineSync.spaces.createFor(actor.authUserId);
@@ -789,6 +909,7 @@ abstract final class DriveService {
       );
       return item;
     });
+    await ContentSizes.refresh(session, item);
     await _afterCreate(
       session,
       actor,
@@ -812,6 +933,12 @@ abstract final class DriveService {
   }) async {
     final cleanName = normalizeItemName(name);
     await _parentFor(session, actor, parentUuid);
+    await StorageHooks.checkCaller(
+      session,
+      actor,
+      StorageHooks.sheetsEstimate(sheets),
+      QuotaReason.import,
+    );
     final space = await session.offlineSync.spaces.createFor(actor.authUserId);
     final d = await SheetsCreateDefaults.of(session, actor.userId);
     await SpreadsheetFactory.write(
@@ -849,6 +976,7 @@ abstract final class DriveService {
       );
       return item;
     });
+    await ContentSizes.refresh(session, item);
     await _afterCreate(session, actor, item, summary: summary);
     return DriveViews.one(session, actor.userId, item, role: Role.owner);
   }
@@ -896,6 +1024,9 @@ abstract final class DriveService {
     }
     if (item.kind == DriveItemKind.spreadsheet && item.contentRef != null) {
       await _mirrorTitleToSpreadsheet(session, actor, updated);
+    }
+    if (item.kind == DriveItemKind.presentation && item.contentRef != null) {
+      await SlidesDecks.mirrorTitleToDeck(session, actor, updated);
     }
     await DriveEvents.notify(session, updated, DriveChangeKind.updated);
     return DriveViews.one(session, actor.userId, updated, role: role);
@@ -1047,6 +1178,9 @@ abstract final class DriveService {
         );
         final updated = await row;
         await AccessService.rebuildInherited(session, updated, transaction: tx);
+        // (v2) Kind masks of the old and the new folder chain.
+        await KindMasks.refreshChain(session, item.parentId, transaction: tx);
+        await KindMasks.refreshChain(session, target?.id, transaction: tx);
         return updated;
       });
       await ActivityService.log(
@@ -1123,7 +1257,52 @@ abstract final class DriveService {
     switch (source.kind) {
       case DriveItemKind.folder:
         throw Errors.invalid('Folders cannot be copied.');
+      case DriveItemKind.presentation:
+        // (v2, SL-8) Deck copies (Slides 02 §9.3): `DeckCopier` rows in a
+        // new deck space, images re-homed; the copier pays.
+        final copied = await DeckCopies.copy(
+          session,
+          actor,
+          source,
+          name: newName,
+          parentUuid:
+              parentUuid ?? await _defaultCopyParent(session, actor, source),
+          description: source.description,
+        );
+        if (copyComments) {
+          await CommentCopier.copyThreads(
+            session,
+            from: source,
+            to: copied.item,
+            anchorIdMap: copied.ids,
+          );
+        }
+        copyView = await _finishCopy(
+          session,
+          actor,
+          source,
+          copied.item,
+          copySharing,
+        );
+      case DriveItemKind.file:
+        // (v2) Server-side copy of the stored bytes (Drive 02 §10).
+        final item = await DriveFileService.copyFile(
+          session,
+          actor,
+          source,
+          newName: newName,
+          parentUuid:
+              parentUuid ?? await _defaultCopyParent(session, actor, source),
+        );
+        copyView = await _finishCopy(session, actor, source, item, copySharing);
       case DriveItemKind.document:
+        // (v2) The copier pays for the copy (Drive 03 §7.2).
+        await StorageHooks.checkCaller(
+          session,
+          actor,
+          source.sizeBytes + source.attachmentBytes,
+          QuotaReason.copy,
+        );
         final sourceDoc = await DocumentStore.requireByItem(
           session,
           source.id!,
@@ -1168,11 +1347,14 @@ abstract final class DriveService {
           );
           await DriveItem.db.updateRow(
             session,
-            item.copyWith(
-              searchText: source.searchText,
-              sizeBytes: source.sizeBytes,
-            ),
-            columns: (t) => [t.searchText, t.sizeBytes],
+            item.copyWith(searchText: source.searchText),
+            columns: (t) => [t.searchText],
+            transaction: tx,
+          );
+          await StorageService.instance.setItemSize(
+            session,
+            item,
+            DocumentSize.of(content),
             transaction: tx,
           );
           if (copyComments) {
@@ -1188,6 +1370,12 @@ abstract final class DriveService {
         });
         copyView = await _finishCopy(session, actor, source, item, copySharing);
       case DriveItemKind.spreadsheet:
+        await StorageHooks.checkCaller(
+          session,
+          actor,
+          source.sizeBytes + source.attachmentBytes,
+          QuotaReason.copy,
+        );
         final space = await session.offlineSync.spaces.createFor(
           actor.authUserId,
         );
@@ -1232,6 +1420,7 @@ abstract final class DriveService {
           }
           return item;
         });
+        await ContentSizes.refresh(session, item);
         copyView = await _finishCopy(session, actor, source, item, copySharing);
     }
     return copyView;
@@ -1248,7 +1437,17 @@ abstract final class DriveService {
     Document? source,
     String? frontMatter,
     Map<String, Object?> activitySummary = const {},
+    String? quotaReason = QuotaReason.import,
   }) async {
+    // (v2) Quota (Drive 03 §7.2); null skips the check (already checked).
+    if (quotaReason != null) {
+      await StorageHooks.checkCaller(
+        session,
+        actor,
+        DocumentSize.of(content),
+        quotaReason,
+      );
+    }
     final docUuid = const Uuid().v7obj();
     final item = await session.db.transaction((tx) async {
       final parent = await _parentFor(
@@ -1281,11 +1480,14 @@ abstract final class DriveService {
       );
       await DriveItem.db.updateRow(
         session,
-        item.copyWith(
-          searchText: DocumentStore.searchText(content),
-          sizeBytes: utf8.encode(DeltaUtils.text(content)).length,
-        ),
-        columns: (t) => [t.searchText, t.sizeBytes],
+        item.copyWith(searchText: DocumentStore.searchText(content)),
+        columns: (t) => [t.searchText],
+        transaction: tx,
+      );
+      await StorageService.instance.setItemSize(
+        session,
+        item,
+        DocumentSize.of(content),
         transaction: tx,
       );
       return item;
@@ -1578,13 +1780,24 @@ abstract final class DriveService {
         Role.editor,
       );
       if (item.trashedAt != null) continue;
+      // (v2) Trashing an upload in progress cancels it (Drive 02 §2).
+      if (item.uploadState == FileUploadState.uploading) {
+        await DriveFileService.cancelUpload(session, actor, item.uuid);
+        continue;
+      }
       final nodes = await AccessService.subtree(session, item);
       final ids = {for (final n in nodes) n.id!};
-      await DriveItem.db.updateWhere(
-        session,
-        columnValues: (t) => [t.trashedAt(now), t.trashedById(actor.userId)],
-        where: (t) => t.id.inSet(ids) & t.trashedAt.equals(null),
-      );
+      await session.db.transaction((tx) async {
+        await DriveItem.db.updateWhere(
+          session,
+          columnValues: (t) => [t.trashedAt(now), t.trashedById(actor.userId)],
+          where: (t) => t.id.inSet(ids) & t.trashedAt.equals(null),
+          transaction: tx,
+        );
+        await KindMasks.refreshChain(session, item.parentId, transaction: tx);
+        // (v2) Bytes move to the owners' trash (Drive 03 §7.4).
+        await StorageService.instance.onTrash(session, nodes, transaction: tx);
+      });
       await ActivityService.log(session, item.id!, actor, ActivityType.trashed);
       final updated = (await DriveItem.db.findById(session, item.id!))!;
       await AclEvents.changed(session, updated, kind: DriveChangeKind.trashed);
@@ -1617,11 +1830,23 @@ abstract final class DriveService {
         final parent = await DriveItem.db.findById(session, parentId);
         if (parent == null || parent.trashedAt != null) parentId = null;
       }
-      await DriveItem.db.updateWhere(
-        session,
-        columnValues: (t) => [t.trashedAt(null), t.trashedById(null)],
-        where: (t) => t.id.inSet(ids),
-      );
+      await session.db.transaction((tx) async {
+        await DriveItem.db.updateWhere(
+          session,
+          columnValues: (t) => [t.trashedAt(null), t.trashedById(null)],
+          where: (t) => t.id.inSet(ids),
+          transaction: tx,
+        );
+        // (v2) Never refused: trashed bytes already count (Q16).
+        await StorageService.instance.onRestore(
+          session,
+          [
+            for (final n in nodes)
+              if (ids.contains(n.id)) n,
+          ],
+          transaction: tx,
+        );
+      });
       if (parentId != item.parentId) {
         await DriveItem.db.updateWhere(
           session,
@@ -1633,6 +1858,7 @@ abstract final class DriveService {
       if (parentId != item.parentId) {
         await AccessService.rebuildInherited(session, updated);
       }
+      await KindMasks.refreshSubtree(session, updated);
       await ActivityService.log(
         session,
         item.id!,
@@ -1695,7 +1921,9 @@ abstract final class DriveService {
     final ids = {for (final n in nodes) n.id!};
     await FileService.deleteFilesOfItems(session, ids);
     for (final n in nodes.reversed) {
-      if (n.kind == DriveItemKind.spreadsheet && n.contentRef != null) {
+      if ((n.kind == DriveItemKind.spreadsheet ||
+              n.kind == DriveItemKind.presentation) &&
+          n.contentRef != null) {
         await session.db.transaction(
           (tx) => OfflineSyncSpace.db.deleteWhere(
             session,
@@ -1709,7 +1937,18 @@ abstract final class DriveService {
         );
       }
     }
-    await DriveItem.db.deleteWhere(session, where: (t) => t.id.inSet(ids));
+    await session.db.transaction((tx) async {
+      await DriveItem.db.deleteWhere(
+        session,
+        where: (t) => t.id.inSet(ids),
+        transaction: tx,
+      );
+      // (v2) Frees the owners' bytes (Drive 03 §7.4).
+      await StorageService.instance.onDelete(session, nodes, transaction: tx);
+      if (item.parentId != null && !ids.contains(item.parentId)) {
+        await KindMasks.refreshChain(session, item.parentId, transaction: tx);
+      }
+    });
     for (final n in nodes) {
       final signal = DriveChangeSignal(
         kind: DriveChangeKind.removed,
@@ -1762,6 +2001,7 @@ abstract final class DriveService {
             previewText: t.previewText,
             themeKey: t.themeKey,
             previewStyle: t.previewStyle,
+            sizeBytes: _builtinSize(t),
           ),
     ];
     final published = await DriveItem.db.find(
@@ -1791,11 +2031,21 @@ abstract final class DriveService {
               ? '${item.searchText!.substring(0, 140)}…'
               : item.searchText ?? '',
           thumbnailFileId: item.thumbnailFileId,
+          sizeBytes: item.sizeBytes + item.attachmentBytes,
         ),
       );
     }
     return result;
   }
+
+  static final Map<String, int> _builtinSizes = {};
+
+  /// (v2) The pre-check size of an item made from a built-in template
+  /// (`TemplateView.sizeBytes`, Drive 03 §6.5).
+  static int _builtinSize(BuiltinTemplate t) =>
+      _builtinSizes[t.key] ??= t.markdown != null
+      ? DocumentSize.of(WriteContent.fromMarkdown(t.markdown!).delta)
+      : StorageHooks.sheetsEstimate(t.sheets);
 
   /// Publishes (or unpublishes with null) an owned item as a template.
   static Future<DriveItemView> setTemplate(
@@ -1823,36 +2073,9 @@ abstract final class DriveService {
     return DriveViews.one(session, actor.userId, updated, role: role);
   }
 
-  static Future<StorageUsage> storageUsage(Session session, Actor actor) async {
-    final result = await session.db.unsafeQuery(
-      r'''
-      SELECT
-        coalesce(sum("sizeBytes"), 0)::bigint,
-        count(*) FILTER (WHERE kind = 'document'),
-        count(*) FILTER (WHERE kind = 'spreadsheet'),
-        count(*) FILTER (WHERE kind = 'folder')
-      FROM drive_item WHERE "ownerId" = @me
-      ''',
-      parameters: QueryParameters.named({'me': actor.userId}),
-    );
-    final files = await session.db.unsafeQuery(
-      r'''
-      SELECT coalesce(sum("sizeBytes"), 0)::bigint, count(*)
-      FROM stored_file WHERE "ownerId" = @me AND status = 'ready'
-        AND kind NOT IN ('exportResult', 'importSource')
-      ''',
-      parameters: QueryParameters.named({'me': actor.userId}),
-    );
-    final row = result.first;
-    final fileRow = files.first;
-    return StorageUsage(
-      bytesUsed: (row[0] as int) + (fileRow[0] as int),
-      documents: row[1] as int,
-      spreadsheets: row[2] as int,
-      folders: row[3] as int,
-      files: fileRow[1] as int,
-    );
-  }
+  /// The caller's storage (Drive 03 §3), from [StorageService].
+  static Future<StorageUsage> storageUsage(Session session, Actor actor) =>
+      StorageService.instance.usage(session, actor.userId);
 
   static Future<DriveItemView> setThumbnail(
     Session session,
@@ -1922,10 +2145,13 @@ abstract final class DriveService {
         t.modifiedAt(nowUtc()),
         t.modifiedById(userId),
         if (searchText != null) t.searchText(searchText),
-        if (sizeBytes != null) t.sizeBytes(sizeBytes),
       ],
       where: (t) => t.id.equals(item.id!),
     );
+    // (v2) Content size through the storage counters (Drive 03 §2).
+    if (sizeBytes != null) {
+      await StorageService.instance.setItemSize(session, item, sizeBytes);
+    }
     final updated = await DriveItem.db.findById(session, item.id!);
     if (updated != null) {
       await DriveEvents.notify(session, updated, DriveChangeKind.modified);

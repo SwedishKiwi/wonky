@@ -180,7 +180,7 @@ void main() {
       final r = _plan(doc(), model, ids, fileName: 'orders.xlsx');
       model.applyPlan(r.plan);
       expect(r.plan.label, 'Import orders.xlsx');
-      model.applyChanges(UndoInverter.invert(r.plan, model));
+      model.applyChanges(SheetsUndo.invert(r.plan, model));
       expect(rowsSnapshot(model), before);
     });
 
@@ -207,7 +207,7 @@ void main() {
           location: ImportLocation.replaceSpreadsheet,
         );
         model.applyPlan(r.plan);
-        model.applyChanges(UndoInverter.invert(r.plan, model));
+        model.applyChanges(SheetsUndo.invert(r.plan, model));
         expect(rowsSnapshot(model), before);
       },
     );
@@ -313,7 +313,7 @@ void main() {
           cell: 'E9',
         );
         model.applyPlan(r.plan);
-        model.applyChanges(UndoInverter.invert(r.plan, model));
+        model.applyChanges(SheetsUndo.invert(r.plan, model));
         expect(rowsSnapshot(model), before);
       });
     }

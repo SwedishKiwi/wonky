@@ -27,6 +27,16 @@ class PickedImage {
   final String mimeType;
 }
 
+/// The quota pre-check of an image insert (Drive 03 §7.2): the images count
+/// against the owner of the open document. Shows the *Out of storage*
+/// dialog (own or owner variant) and returns false when they don't fit.
+Future<bool> imagesFitStorage(ShellServices s, List<PickedImage> images) =>
+    s.storageChecks.ensureRoom(
+      images.fold<int>(0, (n, i) => n + i.bytes.length),
+      reason: QuotaReasons.image,
+      item: s.currentItem.value,
+    );
+
 /// Why an image file was rejected.
 enum ImageRejectReason { svg, unsupportedFormat, tooLarge }
 
@@ -149,7 +159,13 @@ class WriteImageServices extends EditorImageServices {
     required this.documentUuid,
     UuidV7Generator? ids,
     this._offlineUploads,
+    this.onQuotaExceeded,
   }) : _ids = ids ?? UuidV7Generator.instance;
+
+  /// Called when the server refuses an upload of this session because the
+  /// storage quota is full (the screen shows the *Out of storage* dialog);
+  /// the image shows "Not uploaded — out of storage" either way.
+  final void Function(Object error)? onQuotaExceeded;
 
   final FileRepository files;
 
@@ -168,9 +184,25 @@ class WriteImageServices extends EditorImageServices {
     if (q != null && !identical(q, _watched)) {
       _watched = q;
       unawaited(_completedSub?.cancel());
+      unawaited(_refusedSub?.cancel());
       _completedSub = q.completed.listen(_onQueueCompleted);
+      _refusedSub = q.refused.listen(_onQueueRefused);
     }
     return q;
+  }
+
+  StreamSubscription<UuidValue>? _refusedSub;
+
+  /// Upload states of images that only the queue uploads (inserted in an
+  /// earlier session): set when the server refuses them on quota.
+  final Map<String, ValueNotifier<ImageUploadStatus?>> _queued = {};
+
+  static const _outOfStorage = ImageUploadStatus(ImageUploadPhase.outOfStorage);
+
+  void _onQueueRefused(UuidValue fileUuid) {
+    final src = '$scheme${fileUuid.uuid}';
+    if (_uploads.containsKey(src)) return; // Shown by [_run].
+    (_queued[src] ??= ValueNotifier(null)).value = _outOfStorage;
   }
 
   void _onQueueCompleted(UuidValue fileUuid) {
@@ -181,6 +213,7 @@ class WriteImageServices extends EditorImageServices {
       u.status.value = null;
       _updatePending();
     }
+    _queued.remove(src)?.value = null;
     _urls.remove(src);
     _resolving.remove(src);
   }
@@ -210,7 +243,7 @@ class WriteImageServices extends EditorImageServices {
 
   Future<void> _run(String src, _Upload u) async {
     final queue = _queue;
-    if (queue != null && u.attempts == 0) {
+    if (queue != null && u.attempts == 0 && !queue.contains(u.fileUuid)) {
       try {
         await queue.add(
           fileUuid: u.fileUuid,
@@ -249,6 +282,18 @@ class WriteImageServices extends EditorImageServices {
         return;
       } catch (e) {
         debugPrint('Image upload failed (attempt ${u.attempts}): $e');
+        if (QuotaErrorPresenter.isQuotaExceeded(e)) {
+          // Drive 03 §6.3: kept (on this device when queued) until Retry /
+          // Remove; the queue doesn't retry it on its own.
+          u.status.value = ImageUploadStatus(
+            ImageUploadPhase.outOfStorage,
+            localPreview: MemoryImage(u.image.bytes),
+          );
+          if (queue != null) queue.markOutOfStorage(u.fileUuid);
+          _updatePending();
+          onQuotaExceeded?.call(e);
+          return;
+        }
         final retryable = isOfflineError(e);
         if (retryable && queue != null && queue.contains(u.fileUuid)) {
           // Stored on this device: the queue uploads it once online.
@@ -285,15 +330,47 @@ class WriteImageServices extends EditorImageServices {
   }
 
   @override
-  ValueListenable<ImageUploadStatus?> uploadStatus(String src) =>
-      _uploads[src]?.status ?? _none;
+  ValueListenable<ImageUploadStatus?> uploadStatus(String src) {
+    final own = _uploads[src]?.status;
+    if (own != null) return own;
+    final queued = _queued[src];
+    if (queued != null) return queued;
+    final fileUuid = _fileUuidOf(src);
+    final queue = _queue;
+    if (fileUuid == null || queue == null || !queue.contains(fileUuid)) {
+      return _none;
+    }
+    return _queued[src] = ValueNotifier(
+      queue.isOutOfStorage(fileUuid) ? _outOfStorage : null,
+    );
+  }
+
+  static UuidValue? _fileUuidOf(String src) {
+    if (!src.startsWith(scheme)) return null;
+    try {
+      return UuidValue.withValidation(src.substring(scheme.length));
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
   void retry(String src) {
     final u = _uploads[src];
     if (u != null) {
       u.attempts = 0;
+      final f = u.fileUuid;
+      // `_run` claims the file first, so the queue leaves it alone.
       unawaited(_run(src, u));
+      if (_queue?.isOutOfStorage(f) ?? false) _queue!.retry(f);
+      return;
+    }
+    final queued = _queued[src];
+    final fileUuid = _fileUuidOf(src);
+    if (queued != null && fileUuid != null) {
+      // Uploaded by the queue (from the bytes on this device).
+      queued.value = null;
+      _queue?.retry(fileUuid);
       return;
     }
     _urls.remove(src);
@@ -302,6 +379,12 @@ class WriteImageServices extends EditorImageServices {
 
   @override
   void cancel(String src) {
+    final queued = _queued.remove(src);
+    if (queued != null) {
+      queued.value = null;
+      final fileUuid = _fileUuidOf(src);
+      if (fileUuid != null) unawaited(_queue?.cancel(fileUuid));
+    }
     final u = _uploads.remove(src);
     if (u == null) return;
     u.cancelled = true;
@@ -368,6 +451,11 @@ class WriteImageServices extends EditorImageServices {
 
   void dispose() {
     unawaited(_completedSub?.cancel());
+    unawaited(_refusedSub?.cancel());
+    for (final q in _queued.values) {
+      q.dispose();
+    }
+    _queued.clear();
     for (final u in _uploads.values) {
       u.cancelled = true;
       _watched?.release(u.fileUuid);

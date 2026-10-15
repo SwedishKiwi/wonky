@@ -21,7 +21,8 @@
 ///      must not import Flutter or any package that depends on Flutter;
 ///    - `wonky_ui` must not import client or server code (`wonky_client`,
 ///      `wonky_server`, `serverpod*`, `wonky_app`);
-///    - Write packages must not import Sheets packages and vice versa;
+///    - app families (Write, Sheets, Slides, Drive) must not import each
+///      other's packages;
 ///    - nothing outside `wonky_server` imports `package:wonky_server/`, and no
 ///      relative import leaves its package (e.g. into
 ///      `wonky_server/lib/src/generated`);
@@ -49,8 +50,19 @@ import 'dart:io';
 /// The kind of a workspace package; decides which import rules apply.
 enum Kind { pureDart, flutter }
 
-/// The product family of a package, for the Write ⇄ Sheets rule.
-enum Family { shared, write, sheets }
+/// The product family of a package: app families never import each other's
+/// packages (01 §2.1).
+enum Family {
+  shared('Shared'),
+  write('Write'),
+  sheets('Sheets'),
+  slides('Slides'),
+  drive('Drive');
+
+  const Family(this.label);
+
+  final String label;
+}
 
 /// The dependency rule of one workspace package.
 class PackageRule {
@@ -128,8 +140,10 @@ const rules = <String, PackageRule>{
       'xml',
       'image',
       'crypto',
-      'highlight',
+      'wonky_code',
       're_highlight',
+      'wonky_rich_text',
+      'wonky_fonts',
     },
     exceptions: {
       'diff_match_patch':
@@ -141,6 +155,9 @@ const rules = <String, PackageRule>{
     family: Family.sheets,
     spec: {
       'wonky_core',
+      'wonky_charts',
+      'wonky_numfmt',
+      'wonky_sync_kit',
       'wonky_sync_models',
       'petitparser',
       'intl',
@@ -154,6 +171,108 @@ const rules = <String, PackageRule>{
     exceptions: {
       'vector_math':
           'Matrix4 for PdfGraphics.setTransform (a dependency of pdf)',
+    },
+  ),
+  // Shared chart engine and number formats (v2; Slides 08 §2, Sheets 08 §24).
+  'wonky_numfmt': PackageRule(
+    kind: Kind.pureDart,
+    spec: {'intl', 'petitparser'},
+  ),
+  'wonky_charts': PackageRule(
+    kind: Kind.pureDart,
+    spec: {'wonky_core', 'wonky_numfmt', 'pdf', 'image', 'vector_math'},
+  ),
+  'wonky_charts_flutter': PackageRule(
+    kind: Kind.flutter,
+    spec: {'wonky_charts', 'wonky_ui', 'shad', 'flutter_scene', 'vector_math'},
+  ),
+  // Shared code highlighting (v2; Slides 07 §2, Write 04 §15.5). Leaves:
+  // no app family, shell, client or server code.
+  // Shared rich text, fonts and spell checking (v2; v2 review Q4/Q23, Drive
+  // 05 D-7). Leaves: no app family, shell, client or server code. Fonts and
+  // dictionaries are package assets (`flutter: assets:`), the code is pure.
+  'wonky_rich_text': PackageRule(
+    kind: Kind.pureDart,
+    spec: {'wonky_core', 'dart_quill_delta', 'markdown'},
+    forbiddenImports: _sharedLeafForbidden,
+  ),
+  'wonky_fonts': PackageRule(
+    kind: Kind.pureDart,
+    spec: {},
+    forbiddenImports: _sharedLeafForbidden,
+  ),
+  'wonky_spellcheck': PackageRule(
+    kind: Kind.pureDart,
+    spec: {'wonky_core'},
+    forbiddenImports: _sharedLeafForbidden,
+  ),
+  'wonky_code': PackageRule(
+    kind: Kind.pureDart,
+    spec: {'wonky_core', 'string_scanner', 'highlight'},
+    forbiddenImports: [..._sharedLeafForbidden, 'package:wonky_code_flutter'],
+  ),
+  'wonky_code_flutter': PackageRule(
+    kind: Kind.flutter,
+    spec: {'wonky_code', 'wonky_ui', 'shad', 're_editor'},
+    forbiddenImports: _sharedLeafForbidden,
+  ),
+  // Shared offline-sync kit (v2; Slides 12 §5.1–5.2, suite 12 §2.6, Drive 05
+  // D-6), extracted from Sheets: the pure half (row changes, plans, undo)
+  // and the client half (replica, journal, writer, sync controller). Below
+  // the app families; the pure half never imports the Flutter half.
+  'wonky_sync_kit': PackageRule(
+    kind: Kind.pureDart,
+    spec: {
+      'wonky_core',
+      'wonky_sync_models',
+      'serverpod_database',
+      'serverpod_serialization',
+    },
+    forbiddenImports: [
+      ..._appFamilyForbidden,
+      'package:wonky_app',
+      'package:wonky_client',
+      'package:wonky_server',
+      'package:wonky_sync_kit_flutter',
+    ],
+  ),
+  'wonky_sync_kit_flutter': PackageRule(
+    kind: Kind.flutter,
+    spec: {
+      'wonky_sync_kit',
+      'wonky_app',
+      'wonky_ui',
+      'wonky_client',
+      'wonky_sync_models',
+      'serverpod_offline_sync_client',
+      'serverpod_database',
+    },
+    exceptions: {
+      'wonky_core': 'roles and id generators (pure Dart)',
+      'path_provider': 'desktop location of the replica files (12 §2.5)',
+      'sqlite3':
+          'read-only recovery read of a replica that cannot be opened (12 §2.5)',
+    },
+    forbiddenImports: [..._appFamilyForbidden, 'package:wonky_server'],
+  ),
+  // Slides core (v2; Slides 01 §7): pure Dart, never imports Write or Sheets
+  // packages (v2 review Q4); the family rule enforces that.
+  'wonky_slides_core': PackageRule(
+    kind: Kind.pureDart,
+    family: Family.slides,
+    spec: {
+      'wonky_core',
+      'wonky_sync_models',
+      'wonky_sync_kit',
+      'wonky_charts',
+      'wonky_numfmt',
+      'wonky_code',
+      'wonky_rich_text',
+      'wonky_fonts',
+      'pdf',
+      'image',
+      'vector_math',
+      'crypto',
     },
   ),
   'wonky_sheets_script': PackageRule(
@@ -195,7 +314,10 @@ const rules = <String, PackageRule>{
       'wonky_write_core',
       'wonky_sheets_core',
       'wonky_sheets_script',
+      'wonky_slides_core',
+      'wonky_sync_kit',
       'wonky_sync_models',
+      'wonky_code',
       'mcp_dart',
       'http',
       'dartantic_ai',
@@ -204,6 +326,8 @@ const rules = <String, PackageRule>{
       'crypto': 'token and content hashes',
       'dart_quill_delta': 'server-authoritative OT over Deltas (A4)',
       'yaml': 'reads the wonky/mcp/ai sections of the config files',
+      'image': 'Drive upload previews and thumbnails (Drive 02 §6)',
+      'mime': 'MIME sniffing of uploaded files (Drive 02 §5, suite 13 §6)',
     },
   ),
   'wonky_client': PackageRule(
@@ -242,6 +366,8 @@ const rules = <String, PackageRule>{
       'go_router',
       'provider',
       'mcp_dart',
+      'wonky_spellcheck',
+      'wonky_fonts',
     },
     exceptions: {
       'shad': 'UI is built with shad (02)',
@@ -263,6 +389,8 @@ const rules = <String, PackageRule>{
       'wonky_app',
       'wonky_ui',
       'wonky_write_core',
+      'wonky_code',
+      'wonky_code_flutter',
       'super_editor',
       'super_clipboard',
       'printing',
@@ -272,10 +400,55 @@ const rules = <String, PackageRule>{
     exceptions: {
       ..._appExceptions,
       'dart_quill_delta': 'client side of the Delta OT (A4)',
-      'syntax_highlight':
-          'code block syntax highlighting in the editor (vendored, 04 §15.4)',
       'http': 'fetches server-side exports',
       'sqlite_async': 'offline document cache (with wonky_app LocalDatabase)',
+    },
+  ),
+  'wonky_drive': PackageRule(
+    kind: Kind.flutter,
+    family: Family.drive,
+    spec: {
+      'wonky_app',
+      'wonky_ui',
+      'wonky_code_flutter',
+      'printing',
+      'file_picker',
+      'file_saver',
+      'http',
+    },
+    exceptions: _appExceptions,
+  ),
+  // The Slides app (01 §2.1, Slides 01 §7): SL-1 is the skeleton and only
+  // uses the shell; the rest of the list joins with the work packages that
+  // use it (Slides 12 §4).
+  'wonky_slides': PackageRule(
+    kind: Kind.flutter,
+    family: Family.slides,
+    spec: {
+      'wonky_app',
+      'wonky_ui',
+      'wonky_slides_core',
+      'wonky_sync_kit',
+      'wonky_sync_kit_flutter',
+      'wonky_charts_flutter',
+      'wonky_code_flutter',
+      'wonky_rich_text',
+      'wonky_fonts',
+      'super_editor',
+      'super_clipboard',
+      'printing',
+      'file_saver',
+      'file_picker',
+      'flutter_scene',
+      'vector_math',
+    },
+    exceptions: {
+      ..._appExceptions,
+      'wonky_sync_models':
+          'synced ORM classes and the table codec of the replica (Slides 02)',
+      'serverpod_offline_sync_client':
+          'offline-sync client: deck sync sessions (Slides 02 §9)',
+      'serverpod_database': 'ORM types of the local replica (Slides 02 §9)',
     },
   ),
   'wonky_sheets': PackageRule(
@@ -286,6 +459,9 @@ const rules = <String, PackageRule>{
       'wonky_ui',
       'wonky_sheets_core',
       'wonky_sheets_script',
+      'wonky_charts_flutter',
+      'wonky_sync_kit',
+      'wonky_sync_kit_flutter',
       'two_dimensional_scrollables',
       'super_clipboard',
       're_editor',
@@ -309,12 +485,10 @@ const rules = <String, PackageRule>{
       're_highlight':
           'Dart grammar for the script editor (re_editor, Sheets 09 §14.2)',
       'crypto': 'ScriptFile.contentHash sha256 (Sheets 09 A-09-2)',
-      'sqlite3':
-          'read-only recovery read of a replica that cannot be opened (12 §2.5)',
-      'archive': 'ZIP of the unsynced spreadsheets of that recovery (12 §2.5)',
+      'archive':
+          'ZIP of the unsynced spreadsheets of a replica that cannot be '
+          'opened (12 §2.5)',
       'flutter_svg': 'rasterizing SVG images on insert (Sheets 08 §10.1)',
-      'flutter_scene': 'GPU backend of 3D charts (Sheets 08 §23.7)',
-      'vector_math': 'GPU backend of 3D charts (Sheets 08 §23.7)',
     },
     // The script compiler (and the analyzer) is server only (01 A8, Sheets
     // 09 §3.1): the app only instantiates dart_eval runtimes.
@@ -327,6 +501,37 @@ const rules = <String, PackageRule>{
   ),
 };
 
+/// Imports the shared leaf packages (`wonky_code*`, …) must not use: app
+/// families, the shell, client and server code (01 §2.1).
+const _sharedLeafForbidden = [
+  'package:wonky_write',
+  'package:wonky_write_core',
+  'package:wonky_sheets',
+  'package:wonky_sheets_core',
+  'package:wonky_sheets_script',
+  'package:wonky_slides',
+  'package:wonky_slides_core',
+  'package:wonky_drive',
+  'package:wonky_app',
+  'package:wonky_client',
+  'package:wonky_server',
+  'package:wonky_sync_models',
+  'package:serverpod',
+];
+
+/// The packages of every app family (01 §2.1), which the shared packages
+/// below the families must not import.
+const _appFamilyForbidden = [
+  'package:wonky_write/',
+  'package:wonky_write_core/',
+  'package:wonky_sheets/',
+  'package:wonky_sheets_core/',
+  'package:wonky_sheets_script/',
+  'package:wonky_slides/',
+  'package:wonky_slides_core/',
+  'package:wonky_drive/',
+];
+
 /// Entry points run only in development (`target: lib/driver.dart` under
 /// `serverpod: flutter_apps:`), which may import `dev_dependencies`.
 const _devEntryPoints = {'lib/driver.dart'};
@@ -337,11 +542,12 @@ const _devEntryPoints = {'lib/driver.dart'};
 /// check skips it, the other rules still apply.
 const _generatedMarker = 'AUTOMATICALLY GENERATED CODE DO NOT MODIFY';
 
-const _writePackages = {'wonky_write', 'wonky_write_core'};
-const _sheetsPackages = {
-  'wonky_sheets',
-  'wonky_sheets_core',
-  'wonky_sheets_script',
+/// The packages of each app family (01 §2.1); shared packages are in none.
+const _familyPackages = <Family, Set<String>>{
+  Family.write: {'wonky_write', 'wonky_write_core'},
+  Family.sheets: {'wonky_sheets', 'wonky_sheets_core', 'wonky_sheets_script'},
+  Family.slides: {'wonky_slides', 'wonky_slides_core'},
+  Family.drive: {'wonky_drive'},
 };
 
 void main(List<String> args) {
@@ -530,11 +736,16 @@ void _checkFile({
         break;
       }
     }
-    if (rule.family == Family.write && _sheetsPackages.contains(imported)) {
-      report('Write package imports Sheets package "$imported"');
-    }
-    if (rule.family == Family.sheets && _writePackages.contains(imported)) {
-      report('Sheets package imports Write package "$imported"');
+    if (rule.family != Family.shared) {
+      for (final MapEntry(key: family, value: packages)
+          in _familyPackages.entries) {
+        if (family != rule.family && packages.contains(imported)) {
+          report(
+            '${rule.family.label} package imports ${family.label} package '
+            '"$imported"',
+          );
+        }
+      }
     }
   }
 }

@@ -2,6 +2,13 @@
 class: DriveChange
 fields:
   kind: DriveChangeKind
+  ### The changed item. (v2) For [DriveChangeKind.storageChanged] the nil
+  ### UUID (00000000-0000-0000-0000-000000000000): the change is the
+  ### caller's storage, not an item.
   itemUuid: UuidValue
-  ### The item as the watcher sees it; null for [DriveChangeKind.removed].
+  ### The item as the watcher sees it; null for [DriveChangeKind.removed]
+  ### and [DriveChangeKind.storageChanged].
   item: DriveItemView?
+  ### (v2) The watcher's new usage; set only for
+  ### [DriveChangeKind.storageChanged] (Drive 03 §3).
+  storage: StorageUsage?

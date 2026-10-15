@@ -310,6 +310,12 @@ abstract class WonkyAppLocalizations {
   /// **'{who} removed access'**
   String activityUnshared(String who);
 
+  /// No description provided for @activityUploaded.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} uploaded this'**
+  String activityUploaded(String who);
+
   /// No description provided for @addShortcutAction.
   ///
   /// In en, this message translates to:
@@ -589,7 +595,7 @@ abstract class WonkyAppLocalizations {
   /// No description provided for @authSignInSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'One account for Wonky Write and Wonky Sheets.'**
+  /// **'One account for every Wonky Work app.'**
   String get authSignInSubtitle;
 
   /// No description provided for @authSignInTitle.
@@ -601,7 +607,7 @@ abstract class WonkyAppLocalizations {
   /// No description provided for @authSignUpSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Create one account for Wonky Write and Wonky Sheets.'**
+  /// **'Create one account for every Wonky Work app.'**
   String get authSignUpSubtitle;
 
   /// No description provided for @authSignUpTitle.
@@ -760,6 +766,12 @@ abstract class WonkyAppLocalizations {
   /// **'Add shortcut to Drive'**
   String get cmdAddShortcut;
 
+  /// Opens the current app's settings, e.g. 'Write settings'.
+  ///
+  /// In en, this message translates to:
+  /// **'{app} settings'**
+  String cmdAppSettings(String app);
+
   /// No description provided for @cmdAssistant.
   ///
   /// In en, this message translates to:
@@ -910,6 +922,12 @@ abstract class WonkyAppLocalizations {
   /// **'Make a copy'**
   String get cmdMakeCopy;
 
+  /// Opens Wonky Drive's Storage page.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage storage'**
+  String get cmdManageStorage;
+
   /// No description provided for @cmdMove.
   ///
   /// In en, this message translates to:
@@ -987,6 +1005,12 @@ abstract class WonkyAppLocalizations {
   /// In en, this message translates to:
   /// **'Open…'**
   String get cmdOpenFile;
+
+  /// Opens the current folder or view in Wonky Drive (app homes).
+  ///
+  /// In en, this message translates to:
+  /// **'Open in Wonky Drive'**
+  String get cmdOpenInDrive;
 
   /// No description provided for @cmdOpenPanel.
   ///
@@ -1071,6 +1095,12 @@ abstract class WonkyAppLocalizations {
   /// In en, this message translates to:
   /// **'Reply'**
   String get cmdReply;
+
+  /// Opens a prefilled GitHub issue form (after a confirm).
+  ///
+  /// In en, this message translates to:
+  /// **'Report a bug'**
+  String get cmdReportBug;
 
   /// No description provided for @cmdReportProblem.
   ///
@@ -1209,6 +1239,12 @@ abstract class WonkyAppLocalizations {
   /// In en, this message translates to:
   /// **'What\'s new'**
   String get cmdWhatsNew;
+
+  /// Opens the suite settings (account, appearance, …).
+  ///
+  /// In en, this message translates to:
+  /// **'Wonky Work settings'**
+  String get cmdWorkSettings;
 
   /// No description provided for @cmdZoom.
   ///
@@ -1642,6 +1678,18 @@ abstract class WonkyAppLocalizations {
   /// **'Welcome to your drive'**
   String get emptyHomeTitle;
 
+  /// Empty state of a scoped home (v2): the app's product name, e.g. Wonky Write.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to {appName}'**
+  String emptyAppHomeTitle(String appName);
+
+  /// Empty state of a scoped home (v2) by the kind it lists; all = Wonky Drive.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, spreadsheet{Create a spreadsheet or open one shared with you.} presentation{Create a presentation or open one shared with you.} all{Create a document, spreadsheet or presentation, or upload files.} other{Create a document or open one shared with you.}}'**
+  String emptyAppHomeBody(String kind);
+
   /// No description provided for @emptyOfflineBody.
   ///
   /// In en, this message translates to:
@@ -1768,6 +1816,18 @@ abstract class WonkyAppLocalizations {
   /// **'Expand folders'**
   String get expandFolders;
 
+  /// Confirm button: open the external link in the browser.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get externalLinkOpen;
+
+  /// Title of the confirm before opening a link outside Wonky Work.
+  ///
+  /// In en, this message translates to:
+  /// **'Open external link?'**
+  String get externalLinkTitle;
+
   /// No description provided for @feedbackDescription.
   ///
   /// In en, this message translates to:
@@ -1815,6 +1875,48 @@ abstract class WonkyAppLocalizations {
   /// In en, this message translates to:
   /// **'Report a problem'**
   String get feedbackTitle;
+
+  /// Type filter (Drive): ZIP and other archives.
+  ///
+  /// In en, this message translates to:
+  /// **'Archives'**
+  String get fileCategoryArchives;
+
+  /// Type filter (Drive): audio files.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio'**
+  String get fileCategoryAudio;
+
+  /// Type filter (Drive): image files.
+  ///
+  /// In en, this message translates to:
+  /// **'Images'**
+  String get fileCategoryImages;
+
+  /// Type filter (Drive): files of any other type.
+  ///
+  /// In en, this message translates to:
+  /// **'Other files'**
+  String get fileCategoryOther;
+
+  /// Type filter (Drive): PDF files.
+  ///
+  /// In en, this message translates to:
+  /// **'PDFs'**
+  String get fileCategoryPdfs;
+
+  /// Type filter (Drive): text and source files.
+  ///
+  /// In en, this message translates to:
+  /// **'Text & code'**
+  String get fileCategoryText;
+
+  /// Type filter (Drive): video files.
+  ///
+  /// In en, this message translates to:
+  /// **'Videos'**
+  String get fileCategoryVideo;
 
   /// No description provided for @folderTree.
   ///
@@ -1912,11 +2014,23 @@ abstract class WonkyAppLocalizations {
   /// **'Document'**
   String get kindDocument;
 
+  /// No description provided for @kindFile.
+  ///
+  /// In en, this message translates to:
+  /// **'File'**
+  String get kindFile;
+
   /// No description provided for @kindFolder.
   ///
   /// In en, this message translates to:
   /// **'Folder'**
   String get kindFolder;
+
+  /// No description provided for @kindPresentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Presentation'**
+  String get kindPresentation;
 
   /// No description provided for @kindSpreadsheet.
   ///
@@ -1996,11 +2110,23 @@ abstract class WonkyAppLocalizations {
   /// **'File'**
   String get menuFile;
 
+  /// New menu (Drive): upload files.
+  ///
+  /// In en, this message translates to:
+  /// **'File upload'**
+  String get menuFileUpload;
+
   /// No description provided for @menuHelp.
   ///
   /// In en, this message translates to:
   /// **'Help'**
   String get menuHelp;
+
+  /// New menu of app homes (v2): import a file of the app's convertible types as a new item.
+  ///
+  /// In en, this message translates to:
+  /// **'Import file…'**
+  String get menuImportFile;
 
   /// No description provided for @menuMakeCopy.
   ///
@@ -2026,11 +2152,23 @@ abstract class WonkyAppLocalizations {
   /// **'Document'**
   String get menuNewDocument;
 
+  /// New menu: a new Wonky Slides presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Presentation'**
+  String get menuNewPresentation;
+
   /// No description provided for @menuNewSpreadsheet.
   ///
   /// In en, this message translates to:
   /// **'Spreadsheet'**
   String get menuNewSpreadsheet;
+
+  /// Account menu submenu listing the four apps.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get menuOpenApp;
 
   /// No description provided for @menuPanels.
   ///
@@ -2128,6 +2266,12 @@ abstract class WonkyAppLocalizations {
   /// **'Name this version'**
   String get nameVersionTitle;
 
+  /// Semantics label of the left menu's app section.
+  ///
+  /// In en, this message translates to:
+  /// **'Apps'**
+  String get navApps;
+
   /// No description provided for @navHome.
   ///
   /// In en, this message translates to:
@@ -2139,6 +2283,12 @@ abstract class WonkyAppLocalizations {
   /// In en, this message translates to:
   /// **'My Drive'**
   String get navMyDrive;
+
+  /// Left menu of app homes: the root of the user's drive.
+  ///
+  /// In en, this message translates to:
+  /// **'My files'**
+  String get navMyFiles;
 
   /// No description provided for @navOffline.
   ///
@@ -2163,6 +2313,12 @@ abstract class WonkyAppLocalizations {
   /// In en, this message translates to:
   /// **'Starred'**
   String get navStarred;
+
+  /// Left menu (Drive): the Storage page; storage meter label.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage'**
+  String get navStorage;
 
   /// No description provided for @navTrash.
   ///
@@ -2259,6 +2415,12 @@ abstract class WonkyAppLocalizations {
   /// In en, this message translates to:
   /// **'{who} shared {item} with you'**
   String notifShared(String who, String item);
+
+  /// No description provided for @notifStorage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Wonky Work storage needs attention'**
+  String get notifStorage;
 
   /// No description provided for @notifSuggestion.
   ///
@@ -2560,6 +2722,12 @@ abstract class WonkyAppLocalizations {
   /// **'Reply or add others with @'**
   String get replyPlaceholder;
 
+  /// Shown in the confirm before opening the GitHub issue form.
+  ///
+  /// In en, this message translates to:
+  /// **'Issues on GitHub are public: don\'t include private content.'**
+  String get reportBugNote;
+
   /// No description provided for @requestAccessDescription.
   ///
   /// In en, this message translates to:
@@ -2637,6 +2805,30 @@ abstract class WonkyAppLocalizations {
   /// In en, this message translates to:
   /// **'Viewer'**
   String get roleViewer;
+
+  /// Shown while the /new route creates an item.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating…'**
+  String get routeCreating;
+
+  /// Toast: /import without a valid file id.
+  ///
+  /// In en, this message translates to:
+  /// **'This link doesn\'t name a file to import.'**
+  String get routeImportInvalid;
+
+  /// Shown while the /import route imports a Drive file.
+  ///
+  /// In en, this message translates to:
+  /// **'Importing…'**
+  String get routeImporting;
+
+  /// Last row of an app home's search suggestions.
+  ///
+  /// In en, this message translates to:
+  /// **'Search all of Wonky Drive for “{query}”'**
+  String searchAllDrive(String query);
 
   /// No description provided for @searchFor.
   ///
@@ -2815,7 +3007,7 @@ abstract class WonkyAppLocalizations {
   /// No description provided for @settingsOffline.
   ///
   /// In en, this message translates to:
-  /// **'Offline & storage'**
+  /// **'Offline & device data'**
   String get settingsOffline;
 
   /// No description provided for @settingsOfflineHint.
@@ -2848,6 +3040,114 @@ abstract class WonkyAppLocalizations {
   /// **'Turns off non-essential animations.'**
   String get settingsReduceMotionHint;
 
+  /// Wonky Work settings section: avatar, display name, email, delete account.
+  ///
+  /// In en, this message translates to:
+  /// **'Account & profile'**
+  String get settingsAccountProfile;
+
+  /// Shown while an old settings link hands over to another app, e.g. 'Opening Sheets settings…'.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening {settings}…'**
+  String settingsOpeningOtherApp(String settings);
+
+  /// Settings nav entry that lists the other apps' settings (they open in that app).
+  ///
+  /// In en, this message translates to:
+  /// **'Settings of other apps'**
+  String get settingsOtherApps;
+
+  /// Screen reader label of the section select of the settings screen on narrow screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings section'**
+  String get settingsSectionPicker;
+
+  /// Wonky Work settings section with the storage quota.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage'**
+  String get settingsStorage;
+
+  /// No description provided for @settingsStorageDocuments.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents'**
+  String get settingsStorageDocuments;
+
+  /// No description provided for @settingsStorageFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Files'**
+  String get settingsStorageFiles;
+
+  /// No description provided for @settingsStorageLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading storage…'**
+  String get settingsStorageLoading;
+
+  /// No description provided for @settingsStorageManage.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage storage in Wonky Drive'**
+  String get settingsStorageManage;
+
+  /// No description provided for @settingsStoragePresentations.
+  ///
+  /// In en, this message translates to:
+  /// **'Presentations'**
+  String get settingsStoragePresentations;
+
+  /// No description provided for @settingsStorageQuota.
+  ///
+  /// In en, this message translates to:
+  /// **'Your storage'**
+  String get settingsStorageQuota;
+
+  /// No description provided for @settingsStorageQuotaHint.
+  ///
+  /// In en, this message translates to:
+  /// **'One quota for all Wonky Work apps.'**
+  String get settingsStorageQuotaHint;
+
+  /// No description provided for @settingsStorageSpreadsheets.
+  ///
+  /// In en, this message translates to:
+  /// **'Spreadsheets'**
+  String get settingsStorageSpreadsheets;
+
+  /// No description provided for @settingsStorageTrash.
+  ///
+  /// In en, this message translates to:
+  /// **'Trash'**
+  String get settingsStorageTrash;
+
+  /// No description provided for @settingsStorageUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage usage isn\'t available right now.'**
+  String get settingsStorageUnavailable;
+
+  /// No description provided for @settingsStorageWhatCounts.
+  ///
+  /// In en, this message translates to:
+  /// **'What counts'**
+  String get settingsStorageWhatCounts;
+
+  /// No description provided for @settingsStorageWhatCountsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents, spreadsheets, presentations, uploaded files and images in your files, including the trash. Version history, thumbnails and exports don\'t count. Files shared with you count against their owner\'s storage.'**
+  String get settingsStorageWhatCountsBody;
+
+  /// Keyboard shortcuts settings: heading of the commands shared by every Wonky Work app.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared'**
+  String get shortcutsGroupShared;
+
   /// No description provided for @settingsSaved.
   ///
   /// In en, this message translates to:
@@ -2869,7 +3169,7 @@ abstract class WonkyAppLocalizations {
   /// No description provided for @settingsSignOutHint.
   ///
   /// In en, this message translates to:
-  /// **'Signs you out of Wonky Write and Wonky Sheets on this device.'**
+  /// **'Signs you out of Wonky Work on this device.'**
   String get settingsSignOutHint;
 
   /// No description provided for @settingsTheme.
@@ -3220,11 +3520,167 @@ abstract class WonkyAppLocalizations {
   /// **'File size'**
   String get sortSize;
 
+  /// Screen reader value of the storage meter.
+  ///
+  /// In en, this message translates to:
+  /// **'{usage}, {percent} percent'**
+  String storageMeterValue(String usage, int percent);
+
   /// No description provided for @storageUsed.
   ///
   /// In en, this message translates to:
   /// **'{size} used'**
   String storageUsed(String size);
+
+  /// Storage meter, e.g. '12.3 MB of 50 MB used'.
+  ///
+  /// In en, this message translates to:
+  /// **'{used} of {quota} used'**
+  String storageUsedOf(String used, String quota);
+
+  /// Storage meter at or above the quota.
+  ///
+  /// In en, this message translates to:
+  /// **'{used} of {quota} used — over quota'**
+  String storageUsedOfOver(String used, String quota);
+
+  /// Storage meter while the server computes the usage for the first time.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculating storage…'**
+  String get storageCalculating;
+
+  /// Tooltip of the storage meter.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage is shared by Wonky Drive, Write, Sheets and Slides.'**
+  String get storageMeterTooltip;
+
+  /// Tooltip of the storage meter while it shows the last known value offline.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage is shared by Wonky Drive, Write, Sheets and Slides. (offline)'**
+  String get storageMeterTooltipOffline;
+
+  /// Storage banner at 90 % of the quota.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve used {used} of your {quota} storage.'**
+  String storageBannerWarning(String used, String quota);
+
+  /// Storage banner when over the quota.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re out of storage. You can keep editing, but you can\'t upload files, add images, import, or make copies until you free up space.'**
+  String get storageBannerOver;
+
+  /// Tooltip of the storage banner's close button.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss'**
+  String get storageBannerDismiss;
+
+  /// Out of storage dialog: the user's own quota.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re out of storage'**
+  String get quotaOwnTitle;
+
+  /// No description provided for @quotaOwnBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This needs {needed}, but you have {available} left of your {quota}. Free up space in Wonky Drive by deleting files you no longer need and emptying the trash.'**
+  String quotaOwnBody(String needed, String available, String quota);
+
+  /// Out of storage dialog when the needed size is unknown.
+  ///
+  /// In en, this message translates to:
+  /// **'You have {available} left of your {quota}. Free up space in Wonky Drive by deleting files you no longer need and emptying the trash.'**
+  String quotaOwnBodyUnknown(String available, String quota);
+
+  /// Out of storage dialog: the owner of the item is full.
+  ///
+  /// In en, this message translates to:
+  /// **'{owner} is out of storage'**
+  String quotaOwnerTitle(String owner);
+
+  /// kind: document, spreadsheet or presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, spreadsheet{Images added to this spreadsheet count against the owner\'s storage. Ask {owner} to free up space, or add the image to a spreadsheet you own.} presentation{Images added to this presentation count against the owner\'s storage. Ask {owner} to free up space, or add the image to a presentation you own.} other{Images added to this document count against the owner\'s storage. Ask {owner} to free up space, or add the image to a document you own.}}'**
+  String quotaOwnerImageBody(String kind, String owner);
+
+  /// Out of storage dialog: the owner is full (imports, other content).
+  ///
+  /// In en, this message translates to:
+  /// **'Content added to this file counts against the owner\'s storage. Ask {owner} to free up space first.'**
+  String quotaOwnerBody(String owner);
+
+  /// No description provided for @quotaBatchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough storage for all files'**
+  String get quotaBatchTitle;
+
+  /// No description provided for @quotaBatchBody.
+  ///
+  /// In en, this message translates to:
+  /// **'These {count} files need {needed}, but you have {available} left. Upload the files that fit, or free up space first.'**
+  String quotaBatchBody(int count, String needed, String available);
+
+  /// No description provided for @quotaBatchFit.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload the files that fit'**
+  String get quotaBatchFit;
+
+  /// Ownership transfer refused: the new owner is full.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} doesn\'t have enough storage'**
+  String quotaTransferTitle(String name);
+
+  /// No description provided for @quotaTransferBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} needs {needed} free to take ownership of “{item}”. Ask them to free up space first.'**
+  String quotaTransferBody(String name, String needed, String item);
+
+  /// Accepting an ownership transfer refused.
+  ///
+  /// In en, this message translates to:
+  /// **'You don\'t have enough storage'**
+  String get quotaTransferAcceptTitle;
+
+  /// No description provided for @quotaTransferAcceptBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Taking ownership of “{item}” needs {needed}, but you have {available} left.'**
+  String quotaTransferAcceptBody(String item, String needed, String available);
+
+  /// No description provided for @quotaTooLargeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This file is too large'**
+  String get quotaTooLargeTitle;
+
+  /// No description provided for @quotaTooLargeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Files can be at most {max}.'**
+  String quotaTooLargeBody(String max);
+
+  /// No description provided for @quotaTooLargeNowBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Files can be at most {max} right now, because that\'s how much storage you have left.'**
+  String quotaTooLargeNowBody(String max);
+
+  /// Ownership transfer dialog when the item's name is unknown.
+  ///
+  /// In en, this message translates to:
+  /// **'this item'**
+  String get quotaItemFallback;
 
   /// No description provided for @strengthEmpty.
   ///
@@ -3496,17 +3952,35 @@ abstract class WonkyAppLocalizations {
   /// **'All types'**
   String get typeAll;
 
+  /// Type filter (Drive): every uploaded file.
+  ///
+  /// In en, this message translates to:
+  /// **'All files'**
+  String get typeAllFiles;
+
   /// No description provided for @typeDocuments.
   ///
   /// In en, this message translates to:
   /// **'Documents'**
   String get typeDocuments;
 
+  /// Type filter (Drive): uploaded files.
+  ///
+  /// In en, this message translates to:
+  /// **'Files'**
+  String get typeFiles;
+
   /// No description provided for @typeFolders.
   ///
   /// In en, this message translates to:
   /// **'Folders'**
   String get typeFolders;
+
+  /// Type filter: presentations.
+  ///
+  /// In en, this message translates to:
+  /// **'Presentations'**
+  String get typePresentations;
 
   /// No description provided for @typeSpreadsheets.
   ///
@@ -4129,13 +4603,13 @@ abstract class WonkyAppLocalizations {
   /// No description provided for @mcpScopeDriveRead.
   ///
   /// In en, this message translates to:
-  /// **'Drive: read (list, search, export)'**
+  /// **'Drive: read (list, search, export, download files, storage)'**
   String get mcpScopeDriveRead;
 
   /// No description provided for @mcpScopeDriveWrite.
   ///
   /// In en, this message translates to:
-  /// **'Drive: write (create, rename, move, trash, share)'**
+  /// **'Drive: write (create, rename, move, trash, share, upload and convert files)'**
   String get mcpScopeDriveWrite;
 
   /// No description provided for @mcpScopeWriteRead.
@@ -4161,6 +4635,18 @@ abstract class WonkyAppLocalizations {
   /// In en, this message translates to:
   /// **'Spreadsheets: edit'**
   String get mcpScopeSheetsEdit;
+
+  /// No description provided for @mcpScopeSlidesRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Presentations: read'**
+  String get mcpScopeSlidesRead;
+
+  /// No description provided for @mcpScopeSlidesEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Presentations: edit'**
+  String get mcpScopeSlidesEdit;
 
   /// No description provided for @mcpScopeScriptsRun.
   ///
@@ -4431,6 +4917,24 @@ abstract class WonkyAppLocalizations {
   /// In en, this message translates to:
   /// **'Created offline. It is added to your Drive when you\'re back online.'**
   String get badgePendingCreate;
+
+  /// Drop overlay of Wonky Drive while files are dragged over the list (Drive 04 §3.5).
+  ///
+  /// In en, this message translates to:
+  /// **'Drop files to upload to {folder}'**
+  String dropToUploadInto(String folder);
+
+  /// Drop overlay while files dragged from the OS hover a folder row.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload to {folder}'**
+  String dropUploadToFolder(String folder);
+
+  /// Last-modified column of a file that is still uploading.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading…'**
+  String get driveItemUploading;
 }
 
 class _WonkyAppLocalizationsDelegate

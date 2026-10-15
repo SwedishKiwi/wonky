@@ -1,0 +1,1282 @@
+{
+  "@@locale": "en",
+  "untitledFile": "Untitled file",
+  "@untitledFile": {
+    "description": "Default name of a new item in Wonky Drive (Drive creates no items of its own)."
+  },
+  "backToDrive": "Back to Drive",
+  "@backToDrive": {
+    "description": "Button on placeholder pages that returns to the Drive home."
+  },
+  "driveSettingsSection": "Drive",
+  "@driveSettingsSection": {
+    "description": "Drive settings section (Drive 04 §8)."
+  },
+  "storageTitle": "Storage",
+  "@storageTitle": {
+    "description": "Title of the Storage page (Drive 04 §6)."
+  },
+  "previewLoading": "Loading preview…",
+  "@previewLoading": {
+    "description": "Spinner label while a file preview loads (Drive 02 §6.1)."
+  },
+  "previewUploadingTitle": "This file is still uploading",
+  "@previewUploadingTitle": {
+    "description": "Preview state of a file whose upload has not finished."
+  },
+  "previewUploadingPercent": "This file is still uploading ({percent} %)",
+  "@previewUploadingPercent": {
+    "description": "Preview state with upload progress.",
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "previewUploadingDescription": "The preview appears when the upload is complete.",
+  "@previewUploadingDescription": {
+    "description": "Description under the uploading state."
+  },
+  "previewErrorTitle": "Couldn't load the preview",
+  "@previewErrorTitle": {
+    "description": "Title of the preview error state."
+  },
+  "previewErrorDescription": "Check your connection and try again, or download the file.",
+  "@previewErrorDescription": {
+    "description": "Description of the generic preview error state."
+  },
+  "previewRetry": "Retry",
+  "@previewRetry": {
+    "description": "Button that reloads a failed preview."
+  },
+  "previewOfflineTitle": "Previews aren't available offline",
+  "@previewOfflineTitle": {
+    "description": "Preview state when offline and the file is not cached."
+  },
+  "previewOfflineDescription": "Reconnect to see this file.",
+  "@previewOfflineDescription": {
+    "description": "Description of the offline preview state."
+  },
+  "previewTooLargeTitle": "Preview isn't available for this file",
+  "@previewTooLargeTitle": {
+    "description": "Title of the too-large preview state."
+  },
+  "previewTooLargeDescription": "Files over {size} (and images over 50 megapixels without a server preview) aren't previewed. Download the file to open it.",
+  "@previewTooLargeDescription": {
+    "description": "Description of the too-large preview state.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "previewImageBroken": "This image can't be displayed. The file may be damaged.",
+  "@previewImageBroken": {
+    "description": "Preview error for an image that does not decode."
+  },
+  "previewPdfBroken": "This PDF can't be displayed. The file may be damaged.",
+  "@previewPdfBroken": {
+    "description": "Preview error for a PDF that does not open."
+  },
+  "previewPdfPassword": "This PDF is password-protected. Download it to open it.",
+  "@previewPdfPassword": {
+    "description": "Preview state of an encrypted PDF (Drive 02 §6.3)."
+  },
+  "previewPdfUnavailable": "PDF previews aren't available here. Download the file to view it.",
+  "@previewPdfUnavailable": {
+    "description": "Preview state when the PDF renderer cannot be loaded."
+  },
+  "previewNotText": "This file can't be shown as text. It contains binary data.",
+  "@previewNotText": {
+    "description": "Preview error for a text file whose bytes are binary."
+  },
+  "previewNotFoundTitle": "This file isn't available",
+  "@previewNotFoundTitle": {
+    "description": "Title when the previewed item does not exist or is not accessible."
+  },
+  "previewNotFoundDescription": "It may have been deleted, or you don't have access to it.",
+  "@previewNotFoundDescription": {
+    "description": "Description of the not-found preview state."
+  },
+  "previewOpeningInApp": "Opening in its app…",
+  "@previewOpeningInApp": {
+    "description": "Shown while a non-file item opened at /file/ is redirected to its app."
+  },
+  "previewTrashedBanner": "This file is in the trash",
+  "@previewTrashedBanner": {
+    "description": "Banner on the preview of a trashed file."
+  },
+  "previewRestore": "Restore",
+  "@previewRestore": {
+    "description": "Button on the trashed banner that restores the file."
+  },
+  "previewDownload": "Download",
+  "@previewDownload": {
+    "description": "Download button of the preview (Drive 04 §6)."
+  },
+  "previewDownloadDisabled": "The owner has turned off downloads for viewers",
+  "@previewDownloadDisabled": {
+    "description": "Tooltip of the disabled Download button."
+  },
+  "previewDownloadUnavailable": "Downloads aren't available in this version of Wonky Drive yet.",
+  "@previewDownloadUnavailable": {
+    "description": "Toast when downloads are not supported on the platform (desktop)."
+  },
+  "previewDownloadFailed": "Couldn't start the download",
+  "@previewDownloadFailed": {
+    "description": "Toast when starting a download fails."
+  },
+  "previewOpenWith": "Open with",
+  "@previewOpenWith": {
+    "description": "Open with dropdown of the preview top bar."
+  },
+  "previewOpenWithApp": "Open with {app}",
+  "@previewOpenWithApp": {
+    "description": "Open with menu item / button.",
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "previewShare": "Share",
+  "@previewShare": {
+    "description": "Share button of the preview top bar."
+  },
+  "previewStar": "Add to starred",
+  "@previewStar": {
+    "description": "Star button tooltip."
+  },
+  "previewUnstar": "Remove from starred",
+  "@previewUnstar": {
+    "description": "Unstar button tooltip."
+  },
+  "previewDetails": "Details",
+  "@previewDetails": {
+    "description": "Details panel toggle tooltip."
+  },
+  "previewMore": "More actions",
+  "@previewMore": {
+    "description": "Tooltip of the ⋮ menu of the preview."
+  },
+  "previewClose": "Close preview",
+  "@previewClose": {
+    "description": "Tooltip of the close / back buttons of the preview."
+  },
+  "previewRename": "Rename",
+  "@previewRename": {
+    "description": "⋮ menu item."
+  },
+  "previewMove": "Move to…",
+  "@previewMove": {
+    "description": "⋮ menu item."
+  },
+  "previewCopy": "Make a copy",
+  "@previewCopy": {
+    "description": "⋮ menu item."
+  },
+  "previewTrash": "Move to trash",
+  "@previewTrash": {
+    "description": "⋮ menu item."
+  },
+  "previewNext": "Next file",
+  "@previewNext": {
+    "description": "Tooltip of the next-file arrow."
+  },
+  "previewPrevious": "Previous file",
+  "@previewPrevious": {
+    "description": "Tooltip of the previous-file arrow."
+  },
+  "previewPosition": "{index} of {count} in “{folder}”",
+  "@previewPosition": {
+    "description": "Position of the file in its folder (Drive 04 §6).",
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      },
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "previewPositionNoFolder": "{index} of {count}",
+  "@previewPositionNoFolder": {
+    "description": "Position of the file when the folder name is unknown.",
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "previewZoomIn": "Zoom in",
+  "@previewZoomIn": {
+    "description": "Viewer bar button."
+  },
+  "previewZoomOut": "Zoom out",
+  "@previewZoomOut": {
+    "description": "Viewer bar button."
+  },
+  "previewZoomFit": "Fit",
+  "@previewZoomFit": {
+    "description": "Viewer bar button: fit the image to the window."
+  },
+  "previewZoomFitWidth": "Fit width",
+  "@previewZoomFitWidth": {
+    "description": "Viewer bar button: fit the PDF page width."
+  },
+  "previewZoomActual": "Actual size",
+  "@previewZoomActual": {
+    "description": "Viewer bar button: 100 %."
+  },
+  "previewRotate": "Rotate",
+  "@previewRotate": {
+    "description": "Viewer bar button: rotate the image view 90°."
+  },
+  "previewZoomPercent": "{percent} %",
+  "@previewZoomPercent": {
+    "description": "Zoom level label.",
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "previewImageSize": "{width} × {height}",
+  "@previewImageSize": {
+    "description": "Image pixel size in the viewer bar.",
+    "placeholders": {
+      "width": {
+        "type": "int"
+      },
+      "height": {
+        "type": "int"
+      }
+    }
+  },
+  "previewImageSemantics": "{name}, {width} by {height} pixels",
+  "@previewImageSemantics": {
+    "description": "Accessibility label of the previewed image.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "width": {
+        "type": "int"
+      },
+      "height": {
+        "type": "int"
+      }
+    }
+  },
+  "previewServerPreviewNote": "Showing a smaller preview",
+  "@previewServerPreviewNote": {
+    "description": "Viewer bar note when the server preview image is shown instead of the original."
+  },
+  "previewPdfPageOf": "/ {count}",
+  "@previewPdfPageOf": {
+    "description": "Suffix after the page number field of the PDF viewer bar (\"3 / 24\").",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "previewPdfPageSemantics": "Page {page} of {count}",
+  "@previewPdfPageSemantics": {
+    "description": "Accessibility label of a PDF page.",
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "previewPdfPageField": "Page number",
+  "@previewPdfPageField": {
+    "description": "Accessibility label of the page number field."
+  },
+  "previewPdfTruncated": "Showing the first {count} pages. Download the file to see all of them.",
+  "@previewPdfTruncated": {
+    "description": "Note when a PDF has more pages than the preview shows.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "previewPdfLoadingPages": "Reading pages…",
+  "@previewPdfLoadingPages": {
+    "description": "PDF viewer bar while pages are being counted."
+  },
+  "previewPdfTooltip": "Pages are shown as images. Download the PDF to select or search its text.",
+  "@previewPdfTooltip": {
+    "description": "Tooltip on the PDF page indicator (accessibility note, Drive 04 §12)."
+  },
+  "previewGoToPageTitle": "Go to page",
+  "@previewGoToPageTitle": {
+    "description": "Title of the go-to-page dialog."
+  },
+  "previewGoToPageLabel": "Page (1–{count})",
+  "@previewGoToPageLabel": {
+    "description": "Label of the page field in the go-to-page dialog.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "previewGoToPageInvalid": "Enter a page between 1 and {count}.",
+  "@previewGoToPageInvalid": {
+    "description": "Validation error of the go-to-page dialog.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "previewGo": "Go",
+  "@previewGo": {
+    "description": "Confirm button of the go-to-page dialog."
+  },
+  "previewCancel": "Cancel",
+  "@previewCancel": {
+    "description": "Cancel button of dialogs."
+  },
+  "previewWrap": "Wrap lines",
+  "@previewWrap": {
+    "description": "Viewer bar toggle of the text viewer."
+  },
+  "previewCopyAll": "Copy all",
+  "@previewCopyAll": {
+    "description": "Viewer bar button that copies the whole text."
+  },
+  "previewCopied": "Copied to the clipboard",
+  "@previewCopied": {
+    "description": "Toast after Copy all."
+  },
+  "previewLines": "{count, plural, =1{1 line} other{{count} lines}}",
+  "@previewLines": {
+    "description": "Line count in the text viewer bar.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "previewPlainText": "Plain text",
+  "@previewPlainText": {
+    "description": "Language label of text without highlighting."
+  },
+  "previewLatin1": "Shown as Latin-1",
+  "@previewLatin1": {
+    "description": "Notice when a text file is not UTF-8 (Drive 02 §6.4)."
+  },
+  "previewTextTruncated": "Showing the first 1 MB. Download to see the whole file.",
+  "@previewTextTruncated": {
+    "description": "Notice when a text file is larger than 1 MB."
+  },
+  "previewCsvTable": "Table",
+  "@previewCsvTable": {
+    "description": "CSV viewer toggle: table view."
+  },
+  "previewCsvText": "Text",
+  "@previewCsvText": {
+    "description": "CSV viewer toggle: text view."
+  },
+  "previewCsvTruncated": "Showing the first {count} rows.",
+  "@previewCsvTruncated": {
+    "description": "Notice when a CSV file has more rows than the table shows.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "previewCsvRows": "{count, plural, =1{1 row} other{{count} rows}}",
+  "@previewCsvRows": {
+    "description": "Row count of the CSV table.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "previewNoPreview": "No preview available",
+  "@previewNoPreview": {
+    "description": "Title of the \"everything else\" card (Drive 02 §6.7)."
+  },
+  "previewTypeSize": "{type} · {size}",
+  "@previewTypeSize": {
+    "description": "Type and size line of the file card (\"ZIP archive · 12.4 MB\").",
+    "placeholders": {
+      "type": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "previewOwnedByMe": "Owned by you",
+  "@previewOwnedByMe": {
+    "description": "Owner line of the file card."
+  },
+  "previewOwnedBy": "Owned by {name}",
+  "@previewOwnedBy": {
+    "description": "Owner line of the file card.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "previewModified": "Modified {date}",
+  "@previewModified": {
+    "description": "Modified line of the file card.",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "fileTypeLabel": "{category, select, image{{ext} image} pdf{PDF document} text{{ext} text file} audio{{ext} audio} video{{ext} video} archive{{ext} archive} document{{ext} document} spreadsheet{{ext} spreadsheet} presentation{{ext} presentation} other{{ext} file}}",
+  "@fileTypeLabel": {
+    "description": "Type label of an uploaded file by category; ext is the upper-case extension (may be \"File\").",
+    "placeholders": {
+      "category": {
+        "type": "String"
+      },
+      "ext": {
+        "type": "String"
+      }
+    }
+  },
+  "fileTypeGeneric": "File",
+  "@fileTypeGeneric": {
+    "description": "Type label of a file without an extension."
+  },
+  "categoryPreview": "Preview",
+  "@categoryPreview": {
+    "description": "Command category of the file preview commands."
+  },
+  "cmdPreviewFile": "Preview",
+  "@cmdPreviewFile": {
+    "description": "Command drive.file.preview."
+  },
+  "cmdOpenWith": "Open with…",
+  "@cmdOpenWith": {
+    "description": "Command drive.file.openWith."
+  },
+  "cmdDownloadFile": "Download",
+  "@cmdDownloadFile": {
+    "description": "Command drive.file.download."
+  },
+  "cmdPreviewNext": "Next file",
+  "@cmdPreviewNext": {
+    "description": "Command drive.preview.next."
+  },
+  "cmdPreviewPrevious": "Previous file",
+  "@cmdPreviewPrevious": {
+    "description": "Command drive.preview.previous."
+  },
+  "cmdPreviewZoomIn": "Zoom in",
+  "@cmdPreviewZoomIn": {
+    "description": "Command drive.preview.zoomIn."
+  },
+  "cmdPreviewZoomOut": "Zoom out",
+  "@cmdPreviewZoomOut": {
+    "description": "Command drive.preview.zoomOut."
+  },
+  "cmdPreviewZoomFit": "Fit to window",
+  "@cmdPreviewZoomFit": {
+    "description": "Command drive.preview.zoomFit."
+  },
+  "cmdPreviewZoomActual": "Actual size",
+  "@cmdPreviewZoomActual": {
+    "description": "Command drive.preview.zoomActual."
+  },
+  "cmdPreviewRotate": "Rotate view",
+  "@cmdPreviewRotate": {
+    "description": "Command drive.preview.rotate."
+  },
+  "cmdPreviewGoToPage": "Go to page…",
+  "@cmdPreviewGoToPage": {
+    "description": "Command drive.preview.goToPage."
+  },
+  "cmdPreviewToggleWrap": "Wrap lines",
+  "@cmdPreviewToggleWrap": {
+    "description": "Command drive.preview.toggleWrap."
+  },
+  "cmdPreviewCopyAll": "Copy all text",
+  "@cmdPreviewCopyAll": {
+    "description": "Command drive.preview.copyAll."
+  },
+  "cmdPreviewClose": "Close preview",
+  "@cmdPreviewClose": {
+    "description": "Command drive.preview.close."
+  },
+  "categoryUploads": "Uploads",
+  "@categoryUploads": {
+    "description": "Command palette category of the upload commands (Drive 04 §9)."
+  },
+  "cmdUploadFiles": "Upload files",
+  "@cmdUploadFiles": {
+    "description": "Command drive.upload.files (drop and picker handler)."
+  },
+  "cmdUploadCancel": "Cancel upload",
+  "@cmdUploadCancel": {
+    "description": "Command drive.upload.cancel."
+  },
+  "cmdUploadCancelAll": "Cancel all uploads",
+  "@cmdUploadCancelAll": {
+    "description": "Command drive.upload.cancelAll."
+  },
+  "cmdUploadRetry": "Retry upload",
+  "@cmdUploadRetry": {
+    "description": "Command drive.upload.retry."
+  },
+  "cmdUploadRetryAll": "Retry failed uploads",
+  "@cmdUploadRetryAll": {
+    "description": "Command drive.upload.retryAll."
+  },
+  "cmdUploadRemove": "Remove upload",
+  "@cmdUploadRemove": {
+    "description": "Command drive.upload.remove (removes a row of the upload panel)."
+  },
+  "cmdUploadClearFinished": "Clear finished uploads",
+  "@cmdUploadClearFinished": {
+    "description": "Command drive.upload.clearFinished."
+  },
+  "cmdUploadTogglePanel": "Show uploads",
+  "@cmdUploadTogglePanel": {
+    "description": "Command drive.upload.togglePanel."
+  },
+  "uploadPickTitle": "Upload files",
+  "@uploadPickTitle": {
+    "description": "Title of the file picker of File upload… in Wonky Drive."
+  },
+  "uploadPanelLabel": "Uploads",
+  "@uploadPanelLabel": {
+    "description": "Accessibility label of the upload panel."
+  },
+  "uploadPanelUploading": "{count, plural, =1{Uploading 1 item} other{Uploading {count} items}}",
+  "@uploadPanelUploading": {
+    "description": "Upload panel header while uploads run.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "uploadPanelWaiting": "{count, plural, =1{1 upload waiting for connection} other{{count} uploads waiting for connection}}",
+  "@uploadPanelWaiting": {
+    "description": "Upload panel header while offline.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "uploadPanelComplete": "{count, plural, =0{Uploads} =1{1 upload complete} other{{count} uploads complete}}",
+  "@uploadPanelComplete": {
+    "description": "Upload panel header when everything is uploaded.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "uploadPanelFailed": "{count, plural, =1{1 upload failed} other{{count} uploads failed}}",
+  "@uploadPanelFailed": {
+    "description": "Upload panel header when uploads failed.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "uploadSecondsLeft": "{seconds} s left",
+  "@uploadSecondsLeft": {
+    "description": "Time left of the uploads, under a minute.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "uploadMinutesLeft": "{minutes} min left",
+  "@uploadMinutesLeft": {
+    "description": "Time left of the uploads, in minutes.",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "uploadPill": "Uploading {count} · {percent} %",
+  "@uploadPill": {
+    "description": "Collapsed upload panel.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "uploadPanelCollapse": "Collapse uploads",
+  "@uploadPanelCollapse": {
+    "description": "Button that collapses the upload panel to a pill."
+  },
+  "uploadPanelClose": "Close uploads",
+  "@uploadPanelClose": {
+    "description": "Button that closes the upload panel."
+  },
+  "uploadStatusQueued": "Queued",
+  "@uploadStatusQueued": {
+    "description": "Upload row status: waiting for a free slot."
+  },
+  "uploadStatusWaiting": "Waiting for connection",
+  "@uploadStatusWaiting": {
+    "description": "Upload row status while offline."
+  },
+  "uploadStatusStarting": "Starting…",
+  "@uploadStatusStarting": {
+    "description": "Upload row status while the upload is created on the server."
+  },
+  "uploadStatusPercent": "{percent} %",
+  "@uploadStatusPercent": {
+    "description": "Upload row status: progress.",
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "uploadStatusVerifying": "Verifying…",
+  "@uploadStatusVerifying": {
+    "description": "Upload row status while the server checks the bytes."
+  },
+  "uploadStatusDone": "Uploaded",
+  "@uploadStatusDone": {
+    "description": "Upload row status when done."
+  },
+  "uploadStatusCancelled": "Cancelled",
+  "@uploadStatusCancelled": {
+    "description": "Upload row status after cancelling."
+  },
+  "uploadFailedOutOfStorage": "Not uploaded — you're out of storage",
+  "@uploadFailedOutOfStorage": {
+    "description": "Upload row status: the quota doesn't fit the file."
+  },
+  "uploadFailedNetwork": "Failed — network error",
+  "@uploadFailedNetwork": {
+    "description": "Upload row status after repeated network failures."
+  },
+  "uploadFailedTooLarge": "Too large — files can be at most {max}",
+  "@uploadFailedTooLarge": {
+    "description": "Upload row status: the file is over the size limit.",
+    "placeholders": {
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadFailedFolderGone": "The folder is gone or you lost access to it",
+  "@uploadFailedFolderGone": {
+    "description": "Upload row status: the target folder was deleted or access was lost."
+  },
+  "uploadFailedRateLimited": "Too many uploads — try again later",
+  "@uploadFailedRateLimited": {
+    "description": "Upload row status: upload rate limit."
+  },
+  "uploadFailedNotSaved": "Add the file again — it wasn't saved on this device.",
+  "@uploadFailedNotSaved": {
+    "description": "Upload row status after a reload when the bytes were only held in memory."
+  },
+  "uploadFailedOther": "Not uploaded",
+  "@uploadFailedOther": {
+    "description": "Upload row status for other errors."
+  },
+  "uploadVolatileHint": "keep this tab open",
+  "@uploadVolatileHint": {
+    "description": "Hint on rows whose bytes are held in memory only (no OPFS)."
+  },
+  "uploadActionCancel": "Cancel upload of {name}",
+  "@uploadActionCancel": {
+    "description": "Row action (accessibility label).",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadActionRetry": "Retry upload of {name}",
+  "@uploadActionRetry": {
+    "description": "Row action (accessibility label).",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadActionRemove": "Remove {name} from the list",
+  "@uploadActionRemove": {
+    "description": "Row action (accessibility label).",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadActionShowInFolder": "Show {name} in its folder",
+  "@uploadActionShowInFolder": {
+    "description": "Row action of a finished upload (accessibility label).",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadActionToMyDrive": "Upload to My Drive",
+  "@uploadActionToMyDrive": {
+    "description": "Row action when the target folder is gone."
+  },
+  "uploadActionChooseFile": "Choose file",
+  "@uploadActionChooseFile": {
+    "description": "Row action when the bytes weren't saved on this device."
+  },
+  "uploadManageStorage": "Manage storage",
+  "@uploadManageStorage": {
+    "description": "Opens the Storage page (quota failures)."
+  },
+  "uploadRetryAll": "Retry all",
+  "@uploadRetryAll": {
+    "description": "Upload panel footer button."
+  },
+  "uploadClearFinished": "Clear finished",
+  "@uploadClearFinished": {
+    "description": "Upload panel footer button."
+  },
+  "uploadAnnounceDone": "Upload of {name} complete",
+  "@uploadAnnounceDone": {
+    "description": "Screen reader announcement.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadAnnounceFailed": "Upload of {name} failed",
+  "@uploadAnnounceFailed": {
+    "description": "Screen reader announcement.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadDialogCancel": "Cancel",
+  "@uploadDialogCancel": {
+    "description": "Cancel button of the upload dialogs."
+  },
+  "uploadConflictTitle": "Upload options",
+  "@uploadConflictTitle": {
+    "description": "Title of the name-conflict dialog (Drive 02 §3.2)."
+  },
+  "uploadConflictBodyOne": "\"{name}\" already exists in {folder}. Keep both files, or skip this one?",
+  "@uploadConflictBodyOne": {
+    "description": "Name-conflict dialog body, one file.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadConflictBodyMany": "{count} files already exist in {folder}. Keep both versions of each, or skip them?",
+  "@uploadConflictBodyMany": {
+    "description": "Name-conflict dialog body, several files.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadConflictKeepBoth": "Keep both",
+  "@uploadConflictKeepBoth": {
+    "description": "Name-conflict choice: upload with a numbered name."
+  },
+  "uploadConflictSkip": "Skip",
+  "@uploadConflictSkip": {
+    "description": "Name-conflict choice: don't upload the files with existing names."
+  },
+  "uploadMyDrive": "My Drive",
+  "@uploadMyDrive": {
+    "description": "Name of the user's drive root in upload texts."
+  },
+  "uploadCancelAllTitle": "{count, plural, =1{Cancel 1 upload?} other{Cancel {count} uploads?}}",
+  "@uploadCancelAllTitle": {
+    "description": "Confirm when closing the upload panel while uploads run.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "uploadCancelAllBody": "Files that haven't finished uploading won't be saved.",
+  "@uploadCancelAllBody": {
+    "description": "Body of the cancel-uploads confirm."
+  },
+  "uploadCancelAllConfirm": "Cancel uploads",
+  "@uploadCancelAllConfirm": {
+    "description": "Confirm button of the cancel-uploads dialog."
+  },
+  "uploadKeepUploading": "Keep uploading",
+  "@uploadKeepUploading": {
+    "description": "Dismiss button of the cancel-uploads dialog."
+  },
+  "uploadTooManyFiles": "You can upload at most {max} files at once.",
+  "@uploadTooManyFiles": {
+    "description": "Toast when a batch has too many files.",
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "uploadFolderNeedsConnection": "Folders can only be uploaded while you're online. The other files were added.",
+  "@uploadFolderNeedsConnection": {
+    "description": "Toast when a folder is dropped offline."
+  },
+  "uploadFolderFailed": "The folders couldn't be created",
+  "@uploadFolderFailed": {
+    "description": "Toast when creating the folders of a folder upload failed."
+  },
+  "storagePercent": "{percent} %",
+  "@storagePercent": {
+    "description": "Share of the quota used, next to the Storage page headline.",
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "storageOverBy": "Over by {size}",
+  "@storageOverBy": {
+    "description": "Storage page: how far usage is over the quota.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "storageLegendFree": "Free",
+  "@storageLegendFree": {
+    "description": "Legend entry of the unused part of the quota."
+  },
+  "storageBreakdownLabel": "Storage by type",
+  "@storageBreakdownLabel": {
+    "description": "Screen reader label prefix of the usage bar."
+  },
+  "storageEmptyTrash": "Empty trash",
+  "@storageEmptyTrash": {
+    "description": "Storage page button that empties the trash."
+  },
+  "storageFreeUpTitle": "Free up space",
+  "@storageFreeUpTitle": {
+    "description": "Storage page section with clean-up suggestions."
+  },
+  "storageCardTrashBody": "Frees {size}",
+  "@storageCardTrashBody": {
+    "description": "Empty trash suggestion card.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "storageCardLargeTitle": "Large files",
+  "@storageCardLargeTitle": {
+    "description": "Suggestion card of items of 1 MB or more."
+  },
+  "storageCardLargeBody": "{count, plural, =1{1 file over 1 MB} other{{count} files over 1 MB}}",
+  "@storageCardLargeBody": {
+    "description": "Large files suggestion card.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "storageCardNotOpenedTitle": "Not opened in 6 months",
+  "@storageCardNotOpenedTitle": {
+    "description": "Suggestion card of items nobody opened for 6 months."
+  },
+  "storageCardNotOpenedBody": "{count, plural, =1{1 file · {size}} other{{count} files · {size}}}",
+  "@storageCardNotOpenedBody": {
+    "description": "Not opened suggestion card: count and total size.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "storageCardMore": "More than {count} files",
+  "@storageCardMore": {
+    "description": "Suggestion card when there are more matches than were counted.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "storageCardReview": "Review",
+  "@storageCardReview": {
+    "description": "Button of a suggestion card that filters the list."
+  },
+  "storageNothingToFree": "Nothing to clean up right now.",
+  "@storageNothingToFree": {
+    "description": "Free up space section without suggestions."
+  },
+  "storageItemsTitle": "Items using storage",
+  "@storageItemsTitle": {
+    "description": "Title of the Storage page table."
+  },
+  "storageFilterLabel": "Type: {type}",
+  "@storageFilterLabel": {
+    "description": "Type filter button of the Storage page.",
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "storageFilterAll": "All",
+  "@storageFilterAll": {
+    "description": "Storage type filter: everything."
+  },
+  "storageFilterDocuments": "Documents",
+  "@storageFilterDocuments": {
+    "description": "Storage type filter."
+  },
+  "storageFilterSpreadsheets": "Spreadsheets",
+  "@storageFilterSpreadsheets": {
+    "description": "Storage type filter."
+  },
+  "storageFilterPresentations": "Presentations",
+  "@storageFilterPresentations": {
+    "description": "Storage type filter."
+  },
+  "storageFilterFiles": "Files",
+  "@storageFilterFiles": {
+    "description": "Storage type filter: uploaded files."
+  },
+  "storageFilterTrash": "Trash",
+  "@storageFilterTrash": {
+    "description": "Storage type filter: trashed items."
+  },
+  "storageFilterLarge": "Large files",
+  "@storageFilterLarge": {
+    "description": "Storage filter of the Large files card."
+  },
+  "storageFilterNotOpened": "Not opened in 6 months",
+  "@storageFilterNotOpened": {
+    "description": "Storage filter of the Not opened card."
+  },
+  "storageClearFilter": "Show all items",
+  "@storageClearFilter": {
+    "description": "Removes a suggestion filter of the Storage page table."
+  },
+  "storageColumnName": "Name",
+  "@storageColumnName": {
+    "description": "Storage table column."
+  },
+  "storageColumnKind": "Kind",
+  "@storageColumnKind": {
+    "description": "Storage table column."
+  },
+  "storageColumnLocation": "Location",
+  "@storageColumnLocation": {
+    "description": "Storage table column."
+  },
+  "storageColumnLastOpened": "Last opened",
+  "@storageColumnLastOpened": {
+    "description": "Storage table column."
+  },
+  "storageColumnStorage": "Storage",
+  "@storageColumnStorage": {
+    "description": "Storage table column: counted size."
+  },
+  "storageInTrash": "In trash",
+  "@storageInTrash": {
+    "description": "Badge of a trashed row in the Storage table."
+  },
+  "storageNeverOpened": "Never opened",
+  "@storageNeverOpened": {
+    "description": "Screen reader text of an empty Last opened cell."
+  },
+  "storageRowLabel": "{name}, {kind}, {size}",
+  "@storageRowLabel": {
+    "description": "Screen reader label of a Storage table row.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "kind": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "storageSelectAll": "Select all",
+  "@storageSelectAll": {
+    "description": "Header checkbox of the Storage table."
+  },
+  "storageSelectRow": "Select {name}",
+  "@storageSelectRow": {
+    "description": "Row checkbox of the Storage table.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "storageSelectionSize": "{count, plural, =1{1 selected · {size}} other{{count} selected · {size}}}",
+  "@storageSelectionSize": {
+    "description": "Selection bar of the Storage table.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "storageDownload": "Download",
+  "@storageDownload": {
+    "description": "Selection bar: download the selected files."
+  },
+  "storageClearSelection": "Clear selection",
+  "@storageClearSelection": {
+    "description": "Selection bar: clear the selection."
+  },
+  "storageEmptyTitle": "Nothing here uses storage",
+  "@storageEmptyTitle": {
+    "description": "Empty Storage table."
+  },
+  "storageEmptyFilterTitle": "No items match this filter",
+  "@storageEmptyFilterTitle": {
+    "description": "Empty Storage table with a filter."
+  },
+  "storageEmptyTrashTitle": "The trash is empty",
+  "@storageEmptyTrashTitle": {
+    "description": "Empty Storage table with the Trash filter."
+  },
+  "storageOfflineTitle": "You're offline",
+  "@storageOfflineTitle": {
+    "description": "Storage table offline."
+  },
+  "storageOfflineBody": "The list of items needs a connection. The usage above is the last one saved on this device.",
+  "@storageOfflineBody": {
+    "description": "Storage table offline."
+  },
+  "storageErrorTitle": "Couldn't load your items",
+  "@storageErrorTitle": {
+    "description": "Storage table load error."
+  },
+  "storageLoadingMore": "Loading more…",
+  "@storageLoadingMore": {
+    "description": "Footer while the next page loads."
+  },
+  "storageWhatCountsTitle": "What counts?",
+  "@storageWhatCountsTitle": {
+    "description": "Footer title of the Storage page."
+  },
+  "storageEmptyTrashTitleConfirm": "Empty trash?",
+  "@storageEmptyTrashTitleConfirm": {
+    "description": "Title of the empty-trash confirm of the Storage page."
+  },
+  "storageEmptyTrashBody": "{count, plural, =1{Permanently delete 1 item in the trash? This frees {size} and can't be undone.} other{Permanently delete {count} items in the trash? This frees {size} and can't be undone.}}",
+  "@storageEmptyTrashBody": {
+    "description": "Empty-trash confirm (Drive 03 §6.4).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "storageEmptyTrashBodyUnknown": "Permanently delete everything in the trash? This frees {size} and can't be undone.",
+  "@storageEmptyTrashBodyUnknown": {
+    "description": "Empty-trash confirm when the item count is unknown.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "storageDeleteTitle": "{count, plural, =1{Delete 1 item forever?} other{Delete {count} items forever?}}",
+  "@storageDeleteTitle": {
+    "description": "Delete-forever confirm of the Storage page.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "storageDeleteBody": "This frees {size} and can't be undone.",
+  "@storageDeleteBody": {
+    "description": "Delete-forever confirm of the Storage page.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "storageDeleted": "{count, plural, =1{Deleted 1 item forever} other{Deleted {count} items forever}}",
+  "@storageDeleted": {
+    "description": "Toast after deleting forever.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "storageTrashEmptied": "Trash emptied",
+  "@storageTrashEmptied": {
+    "description": "Toast after emptying the trash."
+  },
+  "categoryStorage": "Storage",
+  "@categoryStorage": {
+    "description": "Command palette category of the Storage page commands."
+  },
+  "cmdStorageShow": "Show storage",
+  "@cmdStorageShow": {
+    "description": "Command drive.storage.show: opens the Storage page (with a filter)."
+  },
+  "driveSettingsList": "Files list",
+  "@driveSettingsList": {
+    "description": "Drive settings group of the list defaults."
+  },
+  "driveSettingsListHint": "Defaults for the lists in Wonky Drive. Changing the layout or sort in a list remembers it on this device.",
+  "@driveSettingsListHint": {
+    "description": "Drive settings group description."
+  },
+  "driveSettingsLayout": "Default layout",
+  "@driveSettingsLayout": {
+    "description": "Drive setting."
+  },
+  "driveSettingsLayoutList": "List",
+  "@driveSettingsLayoutList": {
+    "description": "Drive setting value."
+  },
+  "driveSettingsLayoutGrid": "Grid",
+  "@driveSettingsLayoutGrid": {
+    "description": "Drive setting value."
+  },
+  "driveSettingsSort": "Default sort",
+  "@driveSettingsSort": {
+    "description": "Drive setting."
+  },
+  "driveSettingsSortOrder": "Sort order",
+  "@driveSettingsSortOrder": {
+    "description": "Drive setting."
+  },
+  "driveSettingsAscending": "Ascending",
+  "@driveSettingsAscending": {
+    "description": "Drive setting value."
+  },
+  "driveSettingsDescending": "Descending",
+  "@driveSettingsDescending": {
+    "description": "Drive setting value."
+  },
+  "driveSettingsShowExtensions": "Show file extensions",
+  "@driveSettingsShowExtensions": {
+    "description": "Drive setting."
+  },
+  "driveSettingsShowExtensionsHint": "When off, lists show \"notes\" for \"notes.pdf\". Dialogs and previews always show the full name.",
+  "@driveSettingsShowExtensionsHint": {
+    "description": "Drive setting description."
+  },
+  "driveSettingsUploads": "Uploads",
+  "@driveSettingsUploads": {
+    "description": "Drive settings group."
+  },
+  "driveSettingsAskOnConflict": "Ask when uploaded files have the same name",
+  "@driveSettingsAskOnConflict": {
+    "description": "Drive setting."
+  },
+  "driveSettingsAskOnConflictHint": "When off, both files are kept and the new one gets a number, like \"notes (1).pdf\".",
+  "@driveSettingsAskOnConflictHint": {
+    "description": "Drive setting description."
+  },
+  "driveSettingsConvertUploads": "Convert uploads to Wonky formats",
+  "@driveSettingsConvertUploads": {
+    "description": "Drive setting (Drive 02 §7.3)."
+  },
+  "driveSettingsConvertUploadsHint": "Files that Wonky Write or Wonky Sheets can open, like Word, Markdown, Excel and CSV, become documents and spreadsheets instead of being stored as files.",
+  "@driveSettingsConvertUploadsHint": {
+    "description": "Drive setting description."
+  },
+  "cmdDrivePrefsSet": "Change a Drive setting",
+  "@cmdDrivePrefsSet": {
+    "description": "Command drive.prefs.set."
+  },
+  "cmdViewSetLayout": "Grid or list view",
+  "@cmdViewSetLayout": {
+    "description": "Command drive.view.setLayout."
+  },
+  "cmdViewSort": "Sort by…",
+  "@cmdViewSort": {
+    "description": "Command drive.view.sort."
+  },
+  "cmdViewToggleFoldersOnTop": "Folders on top",
+  "@cmdViewToggleFoldersOnTop": {
+    "description": "Command drive.view.toggleFoldersOnTop."
+  },
+  "categoryView": "View",
+  "@categoryView": {
+    "description": "Command palette category of the drive.view commands."
+  },
+  "uploadStatusConverted": "{kind, select, document{Converted to a document} spreadsheet{Converted to a spreadsheet} other{Converted}}",
+  "@uploadStatusConverted": {
+    "description": "Upload panel row of an upload converted with Convert uploads to Wonky formats (Drive 02 §7.3).",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadConvertFailed": "{name} couldn't be converted. It was kept as a file.",
+  "@uploadConvertFailed": {
+    "description": "Toast when converting an upload failed.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
+}

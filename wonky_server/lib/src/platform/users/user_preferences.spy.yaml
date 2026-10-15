@@ -1,4 +1,4 @@
-### Per-user preferences shared by both apps (specs/04 §3).
+### Per-user preferences shared by all apps (specs/04 §3).
 class: UserPreferences
 table: user_preferences
 fields:
@@ -14,6 +14,16 @@ fields:
   writeDefaults: String, default='{}'
   ### JSON: default locale, font, formula help, …
   sheetsDefaults: String, default='{}'
+  ### (v2) JSON: Slides settings (Slides 04 §17 A-04-2: theme, slide size,
+  ### animation, code, …); the last-used PDF/PNG export options (Slides 10
+  ### A-10-4 `slidesExportOptions`) under the key `exportOptions`.
+  slidesDefaults: String, default='{}'
+  ### (v2) JSON: Slides presenter preferences (Slides 10 A-10-4: presenter
+  ### layout, notes size, timer, pen, …).
+  slidesPresenter: String, default='{}'
+  ### (v2) JSON: Drive settings (Drive 04 §8: layout, sort, folders on top,
+  ### extensions, ask on name conflicts, convert uploads).
+  driveDefaults: String, default='{}'
   ### JSON: {mentions, replies, shares, suggestions: "inApp"|"email"|"off", digest: bool}.
   notificationSettings: String, default='{}'
   aiEnabled: bool, default=true

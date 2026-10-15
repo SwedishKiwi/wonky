@@ -1,5 +1,6 @@
+import 'package:wonky_numfmt/wonky_numfmt.dart';
+
 import '../format/number_format/inference.dart';
-import '../format/number_format/locale_data.dart';
 
 /// A number recognized in typed input (03 §8.6).
 final class NumberInputMatch {

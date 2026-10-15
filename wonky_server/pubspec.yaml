@@ -15,7 +15,9 @@ dependencies:
   dart_quill_delta: ^9.6.0
   dartantic_ai: ^3.4.2
   http: ^1.6.0
+  image: ^4.12.0
   mcp_dart: ^2.4.2
+  mime: ^2.0.0
   serverpod: 4.1.0-beta.3
   serverpod_auth_idp_server: 4.1.0-beta.3
   serverpod_cloud_storage: 4.1.0-beta.3
@@ -28,6 +30,10 @@ dependencies:
     path: ../packages/wonky_sheets_core
   wonky_sheets_script:
     path: ../packages/wonky_sheets_script
+  wonky_slides_core:
+    path: ../packages/wonky_slides_core
+  wonky_sync_kit:
+    path: ../packages/wonky_sync_kit
   wonky_sync_models:
     path: ../packages/wonky_sync_models
   wonky_write_core:
@@ -49,39 +55,65 @@ dev_dependencies:
 
 serverpod:
   scripts:
-    # Build both Flutter web apps into the server's web directory
-    # (specs/01-architecture.md §2.4): wonky_write → web/write (/write/),
-    # wonky_sheets → web/sheets (/sheets/). Built with --wasm (cross-origin
-    # isolation for OPFS/SharedArrayBuffer, specs/13 §3).
+    # Build every Flutter web app into the server's web directory
+    # (specs/01-architecture.md §2.4): wonky_<app> → web/<app> (/<app>/) for
+    # drive, write, sheets and slides; app folders that don't exist yet are
+    # skipped. Built with --wasm (cross-origin isolation for
+    # OPFS/SharedArrayBuffer, specs/13 §3). posix builds the apps in
+    # parallel and fails if any build fails.
     # Windows uses xcopy since flutter's --output flag doesn't work there.
     # See: https://github.com/flutter/flutter/issues/157886
     # On failure, clean and retry once to clear stale Flutter build caches.
     flutter_build:
       windows: >-
-        (if exist web\write rmdir /S /Q web\write)
-        & (if exist web\sheets rmdir /S /Q web\sheets)
-        & cd /D ..\wonky_write
-        & set ARGS=web --wasm --base-href /write/
-        && (call flutter build %ARGS% || (flutter clean && call flutter build %ARGS%))
-        && xcopy /E /I /Y build\web ..\wonky_server\web\write
-        && cd /D ..\wonky_sheets
-        && set ARGS=web --wasm --base-href /sheets/
-        && (call flutter build %ARGS% || (flutter clean && call flutter build %ARGS%))
-        && xcopy /E /I /Y build\web ..\wonky_server\web\sheets
+        for %A in (drive write sheets slides) do
+        @if exist ..\wonky_%A\pubspec.yaml (
+        (if exist web\%A rmdir /S /Q web\%A)
+        & pushd ..\wonky_%A
+        & (call flutter build web --wasm --base-href /%A/
+        || (flutter clean && call flutter build web --wasm --base-href /%A/))
+        && xcopy /E /I /Y build\web ..\wonky_server\web\%A
+        & popd )
       posix: |
         set -e
-        rm -rf ../wonky_server/web/write ../wonky_server/web/sheets
-        cd ../wonky_write
-        set -- web --wasm --base-href /write/ --output ../wonky_server/web/write
-        flutter build "$@" || { flutter clean && flutter build "$@"; }
-        cd ../wonky_sheets
-        set -- web --wasm --base-href /sheets/ --output ../wonky_server/web/sheets
-        flutter build "$@" || { flutter clean && flutter build "$@"; }
+        build() {
+          out=../wonky_server/web/$1
+          rm -rf "$out"
+          cd "../wonky_$1"
+          set -- web --wasm --base-href "/$1/" --output "$out"
+          flutter build "$@" || { flutter clean && flutter build "$@"; }
+        }
+        logs=$(mktemp -d)
+        jobs=""
+        for app in drive write sheets slides; do
+          [ -f "../wonky_$app/pubspec.yaml" ] || continue
+          ( build "$app" ) > "$logs/$app.log" 2>&1 &
+          jobs="$jobs $!:$app"
+        done
+        failed=0
+        for job in $jobs; do
+          app=${job#*:}
+          if wait "${job%%:*}"; then
+            echo "Built $app"
+          else
+            echo "Building $app failed:"
+            cat "$logs/$app.log"
+            failed=1
+          fi
+        done
+        rm -rf "$logs"
+        exit $failed
 
-  # Both apps are launched by `serverpod start` from their flutter_driver
+  # The apps are launched by `serverpod start` from their flutter_driver
   # entry point, on fixed ports so their origins are stable for
   # `allowedOrigins` and cookie auth (specs/01-architecture.md §2.4–2.5).
   flutter_apps:
+    drive:
+      path: ../wonky_drive
+      displayName: "Wonky Drive"
+      auto_launch: true
+      target: lib/driver.dart
+      web-port: 8100
     write:
       path: ../wonky_write
       displayName: "Wonky Write"
@@ -94,3 +126,11 @@ serverpod:
       auto_launch: true
       target: lib/driver.dart
       web-port: 8102
+    # Not launched automatically while Wonky Slides is being built (Slides 12
+    # SL-1); start it with the `spawn_flutter_app` MCP tool.
+    slides:
+      path: ../wonky_slides
+      displayName: "Wonky Slides"
+      auto_launch: false
+      target: lib/driver.dart
+      web-port: 8104

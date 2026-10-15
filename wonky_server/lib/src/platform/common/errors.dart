@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:wonky_core/files.dart' show formatStorageBytes;
+
 import 'models.dart';
 
 /// Shorthands for the [WonkyException]s thrown by services.
@@ -35,4 +39,16 @@ abstract final class Errors {
 
   static WonkyException busy(String message) =>
       WonkyException(code: WonkyErrorCode.busy, message: message);
+
+  /// (v2) Not enough storage (Drive 03 §7.1): "Not enough storage: this
+  /// needs 12.4 MB, 3.1 MB is available." with [details] as `detailsJson`.
+  static WonkyException quotaExceeded(
+    QuotaExceededDetails details,
+  ) => WonkyException(
+    code: WonkyErrorCode.quotaExceeded,
+    message:
+        'Not enough storage: this needs ${formatStorageBytes(details.neededBytes)}, '
+        '${formatStorageBytes(details.availableBytes)} is available.',
+    detailsJson: jsonEncode(details.toJson()),
+  );
 }

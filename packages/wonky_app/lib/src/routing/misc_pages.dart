@@ -111,7 +111,7 @@ class _InvitePageState extends State<InvitePage> {
           ? '/s/${r.itemUuid.uuid}'
           : '/d/${r.itemUuid.uuid}';
       if (r.kind == DriveItemKind.folder) {
-        widget.services.router.go('/drive/${r.itemUuid.uuid}');
+        widget.services.router.go('/f/${r.itemUuid.uuid}');
       } else {
         await widget.services.openPath(path);
       }

@@ -6,7 +6,7 @@ import 'dart:typed_data';
 import 'package:dart_quill_delta/dart_quill_delta.dart';
 
 import '../collab/suggestion_view.dart';
-import '../fonts/font_provider.dart';
+import 'package:wonky_fonts/wonky_fonts.dart';
 import '../ir/doc_tree.dart';
 import '../layout/page_setup.dart';
 import '../theme/model/values.dart';

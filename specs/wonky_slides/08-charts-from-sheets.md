@@ -73,7 +73,7 @@ wonky_sheets       wonky_slides
 | `spec/image_spec.dart` | **stays** in `wonky_sheets_core` (`objects/`) | Sheets images are not charts. |
 | `data/chart_data.dart` | `wonky_charts/lib/src/data/` | + `toJson`/`fromJson` (§3.4). |
 | `data/data_algorithms.dart` | split: generic (aggregation over doubles, histogram buckets, LTTB) → `wonky_charts`; `FValue`-specific helpers stay in Sheets | |
-| `data/chart_data_resolver.dart` | **stays** (`wonky_sheets_core/lib/src/charts_data/`) | Reads cells; produces `wonky_charts` `ChartData`. |
+| `data/chart_data_resolver.dart` | **stays** (`wonky_sheets_core/lib/src/charts/data/`) | Reads cells; produces `wonky_charts` `ChartData`. |
 | `data/value_formatter.dart` | `ChartValueFormatter` interface + `ChartFormats` → `wonky_charts`; `DefaultChartValueFormatter` → `wonky_charts` on top of `wonky_numfmt` | §2.5 |
 | `describe/chart_describer.dart` | `wonky_charts` | |
 | `layout/*` (engine, cartesian, pie, radial, tabular, 3D layout, scales, text measurer) | `wonky_charts/lib/src/layout/` | `scales.dart` takes date serials from `wonky_numfmt`; `chart_theme.dart` takes a `ChartThemeSource` (§2.6). |
@@ -166,7 +166,9 @@ wonky_slides          → … + wonky_charts_flutter
 wonky_server          → … + wonky_charts (via the cores)
 ```
 `wonky_charts*` are neither Write nor Sheets packages, so Slides may use them. The justified
-exception `wonky_sheets_core → vector_math` moves to `wonky_charts`.
+exception `wonky_sheets_core → vector_math` stays: it belongs to the print PDF renderer
+(`io/print/pdf_renderer.dart`), not to the chart renderers, so `wonky_charts` does not depend on
+`vector_math` (it is allowed for the 3D work of SL-27).
 
 ### 2.9 Migration order (M8 wave 1, Drive 05 D-3; step 5 may finish in M10 with the chart element)
 
@@ -177,6 +179,47 @@ exception `wonky_sheets_core → vector_math` moves to `wonky_charts`.
 4. Move tests with their code (`test/charts/**` → `wonky_charts/test/`, golden masters re-homed;
    the scene JSON goldens must be byte-identical).
 5. Add the new APIs (§2.7) with tests.
+
+### 2.10 As built (D-3, M8)
+
+Steps 1–4 are done; step 5 (§2.7 APIs except `DataRangeRef`, `ChartThemeSource` and the
+generic `ChartPipeline`) is SL-27 (M10). Differences from the plan above:
+
+- **`wonky_numfmt`** exports `NumberPatternFormatter` (cached; `formatNumber(double, …)`,
+  `formatString`, `formatNumberText`) plus the parser/AST, `NumberFormatRenderer` (numbers and
+  text), `AutomaticFormatter`, presets, `LocaleFormatData`, `FormattedValue`, `SerialCalendar`
+  and `DateSerial` (moved from Sheets `formula/values/dates.dart`, re-exported there). Sheets
+  keeps `NumberFormatter` (cell values, booleans/errors, format hints; delegates to
+  `NumberPatternFormatter` and shares its cache), `CellTextFormatter`, inference,
+  `DecimalsAdjuster` (it takes a cell value) and `FontSizeSteps`.
+- **`DataRangeRef`** wraps the stored JSON (null values dropped; requires a string `s`, which is
+  exactly when `GridRange.tryParse` succeeds, so validation is unchanged). The schema node is
+  `RangeRefSchema` with the old GridRange JSON Schema and message; the pluggable "no ranges"
+  validator for Slides comes with SL-27. Sheets helpers: `GridRange.fromRef` / `toRef`,
+  `ChartDataSpec.gridRanges`, `ScorecardOptions.keyValueRange` / `baselineRange`,
+  `Iterable<GridRange>.toRefs()` (`charts/chart_ranges.dart`).
+- **`ChartThemeSource`** is an interface (`accentArgbs`, `textFont`, `resolveArgb`) that
+  `SpreadsheetTheme` implements (call sites unchanged); `ChartThemeColors` is a plain-value
+  implementation. `background`/`text` overrides come with the deck theme adapter (SL-27).
+  `ChartTheme.spreadsheetTheme` is now `ChartTheme.source`.
+- **Pipeline**: `ChartPipeline` (`wonky_charts`: `layout`, `build`, `exportSvg/Pdf/Png` over
+  `ChartData`) and `SheetsChartPipeline` (`wonky_sheets_core`: `resolve`, `build`, `exportTheme`,
+  `exportSvg/Pdf/Png`, `printSceneFor` over a `WorkbookModel`).
+- **Stays in Sheets** besides §2.3: the whole recommender (the `ChartTable` profiling split is
+  SL-27), `HeaderDetection` (split out of `data_algorithms.dart`; it reads `FValue`s),
+  `ImageSpec` (now `objects/image_spec.dart`).
+- **`wonky_charts_flutter`** got `ChartScenePainter`/`paintChartScene`/`chartSceneToPng`,
+  `FlutterTextMeasurer`, `Chart3DGpuRenderer`/`Chart3DBackends`, `ChartOrbitGesture`,
+  `Chart3DGlyphPainter`, and in the separate library `gpu.dart` the `flutter_scene` backend
+  (`installChart3DGpuBackend`, only the app entry point imports it). `ChartView`, the data table
+  dialog, `ChartTypeIcon` and the Customize-tab `ChartStyleEditor` stay in Sheets until Slides
+  needs them (SL-27); they are outside D-3's owned folders.
+- **Tests**: tests that need no workbook moved (`wonky_charts/test`: spec, scales, text measurer,
+  scene, renderers, stats, generic data algorithms, value formatter; `wonky_numfmt/test`: parser,
+  automatic; `wonky_charts_flutter/test`: mesh winding) plus new tests for `ChartPipeline`,
+  `DataRangeRef`, `ChartThemeColors`, `NumberPatternFormatter` and the painter. Layout, 3D,
+  describer, recommender and resolver tests build their data from workbooks and stay in
+  `wonky_sheets_core/test/charts` with the scene JSON goldens (unchanged, byte-identical).
 
 ---
 

@@ -5,13 +5,14 @@ import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_core/wonky_core.dart';
 
 import '../commands/sheets_commands.dart';
-import '../features/formatting/sheets_settings_section.dart';
 import '../features/history/server_change_undo.dart';
 import '../features/history/sheets_version_view.dart';
+import '../features/import/drive_file_import.dart';
 import '../features/import/sheets_import_handler.dart';
 import '../features/print/print_preview_screen.dart';
 import '../features/scripts/editor/script_editor_screen.dart';
 import '../features/scripts/script_menus.dart';
+import '../features/settings/sheets_settings.dart';
 import '../features/sheet_editor/sheet_editor_screen.dart';
 import '../features/sync/sheets_sessions.dart' show SheetsData;
 import '../l10n/sheets_l10n.dart';
@@ -53,6 +54,16 @@ class SheetsAppConfig extends WonkyAppConfig {
   /// Home/drive uploads and drops of .xlsx/.ods/.csv/.tsv (11 §2.1).
   @override
   ImportHandler? get importHandler => const SheetsImportHandler();
+
+  /// (v2) The Sheets home lists only spreadsheets and the folders that
+  /// contain them (suite 03 §3.3, 04 §12).
+  @override
+  HomeScope? get homeScope => const HomeScope.kind(DriveItemKind.spreadsheet);
+
+  /// `/import?file=<fileItemUuid>`: Drive's *Open with ▸ Wonky Sheets*
+  /// imports the file with the import dialog (Drive 02 §7.2, 04 §11.15).
+  @override
+  ImportRouteHandler? get importRoute => importDriveFileAsSpreadsheet;
 
   /// `/s/:uuid/print` (11 §7.1) under the editor route: the spreadsheet
   /// stays open underneath the print preview.
@@ -97,8 +108,10 @@ class SheetsAppConfig extends WonkyAppConfig {
   ];
 
   @override
-  List<Command<CommandArgs>> commands(ShellServices services) =>
-      sheetsCommands(services);
+  List<Command<CommandArgs>> commands(ShellServices services) => [
+    ...sheetsCommands(services),
+    ...sheetsSettingsCommands(services),
+  ];
 
   @override
   MenuRoot menus(BuildContext context, ShellMenus shell) =>
@@ -124,11 +137,11 @@ class SheetsAppConfig extends WonkyAppConfig {
     await super.onSigningOut(services);
   }
 
-  /// Settings › Sheets: spreadsheet defaults and editing preferences
-  /// (04 §11.24).
+  /// Sheets settings › Defaults: spreadsheet defaults and editing
+  /// preferences (`/settings/app/defaults`, 04 §11.24, suite 04 §4).
   @override
-  Widget? sheetsSettings(BuildContext context, ShellServices services) =>
-      SheetsSettingsSection(services: services);
+  List<SettingsSectionSpec> appSettingsSections(ShellServices services) =>
+      sheetsSettingsSections(services);
 
   /// `ui.sheets.*` MCP UI-bridge tools (Sheets 12 §5).
   @override

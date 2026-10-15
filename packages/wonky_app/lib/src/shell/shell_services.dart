@@ -29,8 +29,12 @@ import '../data/file_repository.dart';
 import '../data/sharing_repository.dart';
 import '../data/user_repository.dart';
 import '../document/document_controller.dart';
+import '../drive/drive_controller.dart';
 import '../l10n/wonky_app_localizations.dart';
 import '../mcp_bridge/mcp_control.dart';
+import '../storage/storage_controller.dart';
+import '../storage/quota_error_presenter.dart';
+import '../storage/storage_checks.dart';
 import '../menus/shell_menus.dart';
 import '../undo/drive_undo.dart';
 import 'form_dialog.dart';
@@ -94,7 +98,10 @@ class ShellServices implements ActiveDocumentHost {
     LocalStore? userStore,
     UuidV7Generator? ids,
     this.client,
-  }) : deviceStore = deviceStore,
+    StorageController? storage,
+    CrossAppNavigator? crossApp,
+  }) : storage = storage ?? StorageController.none(),
+       deviceStore = deviceStore,
        userStore = userStore ?? deviceStore.scoped('user.'),
        ids = ids ?? UuidV7Generator.instance {
     registry = CommandRegistry();
@@ -106,7 +113,7 @@ class ShellServices implements ActiveDocumentHost {
       users: repositories.users,
     );
     supervisor = StreamSupervisor(connectivity);
-    crossApp = CrossAppNavigator(urls);
+    this.crossApp = crossApp ?? CrossAppNavigator(urls);
     toasts = Toasts(() => navigatorContext);
     panels = WonkySplitViewController(
       width: prefs.device<double>('panel.width'),
@@ -115,6 +122,7 @@ class ShellServices implements ActiveDocumentHost {
     undo.registerHandler(DriveUndoHandler(repositories.drive));
     undo.registerHandler(CommentsUndoHandler(this));
     undo.registerHandler(VersionsUndoHandler(this));
+    quotaErrors.attach();
   }
 
   final WonkyAppConfig config;
@@ -128,6 +136,19 @@ class ShellServices implements ActiveDocumentHost {
 
   /// The generated client (null in widget tests with fakes).
   final Client? client;
+
+  /// (v2) The user's storage for meters, banners and quota pre-checks
+  /// (Drive 03 §6): `LiveStorageController` in the app,
+  /// `StorageController.none()` by default, `FakeStorage` in tests.
+  final StorageController storage;
+
+  /// (v2) Shows the *Out of storage* dialog for `quotaExceeded` errors
+  /// (Drive 03 §6.3); attached to every human-invoked command.
+  late final QuotaErrorPresenter quotaErrors = QuotaErrorPresenter(this);
+
+  /// (v2) Quota pre-checks before uploads, imports, copies and image
+  /// inserts (Drive 03 §7.2).
+  late final StorageChecks storageChecks = StorageChecks(this);
 
   late final CommandRegistry registry;
   late final CommandDispatcher dispatcher;
@@ -166,6 +187,11 @@ class ShellServices implements ActiveDocumentHost {
 
   /// Select-all on the home screen (set by the drive list).
   VoidCallback? driveSelectAll;
+
+  /// (v2) The list controller of the shown home view (layout, sort and
+  /// selection for Drive's `drive.view.*` commands and `ui.drive.*` tools);
+  /// null while no home is shown.
+  final ValueNotifier<DriveController?> driveView = ValueNotifier(null);
 
   /// The home screen's search field (`/`).
   FocusNode? driveSearchFocus;
@@ -316,36 +342,27 @@ class ShellServices implements ActiveDocumentHost {
   /// Opens a drive item: folders in the drive, files in their app (same
   /// window; other app = full page load on web).
   Future<void> openItem(DriveItemView item) async {
-    switch (item.kind) {
-      case DriveItemKind.folder:
-        router.go('/drive/${item.uuid.uuid}');
-      case DriveItemKind.document:
-      case DriveItemKind.spreadsheet:
-        final app = item.kind == DriveItemKind.document
-            ? WonkyAppKind.write
-            : WonkyAppKind.sheets;
-        final path = app == WonkyAppKind.write
-            ? '/d/${item.uuid.uuid}'
-            : '/s/${item.uuid.uuid}';
-        if (app == config.app) {
-          router.go(path);
-        } else {
-          await crossApp.open(app, path);
-        }
+    final app = WonkyAppKind.forItemKind(item.kind, current: config.app);
+    final path = WonkyAppKind.itemPathFor(item.kind, item.uuid.uuid);
+    if (app == config.app) {
+      router.go(path);
+    } else {
+      await crossApp.open(app, path);
     }
   }
 
-  /// Opens a route that may belong to the other app.
+  /// Opens a route that may belong to another app (`/d/…`, `/s/…`, `/p/…`,
+  /// `/file/…`).
   Future<void> openPath(String path) async {
-    final other = config.app == WonkyAppKind.write ? '/s/' : '/d/';
-    if (path.startsWith(other)) {
-      await crossApp.open(config.app.other, path);
+    final owner = WonkyAppKind.ownerOfPath(path);
+    if (owner != null && owner != config.app) {
+      await crossApp.open(owner, path);
     } else {
       router.go(path);
     }
   }
 
-  /// Creates a document/spreadsheet on the server (default
+  /// Creates a document/spreadsheet/presentation on the server (default
   /// `WonkyAppConfig.createItem`).
   Future<UuidValue?> createItemOnServer(
     DriveItemKind kind, {
@@ -355,17 +372,23 @@ class ShellServices implements ActiveDocumentHost {
   }) async {
     final ctx = navigatorContext;
     final untitled = ctx == null ? 'Untitled' : config.untitledName(ctx);
-    final v = kind == DriveItemKind.spreadsheet
-        ? await drive.createSpreadsheet(
-            parentUuid: parentUuid,
-            name: name ?? untitled,
-            templateUuid: templateUuid,
-          )
-        : await drive.createDocument(
-            parentUuid: parentUuid,
-            name: name ?? untitled,
-            templateUuid: templateUuid,
-          );
+    final v = switch (kind) {
+      DriveItemKind.spreadsheet => await drive.createSpreadsheet(
+        parentUuid: parentUuid,
+        name: name ?? untitled,
+        templateUuid: templateUuid,
+      ),
+      DriveItemKind.presentation => await drive.createPresentation(
+        parentUuid: parentUuid,
+        name: name ?? untitled,
+        templateUuid: templateUuid,
+      ),
+      _ => await drive.createDocument(
+        parentUuid: parentUuid,
+        name: name ?? untitled,
+        templateUuid: templateUuid,
+      ),
+    };
     return v.uuid;
   }
 
@@ -393,9 +416,11 @@ class ShellServices implements ActiveDocumentHost {
   void dispose() {
     _disposed = true;
     keymap.dispose();
+    quotaErrors.dispose();
     dispatcher.dispose();
     undo.dispose();
     supervisor.dispose();
+    storage.dispose();
     _driveChanges.close();
   }
 }

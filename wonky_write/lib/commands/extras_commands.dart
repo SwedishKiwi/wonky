@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dart_quill_delta/dart_quill_delta.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
+import 'package:wonky_app/emoji.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_ui/wonky_ui.dart';
@@ -11,9 +12,6 @@ import '../features/editor/applier/delta_applier.dart' show DeltaSelection;
 import '../features/editor/commands/editor_command_catalog.dart';
 import '../features/editor/dnd/external_drop.dart';
 import '../features/editor/popovers/editor_popovers.dart';
-import '../features/emoji/emoji_catalog.dart';
-import '../features/emoji/emoji_picker.dart';
-import '../features/emoji/emoji_prefs.dart';
 import '../features/images/image_services.dart';
 import '../features/import/import_service.dart';
 import '../features/lightbox/image_lightbox.dart';
@@ -476,6 +474,9 @@ Future<void> handleDroppedFiles(
         description: f.name,
       );
     }
+  }
+  if (images.isNotEmpty && !await imagesFitStorage(s, images)) {
+    images.clear();
   }
   if (images.isNotEmpty) {
     final values = [

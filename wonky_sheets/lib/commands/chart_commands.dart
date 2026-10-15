@@ -6,9 +6,9 @@ import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_sheets_core/formula.dart' show GridRect;
 import 'package:wonky_sheets_core/model.dart';
+import 'package:wonky_charts_flutter/wonky_charts_flutter.dart';
 
 import '../features/charts/chart_insert.dart';
-import '../features/charts/render/chart_painter.dart';
 import '../features/charts/view/chart_data_table_dialog.dart';
 import '../features/images/image_clipboard.dart';
 import '../features/images/image_io.dart';
@@ -131,7 +131,7 @@ List<Command<CommandArgs>> chartCommands(ShellServices s) => [
           dy: _num(m['dy'], 0),
         );
       } else {
-        final region = ChartInsert.regionOf(ed, spec.data.ranges);
+        final region = ChartInsert.regionOf(ed, spec.data.gridRanges);
         final sel = ed.selection.resolved;
         anchor = ObjectPlacement.defaultChartAnchor(
           dataRegion: region ?? GridRect.cell(sel.activeRow, sel.activeCol),
@@ -326,7 +326,7 @@ List<Command<CommandArgs>> chartCommands(ShellServices s) => [
       final spec = ChartSpec.fromJson(o.specJson);
       ChartSpec next;
       if (a.boolean('keepSeries') ?? false) {
-        next = spec.copyWith(data: spec.data.copyWith(ranges: ranges));
+        next = spec.copyWith(data: spec.data.copyWith(ranges: ranges.toRefs()));
       } else {
         final detected = ChartInsert.specFor(ed, ranges, type: spec.type);
         next = spec.copyWith(data: detected.data);
@@ -395,7 +395,7 @@ List<Command<CommandArgs>> chartCommands(ShellServices s) => [
       switch (format) {
         case 'svg':
           bytes = utf8.encode(
-            ChartPipeline.exportSvg(
+            SheetsChartPipeline.exportSvg(
               spec: spec,
               model: ed.model,
               values: ed.engine,
@@ -405,7 +405,7 @@ List<Command<CommandArgs>> chartCommands(ShellServices s) => [
           );
           mime = 'image/svg+xml';
         case 'pdf':
-          bytes = await ChartPipeline.exportPdf(
+          bytes = await SheetsChartPipeline.exportPdf(
             spec: spec,
             model: ed.model,
             values: ed.engine,

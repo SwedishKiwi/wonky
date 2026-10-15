@@ -14,7 +14,7 @@ import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import '../../platform/users/app_theme_mode.dart' as _ii7psk14;
 import '../../platform/users/ui_density.dart' as _iuahhh6p;
 
-/// Per-user preferences shared by both apps (specs/04 §3).
+/// Per-user preferences shared by all apps (specs/04 §3).
 abstract class UserPreferences
     implements _isc.SerializableModel, _isc.ProtocolSerialization {
   UserPreferences._({
@@ -27,6 +27,9 @@ abstract class UserPreferences
     String? keymapOverrides,
     String? writeDefaults,
     String? sheetsDefaults,
+    String? slidesDefaults,
+    String? slidesPresenter,
+    String? driveDefaults,
     String? notificationSettings,
     bool? aiEnabled,
     this.updatedAt,
@@ -36,6 +39,9 @@ abstract class UserPreferences
        keymapOverrides = keymapOverrides ?? '{}',
        writeDefaults = writeDefaults ?? '{}',
        sheetsDefaults = sheetsDefaults ?? '{}',
+       slidesDefaults = slidesDefaults ?? '{}',
+       slidesPresenter = slidesPresenter ?? '{}',
+       driveDefaults = driveDefaults ?? '{}',
        notificationSettings = notificationSettings ?? '{}',
        aiEnabled = aiEnabled ?? true;
 
@@ -49,6 +55,9 @@ abstract class UserPreferences
     String? keymapOverrides,
     String? writeDefaults,
     String? sheetsDefaults,
+    String? slidesDefaults,
+    String? slidesPresenter,
+    String? driveDefaults,
     String? notificationSettings,
     bool? aiEnabled,
     DateTime? updatedAt,
@@ -75,6 +84,9 @@ abstract class UserPreferences
       keymapOverrides: jsonSerialization['keymapOverrides'] as String?,
       writeDefaults: jsonSerialization['writeDefaults'] as String?,
       sheetsDefaults: jsonSerialization['sheetsDefaults'] as String?,
+      slidesDefaults: jsonSerialization['slidesDefaults'] as String?,
+      slidesPresenter: jsonSerialization['slidesPresenter'] as String?,
+      driveDefaults: jsonSerialization['driveDefaults'] as String?,
       notificationSettings:
           jsonSerialization['notificationSettings'] as String?,
       aiEnabled: jsonSerialization['aiEnabled'] == null
@@ -111,6 +123,19 @@ abstract class UserPreferences
   /// JSON: default locale, font, formula help, …
   String sheetsDefaults;
 
+  /// (v2) JSON: Slides settings (Slides 04 §17 A-04-2: theme, slide size,
+  /// animation, code, …); the last-used PDF/PNG export options (Slides 10
+  /// A-10-4 `slidesExportOptions`) under the key `exportOptions`.
+  String slidesDefaults;
+
+  /// (v2) JSON: Slides presenter preferences (Slides 10 A-10-4: presenter
+  /// layout, notes size, timer, pen, …).
+  String slidesPresenter;
+
+  /// (v2) JSON: Drive settings (Drive 04 §8: layout, sort, folders on top,
+  /// extensions, ask on name conflicts, convert uploads).
+  String driveDefaults;
+
   /// JSON: {mentions, replies, shares, suggestions: "inApp"|"email"|"off", digest: bool}.
   String notificationSettings;
 
@@ -131,6 +156,9 @@ abstract class UserPreferences
     String? keymapOverrides,
     String? writeDefaults,
     String? sheetsDefaults,
+    String? slidesDefaults,
+    String? slidesPresenter,
+    String? driveDefaults,
     String? notificationSettings,
     bool? aiEnabled,
     DateTime? updatedAt = const _isc.$UndefinedDateTime(),
@@ -148,6 +176,9 @@ abstract class UserPreferences
       'keymapOverrides': keymapOverrides,
       'writeDefaults': writeDefaults,
       'sheetsDefaults': sheetsDefaults,
+      'slidesDefaults': slidesDefaults,
+      'slidesPresenter': slidesPresenter,
+      'driveDefaults': driveDefaults,
       'notificationSettings': notificationSettings,
       'aiEnabled': aiEnabled,
       if (updatedAt != null) 'updatedAt': updatedAt?.toJson(),
@@ -167,6 +198,9 @@ abstract class UserPreferences
       'keymapOverrides': keymapOverrides,
       'writeDefaults': writeDefaults,
       'sheetsDefaults': sheetsDefaults,
+      'slidesDefaults': slidesDefaults,
+      'slidesPresenter': slidesPresenter,
+      'driveDefaults': driveDefaults,
       'notificationSettings': notificationSettings,
       'aiEnabled': aiEnabled,
       if (updatedAt != null) 'updatedAt': updatedAt?.toJson(),
@@ -192,6 +226,9 @@ class _UserPreferencesImpl extends UserPreferences {
     String? keymapOverrides,
     String? writeDefaults,
     String? sheetsDefaults,
+    String? slidesDefaults,
+    String? slidesPresenter,
+    String? driveDefaults,
     String? notificationSettings,
     bool? aiEnabled,
     DateTime? updatedAt,
@@ -205,6 +242,9 @@ class _UserPreferencesImpl extends UserPreferences {
          keymapOverrides: keymapOverrides,
          writeDefaults: writeDefaults,
          sheetsDefaults: sheetsDefaults,
+         slidesDefaults: slidesDefaults,
+         slidesPresenter: slidesPresenter,
+         driveDefaults: driveDefaults,
          notificationSettings: notificationSettings,
          aiEnabled: aiEnabled,
          updatedAt: updatedAt,
@@ -224,6 +264,9 @@ class _UserPreferencesImpl extends UserPreferences {
     String? keymapOverrides,
     String? writeDefaults,
     String? sheetsDefaults,
+    String? slidesDefaults,
+    String? slidesPresenter,
+    String? driveDefaults,
     String? notificationSettings,
     bool? aiEnabled,
     DateTime? updatedAt = const _isc.$UndefinedDateTime(),
@@ -238,6 +281,9 @@ class _UserPreferencesImpl extends UserPreferences {
       keymapOverrides: keymapOverrides ?? this.keymapOverrides,
       writeDefaults: writeDefaults ?? this.writeDefaults,
       sheetsDefaults: sheetsDefaults ?? this.sheetsDefaults,
+      slidesDefaults: slidesDefaults ?? this.slidesDefaults,
+      slidesPresenter: slidesPresenter ?? this.slidesPresenter,
+      driveDefaults: driveDefaults ?? this.driveDefaults,
       notificationSettings: notificationSettings ?? this.notificationSettings,
       aiEnabled: aiEnabled ?? this.aiEnabled,
       updatedAt: updatedAt is _isc.UndefinedSentinel

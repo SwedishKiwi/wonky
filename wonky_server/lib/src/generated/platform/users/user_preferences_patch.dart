@@ -27,6 +27,9 @@ abstract class UserPreferencesPatch
     this.keymapOverrides,
     this.writeDefaults,
     this.sheetsDefaults,
+    this.slidesDefaults,
+    this.slidesPresenter,
+    this.driveDefaults,
     this.notificationSettings,
     this.aiEnabled,
   });
@@ -40,6 +43,9 @@ abstract class UserPreferencesPatch
     String? keymapOverrides,
     String? writeDefaults,
     String? sheetsDefaults,
+    String? slidesDefaults,
+    String? slidesPresenter,
+    String? driveDefaults,
     String? notificationSettings,
     bool? aiEnabled,
   }) = _UserPreferencesPatchImpl;
@@ -70,6 +76,9 @@ abstract class UserPreferencesPatch
       keymapOverrides: jsonSerialization['keymapOverrides'] as String?,
       writeDefaults: jsonSerialization['writeDefaults'] as String?,
       sheetsDefaults: jsonSerialization['sheetsDefaults'] as String?,
+      slidesDefaults: jsonSerialization['slidesDefaults'] as String?,
+      slidesPresenter: jsonSerialization['slidesPresenter'] as String?,
+      driveDefaults: jsonSerialization['driveDefaults'] as String?,
       notificationSettings:
           jsonSerialization['notificationSettings'] as String?,
       aiEnabled: jsonSerialization['aiEnabled'] == null
@@ -94,6 +103,15 @@ abstract class UserPreferencesPatch
 
   String? sheetsDefaults;
 
+  /// (v2)
+  String? slidesDefaults;
+
+  /// (v2)
+  String? slidesPresenter;
+
+  /// (v2)
+  String? driveDefaults;
+
   String? notificationSettings;
 
   bool? aiEnabled;
@@ -110,6 +128,9 @@ abstract class UserPreferencesPatch
     String? keymapOverrides,
     String? writeDefaults,
     String? sheetsDefaults,
+    String? slidesDefaults,
+    String? slidesPresenter,
+    String? driveDefaults,
     String? notificationSettings,
     bool? aiEnabled,
   });
@@ -125,6 +146,9 @@ abstract class UserPreferencesPatch
       if (keymapOverrides != null) 'keymapOverrides': keymapOverrides,
       if (writeDefaults != null) 'writeDefaults': writeDefaults,
       if (sheetsDefaults != null) 'sheetsDefaults': sheetsDefaults,
+      if (slidesDefaults != null) 'slidesDefaults': slidesDefaults,
+      if (slidesPresenter != null) 'slidesPresenter': slidesPresenter,
+      if (driveDefaults != null) 'driveDefaults': driveDefaults,
       if (notificationSettings != null)
         'notificationSettings': notificationSettings,
       if (aiEnabled != null) 'aiEnabled': aiEnabled,
@@ -143,6 +167,9 @@ abstract class UserPreferencesPatch
       if (keymapOverrides != null) 'keymapOverrides': keymapOverrides,
       if (writeDefaults != null) 'writeDefaults': writeDefaults,
       if (sheetsDefaults != null) 'sheetsDefaults': sheetsDefaults,
+      if (slidesDefaults != null) 'slidesDefaults': slidesDefaults,
+      if (slidesPresenter != null) 'slidesPresenter': slidesPresenter,
+      if (driveDefaults != null) 'driveDefaults': driveDefaults,
       if (notificationSettings != null)
         'notificationSettings': notificationSettings,
       if (aiEnabled != null) 'aiEnabled': aiEnabled,
@@ -167,6 +194,9 @@ class _UserPreferencesPatchImpl extends UserPreferencesPatch {
     String? keymapOverrides,
     String? writeDefaults,
     String? sheetsDefaults,
+    String? slidesDefaults,
+    String? slidesPresenter,
+    String? driveDefaults,
     String? notificationSettings,
     bool? aiEnabled,
   }) : super._(
@@ -178,6 +208,9 @@ class _UserPreferencesPatchImpl extends UserPreferencesPatch {
          keymapOverrides: keymapOverrides,
          writeDefaults: writeDefaults,
          sheetsDefaults: sheetsDefaults,
+         slidesDefaults: slidesDefaults,
+         slidesPresenter: slidesPresenter,
+         driveDefaults: driveDefaults,
          notificationSettings: notificationSettings,
          aiEnabled: aiEnabled,
        );
@@ -195,6 +228,9 @@ class _UserPreferencesPatchImpl extends UserPreferencesPatch {
     Object? keymapOverrides = _Undefined,
     Object? writeDefaults = _Undefined,
     Object? sheetsDefaults = _Undefined,
+    Object? slidesDefaults = _Undefined,
+    Object? slidesPresenter = _Undefined,
+    Object? driveDefaults = _Undefined,
     Object? notificationSettings = _Undefined,
     Object? aiEnabled = _Undefined,
   }) {
@@ -215,6 +251,15 @@ class _UserPreferencesPatchImpl extends UserPreferencesPatch {
       sheetsDefaults: sheetsDefaults is String?
           ? sheetsDefaults
           : this.sheetsDefaults,
+      slidesDefaults: slidesDefaults is String?
+          ? slidesDefaults
+          : this.slidesDefaults,
+      slidesPresenter: slidesPresenter is String?
+          ? slidesPresenter
+          : this.slidesPresenter,
+      driveDefaults: driveDefaults is String?
+          ? driveDefaults
+          : this.driveDefaults,
       notificationSettings: notificationSettings is String?
           ? notificationSettings
           : this.notificationSettings,

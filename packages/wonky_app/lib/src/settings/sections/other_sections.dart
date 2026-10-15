@@ -14,9 +14,6 @@ import 'package:flutter/foundation.dart';
 
 export 'offline_section.dart';
 
-Widget _switch(String key, bool value, ValueChanged<bool> onChanged) =>
-    ShadSwitch(key: ValueKey<String>(key), value: value, onChanged: onChanged);
-
 /// Settings › Language & region.
 class LanguageSection extends StatefulWidget {
   const LanguageSection({super.key, required this.services});
@@ -84,98 +81,6 @@ class _LanguageSectionState extends State<LanguageSection> {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// Settings › Write (defaults stored in `writeDefaults`).
-class WriteDefaultsSection extends StatelessWidget {
-  const WriteDefaultsSection({super.key, required this.services});
-
-  final ShellServices services;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = WonkyAppLocalizations.of(context);
-    final p = services.prefs;
-    return ListenableBuilder(
-      listenable: p,
-      builder: (context, _) {
-        bool v(String k, bool d) => p.writeDefaults[k] as bool? ?? d;
-        return SettingsGroup(
-          title: l.settingsWrite,
-          children: [
-            for (final (k, label, d) in [
-              ('spellcheck', l.writeSpellcheck, true),
-              ('smartQuotes', l.writeSmartQuotes, true),
-              ('autoPairBrackets', l.writeAutoPair, true),
-              ('markdownShortcuts', l.writeMarkdownShortcuts, true),
-              ('pageless', l.writePageless, false),
-            ])
-              SettingsRow(
-                label: label,
-                control: _switch(
-                  'settings.write.$k',
-                  v(k, d),
-                  (x) => p.setWriteDefault(k, x),
-                ),
-              ),
-            SettingsRow(
-              label: l.writeExportFormat,
-              control: ShadSelect<String>(
-                initialValue:
-                    p.writeDefaults['exportFormat'] as String? ?? 'md',
-                options: [
-                  for (final f in const ['md', 'html', 'pdf', 'txt'])
-                    ShadOption(value: f, child: Text(_exportFormatLabel(l, f))),
-                ],
-                selectedOptionBuilder: (context, v) =>
-                    Text(_exportFormatLabel(l, v)),
-                onChanged: (x) => p.setWriteDefault('exportFormat', x),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-/// Settings › Sheets (defaults stored in `sheetsDefaults`).
-class SheetsDefaultsSection extends StatelessWidget {
-  const SheetsDefaultsSection({super.key, required this.services});
-
-  final ShellServices services;
-
-  @override
-  Widget build(BuildContext context) {
-    final custom = services.config.sheetsSettings(context, services);
-    if (custom != null) return custom;
-    final l = WonkyAppLocalizations.of(context);
-    final p = services.prefs;
-    return ListenableBuilder(
-      listenable: p,
-      builder: (context, _) {
-        bool v(String k, bool d) => p.sheetsDefaults[k] as bool? ?? d;
-        return SettingsGroup(
-          title: l.settingsSheets,
-          children: [
-            for (final (k, label, d) in [
-              ('formulaAutocomplete', l.sheetsAutocomplete, true),
-              ('formulaHelp', l.sheetsFormulaHelp, true),
-              ('scriptsEnabled', l.sheetsScripts, true),
-            ])
-              SettingsRow(
-                label: label,
-                control: _switch(
-                  'settings.sheets.$k',
-                  v(k, d),
-                  (x) => p.setSheetsDefault(k, x),
-                ),
-              ),
-          ],
-        );
-      },
     );
   }
 }
@@ -403,47 +308,52 @@ class AboutSection extends StatelessWidget {
             label: l.aboutRunMode,
             control: Text(info?.runMode ?? '—'),
           ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: ShadButton.outline(
-              onPressed: () => showShadDialog<void>(
-                context: context,
-                builder: (context) => ShadDialog(
-                  title: Text(l.aboutLicenses),
-                  child: SizedBox(
-                    width: 520,
-                    height: 400,
-                    child: FutureBuilder<List<LicenseEntry>>(
-                      future: LicenseRegistry.licenses.toList(),
-                      builder: (context, snap) => ListView(
-                        children: [
-                          for (final e in snap.data ?? const <LicenseEntry>[])
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Text(
-                                e.packages.join(', '),
-                                style: ShadTheme.of(context).textTheme.small,
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ShadButton.outline(
+                onPressed: () => showShadDialog<void>(
+                  context: context,
+                  builder: (context) => ShadDialog(
+                    title: Text(l.aboutLicenses),
+                    child: SizedBox(
+                      width: 520,
+                      height: 400,
+                      child: FutureBuilder<List<LicenseEntry>>(
+                        future: LicenseRegistry.licenses.toList(),
+                        builder: (context, snap) => ListView(
+                          children: [
+                            for (final e in snap.data ?? const <LicenseEntry>[])
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: Text(
+                                  e.packages.join(', '),
+                                  style: ShadTheme.of(context).textTheme.small,
+                                ),
                               ),
-                            ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
+                child: Text(l.aboutLicenses),
               ),
-              child: Text(l.aboutLicenses),
-            ),
+              // (v2) suite 04 §4.1: *Report a bug* from About.
+              ShadButton.ghost(
+                key: const ValueKey<String>('settings.about.reportBug'),
+                leading: const Icon(LucideIcons.bug, size: 16),
+                onPressed: () => services.dispatcher.invoke(
+                  'shell.help.reportBug',
+                  context: context,
+                ),
+                child: Text(l.cmdReportBug),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 }
-
-/// The label of a default export format id.
-String _exportFormatLabel(WonkyAppLocalizations l, String id) => switch (id) {
-  'html' => l.exportFormatHtml,
-  'pdf' => l.exportFormatPdf,
-  'txt' => l.exportFormatText,
-  _ => l.exportFormatMarkdown,
-};

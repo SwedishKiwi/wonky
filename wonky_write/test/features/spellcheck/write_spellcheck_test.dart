@@ -2,10 +2,10 @@ import 'package:dart_quill_delta/dart_quill_delta.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor_test.dart';
+import 'package:wonky_app/spellcheck.dart' show SpellDictionaries;
 import 'package:wonky_write/features/editor/applier/delta_applier.dart';
 import 'package:wonky_write/features/editor/commands/write_editor_commands.dart';
 import 'package:wonky_write/features/editor/ui/wonky_editor.dart';
-import 'package:wonky_write/features/spellcheck/dictionaries.dart';
 import 'package:wonky_write/features/spellcheck/spelling_dialogs.dart';
 import 'package:wonky_write/features/spellcheck/write_spellcheck.dart';
 
@@ -236,28 +236,6 @@ void main() {
       expect(spell.state, SpellcheckState.off);
       expect(spell.errors, isEmpty);
     });
-  });
-
-  group('Given document languages', () {
-    const all = [
-      DictionaryInfo(tag: 'en-US', name: 'US', aff: 'a', dic: 'd'),
-      DictionaryInfo(tag: 'en-GB', name: 'GB', aff: 'a', dic: 'd'),
-      DictionaryInfo(tag: 'fr-FR', name: 'FR', aff: 'a', dic: 'd'),
-    ];
-    for (final (language, expected) in [
-      (null, 'en-US'),
-      ('en', 'en-US'),
-      ('en-AU', 'en-GB'),
-      ('en_GB', 'en-GB'),
-      ('en-CA', 'en-US'),
-      ('fr', 'fr-FR'),
-      ('fr-CA', 'fr-FR'),
-      ('de-DE', null),
-    ]) {
-      test('when resolving "$language" then the dictionary is $expected', () {
-        expect(SpellDictionaries.resolve(all, language)?.tag, expected);
-      });
-    }
   });
 
   testWidgets('Given a selection on a flagged word when computing errorAt '

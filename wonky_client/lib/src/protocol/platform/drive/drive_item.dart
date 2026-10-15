@@ -12,6 +12,8 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import '../../platform/drive/drive_item_kind.dart' as _i26ubj99;
+import '../../platform/drive/file_category.dart' as _idj2ejj9;
+import '../../platform/drive/file_upload_state.dart' as _idvu08o8;
 import '../../platform/drive/template_category.dart' as _i4yf368z;
 
 /// A file or folder in Wonky Drive (specs/05 §1, sharing settings 06 §2).
@@ -28,6 +30,13 @@ abstract class DriveItem
     this.contentRef,
     this.thumbnailFileId,
     int? sizeBytes,
+    int? attachmentBytes,
+    int? kindMask,
+    this.mimeType,
+    this.fileCategory,
+    this.uploadState,
+    this.fileMetaJson,
+    this.previewFileId,
     required this.createdAt,
     required this.createdById,
     required this.modifiedAt,
@@ -41,6 +50,8 @@ abstract class DriveItem
     bool? viewersSeeComments,
   }) : uuid = uuid ?? const _isc.Uuid().v7obj(),
        sizeBytes = sizeBytes ?? 0,
+       attachmentBytes = attachmentBytes ?? 0,
+       kindMask = kindMask ?? 0,
        editorsCanShare = editorsCanShare ?? true,
        nonEditorsCanExport = nonEditorsCanExport ?? true,
        viewersSeeComments = viewersSeeComments ?? false;
@@ -56,6 +67,13 @@ abstract class DriveItem
     _isc.UuidValue? contentRef,
     _isc.UuidValue? thumbnailFileId,
     int? sizeBytes,
+    int? attachmentBytes,
+    int? kindMask,
+    String? mimeType,
+    _idj2ejj9.FileCategory? fileCategory,
+    _idvu08o8.FileUploadState? uploadState,
+    String? fileMetaJson,
+    _isc.UuidValue? previewFileId,
     required DateTime createdAt,
     required int createdById,
     required DateTime modifiedAt,
@@ -93,6 +111,25 @@ abstract class DriveItem
               jsonSerialization['thumbnailFileId'],
             ),
       sizeBytes: jsonSerialization['sizeBytes'] as int?,
+      attachmentBytes: jsonSerialization['attachmentBytes'] as int?,
+      kindMask: jsonSerialization['kindMask'] as int?,
+      mimeType: jsonSerialization['mimeType'] as String?,
+      fileCategory: jsonSerialization['fileCategory'] == null
+          ? null
+          : _idj2ejj9.FileCategory.fromJson(
+              (jsonSerialization['fileCategory'] as String),
+            ),
+      uploadState: jsonSerialization['uploadState'] == null
+          ? null
+          : _idvu08o8.FileUploadState.fromJson(
+              (jsonSerialization['uploadState'] as String),
+            ),
+      fileMetaJson: jsonSerialization['fileMetaJson'] as String?,
+      previewFileId: jsonSerialization['previewFileId'] == null
+          ? null
+          : _isc.UuidValueJsonExtension.fromJson(
+              jsonSerialization['previewFileId'],
+            ),
       createdAt: _isc.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
@@ -148,12 +185,40 @@ abstract class DriveItem
 
   String? description;
 
-  /// Documents: Document.uuid; spreadsheets: the sync space UUID (= Spreadsheet.id).
+  /// Documents: Document.uuid; spreadsheets: the sync space UUID (= Spreadsheet.id);
+  /// presentations: the deck's space UUID (= Deck.id = item uuid); files: the
+  /// `driveFile` StoredFile.fileUuid of the current content.
   _isc.UuidValue? contentRef;
 
   _isc.UuidValue? thumbnailFileId;
 
+  /// Counted content size (Drive 03 §2): the content estimate, or the file
+  /// size for files.
   int sizeBytes;
+
+  /// (v2) Bytes of images/attachments stored for this item, charged to its
+  /// owner (Drive 03 §2). Counted size = sizeBytes + attachmentBytes.
+  int attachmentBytes;
+
+  /// (v2) Folders: bit set of the kinds contained recursively, ignoring
+  /// trashed items (bit = 1 << DriveItemKind.index; suite 05 §3.2).
+  int kindMask;
+
+  /// (v2) Files: the effective (sniffed) MIME type; null for other kinds.
+  String? mimeType;
+
+  /// (v2) Files: category for icons, filters and the preview viewer.
+  _idj2ejj9.FileCategory? fileCategory;
+
+  /// (v2) Files: upload state (Drive 02 §2). Null for other kinds.
+  _idvu08o8.FileUploadState? uploadState;
+
+  /// (v2) Files: kind-specific metadata JSON: {width, height} (images),
+  /// {pages} (PDF), {lines, encoding} (text), {durationMs} (audio, P2).
+  String? fileMetaJson;
+
+  /// (v2) Files: downscaled preview image (StoredFileKind.preview). Not counted.
+  _isc.UuidValue? previewFileId;
 
   DateTime createdAt;
 
@@ -194,6 +259,13 @@ abstract class DriveItem
     _isc.UuidValue? contentRef = const _isc.$UndefinedUuidValue(),
     _isc.UuidValue? thumbnailFileId = const _isc.$UndefinedUuidValue(),
     int? sizeBytes,
+    int? attachmentBytes,
+    int? kindMask,
+    String? mimeType,
+    _idj2ejj9.FileCategory? fileCategory,
+    _idvu08o8.FileUploadState? uploadState,
+    String? fileMetaJson,
+    _isc.UuidValue? previewFileId = const _isc.$UndefinedUuidValue(),
     DateTime? createdAt,
     int? createdById,
     DateTime? modifiedAt,
@@ -220,6 +292,13 @@ abstract class DriveItem
       if (contentRef != null) 'contentRef': contentRef?.toJson(),
       if (thumbnailFileId != null) 'thumbnailFileId': thumbnailFileId?.toJson(),
       'sizeBytes': sizeBytes,
+      'attachmentBytes': attachmentBytes,
+      'kindMask': kindMask,
+      if (mimeType != null) 'mimeType': mimeType,
+      if (fileCategory != null) 'fileCategory': fileCategory?.toJson(),
+      if (uploadState != null) 'uploadState': uploadState?.toJson(),
+      if (fileMetaJson != null) 'fileMetaJson': fileMetaJson,
+      if (previewFileId != null) 'previewFileId': previewFileId?.toJson(),
       'createdAt': createdAt.toJson(),
       'createdById': createdById,
       'modifiedAt': modifiedAt.toJson(),
@@ -248,6 +327,13 @@ abstract class DriveItem
       if (contentRef != null) 'contentRef': contentRef?.toJson(),
       if (thumbnailFileId != null) 'thumbnailFileId': thumbnailFileId?.toJson(),
       'sizeBytes': sizeBytes,
+      'attachmentBytes': attachmentBytes,
+      'kindMask': kindMask,
+      if (mimeType != null) 'mimeType': mimeType,
+      if (fileCategory != null) 'fileCategory': fileCategory?.toJson(),
+      if (uploadState != null) 'uploadState': uploadState?.toJson(),
+      if (fileMetaJson != null) 'fileMetaJson': fileMetaJson,
+      if (previewFileId != null) 'previewFileId': previewFileId?.toJson(),
       'createdAt': createdAt.toJson(),
       'createdById': createdById,
       'modifiedAt': modifiedAt.toJson(),
@@ -282,6 +368,13 @@ class _DriveItemImpl extends DriveItem {
     _isc.UuidValue? contentRef,
     _isc.UuidValue? thumbnailFileId,
     int? sizeBytes,
+    int? attachmentBytes,
+    int? kindMask,
+    String? mimeType,
+    _idj2ejj9.FileCategory? fileCategory,
+    _idvu08o8.FileUploadState? uploadState,
+    String? fileMetaJson,
+    _isc.UuidValue? previewFileId,
     required DateTime createdAt,
     required int createdById,
     required DateTime modifiedAt,
@@ -304,6 +397,13 @@ class _DriveItemImpl extends DriveItem {
          contentRef: contentRef,
          thumbnailFileId: thumbnailFileId,
          sizeBytes: sizeBytes,
+         attachmentBytes: attachmentBytes,
+         kindMask: kindMask,
+         mimeType: mimeType,
+         fileCategory: fileCategory,
+         uploadState: uploadState,
+         fileMetaJson: fileMetaJson,
+         previewFileId: previewFileId,
          createdAt: createdAt,
          createdById: createdById,
          modifiedAt: modifiedAt,
@@ -332,6 +432,13 @@ class _DriveItemImpl extends DriveItem {
     _isc.UuidValue? contentRef = const _isc.$UndefinedUuidValue(),
     _isc.UuidValue? thumbnailFileId = const _isc.$UndefinedUuidValue(),
     int? sizeBytes,
+    int? attachmentBytes,
+    int? kindMask,
+    Object? mimeType = _Undefined,
+    Object? fileCategory = _Undefined,
+    Object? uploadState = _Undefined,
+    Object? fileMetaJson = _Undefined,
+    _isc.UuidValue? previewFileId = const _isc.$UndefinedUuidValue(),
     DateTime? createdAt,
     int? createdById,
     DateTime? modifiedAt,
@@ -359,6 +466,19 @@ class _DriveItemImpl extends DriveItem {
           ? this.thumbnailFileId
           : thumbnailFileId,
       sizeBytes: sizeBytes ?? this.sizeBytes,
+      attachmentBytes: attachmentBytes ?? this.attachmentBytes,
+      kindMask: kindMask ?? this.kindMask,
+      mimeType: mimeType is String? ? mimeType : this.mimeType,
+      fileCategory: fileCategory is _idj2ejj9.FileCategory?
+          ? fileCategory
+          : this.fileCategory,
+      uploadState: uploadState is _idvu08o8.FileUploadState?
+          ? uploadState
+          : this.uploadState,
+      fileMetaJson: fileMetaJson is String? ? fileMetaJson : this.fileMetaJson,
+      previewFileId: previewFileId is _isc.UndefinedSentinel
+          ? this.previewFileId
+          : previewFileId,
       createdAt: createdAt ?? this.createdAt,
       createdById: createdById ?? this.createdById,
       modifiedAt: modifiedAt ?? this.modifiedAt,

@@ -59,17 +59,20 @@ sessionLogs:
 #  concurrencyLimit: 1 # Defaults to 1, a negative or null value removes the limit
 #  scanInterval: 5000 # Unit in milliseconds, defaults to 5000
 
-# Keeps auth tokens in httpOnly cookies shared by /write/ and /sheets/ (and
-# both `flutter run` dev origins; cookies are not port-isolated). Web clients
+# Keeps auth tokens in httpOnly cookies shared by all apps (/drive/, /write/,
+# /sheets/, /slides/) and the `flutter run` dev origins (cookies are not
+# port-isolated). Web clients
 # opt in with `client.cookieAuth = true` (specs/01-architecture.md §2.5).
 authCookie:
   secure: false # Cookies require https; relaxed for http://localhost
   path: /
   sameSite: lax
 allowedOrigins:
-  - http://localhost:8082 # The web server serving /write/ and /sheets/
+  - http://localhost:8082 # The web server serving /drive/, /write/, /sheets/, /slides/
+  - http://localhost:8100 # Wonky Drive dev app (`flutter run`)
   - http://localhost:8101 # Wonky Write dev app (`flutter run`)
   - http://localhost:8102 # Wonky Sheets dev app (`flutter run`)
+  - http://localhost:8104 # Wonky Slides dev app (`flutter run`)
 
 # Wonky Work settings (read by `lib/src/platform/config/wonky_config.dart`;
 # specs/01-architecture.md §6). Unknown to Serverpod itself.
@@ -90,7 +93,9 @@ wonky:
   write:
     snapshotEveryNOps: 500
     maxDocumentChars: 2000000
-  minClientVersion: 1.0.0
+  # v2 (M8): new enum values (DriveItemKind.presentation/file, …) that v1
+  # clients cannot read (specs/01 §7); the apps default to WONKY_VERSION 2.0.0.
+  minClientVersion: 2.0.0
   # The /mcp endpoint (specs/09-mcp.md §1–2, read by
   # lib/src/platform/mcp/mcp_config.dart). Requests with an Origin header must
   # match allowedOrigins; the Host header must match allowedHosts.
@@ -99,8 +104,10 @@ wonky:
     allowedHosts: [localhost, 127.0.0.1]
     allowedOrigins:
       - http://localhost:8082
+      - http://localhost:8100
       - http://localhost:8101
       - http://localhost:8102
+      - http://localhost:8104
     rateLimitPerMinute: 600
     sessionIdleMinutes: 60
   # The AI features (specs/10-ai-assistant.md §1, read by

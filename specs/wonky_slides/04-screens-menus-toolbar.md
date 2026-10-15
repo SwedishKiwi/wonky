@@ -43,7 +43,7 @@ grid_view,outline_view,menus,toolbar,dialogs,home}/`.
 
 | Route (D1, relative to `/slides/`) | Screen | Class | Notes |
 |------------------------------------|--------|-------|-------|
-| `/` and drive routes (`/recent`, `/f/:folder`, `/shared`, `/starred`, `/trash`, `/search`) | **Home** (Drive filtered to presentations, D2) | shell `DriveHomeScreen` + `SlidesHomeConfig` | §15 |
+| `/` and drive routes (`/recent`, `/f/:folder`, `/shared`, `/starred`, `/trash`, `/search`) | **Home** (Drive filtered to presentations, D2) | shell `DriveHomeScreen` with `SlidesAppConfig.homeScope` = `HomeScope.kind(presentation)` | §15 |
 | `/templates` | Template gallery (presentation categories) | shell | §15 |
 | `/p/:uuid` (`?slide=<slideId>&comment=<threadUuid>`) | **Deck editor** | `DeckEditorScreen` | §2 |
 | `/p/:uuid` while downloading | "Downloading presentation… 42 %" (skeleton navigator + slide) | `DeckLoadingView` | 02 §9.1 |
@@ -1016,7 +1016,7 @@ Built as the Slides app's settings sections (`WonkyAppConfig.settingsSections`),
 
 ## 15. Home screen and templates (Slides variant of the unified Drive, D2)
 
-- `SlidesHomeConfig`: the app home shows **only presentations** (Recent, My files, Shared with
+- `SlidesAppConfig.homeScope` = `HomeScope.kind(presentation)` (as built in SL-1): the app home shows **only presentations** (Recent, My files, Shared with
   me, Starred, Trash) with folders only as navigation (D2; only folders that contain a presentation,
   `kindMask` — decided in the v2 review, Q7, suite 03 §3.3). The left menu follows D2: apps section (Drive, Write, Sheets, **Slides**
   highlighted), the Slides navigation, then *Slides settings*, *Wonky Work settings*, *Report a

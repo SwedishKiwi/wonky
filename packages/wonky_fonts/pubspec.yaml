@@ -1,0 +1,23 @@
+name: wonky_fonts
+description: "Wonky Work shared fonts (pure Dart): the curated font registry and weight snapping, the FontProvider interface, and the bundled static TTF faces as package assets with their manifest."
+publish_to: none
+
+environment:
+  sdk: '^3.12.2'
+
+resolution: workspace
+
+dependencies:
+  collection: ^1.19.1
+
+dev_dependencies:
+  lints: '>=3.0.0 <7.0.0'
+  test: ^1.25.5
+
+# The bundled static TTF faces and their licenses (manifest: BundledFonts in
+# lib/src/bundled_fonts.dart; mirrored to wonky_server/web/fonts/ for server
+# PDF exports). A pure-Dart package can ship Flutter assets: apps depending on
+# it bundle them as `packages/wonky_fonts/fonts/…` and load faces on demand.
+flutter:
+  assets:
+    - fonts/

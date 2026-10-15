@@ -9,9 +9,12 @@ import 'package:wonky_core/wonky_core.dart' hide ActorKind;
 
 import '../../bootstrap/app_urls.dart';
 import '../../comments/comment_anchor.dart';
+import '../../config/home_scope.dart';
 import '../../comments/comments_undo.dart';
 import '../../data/models_ext.dart';
+import '../../shell/bug_report.dart';
 import '../../shell/dialogs.dart';
+import '../../shell/overlays/shell_overlays.dart' show clientVersion;
 import '../../shell/shell_services.dart';
 import '../../sharing/share_dialog.dart';
 import '../../undo/undo_history.dart';
@@ -57,6 +60,27 @@ List<Command<CommandArgs>> navigationCommands(ShellServices s) => [
     run: (ctx, a) async {
       s.router.go('/');
       return const CommandResult.ok();
+    },
+  ),
+  shellCommand(
+    'shell.nav.openInDrive',
+    title: (l) => l.cmdOpenInDrive,
+    icon: LucideIcons.hardDrive,
+    category: (l) => l.categoryNavigation,
+    args: const JsonSchema.object(
+      properties: {
+        'folderUuid': JsonSchema.string(
+          format: 'uuid',
+          description:
+              'Folder to show; default: the current folder or drive view.',
+        ),
+      },
+    ),
+    enabled: (ctx, a) => s.config.app != WonkyAppKind.drive,
+    run: (ctx, a) async {
+      final path = drivePathFor(s, folderUuid: a.string('folderUuid'));
+      await s.crossApp.open(WonkyAppKind.drive, path);
+      return CommandResult.ok({'path': path});
     },
   ),
   shellCommand(
@@ -172,23 +196,25 @@ List<Command<CommandArgs>> fileCommands(ShellServices s) {
       s.router.go(s.config.itemPath(uuid.uuid));
       return CommandResult.ok({'uuid': uuid.uuid});
     }
-    final uuid = await s.createItemOnServer(
-      kind,
-      parentUuid: parent,
-      templateUuid: template,
-    );
-    if (uuid == null) return const CommandResult.cancelled();
+    // Other kinds are created by their app's `/new` route (suite 03 §2,
+    // Drive 04 §5): offline-first where that app supports it.
     final app = appForKind(kind);
-    await s.crossApp.open(
-      app,
-      app == WonkyAppKind.write ? '/d/${uuid.uuid}' : '/s/${uuid.uuid}',
-    );
-    return CommandResult.ok({'uuid': uuid.uuid});
+    final path = NewItemRequest(
+      folderUuid: parent,
+      templateUuid: template,
+    ).path;
+    await s.crossApp.open(app, path);
+    return CommandResult.ok({'app': app.name, 'path': path});
   }
 
-  DriveItemKind kindOf(JsonArgs a) => a.string('kind') == 'spreadsheet'
-      ? DriveItemKind.spreadsheet
-      : DriveItemKind.document;
+  // Drive has no primary kind (D-17 gives it its own New menu).
+  final defaultKind = s.config.primaryKind ?? DriveItemKind.document;
+
+  DriveItemKind kindOf(JsonArgs a) => switch (a.string('kind')) {
+    'spreadsheet' => DriveItemKind.spreadsheet,
+    'presentation' => DriveItemKind.presentation,
+    _ => DriveItemKind.document,
+  };
 
   return [
     shellCommand(
@@ -200,7 +226,9 @@ List<Command<CommandArgs>> fileCommands(ShellServices s) {
       category: (l) => l.categoryFile,
       args: const JsonSchema.object(
         properties: {
-          'kind': JsonSchema.string(enumValues: ['document', 'spreadsheet']),
+          'kind': JsonSchema.string(
+            enumValues: ['document', 'spreadsheet', 'presentation'],
+          ),
           'templateUuid': JsonSchema.string(format: 'uuid'),
         },
       ),
@@ -209,13 +237,11 @@ List<Command<CommandArgs>> fileCommands(ShellServices s) {
           kindOf(
                 a.values.containsKey('kind')
                     ? a
-                    : JsonArgs({'kind': s.config.primaryKind.name}),
+                    : JsonArgs({'kind': defaultKind.name}),
               ) ==
               s.config.primaryKind,
       run: (ctx, a) {
-        final kind = a.values.containsKey('kind')
-            ? kindOf(a)
-            : s.config.primaryKind;
+        final kind = a.values.containsKey('kind') ? kindOf(a) : defaultKind;
         final t = a.string('templateUuid');
         return newItem(
           ctx,
@@ -1068,13 +1094,42 @@ List<Command<CommandArgs>> miscCommands(ShellServices s) => [
   ),
   shellCommand(
     'shell.settings.open',
-    title: (l) => l.cmdSettings,
+    title: (l) => l.cmdWorkSettings,
     icon: LucideIcons.settings,
+    category: (l) => l.categoryTools,
+    // Wonky Work settings (suite 04 §4); the v1 ids of the apps' sections
+    // (`write`, `themes`, `sheets`) redirect to their app settings.
+    args: const JsonSchema.object(properties: {'section': JsonSchema.string()}),
+    run: (ctx, a) async {
+      s.router.go('/settings/${a.string('section') ?? 'account'}');
+      return const CommandResult.ok();
+    },
+  ),
+  shellCommand(
+    'shell.settings.openApp',
+    title: (l) => l.cmdAppSettings(s.config.shortAppName),
+    icon: LucideIcons.settings2,
+    // Mod+, (desktop) opens the app's settings (suite 04 §4.2).
     bindings: const [KeyBinding(',', mod: true, web: false)],
     category: (l) => l.categoryTools,
     args: const JsonSchema.object(properties: {'section': JsonSchema.string()}),
     run: (ctx, a) async {
-      s.router.go('/settings/${a.string('section') ?? 'account'}');
+      final section = a.string('section');
+      s.router.go(section == null ? '/settings/app' : '/settings/app/$section');
+      return const CommandResult.ok();
+    },
+  ),
+  shellCommand(
+    'shell.storage.open',
+    title: (l) => l.cmdManageStorage,
+    icon: LucideIcons.chartPie,
+    category: (l) => l.categoryTools,
+    run: (ctx, a) async {
+      if (s.config.app == WonkyAppKind.drive) {
+        s.router.go('/storage');
+      } else {
+        await s.crossApp.open(WonkyAppKind.drive, '/storage');
+      }
       return const CommandResult.ok();
     },
   ),
@@ -1138,6 +1193,27 @@ List<Command<CommandArgs>> miscCommands(ShellServices s) => [
       if (c == null || !c.mounted) return const CommandResult.cancelled();
       await showShortcutsHelp(c, s);
       return const CommandResult.ok();
+    },
+  ),
+  shellCommand(
+    'shell.help.reportBug',
+    title: (l) => l.cmdReportBug,
+    icon: LucideIcons.bug,
+    category: (l) => l.categoryHelp,
+    run: (ctx, a) async {
+      final c = ctx.dialogContext;
+      if (c == null || !c.mounted) return const CommandResult.cancelled();
+      final url = bugReportUrl(s);
+      final choice = await confirmExternalLink(
+        c,
+        s,
+        url: url,
+        note: l10nOf(c).reportBugNote,
+      );
+      if (choice == ExternalLinkChoice.cancel) {
+        return const CommandResult.cancelled();
+      }
+      return CommandResult.ok({'url': url, 'action': choice.name});
     },
   ),
   shellCommand(
@@ -1224,14 +1300,20 @@ List<Command<CommandArgs>> miscCommands(ShellServices s) => [
         s.config.app == WonkyAppKind.write ? l.cmdOpenSheets : l.cmdOpenWrite,
     icon: LucideIcons.arrowLeftRight,
     category: (l) => l.categoryAccount,
-    args: const JsonSchema.object(
+    args: JsonSchema.object(
       properties: {
-        'app': JsonSchema.string(enumValues: ['write', 'sheets']),
+        'app': JsonSchema.string(
+          enumValues: [for (final k in WonkyAppKind.values) k.name],
+        ),
       },
     ),
     run: (ctx, a) async {
+      // Without `app`: Write ⇄ Sheets as in v1 (Drive, Slides → Write); the
+      // menus pass `app` (left menu, account menu *Open ▸*).
       final app = a.string('app') == null
-          ? s.config.app.other
+          ? (s.config.app == WonkyAppKind.write
+                ? WonkyAppKind.sheets
+                : WonkyAppKind.write)
           : WonkyAppKind.values.byName(a.string('app')!);
       if (app == s.config.app) {
         s.router.go('/');
@@ -1288,3 +1370,33 @@ Command<CommandArgs> shellCommandFocusSearch(ShellServices s) => shellCommand(
     return const CommandResult.ok();
   },
 );
+
+/// The *Report a bug* link of this app (suite 03 §3.4): app, build
+/// version, platform and browser family only.
+String bugReportUrl(ShellServices s) => BugReportLink.build(
+  issuesUrl: s.urls.bugReportUrl,
+  app: s.config.app,
+  version: clientVersion,
+  platform: BugReportLink.currentPlatform,
+  browser: s.crossApp.browserLabel(),
+);
+
+/// The Wonky Drive route showing what an app home shows now
+/// (`shell.nav.openInDrive`): [folderUuid], else the current folder, else
+/// the matching drive view (`/my-files` → `/my-drive`, `/shared`, …).
+String drivePathFor(ShellServices s, {String? folderUuid}) {
+  final folder = folderUuid ?? s.currentFolder.value?.uuid.uuid;
+  if (folder != null) return '/f/$folder';
+  Uri? uri;
+  try {
+    uri = s.router.state.uri;
+  } catch (_) {
+    uri = null;
+  }
+  return switch (uri?.path) {
+    '/my-files' || '/my-drive' => '/my-drive',
+    '/shared' || '/starred' || '/recent' || '/trash' => uri!.path,
+    '/search' => uri.toString(),
+    _ => '/',
+  };
+}

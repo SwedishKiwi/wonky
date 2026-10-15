@@ -75,4 +75,6 @@ wonky:
   write:
     snapshotEveryNOps: 500
     maxDocumentChars: 2000000
-  minClientVersion: 1.0.0
+  # v2 (M8): new enum values (DriveItemKind.presentation/file, …) that v1
+  # clients cannot read (specs/01 §7); the apps default to WONKY_VERSION 2.0.0.
+  minClientVersion: 2.0.0

@@ -20,8 +20,14 @@ dependencies:
   timezone: ^0.11.1
   uuid: ^4.5.1
   vector_math: ^2.1.4
+  wonky_charts:
+    path: ../wonky_charts
   wonky_core:
     path: ../wonky_core
+  wonky_numfmt:
+    path: ../wonky_numfmt
+  wonky_sync_kit:
+    path: ../wonky_sync_kit
   wonky_sync_models:
     path: ../wonky_sync_models
   xml: ^7.0.1

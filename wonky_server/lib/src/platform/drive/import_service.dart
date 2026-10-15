@@ -75,6 +75,13 @@ abstract final class ImportService {
         );
       case DriveItemKind.folder:
         throw Errors.invalid('Folders cannot be imported.');
+      case DriveItemKind.presentation:
+        // Slides has no import formats (Slides 01).
+        throw Errors.invalid('Presentations cannot be imported.');
+      case DriveItemKind.file:
+        throw Errors.invalid(
+          'Files are uploaded with drive.createFileUpload, not imported.',
+        );
     }
     await FileService.deleteFile(session, file.fileUuid);
     return report;

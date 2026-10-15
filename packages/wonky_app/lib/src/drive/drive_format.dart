@@ -11,13 +11,19 @@ IconData kindIcon(DriveItemKind kind) => switch (kind) {
   DriveItemKind.folder => LucideIcons.folder,
   DriveItemKind.document => LucideIcons.fileText,
   DriveItemKind.spreadsheet => LucideIcons.sheet,
+  DriveItemKind.presentation => LucideIcons.presentation,
+  // Per-category icons of uploaded files come with Drive (D-10/D-14).
+  DriveItemKind.file => LucideIcons.file,
 };
 
-/// Brand color of a kind (Write blue, Sheets green, folders muted).
+/// Brand color of a kind (Write blue, Sheets green, Slides amber, folders
+/// and files muted).
 Color kindColor(DriveItemKind kind, ShadColorScheme c) => switch (kind) {
   DriveItemKind.folder => c.mutedForeground,
   DriveItemKind.document => const Color(0xff2563eb),
   DriveItemKind.spreadsheet => const Color(0xff16a34a),
+  DriveItemKind.presentation => const Color(0xffd97706),
+  DriveItemKind.file => c.mutedForeground,
 };
 
 String describeKind(WonkyAppLocalizations l, DriveItemKind kind) =>
@@ -25,6 +31,8 @@ String describeKind(WonkyAppLocalizations l, DriveItemKind kind) =>
       DriveItemKind.folder => l.kindFolder,
       DriveItemKind.document => l.kindDocument,
       DriveItemKind.spreadsheet => l.kindSpreadsheet,
+      DriveItemKind.presentation => l.kindPresentation,
+      DriveItemKind.file => l.kindFile,
     };
 
 /// "10:42", "Yesterday", "Mar 3", "Mar 3, 2024" (suite 05 §3.1).
@@ -95,3 +103,29 @@ Color parseHexColor(String hex, {Color fallback = const Color(0xff71717a)}) {
   final v = int.tryParse(t.length == 6 ? 'ff$t' : t, radix: 16);
   return v == null ? fallback : Color(v);
 }
+
+/// The file subtypes of Drive's *Type ▸ Files* filter (Drive 04 §3.2).
+const filterFileCategories = [
+  FileCategory.image,
+  FileCategory.pdf,
+  FileCategory.text,
+  FileCategory.audio,
+  FileCategory.video,
+  FileCategory.archive,
+  FileCategory.other,
+];
+
+/// "Images", "PDFs", "Text & code", … (plural filter labels).
+String fileCategoryLabel(WonkyAppLocalizations l, FileCategory c) =>
+    switch (c) {
+      FileCategory.image => l.fileCategoryImages,
+      FileCategory.pdf => l.fileCategoryPdfs,
+      FileCategory.text => l.fileCategoryText,
+      FileCategory.audio => l.fileCategoryAudio,
+      FileCategory.video => l.fileCategoryVideo,
+      FileCategory.archive => l.fileCategoryArchives,
+      FileCategory.document => l.typeDocuments,
+      FileCategory.spreadsheet => l.typeSpreadsheets,
+      FileCategory.presentation => l.typePresentations,
+      FileCategory.other => l.fileCategoryOther,
+    };

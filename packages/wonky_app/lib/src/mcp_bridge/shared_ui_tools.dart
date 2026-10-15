@@ -142,7 +142,8 @@ abstract final class SharedUiTools {
       }, text: 'Opened ${item.name}');
     }
     final path = route!.startsWith('/') ? route : '/$route';
-    if (path.startsWith(s.config.app == WonkyAppKind.write ? '/s/' : '/d/')) {
+    final owner = WonkyAppKind.ownerOfPath(path);
+    if (owner != null && owner != s.config.app) {
       throw UiToolException(
         'unsupported',
         'That route belongs to the other app; open it with '

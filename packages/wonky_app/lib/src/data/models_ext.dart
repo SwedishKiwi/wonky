@@ -33,15 +33,11 @@ extension DriveItemViewX on DriveItemView {
 
   bool get canDownload => myRole.canEdit || nonEditorsCanExport;
 
-  /// The in-app path (`/drive/…`, `/d/…`, `/s/…`).
-  String get path => switch (kind) {
-    DriveItemKind.folder => '/drive/${uuid.uuid}',
-    DriveItemKind.document => '/d/${uuid.uuid}',
-    DriveItemKind.spreadsheet => '/s/${uuid.uuid}',
-  };
+  /// The in-app path (`/drive/…`, `/d/…`, `/s/…`, `/p/…`, `/file/…`) in the
+  /// app of its kind.
+  String get path => WonkyAppKind.itemPathFor(kind, uuid.uuid);
 }
 
-/// The app that edits [kind] (folders: Write).
-WonkyAppKind appForKind(DriveItemKind kind) => kind == DriveItemKind.spreadsheet
-    ? WonkyAppKind.sheets
-    : WonkyAppKind.write;
+/// The app that opens [kind] (folders: Write, as in v1).
+WonkyAppKind appForKind(DriveItemKind kind) =>
+    WonkyAppKind.forItemKind(kind, current: WonkyAppKind.write);

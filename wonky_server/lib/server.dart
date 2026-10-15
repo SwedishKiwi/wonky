@@ -12,6 +12,7 @@ import 'src/generated/serverpod.dart';
 import 'src/platform/cluster/cluster.dart';
 import 'src/platform/cluster/cluster_bus.dart';
 import 'src/platform/config/wonky_config.dart';
+import 'src/platform/files/file_routes.dart';
 import 'src/platform/mcp/mcp_route.dart';
 import 'src/platform/users/email_idp.dart';
 import 'src/platform/users/google_idp.dart';
@@ -21,10 +22,12 @@ import 'src/web/middleware/sqlite_asset_alias.dart';
 import 'src/web/routes/app_config_route.dart';
 import 'src/web/routes/invite_route.dart';
 import 'src/web/routes/root_redirect_route.dart';
+import 'src/web/web_apps.dart';
 import 'src/write/themes/theme_service.dart';
 import 'src/write/versions/write_version_provider.dart';
 import 'src/sheets/changelog/change_log_consumer.dart';
 import 'src/sheets/scripts/script_triggers.dart';
+import 'src/slides/slides_server.dart';
 
 /// The starting point of the Wonky Work server.
 void run(List<String> args) async {
@@ -40,6 +43,7 @@ void run(List<String> args) async {
 
   registerVersionProviders();
   registerScriptHooks();
+  registerSlidesHooks();
   _configureWebServer(pod);
 
   // Cloud storage for uploads, exports and snapshots. Works with Serverpod
@@ -77,6 +81,26 @@ void run(List<String> args) async {
     await session.close();
   }
   await scheduleMaintenanceJobs(pod);
+  await scheduleStorageBackfill(pod);
+}
+
+/// (v2) The storage backfill (Drive 03 §9): once per server start, a few
+/// seconds after it; a no-op when every user is reconciled. Idempotent and
+/// serialized across instances.
+Future<void> scheduleStorageBackfill(sp.Serverpod pod) async {
+  const id = 'wonky.storageBackfill';
+  final session = await pod.createSession(enableLogging: false);
+  try {
+    await Cluster.withLock(session, 'wonky.scheduleJobs', () async {
+      await pod.futureCalls.cancel(id);
+      await pod.futureCalls
+          .callWithDelay(const Duration(seconds: 10), identifier: id)
+          .storage
+          .backfill();
+    });
+  } finally {
+    await session.close();
+  }
 }
 
 /// Sheets scripts: compile-after-sync and installable triggers run from
@@ -87,14 +111,19 @@ void registerScriptHooks() {
   }
 }
 
+/// Wonky Slides: the deck size estimator and the deck change-log plugins
+/// (Slides 12 §5.7).
+void registerSlidesHooks() => SlidesServer.ensureRegistered();
+
 /// Registers the per-app version providers (specs/07 §5).
 void registerVersionProviders() {
   VersionService.register(const WriteVersionProvider());
   VersionService.register(const SheetsVersionProvider());
 }
 
-/// Web routes (specs/01 §2.4): both Flutter web apps on one origin, their
-/// runtime config, the root redirect and share-link landing.
+/// Web routes (specs/01 §2.4): the Flutter web apps ([webApps]: Drive,
+/// Write, Sheets, Slides) on one origin, their runtime config, the root
+/// redirect to `/write/` and share-link landing.
 void _configureWebServer(Serverpod pod) {
   pod.webServer.addRoute(
     StaticRoute.withCacheBusting(cacheBustingConfig),
@@ -114,11 +143,14 @@ void _configureWebServer(Serverpod pod) {
   pod.webServer.addRoute(InviteRoute(), '/invite/:token');
   // The MCP endpoint (specs/09-mcp.md §1): Streamable HTTP, bearer tokens.
   pod.webServer.addRoute(McpRoute(), '/mcp');
+  // Wonky Drive file bytes (Drive 02 §3.3, §8; suite 13 §6): token-bound
+  // downloads with forced headers and the PUT upload route.
+  FileRoutes.register(pod.webServer);
 
   final fallbackPage = File(
     Uri(path: 'web/pages/build_flutter_app.html').toFilePath(),
   );
-  for (final app in const ['write', 'sheets']) {
+  for (final app in webApps) {
     pod.webServer.addRoute(
       AppConfigRoute(
         apiConfig: pod.config.apiServer,
@@ -167,6 +199,8 @@ final _jobs = <String, (String, Future<void> Function(dynamic recurring))>{
   'wonky.sendDigests': ('*/15 * * * *', (r) => r.maintenance.sendDigests()),
   'wonky.cleanupFiles': ('7 * * * *', (r) => r.maintenance.cleanupFiles()),
   'wonky.daily': ('17 3 * * *', (r) => r.maintenance.daily()),
+  // (v2) Storage counters from the sources (Drive 03 §4.3).
+  'wonky.storageReconcile': ('47 3 * * *', (r) => r.storage.reconcile()),
   // Sheets scripts (Sheets 09 §8.7.3, §13.1).
   'wonky.scriptsTick': ('* * * * *', (r) => r.scriptScheduler.tick()),
   'wonky.scriptsPrune': ('37 3 * * *', (r) => r.scriptScheduler.prune()),

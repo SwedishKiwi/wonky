@@ -1615,6 +1615,144 @@ abstract class WriteLocalizations {
   /// **'Document themes'**
   String get settingsDocumentThemes;
 
+  /// Write settings section (Write 05 §13.3).
+  ///
+  /// In en, this message translates to:
+  /// **'Editor'**
+  String get settingsWriteEditor;
+
+  /// Write settings section (Write 05 §13.3).
+  ///
+  /// In en, this message translates to:
+  /// **'Page & export'**
+  String get settingsWritePage;
+
+  /// Write settings section (Write 05 §13.3).
+  ///
+  /// In en, this message translates to:
+  /// **'Spelling'**
+  String get settingsWriteSpelling;
+
+  /// No description provided for @settingsWriteTyping.
+  ///
+  /// In en, this message translates to:
+  /// **'Typing'**
+  String get settingsWriteTyping;
+
+  /// No description provided for @settingsWriteDisplay.
+  ///
+  /// In en, this message translates to:
+  /// **'Display'**
+  String get settingsWriteDisplay;
+
+  /// No description provided for @settingsWriteDefaultMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Default mode for shared documents'**
+  String get settingsWriteDefaultMode;
+
+  /// No description provided for @settingsWriteDefaultModeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'How documents you can edit open when someone shares them with you.'**
+  String get settingsWriteDefaultModeHint;
+
+  /// No description provided for @settingsWritePageGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Page'**
+  String get settingsWritePageGroup;
+
+  /// No description provided for @settingsWriteDefaultLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Default layout'**
+  String get settingsWriteDefaultLayout;
+
+  /// No description provided for @settingsWriteDefaultPageSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Default page setup'**
+  String get settingsWriteDefaultPageSetup;
+
+  /// No description provided for @settingsWritePageSetupSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved with File › Page setup › Set as default.'**
+  String get settingsWritePageSetupSaved;
+
+  /// No description provided for @settingsWritePageSetupHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Save one with File › Page setup › Set as default in a document.'**
+  String get settingsWritePageSetupHint;
+
+  /// No description provided for @settingsWriteResetPageSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get settingsWriteResetPageSetup;
+
+  /// No description provided for @settingsWriteExportGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Export'**
+  String get settingsWriteExportGroup;
+
+  /// No description provided for @settingsWriteSpellingGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Spell check'**
+  String get settingsWriteSpellingGroup;
+
+  /// No description provided for @settingsWriteDictionary.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal dictionary'**
+  String get settingsWriteDictionary;
+
+  /// No description provided for @settingsWriteDictionaryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Words you add from the spelling menu are never marked as misspelled.'**
+  String get settingsWriteDictionaryHint;
+
+  /// No description provided for @settingsWriteDictionaryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No words yet.'**
+  String get settingsWriteDictionaryEmpty;
+
+  /// Screen reader label of the remove button of a personal dictionary word.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {word}'**
+  String settingsWriteDictionaryRemove(String word);
+
+  /// No description provided for @cmdPrefsSetDefaultLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Default layout of new documents'**
+  String get cmdPrefsSetDefaultLayout;
+
+  /// No description provided for @cmdPrefsSetExportFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Default export format'**
+  String get cmdPrefsSetExportFormat;
+
+  /// No description provided for @cmdPrefsResetPageSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset default page setup'**
+  String get cmdPrefsResetPageSetup;
+
+  /// No description provided for @cmdPrefsRemoveDictionaryWord.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove word from personal dictionary'**
+  String get cmdPrefsRemoveDictionaryWord;
+
   /// No description provided for @cmdCommentsPrevious.
   ///
   /// In en, this message translates to:
@@ -7334,6 +7472,48 @@ abstract class WriteLocalizations {
   /// In en, this message translates to:
   /// **'Dismiss'**
   String get importBannerDismiss;
+
+  /// Error of /import?file= (Drive's Open with ▸ Wonky Write) without a connection.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline. Connect to the internet to open this file in Wonky Write.'**
+  String get importRouteOffline;
+
+  /// No description provided for @importRouteNotAFile.
+  ///
+  /// In en, this message translates to:
+  /// **'This item isn\'t an uploaded file.'**
+  String get importRouteNotAFile;
+
+  /// No description provided for @importRouteUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Wonky Write can\'t open “{fileName}”.'**
+  String importRouteUnsupported(String fileName);
+
+  /// No description provided for @importRouteUploading.
+  ///
+  /// In en, this message translates to:
+  /// **'“{fileName}” is still uploading. Try again when the upload has finished.'**
+  String importRouteUploading(String fileName);
+
+  /// Overlay of an image whose background upload was refused because the storage quota is full (Drive 03 §6.3).
+  ///
+  /// In en, this message translates to:
+  /// **'Not uploaded — out of storage'**
+  String get imageNotUploadedOutOfStorage;
+
+  /// No description provided for @imageRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get imageRetry;
+
+  /// No description provided for @imageRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get imageRemove;
 
   /// No description provided for @printNoServer.
   ///

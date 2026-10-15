@@ -23,7 +23,10 @@ enum ActivityType implements _is.SerializableModel {
   restoredVersion,
   trashed,
   restored,
-  exported;
+  exported,
+
+  /// (v2) A file was uploaded (Drive 02 §3.3).
+  uploaded;
 
   static ActivityType fromJson(String name) {
     switch (name) {
@@ -49,6 +52,8 @@ enum ActivityType implements _is.SerializableModel {
         return ActivityType.restored;
       case 'exported':
         return ActivityType.exported;
+      case 'uploaded':
+        return ActivityType.uploaded;
       default:
         throw ArgumentError(
           'Value "$name" cannot be converted to "ActivityType"',

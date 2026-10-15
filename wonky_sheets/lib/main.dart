@@ -1,8 +1,8 @@
 import 'package:wonky_app/wonky_app.dart';
+import 'package:wonky_charts_flutter/wonky_charts_flutter.dart';
+import 'package:wonky_charts_flutter/gpu.dart';
 
 import 'config/sheets_app_config.dart';
-import 'features/charts3d/chart3d_gpu.dart';
-import 'features/charts3d/gpu/install_chart3d_gpu.dart';
 
 /// Wonky Sheets boots through the shared shell (suite 03).
 void main() {

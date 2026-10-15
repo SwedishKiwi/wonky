@@ -4,7 +4,7 @@ library;
 
 import 'package:collection/collection.dart';
 
-import '../../fonts/font_registry.dart';
+import 'package:wonky_fonts/wonky_fonts.dart';
 import 'color_ref.dart';
 import 'json_util.dart';
 import 'length.dart';

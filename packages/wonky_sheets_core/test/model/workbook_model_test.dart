@@ -74,7 +74,7 @@ void main() {
       );
       m.applyPlan(plan);
       expect(contentAt(m, 'A1'), 'n:2');
-      m.applyChanges(UndoInverter.invert(plan, m));
+      m.applyChanges(SheetsUndo.invert(plan, m));
       expect(contentAt(m, 'A1'), 'n:1');
     });
 
@@ -95,7 +95,7 @@ void main() {
       m.applyPlan(plan);
       m.upsertRow(SheetsTables.cell, cell.id, {CellCols.content: 'n:3'});
       final skipped = <String>[];
-      final undo = UndoInverter.invert(
+      final undo = SheetsUndo.invert(
         plan,
         m,
         skipped: (t, id, c) => skipped.add(c),

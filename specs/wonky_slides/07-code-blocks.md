@@ -63,8 +63,9 @@ a, List<T> b, {bool Function(T, T)? equals})`** (the existing private Myers impl
 generalized); `LineDiff` becomes a thin wrapper. `wonky_code` and the Magic Move text matcher
 (06 §9.5) use it.
 
-After Write is migrated (§2.7), `third_party/syntax_highlight` is deleted (its `VENDORED.md`
-notes the move) and the root `pubspec_overrides.yaml` entry removed.
+After Write is migrated (§2.7), `third_party/syntax_highlight` is deleted and the root
+`pubspec_overrides.yaml` entry removed; the provenance (source archive, hash, license) and the
+patch history SH-1…SH-5 live in `packages/wonky_code/THIRD_PARTY.md` (done in D-2).
 
 ### 2.2 Tokenizer decision
 
@@ -150,6 +151,28 @@ Plus `HighlightSteps.parse` (§4.1), `CodeEditScript.compute` (§5.2), `TypingSc
 - `CodeTextStyler` — `SyntaxPalette` + font → `TextStyle`s per token (used by Write's
   `CodeHighlightStylePhase` instead of its private styler).
 - `CodeEditorField` — editing wrapper (§3.5).
+
+**Status (M8, Drive 05 D-2 — extraction done).** Built and differing from the sketch above:
+- `CodeTokenizer` has `supports(language)` + `tokenize(code, language)`; `tokenizeLine` /
+  `LineTokens` / `LineState` come with type-in and editing (M10, §5.4) — the copied engine parses
+  whole texts and has no line-state API yet.
+- `wonky_code` also exposes `TextMateTokenizer`, `HighlightJsTokenizer` (moved from
+  `wonky_write_core`, which keeps `SyntaxHighlighter`/`SyntaxSpan` as typedefs),
+  `DefaultCodeTokenizer`, `ScopeClassifier`, `CodeToken`, `SyntaxToken`, `SyntaxPalette` (+
+  `TokenStyle`, `PaletteBrightness`, `parseColor`/`formatColor`/`contrastRatio`) and
+  `BuiltInPalettes` (§2.5 table; One Dark, Dracula and Solarized accents are lightened/darkened
+  where the originals miss 4.5:1). `CodeLanguages` additionally has `grammars` (language → TextMate
+  grammar), `grammarFor`, `highlightJsLanguages`, `displayNames`, `aliases`, `extensions`;
+  `detect` (P1) is not built. `wonky_code` does not depend on `wonky_core` yet (nothing needed).
+- `wonky_code_flutter` (depends only on `flutter` + `wonky_code` so far) has `CodeTextStyler`
+  and a **read-only `CodeView` widget** for Drive previews: virtualized lines (fixed line extent,
+  fixed line-number gutter, horizontal scroll) or soft wrap, highlighted lines, `SelectionArea`
+  selection, deferred highlighting for long code (sync up to 50k UTF-16 units, at most the first
+  500k highlighted), default palette from the ambient `Theme` brightness. The grid-exact painter
+  driven by `CodeViewState` (title tab, callouts, dimming, caret; §3.3–§3.4) arrives with
+  `CodeLayout`/`MonoFontMetrics` in M10, as is `CodeEditorField` and `CodePaletteResolver`.
+- Write's editor uses `TextMateTokenizer` (not yet the facade) and its own class-keyed theme
+  styling (Write 04 §15.5).
 
 ### 2.4 Languages
 

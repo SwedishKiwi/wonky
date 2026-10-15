@@ -12,7 +12,7 @@ void main() {
     test('when naming the main entry points then each one resolves', () {
       const entryPoints = <Type>[
         // Model, planner, undo.
-        WorkbookModel, SheetsMutationPlanner, UndoInverter, PlanContext,
+        WorkbookModel, SheetsMutationPlanner, SheetsUndo, PlanContext,
         PlanException, WorkbookMaintenance, SheetsOperation, MutationPlan,
         // Engine and bridge.
         FormulaEngine, ModelEngineBinding, EngineFormulaHooks,

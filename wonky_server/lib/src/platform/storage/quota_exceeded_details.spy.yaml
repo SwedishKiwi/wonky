@@ -1,0 +1,17 @@
+### (v2) `WonkyException.detailsJson` of `WonkyErrorCode.quotaExceeded`
+### (Drive 03 §7.1). Clients map it to the *Out of storage* dialog variants
+### (Drive 03 §6.3).
+class: QuotaExceededDetails
+fields:
+  neededBytes: int
+  availableBytes: int
+  quotaBytes: int
+  ### The user whose quota is short: the caller, or the item owner (images
+  ### added to someone else's item, ownership transfers).
+  chargedUserId: int
+  chargedUserName: String
+  ### Whether [chargedUserId] is the caller.
+  isCaller: bool
+  ### What was refused: upload, image, import, convert, copy, template,
+  ### transfer, restoreVersionCopy (`QuotaReason` constants on the server).
+  reason: String

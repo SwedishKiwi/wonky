@@ -1,0 +1,21 @@
+name: wonky_spellcheck
+description: "Wonky Work shared spell checking (pure Dart): the Hunspell-compatible engine (dictionary parsing, checking, suggestions, tokenization) and the bundled dictionaries as package assets."
+publish_to: none
+
+environment:
+  sdk: '^3.12.2'
+
+resolution: workspace
+
+dev_dependencies:
+  lints: '>=3.0.0 <7.0.0'
+  test: ^1.25.5
+
+# The bundled Hunspell dictionaries (sources and licenses in
+# dictionaries/LICENSES.md). A pure-Dart package can ship Flutter assets: apps
+# depending on it (through wonky_app) bundle them as
+# `packages/wonky_spellcheck/dictionaries/…` and load them on first need
+# (SpellDictionaries in wonky_app). The engine never reads them itself.
+flutter:
+  assets:
+    - dictionaries/

@@ -6,7 +6,8 @@ import 'email_sender.dart';
 
 /// Renders notification emails (specs/07 §4): one email for a mention or an
 /// assignment, a digest for everything else. Links point at the apps on the
-/// web server (`<origin>/write/d/<uuid>`, `<origin>/sheets/s/<uuid>`).
+/// web server (`<origin>/write/d/<uuid>`, `<origin>/sheets/s/<uuid>`,
+/// `<origin>/slides/p/<uuid>`, folders `<origin>/drive/f/<uuid>`).
 class NotificationEmails {
   const NotificationEmails({required this.webOrigin});
 
@@ -19,7 +20,10 @@ class NotificationEmails {
     final path = switch ((uuid, n.itemKind)) {
       (null, _) => '/write/',
       (_, DriveItemKind.spreadsheet) => '/sheets/s/$uuid',
-      (_, DriveItemKind.folder) => '/write/drive/$uuid',
+      (_, DriveItemKind.presentation) => '/slides/p/$uuid',
+      // (v2) Folders open in Wonky Drive (suite 03 §2), files in its preview.
+      (_, DriveItemKind.folder) => '/drive/f/$uuid',
+      (_, DriveItemKind.file) => '/drive/file/$uuid',
       _ => '/write/d/$uuid',
     };
     // Spreadsheet comments link to their cell (Sheets 10 §3.6).
@@ -73,6 +77,10 @@ class NotificationEmails {
       NotificationKind.ownershipTransfer =>
         '$who wants to transfer ownership of $what to you',
       NotificationKind.scriptFailure => 'A script failed in $what',
+      NotificationKind.storage =>
+        p['message'] is String
+            ? '${p['message']}'
+            : 'Your Wonky Work storage needs attention',
     };
   }
 

@@ -1,13 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:serverpod_offline_sync_client/serverpod_offline_sync_client.dart'
-    show OfflineSyncSpaceRole;
 import 'package:wonky_client/wonky_client.dart'
-    show AccessRole, SpaceStats, SubscribeResult, UuidValue;
+    show SpaceStats, SubscribeResult, UuidValue;
 import 'package:wonky_core/wonky_core.dart' show Role;
 import 'package:wonky_sheets_core/model.dart';
-import 'package:wonky_ui/wonky_ui.dart' show SyncState, SyncStatus;
+import 'package:wonky_sync_kit_flutter/wonky_sync_kit_flutter.dart'
+    show HostedSpaceSession, JournalIngestion, SpaceOpening, SpaceWriteQueue;
 
 import '../model/memory_workbook_session.dart';
 import '../model/row_loading.dart';
@@ -16,7 +15,6 @@ import '../model/loading_gate.dart';
 import 'remote_patch.dart';
 import 'sheets_replica.dart';
 import 'sheets_session_host.dart';
-import 'sheets_writer.dart';
 
 /// A [WorkbookSession] on the synced local replica (suite 12 §2, Sheets 02
 /// §6–7).
@@ -31,15 +29,16 @@ import 'sheets_writer.dart';
 ///
 /// Writes: the model is updated synchronously by the base class; [persist]
 /// queues the changes for the `SheetsWriter` (one transaction per ≤ 5,000
-/// changes plus the `ChangeLog` row), strictly in order. [flush] awaits the
-/// queue.
+/// changes plus the `ChangeLog` row), strictly in order (the shared kit's
+/// [SpaceWriteQueue]). [flush] awaits the queue.
 ///
 /// Remote changes: after every merge of the space, the rows the change
 /// journal recorded since the session's cursor are re-read and patched into
-/// the model ([RemotePatch]); queued local writes are overlaid so an
-/// optimistic edit never flickers back. The patch is emitted on
-/// [remoteBatches].
-class SyncedWorkbookSession extends WorkbookSessionBase {
+/// the model ([RemotePatch], driven by the shared kit's
+/// [JournalIngestion]); queued local writes are overlaid so an optimistic
+/// edit never flickers back. The patch is emitted on [remoteBatches].
+class SyncedWorkbookSession extends WorkbookSessionBase
+    implements HostedSpaceSession {
   SyncedWorkbookSession._(
     this.host, {
     required super.itemUuid,
@@ -48,7 +47,29 @@ class SyncedWorkbookSession extends WorkbookSessionBase {
     required this.spaceUuid,
     super.role,
     super.maxCells,
-  });
+  }) {
+    _writes = SpaceWriteQueue(
+      writer: host.writer,
+      spaceUuid: spaceUuid,
+      sessionId: host.sessionId,
+      onStored: host.kick,
+      onFailed: (_) {
+        // The optimistic model change was not stored: bring the model back
+        // in line with the replica.
+        _ingestion.needsReload = true;
+        unawaited(ingestRemote());
+      },
+      onChanged: _updateStatus,
+    );
+    _ingestion = JournalIngestion(
+      host: host,
+      modelTables: _modelTables,
+      applyRows: _applyJournalRows,
+      reloadRows: _reloadRows,
+      isDisposed: () => _disposed,
+      afterIngest: _syncRoleFromMembership,
+    );
+  }
 
   /// Opens the spreadsheet [spaceUuid] of drive item [itemUuid]. Returns at
   /// once; follow [loadState].
@@ -78,6 +99,8 @@ class SyncedWorkbookSession extends WorkbookSessionBase {
   }
 
   final SheetsSessionHost host;
+
+  @override
   final UuidValue spaceUuid;
   late Duration _settleTimeout;
 
@@ -108,23 +131,21 @@ class SyncedWorkbookSession extends WorkbookSessionBase {
   bool _disposed = false;
 
   /// Whether [dispose] ran.
+  @override
   bool get isDisposed => _disposed;
-  int? _spaceKey;
+
+  late final SpaceWriteQueue _writes;
+  late final JournalIngestion _ingestion;
 
   /// Journal position of the last ingested change (null until loaded).
-  int? cursor;
+  @override
+  int? get cursor => _ingestion.cursor;
 
   /// Full or incremental model refreshes performed (tests, diagnostics).
   int fullReloads = 0;
   int patches = 0;
 
   StreamSubscription<UuidValue>? _mergeSub;
-  Future<void> _queue = Future.value();
-  final List<_PendingWrite> _pending = [];
-  Future<void>? _ingesting;
-  bool _ingestAgain = false;
-  bool _needsReload = false;
-  Object? _lastError;
 
   bool get _ready => loadStateNotifier.value is WorkbookReady;
 
@@ -167,7 +188,7 @@ class SyncedWorkbookSession extends WorkbookSessionBase {
       if (host.online.value) {
         try {
           sub = await host.subscribe(itemUuid);
-          roleValue = _roleOf(sub.role);
+          roleValue = SpaceOpening.roleOf(sub.role);
           if (!sub.alreadyMember) host.kick();
         } on SheetsOfflineException {
           sub = null;
@@ -220,34 +241,18 @@ class SyncedWorkbookSession extends WorkbookSessionBase {
   /// (`spaceStats`), reporting progress; gives up waiting for the last rows
   /// once the spreadsheet row is there and nothing arrived for
   /// [_settleTimeout] (the rest is patched in as it arrives).
-  Future<void> _waitForSpace(SpaceStats stats) async {
-    final total = stats.totalRows <= 0 ? 1 : stats.totalRows;
-    var last = -1;
-    var lastChange = DateTime.now();
-    while (!_disposed) {
-      final counts = await host.replica.rowCounts(spaceUuid);
-      final have = counts.values.fold(0, (a, b) => a + b);
-      final present = (counts['spreadsheet'] ?? 0) > 0;
-      if (present && have >= stats.totalRows) return;
-      if (have != last) {
-        last = have;
-        lastChange = DateTime.now();
-        loadStateNotifier.value = WorkbookLoading(
-          progress: (have / total).clamp(0.0, 1.0),
-          message: 'Downloading spreadsheet…',
-        );
-      } else if (present &&
-          DateTime.now().difference(lastChange) > _settleTimeout) {
-        return;
-      } else if (!host.online.value && !present) {
-        return;
-      }
-      await Future.any<void>([
-        host.merges.firstWhere((s) => s == spaceUuid).then((_) {}),
-        Future<void>.delayed(const Duration(milliseconds: 500)),
-      ]);
-    }
-  }
+  Future<void> _waitForSpace(SpaceStats stats) => SpaceOpening.waitForSpace(
+    host,
+    spaceUuid,
+    stats,
+    rootTable: SheetsTables.spreadsheet,
+    settleTimeout: _settleTimeout,
+    isDisposed: () => _disposed,
+    onProgress: (progress) => loadStateNotifier.value = WorkbookLoading(
+      progress: progress,
+      message: 'Downloading spreadsheet…',
+    ),
+  );
 
   /// Viewport-first loading (02 §6): the metadata (every table but cells),
   /// then the cells of the first visible window of the active sheet
@@ -263,7 +268,7 @@ class SyncedWorkbookSession extends WorkbookSessionBase {
       );
       return;
     }
-    _spaceKey = key;
+    _ingestion.spaceKey = key;
     // Journal first, then read: anything written while loading is in the
     // journal after the cursor and re-applied (idempotently).
     await replica.journal.track(key);
@@ -280,7 +285,9 @@ class SyncedWorkbookSession extends WorkbookSessionBase {
       },
     );
     if (_disposed) return;
-    model.applyChanges(RemotePatch.reconcile(model, meta, _pendingOverlay()));
+    model.applyChanges(
+      RemotePatch.reconcile(model, meta, _writes.pendingOverlay),
+    );
     final sheets = model.sheets;
     final totalRows = sheets.fold(0, (a, s) => a + s.rows.length);
     for (final sheet in sheets) {
@@ -298,7 +305,7 @@ class SyncedWorkbookSession extends WorkbookSessionBase {
         if (_disposed) return;
       }
     }
-    cursor = start;
+    _ingestion.cursor = start;
     fullReloads++;
     host.journalCursorsChanged();
     _mergeSub ??= host.merges
@@ -402,7 +409,7 @@ class SyncedWorkbookSession extends WorkbookSessionBase {
     } catch (e, st) {
       if (_disposed) return;
       debugPrint('Streaming spreadsheet rows failed, reloading: $e\n$st');
-      _needsReload = true;
+      _ingestion.needsReload = true;
       unawaited(ingestRemote());
     }
   }
@@ -457,89 +464,43 @@ class SyncedWorkbookSession extends WorkbookSessionBase {
 
   /// Applies the rows changed since [cursor] (after a merge). Coalesces
   /// concurrent calls; completes when the model is current.
-  Future<void> ingestRemote() {
-    if (_disposed || _spaceKey == null || cursor == null) {
-      return Future.value();
-    }
-    if (_ingesting != null) {
-      _ingestAgain = true;
-      return _ingesting!;
-    }
-    final f = _ingestLoop();
-    _ingesting = f;
-    return f.whenComplete(() => _ingesting = null);
-  }
+  Future<void> ingestRemote() => _ingestion.ingest();
 
-  Future<void> _ingestLoop() async {
-    do {
-      _ingestAgain = false;
-      try {
-        if (_needsReload) {
-          await _reload();
-        } else {
-          await _ingestOnce();
-        }
-      } catch (e, st) {
-        debugPrint('Applying remote changes failed, reloading: $e\n$st');
-        _needsReload = true;
-        _ingestAgain = !_disposed;
-        await Future<void>.delayed(const Duration(milliseconds: 200));
+  /// Patches the model with the journaled rows (incremental ingestion).
+  void _applyJournalRows(
+    Map<String, Set<UuidValue>> changed,
+    Map<String, Map<String, Map<String, Object?>>> rows,
+  ) {
+    final patch = RemotePatch.build(
+      model,
+      changed,
+      rows,
+      _writes.pendingOverlay,
+    );
+    if (patch.isEmpty) return;
+    if (!_rows.complete) {
+      for (final c in patch) {
+        if (c.table == SheetsTables.cell) _touched.add(c.rowId);
       }
-    } while (_ingestAgain && !_disposed);
-  }
-
-  Future<void> _ingestOnce() async {
-    final replica = host.replica;
-    while (!_disposed) {
-      final changes = await replica.journal.changesSince(_spaceKey!, cursor!);
-      if (changes.head == cursor) break;
-      if (!changes.isEmpty) {
-        changes.rows.removeWhere((t, _) => !_modelTables.contains(t));
-        final rows = await replica.readRows(changes.rows);
-        if (_disposed) return;
-        final patch = RemotePatch.build(
-          model,
-          changes.rows,
-          rows,
-          _pendingOverlay(),
-        );
-        if (patch.isNotEmpty) {
-          if (!_rows.complete) {
-            for (final c in patch) {
-              if (c.table == SheetsTables.cell) _touched.add(c.rowId);
-            }
-          }
-          final batch = model.applyChanges(patch);
-          patches++;
-          if (!batch.isEmpty && !remoteController.isClosed) {
-            remoteController.add(batch);
-          }
-        }
-      }
-      cursor = changes.head;
-      host.journalCursorsChanged();
     }
-    await _syncRoleFromMembership();
+    final batch = model.applyChanges(patch);
+    patches++;
+    if (!batch.isEmpty && !remoteController.isClosed) {
+      remoteController.add(batch);
+    }
   }
 
   /// Fallback after errors: diff the whole space against the model.
-  Future<void> _reload() async {
-    final replica = host.replica;
-    final head = await replica.journal.head();
-    final rows = await replica.loadSpace(_spaceKey!);
-    if (_disposed) return;
-    final patch = RemotePatch.reconcile(model, rows, _pendingOverlay());
+  void _reloadRows(List<(String, Map<String, Object?>)> rows) {
+    final patch = RemotePatch.reconcile(model, rows, _writes.pendingOverlay);
     if (patch.isNotEmpty) {
       final batch = model.applyChanges(patch);
       if (!batch.isEmpty && !remoteController.isClosed) {
         remoteController.add(batch);
       }
     }
-    cursor = head;
     fullReloads++;
-    _needsReload = false;
     _finishStreaming();
-    host.journalCursorsChanged();
   }
 
   // ----------------------------------------------------------------- role
@@ -548,29 +509,19 @@ class SyncedWorkbookSession extends WorkbookSessionBase {
     if (spaceUuid == host.replica.userUuid) return;
     final space = await host.replica.roleOf(spaceUuid);
     if (_disposed) return;
-    final current = role.value;
-    switch (space) {
-      case OfflineSyncSpaceRole.readWrite:
-        if (current < Role.editor) roleValue = Role.editor;
-      case OfflineSyncSpaceRole.readOnly:
-        if (current >= Role.editor) roleValue = Role.viewer;
-      case null:
-        // Membership removed (unshared, trashed, evicted). Offline opens of
-        // a spreadsheet still on the device keep the cached role.
-        if (!initial && _ready) {
-          loadStateNotifier.value = const WorkbookUnavailable(
-            'You no longer have access to this spreadsheet.',
-          );
-        }
+    if (space == null) {
+      // Membership removed (unshared, trashed, evicted). Offline opens of
+      // a spreadsheet still on the device keep the cached role.
+      if (!initial && _ready) {
+        loadStateNotifier.value = const WorkbookUnavailable(
+          'You no longer have access to this spreadsheet.',
+        );
+      }
+      return;
     }
+    final next = SpaceOpening.roleFromMembership(space, role.value);
+    if (next != null) roleValue = next;
   }
-
-  static Role _roleOf(AccessRole r) => switch (r) {
-    AccessRole.viewer => Role.viewer,
-    AccessRole.commenter => Role.commenter,
-    AccessRole.editor => Role.editor,
-    AccessRole.owner => Role.owner,
-  };
 
   final List<FutureOr<void> Function()> _onDispose = [];
 
@@ -598,38 +549,7 @@ class SyncedWorkbookSession extends WorkbookSessionBase {
         if (c.table == SheetsTables.cell) _touched.add(c.rowId);
       }
     }
-    final write = _PendingWrite(changes);
-    _pending.add(write);
-    _updateStatus();
-    _queue = _queue.then((_) async {
-      try {
-        await host.writer.write(
-          spaceId: spaceUuid,
-          changes: changes,
-          plan: plan,
-          label: label,
-          actorKind: actorKind,
-          sessionId: host.sessionId,
-          onProgress: (written, _) {
-            _written = written;
-            _updateStatus();
-          },
-        );
-        _lastError = null;
-        host.kick();
-      } catch (e, st) {
-        debugPrint('Saving "$label" failed: $e\n$st');
-        _lastError = e;
-        // The optimistic model change was not stored: bring the model back
-        // in line with the replica.
-        _needsReload = true;
-        unawaited(ingestRemote());
-      } finally {
-        _pending.remove(write);
-        _written = 0;
-        _updateStatus();
-      }
-    });
+    _writes.enqueue(changes, plan: plan, label: label, actorKind: actorKind);
   }
 
   @override
@@ -637,48 +557,18 @@ class SyncedWorkbookSession extends WorkbookSessionBase {
       LoadingGate.check(op, plan, model, _rows);
 
   @override
-  Future<void> flush() => _queue;
-
-  /// Changes queued but not yet stored, oldest first (overlaid on rows read
-  /// from the replica).
-  List<RowChange> _pendingOverlay() => [for (final w in _pending) ...w.changes];
+  Future<void> flush() => _writes.flush();
 
   /// Number of row changes waiting to be stored.
-  int get pendingChanges => _pending.fold(0, (a, w) => a + w.changes.length);
-
-  /// Changes of the write in flight already stored (its finished chunks).
-  int _written = 0;
+  int get pendingChanges => _writes.pendingChanges;
 
   /// Share of the queued changes stored, for saves bigger than one writer
   /// chunk (shown in the sync status); null for ordinary saves.
-  double? get saveProgress {
-    final pending = pendingChanges;
-    if (pending <= SheetsWriter.chunkSize) return null;
-    return _written / pending;
-  }
+  double? get saveProgress => _writes.saveProgress;
 
   void _updateStatus() {
     if (_disposed) return;
-    final pending = pendingChanges;
-    final SyncStatus status;
-    if (_lastError != null) {
-      status = SyncStatus(
-        state: SyncState.error,
-        pendingChanges: pending,
-        error: '$_lastError',
-      );
-    } else if (pending > 0) {
-      status = SyncStatus(
-        state: SyncState.saving,
-        pendingChanges: pending - _written,
-        progress: saveProgress,
-      );
-    } else if (!host.online.value) {
-      status = const SyncStatus(state: SyncState.offline);
-    } else {
-      status = SyncStatus.saved;
-    }
-    syncStatusNotifier.value = status;
+    syncStatusNotifier.value = _writes.status(online: host.online.value);
   }
 
   // -------------------------------------------------------------- dispose
@@ -696,8 +586,8 @@ class SyncedWorkbookSession extends WorkbookSessionBase {
     for (final f in _onDispose) {
       await f();
     }
-    final key = _spaceKey;
-    cursor = null;
+    final key = _ingestion.spaceKey;
+    _ingestion.cursor = null;
     host.journalCursorsChanged();
     if (key != null && !host.replica.isClosed) {
       try {
@@ -717,10 +607,4 @@ class ViewportHint {
 
   final String? sheetId;
   final int topRow;
-}
-
-class _PendingWrite {
-  _PendingWrite(this.changes);
-
-  final List<RowChange> changes;
 }

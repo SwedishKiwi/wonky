@@ -13,6 +13,8 @@ void main() {
     Directory('lib/features/model'),
     // The shared table codec the writer uses.
     Directory('../packages/wonky_sync_models/lib/src/tables'),
+    // The shared sync client (replica, writer, journal; Drive 05 D-6).
+    Directory('../packages/wonky_sync_kit_flutter/lib'),
   ];
   final files = [
     for (final root in roots)

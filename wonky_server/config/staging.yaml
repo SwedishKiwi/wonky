@@ -71,14 +71,14 @@ sessionLogs:
 #  concurrencyLimit: 1 # Defaults to 1, a negative or null value removes the limit
 #  scanInterval: 5000 # Unit in milliseconds, defaults to 5000
 
-# Keeps auth tokens in httpOnly, secure cookies shared by /write/ and
-# /sheets/ (specs/01-architecture.md §2.5).
+# Keeps auth tokens in httpOnly, secure cookies shared by all apps
+# (/drive/, /write/, /sheets/, /slides/; specs/01-architecture.md §2.5).
 authCookie:
   secure: true
   path: /
   sameSite: lax
 allowedOrigins:
-  - https://app-staging.examplepod.com # The web server serving /write/ and /sheets/
+  - https://app-staging.examplepod.com # The web server serving all apps (/drive/, /write/, …)
 
 # Wonky Work settings (read by `lib/src/platform/config/wonky_config.dart`;
 # specs/01-architecture.md §6). Unknown to Serverpod itself.
@@ -99,4 +99,6 @@ wonky:
   write:
     snapshotEveryNOps: 500
     maxDocumentChars: 2000000
-  minClientVersion: 1.0.0
+  # v2 (M8): new enum values (DriveItemKind.presentation/file, …) that v1
+  # clients cannot read (specs/01 §7); the apps default to WONKY_VERSION 2.0.0.
+  minClientVersion: 2.0.0

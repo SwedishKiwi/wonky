@@ -9,11 +9,9 @@ import 'package:pdf/src/priv.dart' show PdfString;
 // vector_math is a dependency of `pdf` and part of `PdfGraphics.setTransform`.
 // ignore: depend_on_referenced_packages
 import 'package:vector_math/vector_math_64.dart' show Matrix4;
+import 'package:wonky_charts/wonky_charts.dart';
 
 import '../../addressing/column_letters.dart';
-import '../../charts/render/pdf/pdf_chart_renderer.dart';
-import '../../charts/scene/geometry.dart';
-import '../../charts/scene/scene.dart';
 import '../../addressing/grid_geometry.dart';
 import '../../format/attributes.dart';
 import '../../format/borders.dart';

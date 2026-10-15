@@ -1,0 +1,8 @@
+### Kind of an animation step (Slides 02 §3.11, 06 §2). Append-only (A-06-2).
+enum: BuildKind
+serialized: byName
+values:
+  - buildIn
+  - buildOut
+  - emphasis
+  - motion

@@ -3,12 +3,23 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:wonky_client/wonky_client.dart';
 
+import '../config/home_scope.dart';
 import '../data/models_ext.dart';
 import '../shell/shell_services.dart';
 import 'drive_location.dart';
 
-/// Type filter of the filter bar.
-enum DriveTypeFilter { primary, documents, spreadsheets, folders, all }
+/// Type filter of the filter bar. `primary` is the v1 default of the app
+/// homes; Wonky Drive (`HomeScope.all`) starts at `all` and adds
+/// presentations and files (with a file category, Drive 04 §3.3).
+enum DriveTypeFilter {
+  primary,
+  documents,
+  spreadsheets,
+  presentations,
+  folders,
+  files,
+  all,
+}
 
 /// List or grid.
 enum DriveLayout { list, grid }
@@ -24,7 +35,73 @@ class DriveController extends ChangeNotifier {
         ? DriveLayout.grid
         : DriveLayout.list;
     services.driveSelectAll = selectAll;
+    if (scope?.isAll ?? false) {
+      _type = DriveTypeFilter.all;
+      _readViewPrefs();
+    }
+    services.driveView.value = this;
   }
+
+  /// Device keys of Drive's view state (Drive 04 §3.3: layout, sort and
+  /// *Folders on top* persist per device; the defaults come from Drive
+  /// settings, `UserPreferences.driveDefaults`). The v1 homes and the app
+  /// homes keep `drive.layout` and an unpersisted sort.
+  static const viewLayoutKey = 'drive.view.layout';
+  static const viewSortFieldKey = 'drive.view.sortField';
+  static const viewSortDescendingKey = 'drive.view.sortDescending';
+  static const viewFoldersOnTopKey = 'drive.view.foldersOnTop';
+
+  bool get _persistsView => scope?.isAll ?? false;
+
+  /// Layout, sort and *Folders on top* of Drive: the device's last choice,
+  /// else the Drive setting, else list / last modified / on.
+  void _readViewPrefs() {
+    final p = services.prefs;
+    final d = p.driveDefaults;
+    T? def<T>(String key) => d[key] is T ? d[key] as T : null;
+    _layout =
+        (p.device<String>(viewLayoutKey) ?? def<String>('layout')) == 'grid'
+        ? DriveLayout.grid
+        : DriveLayout.list;
+    _sortField =
+        DriveSortField.values.asNameMap()[p.device<String>(viewSortFieldKey) ??
+            def<String>('sortField')] ??
+        DriveSortField.modifiedAt;
+    _descending =
+        p.device<bool>(viewSortDescendingKey) ??
+        def<bool>('sortDescending') ??
+        _sortField != DriveSortField.name;
+    _foldersFirst =
+        p.device<bool>(viewFoldersOnTopKey) ??
+        def<bool>('foldersOnTop') ??
+        true;
+  }
+
+  /// Re-reads Drive's view settings (after `drive.prefs.set`) and reloads
+  /// when the sort changed; app homes only repaint (file-name display).
+  void applyViewPrefs() {
+    if (!_persistsView) {
+      _notify();
+      return;
+    }
+    final before = (_sortField, _descending, _foldersFirst);
+    _readViewPrefs();
+    if (before != (_sortField, _descending, _foldersFirst)) {
+      unawaited(reload());
+    } else {
+      _notify();
+    }
+  }
+
+  void _saveSort() {
+    if (!_persistsView) return;
+    final p = services.prefs;
+    unawaited(p.setDevice(viewSortFieldKey, _sortField.name));
+    unawaited(p.setDevice(viewSortDescendingKey, _descending));
+  }
+
+  /// What the home lists (suite 03 §3.3); null = the v1 home.
+  HomeScope? get scope => services.config.homeScope;
 
   final ShellServices services;
   DriveLocation _location;
@@ -39,6 +116,7 @@ class DriveController extends ChangeNotifier {
   Object? _error;
   int _generation = 0;
   DriveTypeFilter _type = DriveTypeFilter.primary;
+  FileCategory? _fileCategory;
   DriveOwnerFilter _owner = DriveOwnerFilter.anyone;
   DriveSortField _sortField = DriveSortField.modifiedAt;
   bool _descending = true;
@@ -58,6 +136,9 @@ class DriveController extends ChangeNotifier {
   bool get hasMore => _cursor != null;
   Object? get error => _error;
   DriveTypeFilter get typeFilter => _type;
+
+  /// The file subtype of [DriveTypeFilter.files] (null = every file).
+  FileCategory? get fileCategory => _fileCategory;
   DriveOwnerFilter get ownerFilter => _owner;
   DriveSortField get sortField => _sortField;
   bool get descending => _descending;
@@ -91,15 +172,45 @@ class DriveController extends ChangeNotifier {
     unawaited(reload());
   }
 
-  List<DriveItemKind>? get _kinds => switch (_type) {
-    DriveTypeFilter.primary =>
-      _location.kind == DriveLocationKind.folder ||
-              _location.kind == DriveLocationKind.myDrive
-          ? [services.config.primaryKind, DriveItemKind.folder]
-          : [services.config.primaryKind],
+  List<DriveItemKind>? get _kinds {
+    final sc = scope;
+    if (sc != null && !sc.isAll) {
+      // App homes: their kind, plus the folders that contain it where
+      // folders make sense (narrowed by `foldersContaining`).
+      return switch (_location.kind) {
+        DriveLocationKind.search => sc.searchKinds,
+        DriveLocationKind.home ||
+        DriveLocationKind.recent ||
+        DriveLocationKind.offline ||
+        DriveLocationKind.trash => [sc.kind!],
+        _ => sc.listKinds,
+      };
+    }
+    return _typeKinds;
+  }
+
+  /// `DriveListFilter.foldersContaining` of app homes (suite 05 §3.2).
+  DriveItemKind? get _foldersContaining => scope?.foldersContaining;
+
+  List<FileCategory>? get _fileCategories =>
+      _type == DriveTypeFilter.files && _fileCategory != null
+      ? [_fileCategory!]
+      : null;
+
+  List<DriveItemKind>? get _typeKinds => switch (_type) {
+    DriveTypeFilter.primary => switch (services.config.primaryKind) {
+      null => null,
+      final k =>
+        _location.kind == DriveLocationKind.folder ||
+                _location.kind == DriveLocationKind.myDrive
+            ? [k, DriveItemKind.folder]
+            : [k],
+    },
     DriveTypeFilter.documents => [DriveItemKind.document],
     DriveTypeFilter.spreadsheets => [DriveItemKind.spreadsheet],
+    DriveTypeFilter.presentations => [DriveItemKind.presentation],
     DriveTypeFilter.folders => [DriveItemKind.folder],
+    DriveTypeFilter.files => [DriveItemKind.file],
     DriveTypeFilter.all => null,
   };
 
@@ -155,14 +266,24 @@ class DriveController extends ChangeNotifier {
     if (loc.kind == DriveLocationKind.search) {
       return services.drive.search(
         loc.query ?? '',
-        filters: DriveSearchFilters(kinds: _kinds, owner: _owner),
+        filters: DriveSearchFilters(
+          kinds: _kinds,
+          owner: _owner,
+          fileCategories: _fileCategories,
+        ),
         cursor: cursor,
         limit: 50,
       );
     }
     return services.drive.list(
       folderUuid: loc.kind == DriveLocationKind.folder ? loc.folder : null,
-      filter: DriveListFilter(view: loc.view, kinds: _kinds, owner: _owner),
+      filter: DriveListFilter(
+        view: loc.view,
+        kinds: _kinds,
+        owner: _owner,
+        fileCategories: _fileCategories,
+        foldersContaining: _foldersContaining,
+      ),
       sort: _sort,
       cursor: cursor,
       limit: 100,
@@ -210,6 +331,9 @@ class DriveController extends ChangeNotifier {
         } else {
           unawaited(reload());
         }
+      case DriveChangeKind.storageChanged:
+        // Not an item change: the StorageController follows it (D-11).
+        break;
       case DriveChangeKind.created:
       case DriveChangeKind.moved:
       case DriveChangeKind.updated:
@@ -220,7 +344,7 @@ class DriveController extends ChangeNotifier {
           unawaited(reload());
           return;
         }
-        final belongs = _belongsHere(item);
+        final belongs = _belongsHere(item, listed: i >= 0);
         if (i >= 0 && !belongs) {
           _items = [..._items]..removeAt(i);
         } else if (i >= 0) {
@@ -234,10 +358,15 @@ class DriveController extends ChangeNotifier {
     }
   }
 
-  bool _belongsHere(DriveItemView item) {
+  bool _belongsHere(DriveItemView item, {bool listed = false}) {
     if (item.isTrashed != _location.isTrash) return false;
     final kinds = _kinds;
     if (kinds != null && !kinds.contains(item.kind)) return false;
+    final cats = _fileCategories;
+    if (cats != null && !cats.contains(item.fileCategory)) return false;
+    // App homes: whether a folder contains the home's kind is the server's
+    // `kindMask`; a folder not listed yet waits for the next reload.
+    if (_foldersContaining != null && item.isFolder && !listed) return false;
     return switch (_location.kind) {
       DriveLocationKind.folder => item.parentUuid?.uuid == _location.folderUuid,
       DriveLocationKind.myDrive =>
@@ -254,8 +383,10 @@ class DriveController extends ChangeNotifier {
 
   // ---- Filters ----
 
-  void setTypeFilter(DriveTypeFilter t) {
+  /// [category] narrows [DriveTypeFilter.files] to one file subtype.
+  void setTypeFilter(DriveTypeFilter t, {FileCategory? category}) {
     _type = t;
+    _fileCategory = t == DriveTypeFilter.files ? category : null;
     unawaited(reload());
   }
 
@@ -271,17 +402,26 @@ class DriveController extends ChangeNotifier {
       _sortField = field;
       _descending = descending ?? (field != DriveSortField.name);
     }
+    _saveSort();
     unawaited(reload());
   }
 
   void setFoldersFirst(bool v) {
     _foldersFirst = v;
+    if (_persistsView) {
+      unawaited(services.prefs.setDevice(viewFoldersOnTopKey, v));
+    }
     unawaited(reload());
   }
 
   void setLayout(DriveLayout l) {
     _layout = l;
-    unawaited(services.prefs.setDevice('drive.layout', l.name));
+    unawaited(
+      services.prefs.setDevice(
+        _persistsView ? viewLayoutKey : 'drive.layout',
+        l.name,
+      ),
+    );
     _notify();
   }
 
@@ -321,10 +461,16 @@ class DriveController extends ChangeNotifier {
     _notify();
   }
 
-  void selectIds(Iterable<String> ids) {
+  /// Replaces the selection with [ids]; [focus] (one of them) becomes the
+  /// focused row and the range anchor.
+  void selectIds(Iterable<String> ids, {String? focus}) {
     _selected
       ..clear()
       ..addAll(ids);
+    if (focus != null) {
+      _focused = focus;
+      _anchor = focus;
+    }
     _publishSelection();
     _notify();
   }
@@ -359,6 +505,7 @@ class DriveController extends ChangeNotifier {
     _sub?.cancel();
     services.driveRefresh.removeListener(reload);
     if (services.driveSelectAll == selectAll) services.driveSelectAll = null;
+    if (services.driveView.value == this) services.driveView.value = null;
     services.driveSelection.value = const [];
     services.currentFolder.value = null;
     super.dispose();

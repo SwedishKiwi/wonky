@@ -14,15 +14,53 @@ BoxFit boxFitOf(ImageFit fit) => switch (fit) {
 
 /// An image over cells (08 §10.1): the decoded image, or a placeholder
 /// while it loads ("Image uploading…" while another user's upload is
-/// pending) or when it can't be shown.
+/// pending) or when it can't be shown. An image whose upload from this
+/// device was refused on quota gets the "Not uploaded — out of storage"
+/// overlay with *Retry* and *Remove* (Drive 03 §6.3).
 class ImageObjectView extends StatelessWidget {
-  const ImageObjectView({super.key, required this.service, required this.spec});
+  const ImageObjectView({
+    super.key,
+    required this.service,
+    required this.spec,
+    this.onRemove,
+  });
 
   final SheetsImageService service;
   final ImageSpec spec;
 
+  /// Deletes the image object (*Remove* on the out-of-storage overlay);
+  /// null hides the button (viewers).
+  final VoidCallback? onRemove;
+
   @override
   Widget build(BuildContext context) {
+    final fileUuid = spec.fileUuid;
+    if (fileUuid.isEmpty) return _image(context);
+    return ListenableBuilder(
+      listenable: service.uploadStates,
+      builder: (context, _) {
+        final image = _image(context);
+        if (!service.isOutOfStorage(fileUuid)) return image;
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            image,
+            ImageOutOfStorageOverlay(
+              onRetry: () => service.retryUpload(fileUuid),
+              onRemove: onRemove == null
+                  ? null
+                  : () {
+                      service.forgetUpload(fileUuid);
+                      onRemove!();
+                    },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _image(BuildContext context) {
     final src = spec.fileUuid.isNotEmpty
         ? spec.fileUuid
         : (spec.sourceUrl ?? '');
@@ -113,6 +151,70 @@ class ImagePlaceholder extends StatelessWidget {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+/// "Not uploaded — out of storage" with *Retry* / *Remove* over an image
+/// whose upload was refused on quota (Drive 03 §6.3, 08 §10).
+class ImageOutOfStorageOverlay extends StatelessWidget {
+  const ImageOutOfStorageOverlay({
+    super.key,
+    required this.onRetry,
+    this.onRemove,
+  });
+
+  final VoidCallback onRetry;
+  final VoidCallback? onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    final l = sheetsL10n(context);
+    return ColoredBox(
+      key: const ValueKey<String>('sheets.image.outOfStorage'),
+      color: theme.colorScheme.destructive.withValues(alpha: 0.82),
+      child: Center(
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  l.imageNotUploadedOutOfStorage,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.small.copyWith(
+                    color: theme.colorScheme.destructiveForeground,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ShadButton.secondary(
+                      key: const ValueKey<String>('sheets.image.retryUpload'),
+                      size: ShadButtonSize.sm,
+                      onPressed: onRetry,
+                      child: Text(l.imageRetryUpload),
+                    ),
+                    if (onRemove != null) ...[
+                      const SizedBox(width: 6),
+                      ShadButton.outline(
+                        key: const ValueKey<String>('sheets.image.remove'),
+                        size: ShadButtonSize.sm,
+                        onPressed: onRemove,
+                        child: Text(l.imageRemove),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

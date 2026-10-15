@@ -3,12 +3,11 @@ import 'dart:async';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:wonky_app/spellcheck.dart';
 
 import '../editor/attributions/wonky_attributions.dart';
 import '../editor/controller/write_editor_controller.dart';
 import '../editor/mapping/wonky_schema.dart';
-import 'dictionaries.dart';
-import 'spell_engine.dart';
 
 /// State of the spellchecker for the open document.
 enum SpellcheckState {

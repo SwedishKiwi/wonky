@@ -334,7 +334,10 @@ void main() {
         ]);
         final spec = ChartSpec(
           data: ChartDataSpec(
-            ranges: [rangeOf(model, 'A1:B4'), rangeOf(model, 'C1:C3')],
+            ranges: [
+              rangeOf(model, 'A1:B4').toRef(),
+              rangeOf(model, 'C1:C3').toRef(),
+            ],
           ),
         );
 
@@ -369,8 +372,10 @@ void main() {
       final (_, model) = buildTable([
         ['a', 1],
       ]);
-      const spec = ChartSpec(
-        data: ChartDataSpec(ranges: [GridRange.sheet('no-such-sheet')]),
+      final spec = ChartSpec(
+        data: ChartDataSpec(
+          ranges: [const GridRange.sheet('no-such-sheet').toRef()],
+        ),
       );
 
       final data = resolveChart(spec, model);

@@ -810,6 +810,18 @@ previews, PNG export) renders one slide at a target size with a `SlideFrame`:
 - Every animating element gets its own compositing layer (`isRepaintBoundary` while it has a
   running effect), so static elements are not repainted per frame.
 
+**As built (SL-10, edit frame).** `SlideStage` (`wonky_slides/lib/features/stage/`) is a
+`Stack` of one `RepaintBoundary` + `CustomPaint` for the background and one per top-level scene
+node (elements and master/layout decorations, keyed by element id), so the stage widget needs
+no custom render objects yet; `SlideScenePainter` applies each element's `ElementVisualState`
+(visibility, opacity via `saveLayer` only below 1, the state transform pre-multiplied in slide
+space, blur) and draws paths, images (`SlideImageCache`), text (the Flutter engine's
+paragraphs), charts (`paintChartScene`) and code. Thumbnails, snapshots and PNG export record
+the same painter into a `ui.Picture` (`recordScene`). Still to come with SL-29: part runs,
+typewriter clips, `drawProgress`, shader masks and dissolve, per-element compositing while
+animating (`RenderSlideElement`), and the `TextPartGeometryProvider` (9.4) on top of
+`FlutterTextLayoutEngine`'s positioned runs.
+
 ### 12.2 Transitions
 
 `TransitionStage` composites the outgoing and incoming slides:

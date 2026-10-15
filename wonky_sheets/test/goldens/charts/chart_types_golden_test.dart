@@ -4,10 +4,10 @@ library;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wonky_sheets/features/charts/editor/chart_editor_panel.dart';
-import 'package:wonky_sheets/features/charts/render/chart_painter.dart';
 import 'package:wonky_sheets/features/objects/objects_controller.dart';
 import 'package:wonky_sheets_core/model.dart';
 import 'package:wonky_ui/wonky_ui.dart';
+import 'package:wonky_charts_flutter/wonky_charts_flutter.dart';
 
 import '../../support/grid_pump.dart';
 import '../../support/sheets_harness.dart';
@@ -68,7 +68,11 @@ void main() {
               'ranges': [g.toJson()],
             },
           });
-          final data = ChartPipeline.resolve(spec, s.model, s.editor.engine);
+          final data = SheetsChartPipeline.resolve(
+            spec,
+            s.model,
+            s.editor.engine,
+          );
           scenes[e.key] = ChartPipeline.layout(
             spec,
             data,

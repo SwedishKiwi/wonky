@@ -3,7 +3,9 @@ import 'package:shad/shad.dart';
 import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
+import '../config/home_scope.dart';
 import '../data/api.dart';
+import '../data/models_ext.dart';
 import '../l10n/wonky_app_localizations.dart';
 import '../shell/page_frame.dart';
 import '../shell/shell_services.dart';
@@ -21,9 +23,23 @@ String templateCategoryLabel(WonkyAppLocalizations l, TemplateCategory c) =>
 Future<void> _createFrom(
   BuildContext context,
   ShellServices s,
-  TemplateView? t,
-) async {
+  TemplateView? t, {
+  DriveItemKind? kind,
+}) async {
   final l = WonkyAppLocalizations.of(context);
+  final k = t?.kind ?? kind ?? s.config.primaryKind;
+  if (k != null && k != s.config.primaryKind) {
+    // Another app's kind (Wonky Drive's gallery): that app's `/new` route
+    // creates it (suite 03 §2, Drive 04 §5).
+    await s.crossApp.open(
+      appForKind(k),
+      NewItemRequest(
+        folderUuid: s.currentFolder.value?.uuid,
+        templateUuid: t?.uuid,
+      ).path,
+    );
+    return;
+  }
   try {
     final uuid = await s.config.createItem(
       s,
@@ -43,6 +59,7 @@ class TemplateCard extends StatelessWidget {
     super.key,
     required this.services,
     this.template,
+    this.kind,
     this.width = 148,
   });
 
@@ -50,6 +67,10 @@ class TemplateCard extends StatelessWidget {
 
   /// null = Blank.
   final TemplateView? template;
+
+  /// The kind of a Blank card (default: the app's kind; Drive's gallery
+  /// shows one per kind).
+  final DriveItemKind? kind;
   final double width;
 
   @override
@@ -66,9 +87,9 @@ class TemplateCard extends StatelessWidget {
         label: t?.name ?? l.templateBlank,
         child: GestureDetector(
           key: ValueKey<String>(
-            'drive.template.${t?.key ?? t?.uuid.uuid ?? 'blank'}',
+            'drive.template.${t?.key ?? t?.uuid.uuid ?? (kind == null ? 'blank' : 'blank.${kind!.name}')}',
           ),
-          onTap: () => _createFrom(context, services, t),
+          onTap: () => _createFrom(context, services, t, kind: kind),
           child: MouseRegion(
             cursor: SystemMouseCursors.click,
             child: Column(
@@ -98,7 +119,10 @@ class TemplateCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  t?.name ?? l.templateBlank,
+                  t?.name ??
+                      (kind == null
+                          ? l.templateBlank
+                          : '${l.templateBlank} · ${describeKind(l, kind!).toLowerCase()}'),
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.small,
                 ),
@@ -263,16 +287,27 @@ class _TemplateStripState extends State<TemplateStrip> {
               Expanded(
                 child: Text(
                   l.templateStripTitle(
-                    describeKind(l, s.config.primaryKind).toLowerCase(),
+                    describeKind(
+                      l,
+                      s.config.primaryKind ?? DriveItemKind.document,
+                    ).toLowerCase(),
                   ),
                   style: theme.textTheme.small,
                 ),
               ),
-              ShadButton.ghost(
-                size: ShadButtonSize.sm,
-                onPressed: () => s.router.go('/templates'),
-                trailing: const Icon(LucideIcons.chevronsUpDown, size: 14),
-                child: Text(l.templateGallery),
+              Flexible(
+                child: ShadButton.ghost(
+                  size: ShadButtonSize.sm,
+                  onPressed: () => s.router.go('/templates'),
+                  trailing: const Icon(LucideIcons.chevronsUpDown, size: 14),
+                  child: Flexible(
+                    child: Text(
+                      l.templateGallery,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
               ),
               ShadTooltip(
                 builder: (_) =>
@@ -358,7 +393,16 @@ class TemplateGalleryScreen extends StatelessWidget {
               Wrap(
                 spacing: 16,
                 runSpacing: 16,
-                children: [TemplateCard(services: services)],
+                children: [
+                  // Drive creates every kind: one Blank card per kind.
+                  if (services.config.primaryKind == null)
+                    for (final k
+                        in services.config.homeScope?.newKinds ??
+                            const [DriveItemKind.document])
+                      TemplateCard(services: services, kind: k)
+                  else
+                    TemplateCard(services: services),
+                ],
               ),
               for (final cat in TemplateCategory.values)
                 if (byCat[cat] != null) ...[

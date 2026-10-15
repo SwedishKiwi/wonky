@@ -15,6 +15,8 @@ import '../../write/mcp/headless_editor.dart';
 import '../common/models.dart';
 import '../drive/drive_service.dart';
 import '../sharing/sharing_service.dart';
+import '../storage/storage_service.dart';
+import 'drive_file_tool_handlers.dart';
 import 'tool_executor.dart';
 import 'tool_support.dart';
 
@@ -38,6 +40,7 @@ abstract final class DriveToolHandlers {
     _t(DriveTools.setLinkSharing, setLinkSharing),
     _t(DriveTools.export, export),
     _t(DriveTools.import, import),
+    ...DriveFileToolHandlers.all,
   ];
 
   static RegisteredMcpTool _t(McpToolDefinition d, ToolHandler h) =>
@@ -61,7 +64,9 @@ abstract final class DriveToolHandlers {
     final path = switch (v.kind) {
       DriveItemKind.document => '/write/d/${v.uuid.uuid}',
       DriveItemKind.spreadsheet => '/sheets/s/${v.uuid.uuid}',
-      DriveItemKind.folder => '/write/drive/${v.uuid.uuid}',
+      DriveItemKind.folder => '/drive/f/${v.uuid.uuid}',
+      DriveItemKind.presentation => '/slides/p/${v.uuid.uuid}',
+      DriveItemKind.file => '/drive/file/${v.uuid.uuid}',
     };
     return base.replace(path: path).toString();
   }
@@ -86,7 +91,39 @@ abstract final class DriveToolHandlers {
     'modified_by': v.modifiedBy?.displayName,
     'trashed': v.trashedAt != null,
     'url': urlOf(v),
+    // (v2) Size incl. images/attachments (what counts for the quota).
+    'counted_bytes': v.countedBytes,
+    if (v.kind == DriveItemKind.file) ...{
+      'mime_type': v.mimeType,
+      'file_category': v.fileCategory?.name,
+      'upload_state': (v.uploadState ?? FileUploadState.ready).name,
+      'file_meta': ?_meta(v.fileMetaJson),
+    },
   };
+
+  static Map<String, Object?>? _meta(String? json) {
+    if (json == null || json.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(json);
+      return decoded is Map<String, Object?> ? decoded : null;
+    } on FormatException {
+      return null;
+    }
+  }
+
+  /// (v2) `storage` of byte-adding tools (suite 09 §4): the caller's usage.
+  static Map<String, Object?> storageOf(StorageUsage u) => {
+    'used_bytes': u.bytesUsed,
+    'quota_bytes': u.quotaBytes,
+    'available_bytes': u.availableBytes,
+    'over_quota': u.overQuota,
+  };
+
+  /// [storageOf] the caller of [ctx].
+  static Future<Map<String, Object?>> storageJson(ToolContext ctx) async =>
+      storageOf(
+        await StorageService.instance.usage(ctx.session, ctx.actor.userId),
+      );
 
   static ToolResult _items(List<DriveItemView> items, String? next) =>
       ToolResult(
@@ -106,14 +143,38 @@ abstract final class DriveToolHandlers {
     'item': itemJson(v),
   }, text: '$verb "${v.name}" (${v.uuid.uuid})');
 
-  static List<DriveItemKind>? _kinds(String? kind) =>
-      kind == null ? null : [DriveItemKind.values.byName(kind)];
+  /// [_changed] plus the caller's `storage` (tools that add bytes).
+  static Future<ToolResult> _added(
+    ToolContext ctx,
+    DriveItemView v,
+    String verb,
+  ) async => ToolResult({
+    'item': itemJson(v),
+    'storage': await storageJson(ctx),
+  }, text: '$verb "${v.name}" (${v.uuid.uuid})');
+
+  /// `kind` and (v2) `kinds`, merged; null = every kind.
+  static List<DriveItemKind>? _kinds(ToolArgs a) {
+    final names = <String>{
+      ?a.string('kind'),
+      for (final k in a.list('kinds') ?? const []) '$k',
+    };
+    if (names.isEmpty) return null;
+    return [for (final n in names) DriveItemKind.values.byName(n)];
+  }
+
+  /// (v2) `file_category`; null = every category.
+  static List<FileCategory>? _categories(ToolArgs a) {
+    final c = a.string('file_category');
+    return c == null ? null : [FileCategory.values.byName(c)];
+  }
 
   // ----------------------------------------------------------------- read
 
   static Future<ToolResult> search(ToolContext ctx, ToolArgs a) async {
     final query = a.string('query')?.trim() ?? '';
-    final kinds = _kinds(a.string('kind'));
+    final kinds = _kinds(a);
+    final categories = _categories(a);
     final owner = a.boolean('owned_by_me') == true
         ? DriveOwnerFilter.me
         : DriveOwnerFilter.anyone;
@@ -133,6 +194,7 @@ abstract final class DriveToolHandlers {
           owner: owner,
           modifiedAfter: modifiedAfter,
           sharedOnly: a.boolean('shared_with_me') ?? false,
+          fileCategories: categories,
         ),
         cursor: a.string('cursor'),
         limit: limit,
@@ -149,7 +211,12 @@ abstract final class DriveToolHandlers {
         ctx.session,
         ctx.actor,
         folderUuid: folder,
-        filter: DriveListFilter(view: view, kinds: kinds, owner: owner),
+        filter: DriveListFilter(
+          view: view,
+          kinds: kinds,
+          owner: owner,
+          fileCategories: categories,
+        ),
         sort: DriveSort(field: DriveSortField.modifiedAt),
         cursor: a.string('cursor'),
         limit: limit,
@@ -182,7 +249,11 @@ abstract final class DriveToolHandlers {
       ctx.session,
       ctx.actor,
       folderUuid: a.uuid('folder_uuid'),
-      filter: DriveListFilter(view: DriveView.folder),
+      filter: DriveListFilter(
+        view: DriveView.folder,
+        kinds: _kinds(a),
+        fileCategories: _categories(a),
+      ),
       sort: DriveSort(field: DriveSortField.name, descending: false),
       cursor: a.string('cursor'),
       limit: a.integer('limit') ?? 50,
@@ -238,7 +309,8 @@ abstract final class DriveToolHandlers {
   static Future<ToolResult> createDocument(
     ToolContext ctx,
     ToolArgs a,
-  ) async => _changed(
+  ) async => _added(
+    ctx,
     await DriveService.createDocument(
       ctx.session,
       ctx.actor,
@@ -280,7 +352,8 @@ abstract final class DriveToolHandlers {
       final source = await DriveService.get(ctx.session, ctx.actor, uuid);
       name = 'Copy of ${source.name}';
     }
-    return _changed(
+    return _added(
+      ctx,
       await DriveService.copy(
         ctx.session,
         ctx.actor,
@@ -414,6 +487,27 @@ abstract final class DriveToolHandlers {
     final uuid = a.requireUuid('uuid');
     final format = a.requireString('format');
     final kindItem = await DriveService.get(ctx.session, ctx.actor, uuid);
+    switch (kindItem.kind) {
+      case DriveItemKind.file:
+        throw McpToolException(
+          McpErrorCode.invalidArgs,
+          'Uploaded files are not exported: use drive.download_file (or '
+          'drive.convert_file to make an editable copy).',
+        );
+      case DriveItemKind.folder:
+        throw McpToolException(
+          McpErrorCode.invalidArgs,
+          'Folders cannot be exported.',
+        );
+      case DriveItemKind.presentation:
+        throw McpToolException(
+          McpErrorCode.unsupported,
+          'Exporting presentations is not available yet.',
+        );
+      case DriveItemKind.document:
+      case DriveItemKind.spreadsheet:
+        break;
+    }
     if (kindItem.kind == DriveItemKind.spreadsheet) {
       final r = await SheetsExportService.export(
         ctx.session,
@@ -548,6 +642,7 @@ abstract final class DriveToolHandlers {
     return ToolResult({
       'item': itemJson(view),
       'warnings': [for (final w in report.warnings) w.toJson()],
+      'storage': await storageJson(ctx),
     }, text: 'Imported "${view.name}" (${view.uuid.uuid})');
   }
 
@@ -599,6 +694,7 @@ abstract final class DriveToolHandlers {
     return ToolResult({
       'item': itemJson(view),
       'warnings': warnings,
+      'storage': await storageJson(ctx),
     }, text: 'Imported "${view.name}" (${view.uuid.uuid})');
   }
 }

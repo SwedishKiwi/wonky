@@ -4,7 +4,7 @@ library;
 
 import 'dart:math' as math;
 
-import '../../fonts/font_registry.dart';
+import 'package:wonky_fonts/wonky_fonts.dart';
 import '../../theme/model/color_ref.dart';
 import '../../theme/resolve/resolved_theme.dart';
 import '../office/office_support.dart';

@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
 import '../auth/auth_controller.dart';
+import '../config/home_scope.dart';
 import '../auth/screens/reset_password_screen.dart';
 import '../auth/screens/sign_in_screen.dart';
 import '../auth/screens/sign_up_screen.dart';
@@ -9,9 +10,10 @@ import '../auth/screens/verify_email_screen.dart';
 import '../drive/drive_location.dart';
 import '../drive/home_screen.dart';
 import '../drive/template_gallery.dart';
-import '../settings/settings_screen.dart';
+import '../settings/settings_routes.dart';
 import '../shell/shell_services.dart';
 import '../versions/version_history_screen.dart';
+import 'item_routes.dart';
 import 'misc_pages.dart';
 
 const _authPaths = {'/signin', '/signup', '/signup/verify', '/reset'};
@@ -19,6 +21,7 @@ const _authPaths = {'/signin', '/signup', '/signup/verify', '/reset'};
 /// The suite routes of 03 §2 plus the app's routes. Paths are relative to
 /// the app's base href.
 GoRouter buildShellRouter(ShellServices s) {
+  final myFiles = s.config.homeNav.myFilesRoute;
   final prefix = s.config.itemPath('x').replaceFirst(RegExp(r'x$'), '');
   final base = prefix.endsWith('/')
       ? prefix.substring(0, prefix.length - 1)
@@ -79,7 +82,7 @@ GoRouter buildShellRouter(ShellServices s) {
         ),
       ),
       GoRoute(
-        path: '/drive/:folderUuid',
+        path: '/f/:folderUuid',
         pageBuilder: (c, st) => page(
           st,
           DriveHomeScreen(
@@ -88,8 +91,27 @@ GoRouter buildShellRouter(ShellServices s) {
           ),
         ),
       ),
+      // v1 folder links (bookmarks, emails, MCP results) → `/f/:uuid`.
+      GoRoute(
+        path: '/drive/:folderUuid',
+        redirect: (c, st) => '/f/${st.pathParameters['folderUuid']}',
+      ),
+      // The drive root: `/my-files` in app homes, `/my-drive` in Drive and
+      // v1 homes; the other path redirects (suite 03 §2).
+      for (final path in const ['/my-files', '/my-drive'])
+        GoRoute(
+          path: path,
+          redirect: (c, st) =>
+              path == myFiles ? null : _withQuery(myFiles, st.uri),
+          pageBuilder: (c, st) => page(
+            st,
+            DriveHomeScreen(
+              services: s,
+              location: const DriveLocation.myDrive(),
+            ),
+          ),
+        ),
       for (final (path, loc) in [
-        ('/my-drive', const DriveLocation.myDrive()),
         ('/shared', const DriveLocation.shared()),
         ('/starred', const DriveLocation.starred()),
         ('/recent', const DriveLocation.recent()),
@@ -115,14 +137,32 @@ GoRouter buildShellRouter(ShellServices s) {
         path: '/templates',
         pageBuilder: (c, st) => page(st, TemplateGalleryScreen(services: s)),
       ),
-      GoRoute(path: '/settings', redirect: (c, st) => '/settings/account'),
-      GoRoute(
-        path: '/settings/:section',
-        pageBuilder: (c, st) => page(
-          st,
-          SettingsScreen(services: s, section: st.pathParameters['section']!),
+      if (s.config.newItemRoute case final handler?)
+        GoRoute(
+          path: '/new',
+          pageBuilder: (c, st) => page(
+            st,
+            NewItemRoutePage(
+              services: s,
+              handler: handler,
+              request: NewItemRequest.fromQuery(st.uri.queryParameters),
+            ),
+          ),
         ),
-      ),
+      if (s.config.importRoute case final handler?)
+        GoRoute(
+          path: '/import',
+          pageBuilder: (c, st) => page(
+            st,
+            ImportRoutePage(
+              services: s,
+              handler: handler,
+              request: ImportRouteRequest.fromQuery(st.uri.queryParameters),
+            ),
+          ),
+        ),
+      // Settings: app settings + Wonky Work settings (suite 04 §4).
+      ...settingsRoutes(s, page),
       GoRoute(
         path: '/invite/:token',
         pageBuilder: (c, st) => page(
@@ -160,3 +200,6 @@ GoRouter buildShellRouter(ShellServices s) {
     ],
   );
 }
+
+String _withQuery(String path, Uri uri) =>
+    uri.hasQuery ? '$path?${uri.query}' : path;

@@ -158,7 +158,7 @@ abstract final class SheetsObjectHandlers {
     final profile = SelectionProfile.fromRanges(ranges, wb.model, wb.engine);
     final suggestions = ChartRecommender.recommend(profile);
     if (suggestions.isEmpty) {
-      return ChartSpec(data: ChartDataSpec(ranges: ranges));
+      return ChartSpec(data: ChartDataSpec(ranges: ranges.toRefs()));
     }
     return suggestions.first.spec;
   }
@@ -320,7 +320,7 @@ abstract final class SheetsObjectHandlers {
     final data = (json['data'] as Map?)?.cast<String, Object?>();
     if (data != null) {
       data['ranges'] = [
-        for (final g in spec.data.ranges)
+        for (final g in spec.data.gridRanges)
           if (wb.model.resolve(g) case final ResolvedRange rr)
             wb.model.a1Of(rr),
       ];

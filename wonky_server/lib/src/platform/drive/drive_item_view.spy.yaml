@@ -27,3 +27,14 @@ fields:
   editorsCanShare: bool
   nonEditorsCanExport: bool
   viewersSeeComments: bool
+  ### (v2) Images/attachments stored for this item (Drive 03 §2).
+  attachmentBytes: int, default=0
+  ### (v2) sizeBytes + attachmentBytes: what the File size column, the
+  ### details panel and the Storage page show (Drive 03 §2).
+  countedBytes: int, default=0
+  ### (v2) Files only (Drive 02 §1.1); null for other kinds.
+  mimeType: String?
+  fileCategory: FileCategory?
+  uploadState: FileUploadState?
+  fileMetaJson: String?
+  previewFileId: UuidValue?

@@ -82,7 +82,7 @@ class _NotificationsButtonState extends State<NotificationsButton> {
       // Spreadsheets open the comment's cell (Sheets 10 §3.4).
       DriveItemKind.spreadsheet =>
         '/s/${uuid.uuid}${thread == null ? '' : '?comment=$thread'}',
-      DriveItemKind.folder => '/drive/${uuid.uuid}',
+      DriveItemKind.folder => '/f/${uuid.uuid}',
       _ => '/d/${uuid.uuid}',
     };
     await s.openPath(path);
@@ -432,6 +432,10 @@ String notificationText(WonkyAppLocalizations l, NotificationView n) {
     },
     NotificationKind.ownershipTransfer => l.notifOwnership(who, what),
     NotificationKind.scriptFailure => l.notifScriptFailure(what),
+    NotificationKind.storage => switch (_payload(n)['message']) {
+      final String m when m.isNotEmpty => m,
+      _ => l.notifStorage,
+    },
   };
 }
 
@@ -463,6 +467,7 @@ IconData _kindIcon(NotificationKind k) => switch (k) {
   NotificationKind.suggestionDecided => LucideIcons.checkCheck,
   NotificationKind.ownershipTransfer => LucideIcons.crown,
   NotificationKind.scriptFailure => LucideIcons.triangleAlert,
+  NotificationKind.storage => LucideIcons.hardDrive,
 };
 
 /// One notification row: avatar with the kind icon, text, excerpt, time and

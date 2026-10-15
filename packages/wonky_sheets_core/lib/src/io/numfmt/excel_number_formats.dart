@@ -1,4 +1,4 @@
-import '../../format/number_format/presets.dart';
+import 'package:wonky_numfmt/wonky_numfmt.dart';
 
 /// Excel number formats ⇄ Wonky patterns (11 §5.2): built-in ids, locale
 /// tags, presets and date detection.

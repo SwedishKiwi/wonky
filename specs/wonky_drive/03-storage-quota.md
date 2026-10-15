@@ -68,7 +68,8 @@ database or a server-admin MCP tool later, P2); there is no UI to buy or request
 
 `StorageUsage` (existing model, extended, v2) is returned by `drive.storageUsage()`, pushed on
 the `drive.watch` stream as `DriveChange(kind: storageChanged, storage: …)` whenever the
-caller's counters change (debounced 1 s), included in the result of every byte-adding endpoint
+caller's counters change (debounced 1 s; the event's `itemUuid` is the nil UUID and `item`
+is null), included in the result of every byte-adding endpoint
 that returns a view (e.g. `FileUploadStart.storage`), and cached in the shell for offline
 display.
 
@@ -138,7 +139,10 @@ fields:
 indexes:
   storage_reservation_file_idx: { fields: fileUuid, unique: true }
   storage_reservation_user_idx: { fields: userId }
+  storage_reservation_expiry_idx: { fields: expiresAt }   # as built (D-1): expiry sweeps
 ```
+
+Both tables are `serverOnly` (as built, D-1).
 
 `DriveItem` gets `attachmentBytes` (02 §1.1); `sizeBytes` keeps its column with the meaning
 of §2 (content estimate, or the file size for files).
@@ -315,7 +319,9 @@ New `WonkyErrorCode.quotaExceeded` (`wonky_server/lib/src/platform/common/`) wit
 ```
 
 `reason` ∈ `upload`, `image`, `import`, `convert`, `copy`, `template`, `transfer`,
-`restoreVersionCopy`. Message: "Not enough storage: this needs 12.4 MB, 3.1 MB is available."
+`restoreVersionCopy`. (As built, D-1: the JSON is the protocol model `QuotaExceededDetails`,
+so clients parse it with `QuotaExceededDetails.fromJson`; `reason` is a string — `import` is a
+reserved enum value — with server constants `QuotaReason`.) Message: "Not enough storage: this needs 12.4 MB, 3.1 MB is available."
 The client maps it to the dialog variants of §6.3 (`QuotaErrorPresenter`, `wonky_app`).
 
 ### 7.2 Enforcement points by endpoint
@@ -425,3 +431,170 @@ dropped; only paths that add bytes are checked.
   produces the same counters as the incremental maintenance.
 - **AC-D3.8** Backfill on a copy of production data completes, sets `reconciledAt` for every
   user and leaves the server responsive (no request blocked > 1 s by it).
+
+## 11. As built (D-9)
+
+Code: `wonky_server/lib/src/platform/storage/` — `DbStorageService` (the installed
+`StorageService.instance`; `PassThroughStorageService` stays for tests that bypass the quota,
+`StorageService.resetInstance()` restores the default), `StorageCounters` (SQL over
+`user_storage`), `ContentSizes` (estimators and cadence), `StorageMaintenance` (backfill,
+reconcile), `StorageFutureCall`, `StorageEvents`, `StorageHooks` (one-line enforcement hooks),
+`StorageListing` (`drive.listByStorage`).
+
+- **Accounting** (§4.2). `setItemSize` / `addAttachment` / `commitReservation` change the
+  `drive_item` column and add the difference to the owner's counter (kind, or `trashBytes`
+  while trashed; folders count nothing) under the user's row lock. The structural callbacks
+  `onTrash`, `onRestore`, `onDelete`, `onOwnerChange` are called **after** the change in its
+  transaction and **recount** the affected owners' item-derived counters from `drive_item`
+  (same query as the reconcile, one user) — robust against stale item objects and subtrees
+  with several owners. `usedBytes` is always the sum of the five counters. `overQuotaSince` is
+  set/cleared by every counter write.
+- **Reservations** (§5): `reserve` is the conditional `UPDATE` of §4.2 (fail open while
+  `reconciledAt` is null), idempotent per `fileUuid`, capped at `maxPendingUploadsPerUser`
+  open reservations (`limitExceeded`). `commitReservation` without a reservation sets a file's
+  exact size (idempotent) and charges nothing for images. Image uploads
+  (`file.createUpload(kind: image)`) reserve on the **item owner** in the transaction that
+  inserts the `StoredFile` and commit/release in `file.completeUpload`; deleting a stored file
+  releases its reservation.
+- **Content sizes** (§2): documents = UTF-8 length of the Delta JSON (`DocumentSize`), set on
+  create/copy/import/version copy and by the OT service's throttled update. Spaces:
+  `SpaceSizeEstimator` (generic over table names; Slides registers its deck estimator with
+  `ContentSizes.register(DriveItemKind.presentation, …)`) sums `pg_column_size` of the live
+  rows, driven by the sync engine's `crdt_data_rows (spaceId, tblId, uuidRowId)` index with
+  `visibility <= 2`. `SheetsSizeEstimator` covers every synced Sheets table except
+  `change_log` (history) and `script_build` (bytecode). The change-log consumer calls
+  `ContentSizes.onSpaceChanged` (immediately when the last estimate is ≥ 5 min old, else one
+  trailing `StorageFutureCall.refreshItemSize` at the end of the interval); server creations,
+  copies and imports refresh at once.
+- **Spike S-D3** (index-driven query, embedded Postgres on the laptop): 100k cells → estimate
+  12.9 MB in ~35 ms; 1M cells → 125 MB in ~3 s; a small space next to 2M foreign cells → 6 ms
+  (cost follows the space, not the table; a plain `WHERE "spaceId" = …` would scan the whole
+  table — no index on `spaceId`). The 5-minute cadence is confirmed. **Finding:** a cell row
+  costs ~125 bytes, so 50 MB holds ~400k cells, less than `maxCellsPerSpreadsheet` (1M) — see
+  `TODO.md`.
+- **Enforcement** (§7.2) as built: uploads (D-8) and image uploads reserve; `drive.import` /
+  MCP `drive.import` check the source size before any work and, for documents, the converted
+  content + image bytes before anything is stored (spreadsheets: the source size; the real size
+  is the estimate after creation); `drive.convertFile` pre-checks with `convert` (D-8) and the
+  import checks again; `sheetsImport.importInto` checks the **spreadsheet owner** with the
+  upload size before queueing; images stored by imports and MCP `write.insert_image` are
+  charged to the item owner (`attachmentBytes`); copies (`drive.copy`, MCP `drive.copy`)
+  check the source's counted size for the copier; `writeHistory.copyVersion`
+  (`restoreVersionCopy`); creations with a template or initial content (built-in spreadsheet
+  templates use a cell-count pre-estimate, `StorageHooks.sheetsEstimate`;
+  `TemplateView.sizeBytes` is filled the same way); `sharing.transferOwnership` at request
+  (new owner, `isCaller: false`) and inside the acceptance transaction (refusal leaves the
+  offer open). Never refused: restores, OT/sync/MCP edits, blank items,
+  `registerSpreadsheet`/`registerPresentation`. MCP maps the error to `quota_exceeded` with the
+  `QuotaExceededDetails` as `details`.
+- **Events**: `storageChanged` is posted (debounced 1 s per user, `StorageEvents.debounce`)
+  on the user's drive channel; `drive.watch` turns it into `DriveChange(kind:
+  storageChanged, itemUuid: nil, storage: usage)`.
+- **Backfill** (§9): there is no stored backfill version — a user is *pending* while they have
+  no `user_storage` row or `reconciledAt` is null. New users get a reconciled row at sign-up
+  (`UserService.ensureProfile`). `StorageFutureCall.backfill` is scheduled 10 s after every
+  server start (`scheduleStorageBackfill`, identifier `wonky.storageBackfill`) and runs under a
+  `pg_try_advisory_xact_lock` (another instance running it → skipped): per pending user it
+  recomputes document/space sizes (100 items per batch) and `attachmentBytes` from ready
+  `image` StoredFiles, then reconciles (commits per user → resumable; from the sources →
+  idempotent) and sends the over-quota notification once (payload `message`, `reason:
+  overQuotaAfterBackfill`, `link: /drive/storage`).
+- **Reconcile** (§4.3): recurring job `wonky.storageReconcile` (03:47 daily) over all users in
+  batches of 200; pending users are backfilled; per user, expired reservations are deleted and
+  all counters (incl. `reservedBytes`) recomputed under the row lock; drifts > 1 % or 64 KB are
+  logged as `storage.drift {userId, field, before, after}`.
+- Not built: the weekly orphan-image cleanup (§2 "−" path) does not exist yet; the per-user
+  override has no admin tool. (MCP results' `storage` field, `drive.get_storage` and the
+  snake_case `quota_exceeded` details came with D-15, suite 09 §4.)
+
+## 12. As built (D-11)
+
+Code: `packages/wonky_app/lib/src/storage/` (exported by `package:wonky_app/wonky_app.dart`).
+
+- **Controller** (§3, §6.1). `ShellServices.storage` is a `LiveStorageController` in the apps
+  (`WonkyShell.createServices`): it loads `drive.storageUsage` after sign-in, follows the
+  `storageChanged` events of the supervised `drive.watch`, refetches when the drive refreshes
+  (`ShellServices.driveRefresh`: reconnect, *Empty trash*) and caches the last value per user
+  (`storage.usage` in the user store), shown offline with `stale == true`; `stop()` on sign-out.
+  The `StorageController` contract gained `report(usage)` (results of byte-adding endpoints,
+  e.g. `FileUploadStart.storage`) and `checkRoom(bytes, itemUuid:)` (`drive.checkRoom`).
+  `StorageController.none()` stays the default of hand-built services (meters hide, checks
+  pass); tests use `FakeStorage` (`onCheckRoom`, `checkRoomCalls`, `quotaError(...)`).
+- **Meter** `StorageMeter(services, onOpen:, large:)` (§6.1): `ShadProgress` 4 px (8 px with
+  `large`), "12.3 MB of 50 MB used" (`storageBytes` / `storageQuota` format helpers), `primary` /
+  `warning` (≥ 90 %) / `destructive` (≥ 100 %, "… used — over quota"), indeterminate +
+  "Calculating storage…"; a button for click, Enter and Space; one semantics node (label
+  "Storage", value with the percentage, the tooltip as hint, "(offline)" when stale or
+  disconnected). `HomeSidebar`'s `StorageMeterSlot` (key `home.storage`) hosts it with
+  `shell.storage.open`; Settings › Storage and the Storage page reuse it.
+- **Banner** `StorageBanner(services, place:, item:)` (§6.2): below the top bar of every home
+  (`DriveHomeScreen`) and below the toolbar of every editor (`EditorScaffold`, owned items only).
+  Warning and destructive tints, *Manage storage*, and *Empty trash* first when the trash holds
+  ≥ 10 % of the usage (§7.4). Dismissal per device (`storage.banner.warningDismissedAt` /
+  `overDismissedAt` in the device store): 90 % for 7 days; over quota in editors until the next
+  calendar day ("once per day"), never in homes. Long translations wrap; buttons ellipsize.
+- **Dialog** (§6.3): `QuotaExceededDialog.spec(l10n, problem)` → a `WonkyDialogSpec` with the new
+  `alert: true` (`ShadDialog.alert`), key `dialog.quota`, buttons `manage`, `fit`, `close` /
+  `cancel` (MCP `ui.get_dialog` / `ui.press_dialog_button`); `showQuotaDialog` returns a
+  `QuotaDialogChoice` and runs `shell.storage.open` for *Manage storage*. Variants:
+  `OwnQuotaProblem` (needed bytes optional — "You have 3.1 MB left of your 50 MB…" when the
+  error carries no details), `OwnerQuotaProblem` (images: "Images added to this
+  document/spreadsheet/presentation…"; other reasons: "Content added to this file counts against
+  the owner's storage. Ask Anna Berg to free up space first."), `BatchQuotaProblem` (480 px
+  wide), `TransferQuotaProblem`, `TransferAcceptQuotaProblem`, `FileTooLargeProblem` (`byQuota`
+  for the "…right now" text). Below shad's `sm` breakpoint every `WonkyFormDialog` now
+  ellipsizes long button labels (buttons stack there).
+- **Error presenter** `QuotaErrorPresenter` (`services.quotaErrors`, §7.1): `isQuotaExceeded`,
+  `detailsOf`, `problemOf(error, itemKind:, itemName:, reason:)` (caller → own; not the caller →
+  owner, with the open item's kind; `reason: transfer` → requester / new-owner variants),
+  `present(error)` (true when handled; each error object once, so nested commands show one
+  dialog) and `show(problem)`. It listens to every command invocation: a **human**-invoked
+  command that fails with `quotaExceeded` shows the dialog, and menus / the palette skip their
+  "Command failed" toast for it; MCP, AI and script invocations only get the error (§6.6).
+- **Pre-checks** `StorageChecks` (`services.storageChecks`, §7.2): `ensureRoom(bytes, reason:,
+  item:, askServer:)` checks the known usage for the user's own items, then (online)
+  `drive.checkRoom(bytes, item)` — the owner of someone else's item is charged and gets the
+  owner variant — and fails open offline or on other errors; `fittingUploads(sizes)` returns the
+  indices that may start (files above `ServerLimits.maxFileUploadBytes` → *This file is too
+  large*; one file or none fitting → own variant; else the batch dialog, *Upload the files that
+  fit* = greedy in order); `fits(bytes)` for disabling controls. Wired: `shell.drive.copy`
+  (human invocations: the source's `countedBytes` against the copier's usage), Write
+  `write.insert.image`, `write.image.replace` and canvas drops (`imagesFitStorage`),
+  `WriteImportHandler` and `write.insert.fromFile` (presenter), Sheets image inserts and pastes
+  (`_prepared`, human only) and `SheetsImportHandler`.
+
+## 13. As built (D-17)
+
+Code: `wonky_drive/lib/features/storage/` — `StorageScreen` (`/storage[?filter=…]`, in the home
+frame: top bar, banner, left menu with *Storage* highlighted via
+`HomeSidebar.activeDestination`), `StorageUsageSummary`, `StorageSuggestions`, the table
+(`StorageTableTitle`, `StorageTableBar`, `StorageRow`), `StoragePageController`, `StorageFilter`,
+`StorageApi` (`drive.listByStorage`).
+
+- **Usage** (§6.4): "46.1 MB of 50 MB used" and "92 %", `WonkyStackedBar` (`wonky_ui`) with the
+  legend Documents · Spreadsheets · Presentations · Files · Trash · Free. Colors are the kind
+  colors of the drive icons (documents blue, spreadsheets green, presentations amber), files
+  violet and trash muted — not `chart1–5`, which are grays in the zinc theme. Over quota: the
+  bar is full in `destructive`, the headline "… used — over quota" and "Over by 0.4 MB";
+  calculating: the shell's large `StorageMeter`.
+- **Free up space**: *Empty trash* (trash bytes > 0; confirm "Permanently delete 23 items in the
+  trash? This frees 8.1 MB and can't be undone.", the count from a trash listing of ≤ 200 rows,
+  then `shell.drive.emptyTrash {confirmed}`), *Large files* (≥ 1 MB, trashed ones included),
+  *Not opened in 6 months* (≥ 256 KB, `notOpenedSince` = now − 180 days; items **created** after
+  the cutoff are left out, so a fresh upload nobody opened yet is not a candidate). Counts read
+  ≤ 200 rows ("More than 200 files"). *Review* runs `drive.storage.show {filter}`; the filter is
+  a removable chip in the table title.
+- **Items using storage**: the type menu (All, Documents, Spreadsheets, Presentations, Files,
+  Trash) is the `?filter=` of the route; paged by 50 with the keyset cursor (infinite scroll);
+  sorted by counted size only (no sort menu). Columns Name (category icon, *In trash* badge),
+  Kind ("M4A audio", "Spreadsheet"), Location (folder name, *My Drive*, *Trash*), Last opened,
+  Storage, ⋮ (the shell's item menu); below ~800 px only Name, Storage and ⋮. Checkboxes,
+  click / `Mod`-click / `Shift`-click, arrows / Home / End / Esc; the selection is published as
+  `ShellServices.driveSelection`, so `Del`, `Space`, `Enter`, `F2`, `S` and `Mod+A` act on it.
+  Selection bar: "3 selected · 12.4 MB", *Move to trash* (`shell.drive.trash`, undoable),
+  *Restore* and *Delete forever* (trashed selections; confirm "Delete 3 items forever? This
+  frees 4.2 MB and can't be undone."), *Download* (files only, `drive.file.download`).
+- **Live**: reloads (debounced 300 ms, keeping the loaded rows) on drive changes, a changed
+  `StorageUsage` (`storageChanged`) and `driveRefresh`; offline: the cached usage and "You're
+  offline" with *Retry* for the table.
+

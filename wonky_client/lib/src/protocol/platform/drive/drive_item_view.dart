@@ -14,6 +14,8 @@ import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'package:wonky_client/src/protocol/protocol.dart' as _i8pkqg1o;
 import '../../platform/common/access_role.dart' as _iv7g6vuy;
 import '../../platform/drive/drive_item_kind.dart' as _i26ubj99;
+import '../../platform/drive/file_category.dart' as _idj2ejj9;
+import '../../platform/drive/file_upload_state.dart' as _idvu08o8;
 import '../../platform/drive/template_category.dart' as _i4yf368z;
 import '../../platform/users/user_summary.dart' as _itg9e9ms;
 
@@ -45,7 +47,15 @@ abstract class DriveItemView
     required this.editorsCanShare,
     required this.nonEditorsCanExport,
     required this.viewersSeeComments,
-  });
+    int? attachmentBytes,
+    int? countedBytes,
+    this.mimeType,
+    this.fileCategory,
+    this.uploadState,
+    this.fileMetaJson,
+    this.previewFileId,
+  }) : attachmentBytes = attachmentBytes ?? 0,
+       countedBytes = countedBytes ?? 0;
 
   factory DriveItemView({
     required _isc.UuidValue uuid,
@@ -72,6 +82,13 @@ abstract class DriveItemView
     required bool editorsCanShare,
     required bool nonEditorsCanExport,
     required bool viewersSeeComments,
+    int? attachmentBytes,
+    int? countedBytes,
+    String? mimeType,
+    _idj2ejj9.FileCategory? fileCategory,
+    _idvu08o8.FileUploadState? uploadState,
+    String? fileMetaJson,
+    _isc.UuidValue? previewFileId,
   }) = _DriveItemViewImpl;
 
   factory DriveItemView.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -152,6 +169,25 @@ abstract class DriveItemView
       viewersSeeComments: _isc.BoolJsonExtension.fromJson(
         jsonSerialization['viewersSeeComments'],
       ),
+      attachmentBytes: jsonSerialization['attachmentBytes'] as int?,
+      countedBytes: jsonSerialization['countedBytes'] as int?,
+      mimeType: jsonSerialization['mimeType'] as String?,
+      fileCategory: jsonSerialization['fileCategory'] == null
+          ? null
+          : _idj2ejj9.FileCategory.fromJson(
+              (jsonSerialization['fileCategory'] as String),
+            ),
+      uploadState: jsonSerialization['uploadState'] == null
+          ? null
+          : _idvu08o8.FileUploadState.fromJson(
+              (jsonSerialization['uploadState'] as String),
+            ),
+      fileMetaJson: jsonSerialization['fileMetaJson'] as String?,
+      previewFileId: jsonSerialization['previewFileId'] == null
+          ? null
+          : _isc.UuidValueJsonExtension.fromJson(
+              jsonSerialization['previewFileId'],
+            ),
     );
   }
 
@@ -205,6 +241,24 @@ abstract class DriveItemView
 
   bool viewersSeeComments;
 
+  /// (v2) Images/attachments stored for this item (Drive 03 §2).
+  int attachmentBytes;
+
+  /// (v2) sizeBytes + attachmentBytes: what the File size column, the
+  /// details panel and the Storage page show (Drive 03 §2).
+  int countedBytes;
+
+  /// (v2) Files only (Drive 02 §1.1); null for other kinds.
+  String? mimeType;
+
+  _idj2ejj9.FileCategory? fileCategory;
+
+  _idvu08o8.FileUploadState? uploadState;
+
+  String? fileMetaJson;
+
+  _isc.UuidValue? previewFileId;
+
   /// Returns a shallow copy of this [DriveItemView]
   /// with some or all fields replaced by the given arguments.
   @_isc.useResult
@@ -234,6 +288,13 @@ abstract class DriveItemView
     bool? editorsCanShare,
     bool? nonEditorsCanExport,
     bool? viewersSeeComments,
+    int? attachmentBytes,
+    int? countedBytes,
+    String? mimeType,
+    _idj2ejj9.FileCategory? fileCategory,
+    _idvu08o8.FileUploadState? uploadState,
+    String? fileMetaJson,
+    _isc.UuidValue? previewFileId = const _isc.$UndefinedUuidValue(),
   });
   @override
   Map<String, dynamic> toJson() {
@@ -263,6 +324,13 @@ abstract class DriveItemView
       'editorsCanShare': editorsCanShare,
       'nonEditorsCanExport': nonEditorsCanExport,
       'viewersSeeComments': viewersSeeComments,
+      'attachmentBytes': attachmentBytes,
+      'countedBytes': countedBytes,
+      if (mimeType != null) 'mimeType': mimeType,
+      if (fileCategory != null) 'fileCategory': fileCategory?.toJson(),
+      if (uploadState != null) 'uploadState': uploadState?.toJson(),
+      if (fileMetaJson != null) 'fileMetaJson': fileMetaJson,
+      if (previewFileId != null) 'previewFileId': previewFileId?.toJson(),
     };
   }
 
@@ -294,6 +362,13 @@ abstract class DriveItemView
       'editorsCanShare': editorsCanShare,
       'nonEditorsCanExport': nonEditorsCanExport,
       'viewersSeeComments': viewersSeeComments,
+      'attachmentBytes': attachmentBytes,
+      'countedBytes': countedBytes,
+      if (mimeType != null) 'mimeType': mimeType,
+      if (fileCategory != null) 'fileCategory': fileCategory?.toJson(),
+      if (uploadState != null) 'uploadState': uploadState?.toJson(),
+      if (fileMetaJson != null) 'fileMetaJson': fileMetaJson,
+      if (previewFileId != null) 'previewFileId': previewFileId?.toJson(),
     };
   }
 
@@ -336,6 +411,13 @@ class _DriveItemViewImpl extends DriveItemView {
     required bool editorsCanShare,
     required bool nonEditorsCanExport,
     required bool viewersSeeComments,
+    int? attachmentBytes,
+    int? countedBytes,
+    String? mimeType,
+    _idj2ejj9.FileCategory? fileCategory,
+    _idvu08o8.FileUploadState? uploadState,
+    String? fileMetaJson,
+    _isc.UuidValue? previewFileId,
   }) : super._(
          uuid: uuid,
          kind: kind,
@@ -361,6 +443,13 @@ class _DriveItemViewImpl extends DriveItemView {
          editorsCanShare: editorsCanShare,
          nonEditorsCanExport: nonEditorsCanExport,
          viewersSeeComments: viewersSeeComments,
+         attachmentBytes: attachmentBytes,
+         countedBytes: countedBytes,
+         mimeType: mimeType,
+         fileCategory: fileCategory,
+         uploadState: uploadState,
+         fileMetaJson: fileMetaJson,
+         previewFileId: previewFileId,
        );
 
   /// Returns a shallow copy of this [DriveItemView]
@@ -393,6 +482,13 @@ class _DriveItemViewImpl extends DriveItemView {
     bool? editorsCanShare,
     bool? nonEditorsCanExport,
     bool? viewersSeeComments,
+    int? attachmentBytes,
+    int? countedBytes,
+    Object? mimeType = _Undefined,
+    Object? fileCategory = _Undefined,
+    Object? uploadState = _Undefined,
+    Object? fileMetaJson = _Undefined,
+    _isc.UuidValue? previewFileId = const _isc.$UndefinedUuidValue(),
   }) {
     return DriveItemView(
       uuid: uuid ?? this.uuid,
@@ -435,6 +531,19 @@ class _DriveItemViewImpl extends DriveItemView {
       editorsCanShare: editorsCanShare ?? this.editorsCanShare,
       nonEditorsCanExport: nonEditorsCanExport ?? this.nonEditorsCanExport,
       viewersSeeComments: viewersSeeComments ?? this.viewersSeeComments,
+      attachmentBytes: attachmentBytes ?? this.attachmentBytes,
+      countedBytes: countedBytes ?? this.countedBytes,
+      mimeType: mimeType is String? ? mimeType : this.mimeType,
+      fileCategory: fileCategory is _idj2ejj9.FileCategory?
+          ? fileCategory
+          : this.fileCategory,
+      uploadState: uploadState is _idvu08o8.FileUploadState?
+          ? uploadState
+          : this.uploadState,
+      fileMetaJson: fileMetaJson is String? ? fileMetaJson : this.fileMetaJson,
+      previewFileId: previewFileId is _isc.UndefinedSentinel
+          ? this.previewFileId
+          : previewFileId,
     );
   }
 }

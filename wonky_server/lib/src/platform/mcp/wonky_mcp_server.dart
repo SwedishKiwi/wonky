@@ -10,6 +10,7 @@ import '../../sheets/scripts/mcp/script_tool_handlers.dart';
 import '../../write/mcp/write_mcp_content.dart';
 import '../../write/mcp/write_tool_handlers.dart';
 import 'collab_tool_handlers.dart';
+import 'drive_mcp_content.dart';
 import 'drive_tool_handlers.dart';
 import 'mcp_config.dart';
 import 'tool_executor.dart';
@@ -30,7 +31,10 @@ abstract final class WonkyMcpServer {
 
   static const instructions =
       'Wonky Work: a collaborative office suite. Wonky Write documents are '
-      'Markdown-first. Use drive.* to find, create and organize items, '
+      'Markdown-first. Use drive.* to find, create and organize items and '
+      'to upload, download and convert files (they count against a storage '
+      'quota: drive.get_storage; never delete files to make room unless '
+      'the user asks), '
       'write.* to read and edit documents (prefer quote addressing and '
       'small targeted edits), sheets.* to read and edit spreadsheets (A1 '
       'ranges, English formula syntax; start with sheets.get_spreadsheet or '
@@ -118,6 +122,7 @@ abstract final class WonkyMcpServer {
     WriteMcpContent.registerPrompts(server);
     SheetsMcpContent.registerResources(server, contextOf);
     SheetsMcpContent.registerPrompts(server);
+    DriveMcpContent.registerResources(server, contextOf);
     return server;
   }
 

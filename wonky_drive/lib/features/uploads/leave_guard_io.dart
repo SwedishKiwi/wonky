@@ -1,0 +1,1 @@
+void setLeaveGuard(bool active) {}

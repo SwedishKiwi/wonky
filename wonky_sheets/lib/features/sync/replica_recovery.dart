@@ -2,15 +2,10 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
-import 'package:serverpod_database/serverpod_database.dart'
-    show ColumnBool, ColumnDateTime, ColumnDouble, ColumnUuid;
-import 'package:wonky_client/wonky_client.dart' show UuidValue;
 import 'package:wonky_sheets_core/model.dart';
-import 'package:wonky_sync_models/tables.dart';
+import 'package:wonky_sync_kit_flutter/wonky_sync_kit_flutter.dart'
+    show ReplicaRecoveryReader;
 
-import 'replica_recovery_io.dart'
-    if (dart.library.js_interop) 'replica_recovery_web.dart'
-    as platform;
 import 'sheets_replica.dart';
 
 /// One spreadsheet with unsynced local writes read from a replica that can't
@@ -45,9 +40,26 @@ class ReplicaRecovery {
   bool get isEmpty => spreadsheets.isEmpty;
 
   /// Reads the replica file [path] read-only (desktop; null on the web or
-  /// when the file can't be read at all).
-  static Future<ReplicaRecovery?> read(String path) =>
-      platform.readRecovery(path);
+  /// when the file can't be read at all), with the shared kit's
+  /// [ReplicaRecoveryReader].
+  static Future<ReplicaRecovery?> read(String path) async {
+    final spaces = await ReplicaRecoveryReader.read(
+      path,
+      SheetsReplica.sheetsTables,
+    );
+    if (spaces == null) return null;
+    return ReplicaRecovery([
+      for (final s in spaces)
+        RecoveredSpreadsheet(
+          spaceUuid: s.spaceUuid,
+          title: switch (s.valueOf(SheetsTables.spreadsheet, 'title')) {
+            final String title => title,
+            _ => 'Untitled spreadsheet',
+          },
+          rows: s.rows,
+        ),
+    ]);
+  }
 
   /// `Wonky Sheets unsynced changes <date>.zip`.
   static String fileName(DateTime now) =>
@@ -108,42 +120,4 @@ class ReplicaRecovery {
         final v => v,
       },
   };
-
-  /// A column map from raw SQLite values of [table] (UUIDs as 16-byte
-  /// blobs, times as epoch milliseconds, booleans as 0/1), as
-  /// `SyncedTableSpec.toColumns` returns them.
-  static Map<String, Object?>? columnsFromRaw(
-    String table,
-    Map<String, Object?> raw,
-  ) {
-    final spec = SyncedTables.byName[table];
-    if (spec == null) return null;
-    final out = <String, Object?>{};
-    for (final c in spec.table.columns) {
-      final name = c.columnName;
-      if (name == SyncedTableSpec.spaceIdColumn) continue;
-      final v = raw[name];
-      out[name] = v == null
-          ? null
-          : switch (c) {
-              ColumnUuid() =>
-                v is List<int>
-                    ? UuidValue.fromByteList(Uint8List.fromList(v)).uuid
-                    : '$v',
-              ColumnDateTime() =>
-                v is int
-                    ? DateTime.fromMillisecondsSinceEpoch(v, isUtc: true)
-                    : DateTime.parse('$v').toUtc(),
-              ColumnBool() => v is int ? v != 0 : v == true,
-              ColumnDouble() => (v as num).toDouble(),
-              _ => v,
-            };
-    }
-    return out;
-  }
-
-  /// The model tables read for a recovery (as `SheetsReplica.loadSpace`).
-  static List<String> get tables => [
-    for (final s in SheetsReplica.modelTables) s.name,
-  ];
 }

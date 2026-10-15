@@ -116,6 +116,41 @@ charged_user: {id, name}, reason}` ([Drive 03 §7.1](wonky_drive/03-storage-quot
 descriptions tell agents to check `drive.get_storage` before large uploads and never to delete
 files to make room without the user asking.
 
+(v2) **As built (D-15).** Definitions in `wonky_core/lib/mcp/drive_tools.dart`, handlers in
+`wonky_server/lib/src/platform/mcp/drive_file_tool_handlers.dart` (registered through
+`DriveToolHandlers.all`):
+- `drive.search` takes `kind` and `kinds` (merged) and `file_category`; `drive.list_folder`
+  takes `kinds` and `file_category` (it restricts `file` items only). Items carry
+  `counted_bytes`, and files `mime_type`, `file_category`, `upload_state`, `file_meta`.
+- `drive.upload_file` runs the app's upload lifecycle on the server (`createFileUpload` →
+  store → `completeFileUpload`; sniffing, "Keep both" numbering, rate limits, reservation);
+  exactly one of `text` (stored as UTF-8) / `content_base64`; over 10 MB → `too_large`
+  (pointing to `create_upload`) before decoding. On any failure the upload is cancelled.
+- `drive.create_upload` answers `{item_uuid, item, upload_url, method: PUT, headers:
+  {Content-Type: application/octet-stream}, max_bytes, expires_at, storage}`; the URL is the
+  token route `PUT /files/upload/<fileUuid>?t=` (Drive 02 §3.3). `drive.complete_upload`
+  answers `conflict` (`details.expected_bytes`) when no bytes were received yet, leaving the
+  upload open (the endpoint would fail and delete it); only the uploader sees the upload
+  (`not_found` for others).
+- `drive.download_file` needs Viewer+ and, for viewers/commenters, `nonEditorsCanExport`
+  (every `as`, like `drive.export`); text is decoded with the encoding recorded at upload
+  (`utf-8`, `utf-16le/be`, `latin1`); documents/spreadsheets → `invalid_args` pointing to
+  `drive.export`; uploads in progress → `conflict`. `drive.export` refuses files
+  (`invalid_args` → `download_file`), folders and (until SL-40) presentations (`unsupported`).
+- `drive.convert_file {uuid, target, name?, parent_uuid?, format?, options?}` →
+  `{item, warnings, storage}` (Drive 02 §7.2: the file's folder or My Drive).
+- `drive.get_storage` → the fields above plus `max_file_upload_bytes`, `calculating` and
+  `counts {documents, spreadsheets, presentations, files, folders}`.
+- `storage` is `{used_bytes, quota_bytes, available_bytes, over_quota}` of the **caller** (an
+  image charged to another owner does not reveal that owner's usage); it is returned by
+  `upload_file`, `complete_upload`, `create_upload`, `convert_file`, `import`, `copy`,
+  `create_document`, `create_spreadsheet` and `write.insert_image` (when it stores an image).
+  `quota_exceeded` details: `{needed_bytes, available_bytes, quota_bytes, charged_user: {id,
+  name}, is_caller, reason}` (`McpToolException.quotaDetails`).
+- `drive.create_presentation` is **not registered yet**: it needs the headless deck (Slides
+  SL-8/SL-40). The `slides:read` / `slides:edit` scopes are accepted for tokens and offered in
+  Settings › Developer (off by default) ahead of the `slides.*` tools.
+
 ### comments.*
 `comments.list(uuid, status?)`, `comments.create(uuid, anchor, body)` (anchor formats per app:
 Write `{quote, occurrence?}` or `{start, length}`; Sheets `{sheet, a1}`; (v2) Slides `{slide}`
@@ -143,7 +178,10 @@ deck of `wonky_slides_core`. Drive has no namespace of its own beyond `drive.*` 
   `wonky://sheet/<uuid>/<sheetName>` (CSV of used range, `text/csv`),
   `wonky://doc/<uuid>/outline`, (v2) `wonky://file/<uuid>` (text files ≤ 1 MB as text, other
   files ≤ 2 MB as blob), `wonky://deck/<uuid>` (outline of a presentation as Markdown, Slides 11),
-  `wonky://drive/storage` (usage JSON). Resource templates registered for each. Subscriptions emit
+  `wonky://drive/storage` (usage JSON). Resource templates registered for each. (v2, as built:
+  `DriveMcpContent` in `platform/mcp/drive_mcp_content.dart`; files over the limits are refused
+  with a pointer to `drive.download_file` `as: url`; the `wonky://file` template lists the 50
+  most recently modified files.) Subscriptions emit
   `notifications/resources/updated` when content changes (debounced 2 s) — *not yet
   implemented* (§7).
 - Prompts: `summarize_document`, `review_document`, `analyze_sheet`, `build_dashboard` — thin
@@ -204,7 +242,8 @@ buttons) rendered by a shared `WonkyFormDialog`; custom dialogs must implement
 App-specific `ui.*` tools (e.g. `ui.write.get_selection`, `ui.write.select_text`,
 `ui.sheets.select_range`, `ui.sheets.get_visible_range`, (v2) `ui.slides.*` in Slides 11,
 `ui.drive.*` in [Drive 04 §13](wonky_drive/04-screens-menus.md)) are listed in each app's MCP
-spec. `UiBridgeHello.app` takes `drive`, `write`, `sheets`, `slides`.
+spec. (v2: the `ui.drive.*` definitions are `UiDriveTools` in `wonky_core/lib/mcp/ui_drive_tools.dart`,
+relayed by the server to windows with `app: drive`; the Drive window implements them in D-17.) `UiBridgeHello.app` takes `drive`, `write`, `sheets`, `slides`.
 
 ## 7. Conventions for tool implementations
 

@@ -11,6 +11,7 @@ const _jobs = [
   'wonky.sendDigests',
   'wonky.cleanupFiles',
   'wonky.daily',
+  'wonky.storageReconcile',
 ];
 
 /// Every instance schedules the recurring jobs at start (specs/13 §4).

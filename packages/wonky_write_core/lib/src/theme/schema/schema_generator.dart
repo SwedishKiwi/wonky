@@ -4,7 +4,7 @@
 /// that it equals [generateThemeSchemaV1] so the two never drift apart.
 library;
 
-import '../../fonts/font_registry.dart';
+import 'package:wonky_fonts/wonky_fonts.dart';
 import '../model/catalog.dart';
 import '../model/color_ref.dart';
 import '../model/json_util.dart';

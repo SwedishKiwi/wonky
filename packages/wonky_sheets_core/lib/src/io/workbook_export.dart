@@ -1,12 +1,11 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:wonky_charts/wonky_charts.dart';
+
 import '../addressing/grid_geometry.dart';
 import '../charts/chart_pipeline.dart';
-import '../charts/render/svg/svg_chart_renderer.dart';
-import '../charts/scene/geometry.dart' show ChartSize;
-import '../charts/spec/chart_spec.dart';
-import '../charts/spec/image_spec.dart';
+import '../objects/image_spec.dart';
 import '../formula/model/workbook_view.dart';
 import '../model/records.dart';
 import '../model/schema.dart' show EmbeddedObjectKind;
@@ -151,7 +150,7 @@ abstract final class SheetsWorkbookExporter {
       return null;
     }
     try {
-      return ChartPipeline.exportPng(
+      return SheetsChartPipeline.exportPng(
         spec: ChartSpec.fromJson(chart.specJson),
         model: model,
         values: source,
@@ -220,7 +219,7 @@ abstract final class SheetsWorkbookExporter {
     charts: (chart, w, h) {
       try {
         return const SvgChartRenderer().render(
-          ChartPipeline.printSceneFor(model, source)(chart, w, h)!,
+          SheetsChartPipeline.printSceneFor(model, source)(chart, w, h)!,
         );
       } on Object {
         return null;
@@ -273,7 +272,7 @@ abstract final class SheetsWorkbookExporter {
     title: title,
     conditional: conditional,
     charts: SceneChartPdfDrawer(
-      ChartPipeline.printSceneFor(model, source, dark: darkTheme),
+      SheetsChartPipeline.printSceneFor(model, source, dark: darkTheme),
     ),
     images: imageBytes == null
         ? null

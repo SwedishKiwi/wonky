@@ -10,3 +10,5 @@ values:
   - suggestionDecided
   - ownershipTransfer
   - scriptFailure
+  ### (v2) Storage notice, e.g. over quota after the backfill (Drive 03 §9).
+  - storage

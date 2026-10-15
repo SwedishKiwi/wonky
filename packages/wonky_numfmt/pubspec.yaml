@@ -1,0 +1,16 @@
+name: wonky_numfmt
+description: "Spreadsheet number formats (pattern parser, renderer, presets, locale data, serial dates), shared by Wonky Sheets and Wonky Slides."
+publish_to: none
+
+environment:
+  sdk: '^3.12.2'
+
+resolution: workspace
+
+dependencies:
+  intl: ^0.20.3
+  petitparser: ^7.1.0
+
+dev_dependencies:
+  lints: '>=3.0.0 <7.0.0'
+  test: ^1.25.5

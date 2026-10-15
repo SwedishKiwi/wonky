@@ -102,6 +102,7 @@ class WonkyDialogSpec {
     this.cancelId = 'cancel',
     this.width = 420,
     this.dialogKey,
+    this.alert = false,
   });
 
   final String title;
@@ -115,6 +116,10 @@ class WonkyDialogSpec {
 
   /// Stable key prefix for widgets (`dialog.rename`).
   final String? dialogKey;
+
+  /// Rendered as a `ShadDialog.alert` (no close icon; a message the user
+  /// acknowledges, e.g. the *Out of storage* dialog).
+  final bool alert;
 }
 
 /// What the user chose.
@@ -363,12 +368,21 @@ class _WonkyFormDialogState extends State<WonkyFormDialog>
           );
       }
     }
+    // Below shad's `sm` breakpoint the actions stack vertically and each
+    // button is as wide as the dialog: long labels ellipsize instead of
+    // overflowing (360 px windows, long translations).
+    final narrow = MediaQuery.sizeOf(context).width < 640;
+    Widget label(DialogButtonSpec b) => narrow
+        ? Flexible(
+            child: Text(b.label, maxLines: 1, overflow: TextOverflow.ellipsis),
+          )
+        : Text(b.label);
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.escape): () =>
             Navigator.of(context).pop(),
       },
-      child: ShadDialog(
+      child: (spec.alert ? ShadDialog.alert : ShadDialog.new)(
         key: key == null ? null : ValueKey<String>(key),
         title: Text(spec.title),
         description: spec.description == null ? null : Text(spec.description!),
@@ -381,19 +395,19 @@ class _WonkyFormDialogState extends State<WonkyFormDialog>
                               ? null
                               : ValueKey<String>('$key.${b.id}'),
                           onPressed: () => _press(b),
-                          child: Text(b.label),
+                          child: label(b),
                         )
                       : ShadButton(
                           key: key == null
                               ? null
                               : ValueKey<String>('$key.${b.id}'),
                           onPressed: () => _press(b),
-                          child: Text(b.label),
+                          child: label(b),
                         ))
                 : ShadButton.outline(
                     key: key == null ? null : ValueKey<String>('$key.${b.id}'),
                     onPressed: () => _press(b),
-                    child: Text(b.label),
+                    child: label(b),
                   ),
         ],
         child: SizedBox(

@@ -159,6 +159,25 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
   `wonky_server/{pubspec.yaml,config/*.yaml,lib/server.dart}`, `AGENTS.md`.
 - Acceptance: the Slides home lists presentations (none yet) with the left menu; `/slides/p/x`
   shows "Coming soon"; analyze/format clean; D-18 includes Slides in its release build check.
+- As built: `wonky_slides/` (workspace member; `lib/{main,driver}.dart`; `lib/config/
+  slides_app_config.dart`: `SlidesAppConfig` — `WonkyAppKind.slides`, `primaryKind:
+  presentation`, brand `#d97706` (the presentation kind color, amber of the product icon),
+  `WonkyProduct.slides` logo (the icon already existed in `wonky_app/assets/icons/`),
+  `HomeScope.kind(presentation)` → app-home menu, `/p/:uuid` → `DeckPlaceholderScreen`
+  (`lib/features/editor/`: `EditorScaffold` with a `BasicDocumentController`, title row/menubar
+  of the shell, *Coming soon* body with *Back to Slides* = `shell.nav.home`); `createItem`
+  creates nothing and shows a *Creating presentations is coming soon* toast, so the home's
+  *+ New*, `shell.file.new {kind: presentation}` and `/new` (Drive's *New* menu; the shell then
+  goes back) are safe until SL-5/SL-9 bring deck spaces and offline creation; no import route
+  or handler); ARB l10n `SlidesLocalizations` (`slides_en.arb` + generated `slides_en_XA.arb`);
+  `web/` (product icon favicon/192/512, manifest, sqlite files for the replica of SL-9);
+  `assets/config.json` (four apps). Server: `flutter_apps: slides` (8104, `auto_launch:
+  false`); `/slides/`, `config.json`, origins and `flutter_build` were already in place from
+  D-5. `tool/check_dependencies.dart` rule `wonky_slides` (the full 01 §2.1 list; SL-1 uses
+  only the shell). `wonky_slides_core` was already scaffolded by SL-6. An unknown or
+  inaccessible deck id shows the shell's not-found / error pages (not "Coming soon"). Tests:
+  `wonky_slides` 18 (config contract, home scoped to presentations light/dark with the
+  app-home menu and empty state, placeholder editor light/dark + *Back to Slides*).
 
 ### 4.3 M9 wave 1 — contracts and foundations
 
@@ -172,6 +191,15 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
 - Provides: generated model types for everything else.
 - Acceptance: generated code compiles; deterministic id tests; S-1 hash recorded in 02;
   Sheets suites green with the new hash.
+- As built: models in `wonky_sync_models/lib/src/models/slides/` (+ `enums/`), migration
+  `20261014234831373-slides-s1` (server + client), `SlidesIds`, the table codec
+  `SlidesSyncedTables` (`wonky_sync_models/tables.dart`), `SyncSchemaRelease` (S-1 hash, guard
+  tests on the server and in Sheets), and `package:wonky_slides_core/schema.dart`
+  (`SlidesTables`/`…Cols`, `SlidesTableSet`, `SlidesUndoHooks` = coupled columns + column-wise
+  cell inserts) — 02 §2.1, §3, §12.2, §14.1. The columns lint test lives in
+  `wonky_slides_core/test/schema/columns_lint_test.dart` (it scans `wonky_slides/lib/features/
+  {sync,model}` and `wonky_server/lib/src/slides` once they exist) because `wonky_slides` did not
+  exist yet; SL-9 moved it to `wonky_slides/test/sync/columns_lint_test.dart`.
 
 **SL-3 · Core contracts, `DeckSession`, harness** (§5)
 - Scope: records and `DeckModel` API, the sealed `SlidesOperation` set, `SlidesPlanContext`,
@@ -183,6 +211,18 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
   `wonky_slides/test/harness/`.
 - Acceptance: contracts compile with fakes; a harness smoke test runs a no-op command
   execute → undo → redo on `MemoryDeckSession`.
+- As built: core libraries `model.dart` (`core/model/api/`: records, `DeckModel`,
+  `DeckReader`, events, `ResolvedElement` stub), `ops.dart` (`core/ops/`: the sealed
+  operation family, one part per area, `Patch<T>`, `SlidesPlanContext`, `SlidesLimits`,
+  `PlanException`, `SlidesChangeSummary`/`SlidesPlan`, `SlidesMutationPlanner` interface),
+  `scene.dart` (`core/scene/nodes/`), `motion.dart` (`core/motion/stub/`), `interfaces.dart`
+  (`core/interfaces/`), `session.dart` (`core/session/`: `DeckWritePath`, pure-Dart
+  `MemoryDeck`, `slides.rows` undo entry/handler) and `testing.dart` (`DeckBuilder`,
+  `themePackageRows`, `FakeSlidesPlanner`, `LwwSyncRelay`); app `features/model/`
+  (`DeckSession`, `DeckSessionBase`, `MemoryDeckSession`) and
+  `features/elements/element_kind_handler.dart` (handler contract + `ElementKindRegistry`);
+  harness `wonky_slides/test/harness/deck_harness.dart` (`DeckHarness` on SL-1's
+  `slidesHarness()`). Contract details and deviations: §5 "As built". Status: [STATUS.md](STATUS.md).
 
 **SL-4 · Spike: super_editor overlay** (03 §6.1, v2 review Q20) — timebox 1 day
 - Scope: prototype an overlay editor over a rotated text box with `SlidesDeltaMapper`; measure
@@ -200,6 +240,37 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
 - Owns: `server/{spaces,sync,changelog,endpoints}/`.
 - Acceptance: server tests — reserve/subscribe per role, a Sheets client never receives deck
   rows, consumer exactly-once across restarts, title mirroring.
+- As built: `wonky_server/lib/src/slides/` — `endpoints/` (`SlidesEndpoint` `slides.*`:
+  `reserveSpaces`, `subscribe`, `unsubscribe`, `ensureSubscribed`, `spaceStats`;
+  `revertChange`/`reapplyChange` throw `unavailable` until server deck edits record inverses;
+  `SlidesSyncEndpoint` `slidesSync.sync`), `spaces/` (`SlidesSpaces` = `SpaceService` with
+  `kind: deck`; the shared `SpaceStats` reports `sheetCount` = slides, `cellCount` = elements,
+  `gridCells` 0; `SlidesDecks.create` = server-side creation behind the new
+  **`drive.createPresentation(parentUuid?, name, templateUuid?)`** (`createSpace(kind: deck)`,
+  `DeckFactory` rows = built-in theme copy + title slide + "Create presentation" log row, drive
+  item, size estimate; `templateUuid` refused until SL-8/SL-22); `SlidesDecks.mirrorTitleToDeck`
+  = drive rename → `Deck.title`), `sync/` (`SlidesSyncService` = `SpaceSync.sync(kind: deck)` +
+  `onMergeSuccess` → `slides:merged:<space>` bus signal + consumer, `afterRegistration` called
+  by `drive.registerPresentation`; `ServerSlidesWriter` skeleton: chunks of ≤ 5,000 changes per
+  `transactionForUser` + `DeckChangeLog`, consecutive inserts batched, runs the consumer),
+  `changelog/` (`DeckChangeLogProcessor` with the plugin registry; plugins `drive`
+  (`DeckDriveMirror`: last-edited state, `VersionService.recordEdit`, `Deck.title` →
+  `DriveItem.name`, `modifiedAt` + search text — title, group titles, element and table-cell
+  text, notes — throttled 10 s with a trailing refresh), `activity` (`DeckActivity`: one
+  `logEdit` per author and batch, counters `changes`, `slides`, `slidesDeleted`, `themes`),
+  `storage` (`ContentSizes.onSpaceChanged`; `SlidesSizeEstimator` registered for
+  `presentation`, change log excluded)), `slides_server.dart` (`SlidesServer.ensureRegistered`,
+  called from `server.dart` `registerSlidesHooks` and before processing). Server-only model
+  `DeckChangeLogReceipt` (migration `20261015005729394-slides-receipts`): claim per row,
+  **`doneConsumers` per plugin** so a re-claimed stale row only runs the plugins not yet
+  recorded (exactly once per plugin across restarts); a throwing plugin is logged and counted
+  as done. ACL changes mirror deck membership (`AclEvents` → `SpaceService.mirrorMembership`).
+  The server now depends on `wonky_slides_core` and `wonky_sync_kit` (01 §2.1). Deviations:
+  plugins bind the core contract to `DeckChangeLogConsumer<DeckConsumerContext>` (session +
+  drive item + cached authors) instead of `<Session>` (§5.7); until SL-7's planner exists,
+  `DeckFactory` takes its rows from the core's `DeckBuilder` (same rows as `CreateDeck`).
+  Tests: `wonky_server/test/integration/slides/slides_sync_test.dart` (9, `SlidesDevice`
+  isolate devices in `test/support/slides_device.dart`).
 
 **SL-6 · Themes core** (05 §2–§7)
 - Scope: theme JSON schemas, validator, migrations, resolver; 16 built-in layouts; 10 built-in
@@ -208,6 +279,10 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
 - Owns: `core/theme/**`, `packages/wonky_fonts/` (Slides families only).
 - Acceptance: 05 §12 unit tests (validation, resolution, layout remap, size scaling); every
   built-in theme × layout resolves without warnings.
+- As built: code in `core/theme/**` (`package:wonky_slides_core/themes.dart`); the display
+  families are not bundled yet, so the built-ins use bundled substitutes (05 §3.2, §6) and
+  `wonky_fonts` is unchanged; the shared Flutter `AssetFontRegistry` landed in `wonky_app`
+  (`package:wonky_app/fonts.dart`, 05 §3.1). Status: [STATUS.md](STATUS.md).
 
 ### 4.4 M9 wave 2 — model, sync, scene, chrome
 
@@ -219,6 +294,20 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
 - Acceptance: execute → undo → redo equality for every op; seeded op-sequence property test
   (invariants of 02 §10 hold; undo of all returns to the start); incremental remote patch ≡
   full reload; ≥ 90 % line coverage.
+- As built: `package:wonky_slides_core/model.dart` gains `lib/src/model/{index,resolve,text,
+  geometry}/` — `DeckIndexes` (`model.indexes`: `SlideOrder`, `ElementTree`, `ThemeIndex`,
+  `PlaceholderIndex`, `TableIndex`, builds by element, per-slide revisions; invalidated per
+  change batch), `SlideResolver` → `ResolvedSlide`/`ResolvedElement`, `TextStyleResolver`,
+  `ElementFrame`/`GroupSpace`, `SlidesText` (02 §4 schema on `wonky_rich_text`); new libraries
+  `planner.dart` (`lib/src/planner/`, not `mutations/`: `SlidesPlanner` for all 62 operations,
+  `PlanBuilder`, `OrderKeys`, `ThemeCopy`) and `maintenance.dart` (`DeckMaintenance`).
+  `SlidesPlanner` is the default of `MemoryDeckSession.blank` and `DeckHarness`;
+  `FakeSlidesPlanner` stays for session contract tests. Additive contract changes:
+  `ElementSpec.tableRows/tableColumns/codeStates`, `ApplyThemeToSlides.setDefault` (empty
+  `slideIds` = all), `ResolvedElement` style/placeholder/field fields, `DeckViolation.toString`.
+  Builds, code states and chart links are planned at row level (not stubs); their catalogs and
+  schemas are validated by SL-24/SL-26/SL-27. Details: 02 §10–§12 "As built (SL-7)",
+  [STATUS.md](STATUS.md).
 
 **SL-8 · Copier, clipboard codec, text schema, headless deck**
 - Scope: `DeckCopier` (id rewrite, reference remap, file re-homing plan), `SlidesClipboardCodec`,
@@ -236,6 +325,42 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
 - Owns: `app/features/sync/**`, `app/features/model/synced_deck_session.dart`.
 - Acceptance: harness — create a deck offline → reconnect → a collaborator sees it in Drive and
   opens it; roles mirror; two clients converge on random edits (smoke property run).
+- As built: `wonky_slides/lib/features/sync/` — `SlidesReplica` (`slides_<userId>.db`,
+  `SlidesTableSet.tables`, `hasDeck`), `SlidesWriter` (the kit's `SyncWriter`: column-named
+  updates, `bulkWrite` runs, `DeckChangeLog` row, `SlidesChangeSummary.of` for plan-less writes;
+  an insert hitting a visible deterministic row keeps `id`, `createdAt` and a table cell's keys),
+  `ClientSlidesRemote` (`slidesSync.sync` + `slides.*`, *Simulate offline*),
+  `SlidesSyncController` (kit `AppSyncController`: loop, backoff, pause when hidden, pool of 3
+  reserved deck spaces, weekly purge; `createLocalPresentation` = `CreateDeck` planned by
+  `SlidesPlanner` in a reserved space; `openSession`; `elementCap` = `DeviceRowCap` on
+  `slide_element`, 50,000 on browsers without OPFS), `DeckRemotePatch` (kit `RowPatch` in Slides
+  rank), `SlidesData` (`install`/`uninstall`/`ready`/`current`/`createPresentation`/`strings`,
+  kit `ReplicaInstallation` with the offline provider `slides` and the limited-storage
+  warning), `openDeckSession(services, itemUuid)` (memory deck when not installed;
+  `SlidesDataUnavailableException` when installed but not started), `DeckOpenHistory`
+  (`slides.opened.<deckId>`, newest 200, for the device cap), `SlidesReplicaRecovery` (JSON of
+  the unsynced decks' rows, `Wonky Slides unsynced changes <date>.json`).
+  `features/model/synced_deck_session.dart`: `SyncedDeckSession` (subscribe → role, wait with
+  "Downloading presentation… 42 %", load every row (`DeckChangeOrigin.load`), `DeckReady`;
+  offline unavailable + reopen when online; journal ingestion → `applyRemote`; pending writes
+  overlaid; role from membership after each ingestion; writes refused while opening
+  (`PlanException.locked`); `DeckMaintenance.repairOp` written by editors 1 s after merges,
+  not undoable). Load-state strings come from the ARB files (`SyncedDeckStrings`).
+  `SlidesAppConfig`: `onSignedIn`/`onSigningOut` install/uninstall the data layer;
+  `createItem` = `SlidesData.createPresentation` (offline: toast "Connect to the internet to
+  create a presentation" when no reservation is usable yet). Shell additions (`wonky_app`):
+  `DriveRepository.createPresentation`/`registerPresentation` (cached repository: create online
+  only, register queued offline with an optimistic item, replayed into My Drive when the folder
+  is gone), `createItemOnServer` handles presentations. The columns lint test moved to
+  `wonky_slides/test/sync/columns_lint_test.dart`. Deviations: the recovery export is desktop
+  only (as Sheets: on the web the replica sits behind the SQLite worker and can't be read once
+  it failed to open) and is one JSON file (no per-deck ZIP). Tests: `wonky_slides/test/sync/`
+  (43: writer/replica, session, remote-patch ≡ full-reload property (5 seeds), controller with
+  an in-process sync server — offline creation → collaborator opens, viewer read-only,
+  two-client random-edit convergence — `SlidesData`/`openDeckSession`, recovery, lint), server
+  `test/integration/slides/slides_client_creation_test.dart` (the planner's `CreateDeck` rows →
+  `slidesSync` → `registerPresentation` → consumer → collaborator device),
+  `wonky_app` `test/drive/cached_drive_repository_test.dart` (queued registration).
 
 **SL-10 · Scene, text layout, geometry, stage** (03 §6.3, 06 §12.1)
 - Scope: `SlideSceneBuilder`, `FlutterTextLayoutEngine` and the core `SlideTextLayout` (pdf
@@ -244,6 +369,30 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
 - Owns: `core/{scene,layout,text_layout,geometry,connectors}/**`, `app/features/stage/**`.
 - Acceptance: goldens of every geometry and text style; overlay vs static line breaks equal
   (with SL-13's mapper fake); thumbnail ≤ 8 ms.
+- As built: core (`package:wonky_slides_core/scene.dart`) — `lib/src/geometry/`
+  (`ShapeLibrary`: all 70 keys of 03 §6.3 incl. `custom`, with outlines as `ShapePart`s
+  (shaded faces, stroke-only details), adjusts with defaults/ranges/handle tracks, text
+  rectangles and connection sites; `SvgPathParser`; `ShapePathBuilder`/`PathOps`),
+  `lib/src/connectors/` (`ConnectorRouter`: free and glued endpoints derived from the target's
+  current frame, straight/elbow/curved routes, elbow candidate search with 24 su clearance;
+  `ArrowHeads`), `lib/src/layout/` (`AutoFit`), `lib/src/text_layout/` (`TextParagraphs` =
+  the styled paragraph model both engines share; `SlideTextLayout` with an injectable
+  `SlideTextMeasurer`, `ApproxTextMeasurer` default), `lib/src/scene/builder/`
+  (`SlideSceneBuilder` + `ScenePaint`, `ImageAdjust`, `BasicCodeLayout`) and
+  `lib/src/scene/hit/` (`SceneHitTest`, for SL-12). App — `features/stage/`
+  (`FlutterTextLayoutEngine`, `SlideScenePainter`, `SlideStage`, `SlideImageCache`,
+  `SlideRenderer` = resolver + builder + engine + images + fonts + thumbnails per open deck,
+  `CoreSceneBuilding` handler mixin) and `features/thumbnails/` (`SlideThumbnailCache`,
+  `SlideThumbnail`; a folder of its own, not under `stage/`). Additive contract changes:
+  `SceneContext` (`deck`, `purpose`, `icons`, `charts`, `code`, `codeStates`, `generation`,
+  `withTheme`), `SlideScene.frames`/`routes`/`frameOf` (derived geometry), `PromptNode.layout`,
+  `CodeScene` layout fields, `ResolvedTextStyles.theme`/`withBox`, `ScenePurpose`,
+  `SlideIconSource`/`IconGlyph`, `ChartSceneSource`, `CodeSceneSource`. Deviations: no golden
+  masters (they are generated on CI Linux only, 15 §7) — paint-pattern tests per kind in light
+  and dark instead; the overlay-equality test uses a `TextPainter` over the same styled runs as
+  SL-13's mapper fake; the stage is a `Stack` of one `RepaintBoundary` + `CustomPaint` per
+  top-level node (not a custom `RenderSlideStage`, 06 §12.1); the core engine's `pdf`-metrics
+  measurer is SL-20's. Details: 03 §6 "As built (SL-10)", 06 §12.1, [STATUS.md](STATUS.md).
 
 **SL-11 · Chrome** (04) — web-build token
 - Scope: full `SlidesAppConfig` (routes, `editorRoutes` present/print, `createItem` offline,
@@ -460,49 +609,109 @@ Names are binding unless changed via a contract PR.
 
 ### 5.1 Shared sync kit — pure Dart (extracted from Sheets)
 
+Built by Drive 05 D-6 (`packages/wonky_sync_kit`); the signatures below are the implemented
+ones (README of the package for the full list).
+
 ```dart
-/// packages/wonky_sync_kit/lib/rows.dart (pure Dart; v2 review Q23)
+/// package:wonky_sync_kit/rows.dart (pure Dart; v2 review Q23)
 enum RowOp { insert, update, delete }
-final class RowChange {               // = today's Sheets RowChange, moved
+final class RowChange {               // = Sheets' RowChange, moved
   final String table; final String rowId; final RowOp op;
   final Map<String, Object?> columnsBefore, columnsAfter;
-  Set<String> get touchedColumns;
+  Set<String> get touchedColumns;  RowChange inverse();  toJson()/fromJson()
 }
-abstract interface class ChangeSummary { Map<String, Object?> toJson(); }
+abstract interface class CurrentRowReader { Map<String, Object?>? currentColumns(String table, String rowId); }
+abstract interface class ChangeSummary { Map<String, Object?> toJson(); }   // + JsonChangeSummary
 final class MutationPlan<S extends ChangeSummary> {
   final String label; final S summary; final List<RowChange> changes;
-  final Map<String, Object?>? detail;
+  final Map<String, Object?>? detail; final List<String> warnings; final Map<String, Object?> result;
+  static const chunkSize = 5000;  List<List<RowChange>> get chunks;  String get summaryJson;  String? get detailJson;
+  MutationPlan<S> inverse({String? label});
 }
 /// Columns that must be skipped together by undo (02 P4).
-abstract interface class CoupledColumns { Set<String>? groupOf(String table, String column); }
+abstract interface class CoupledColumns { Set<String>? groupOf(String table, String column); }   // + TableCoupledColumns
+/// Table hook: inserts undone column by column (Sheets' cells).
+abstract interface class ColumnwiseInserts { Set<String>? identityColumns(String table); }    // + TableColumnwiseInserts
 abstract final class UndoInverter {
-  static List<RowChange> invert(MutationPlan plan, CurrentRowReader current,
-      {CoupledColumns? coupled, void Function(String table, String rowId, String column)? skipped});
+  static List<RowChange> invert(MutationPlan<ChangeSummary> plan, CurrentRowReader current,
+      {CoupledColumns? coupled, ColumnwiseInserts? columnwise, SkippedColumn? skipped});
+  static List<RowChange> invertChanges(List<RowChange> changes, CurrentRowReader current, {…same});
 }
-abstract interface class SyncTxAdapter {   // client writer and server writer
-  Future<void> apply(MutationPlan plan, {required String actorKind, required String sessionId});
+abstract interface class SyncTxAdapter {   // client writer (SyncWriter); server writers later
+  Future<void> apply(MutationPlan<ChangeSummary> plan,
+      {required String spaceId, required String actorKind, required String sessionId});
 }
+/// Remote patching: replica rows (+ pending local writes) → model changes.
+abstract final class RowPatch {
+  static List<RowChange> build(CurrentRowReader model, Map<String, Iterable<String>> changed,
+      Map<String, Map<String, Map<String, Object?>>> rows, List<RowChange> pending, {required TableRank rank});
+  static List<RowChange> reconcile(CurrentRowReader model, Iterable<(String, Map<String, Object?>)> modelRows,
+      List<(String, Map<String, Object?>)> all, List<RowChange> pending, {required TableRank rank});
+}
+
+/// package:wonky_sync_kit/tables.dart — an app's synced tables (dependency order, model tables, root table)
+final class SyncTableSet { SyncTableSet(List<AnySyncedTable> all, {Set<String> nonModelTables, String? rootTable}); int rank(String table); … }
+// specs of the Slides tables: SyncedTableSpec<Deck>.of(Deck.t, Deck.fromJson) (wonky_sync_models/tables.dart)
+
+/// package:wonky_sync_kit/undo.dart — the `*.rows` undo domain
+class RowsUndoEntry extends UndoEntry { RowsUndoEntry(String domain, List<RowChange> changes, {String label}); … }
+abstract interface class RowsUndoTarget { CurrentRowReader get currentRows; void applyChanges(List<RowChange>, {required String label, String actorKind}); }
+abstract class RowsUndoHandler<E extends RowsUndoEntry> extends UndoHandler<E> { RowsUndoTarget get target; … }
 ```
 
-Sheets keeps its cell-specific undo rule (Sheets 02 §7) as a table hook of the generic inverter.
+Sheets keeps its cell-specific undo rule (Sheets 02 §7) as a table hook of the generic inverter
+(`SheetsUndo.columnwise`); its `ChangeSummary` implements the kit interface and its
+`MutationPlan` is `MutationPlan<ChangeSummary>` (a typedef in `wonky_sheets_core`, so a file
+importing both `wonky_sheets_core` and `wonky_sync_kit` hides one of the two names). Slides
+defines `SlidesChangeSummary` and `typedef SlidesPlan = MutationPlan<SlidesChangeSummary>`, and a
+`slides.rows` `RowsUndoEntry`/`RowsUndoHandler` with `TableCoupledColumns` for P4.
 
 ### 5.2 Shared sync kit — client (`wonky_sync_kit_flutter`; extracted from `wonky_sheets/lib/features/sync/`)
 
 ```dart
-abstract class SyncReplica {            // per user + app: open/close, spaces, reservations, dirty marks
-  Future<void> open({required String fileName});   // 'slides_<userId>.db'
-  Future<List<String>> reservedSpaces();
-  Future<void> purgeSpace(String spaceId);
+class SyncReplica {                     // per user + app (`SyncReplica.fileName('slides', userId)`)
+  SyncReplica(OfflineSyncDatabaseSession session, {required UuidValue userUuid, required SyncTableSet tables});
+  static Future<OfflineSyncDatabaseSession> openSession({client, path, userUuid, isDebugMode});
+  Future<void> prepare();               // tuning + change journal triggers
+  // spaces: spaceKey, roleOf, memberSpaces, hasRoot, rootIds, rowCounts, rowCountsBySpace,
+  //         hiddenSpaces, purgeSpace(int key)
+  // reservations: reservations, reservedSpaces, addReservations, usableReservations, removeReservation
+  // dirty marks: markDirty, dirtySpaces, clearDirty;  rows: loadSpace, readRows;  clearAllTables
 }
-abstract class AppSyncController {      // guard → syncOnce → reservations → syncContinuously; backoff; pause when hidden
-  ValueListenable<SyncStatus> get status;
-  Stream<SpaceMerge> get merges;        // (spaceId, hlc) after onMergeSuccess
+class ChangeJournal {                   // U11 trigger journal per open space
+  Future<void> track(int spaceKey); Future<void> untrack(int spaceKey); Future<int> head();
+  Future<JournalChanges> changesSince(int spaceKey, int after); Future<void> prune(int upTo);
 }
-abstract class SyncWriter implements SyncTxAdapter { /* chunking, columnValues, change-log row */ }
-abstract class ChangeJournal {          // U11 trigger journal per open space
-  Future<List<JournaledRow>> since(String spaceId, int cursor);
+abstract class SyncWriter implements SyncTxAdapter {   // chunking, columnValues, bulkWrite runs, dirty marks
+  Future<void> write({spaceId, changes, plan, label, actorKind, sessionId, onProgress});
+  Future<void> writeChangeLog(DatabaseSession s, ChangeLogEntry entry, Transaction tx);   // app hook
+  ChangeSummary summarize(List<RowChange> changes);                                     // app hook
+  Iterable<String> columnsIfVisible(RowChange change);                                  // app hook
 }
+abstract interface class SyncRemote { OfflineSyncClient get sync; reserveSpaces; subscribe; spaceStats;
+  ensureSubscribed; unsubscribe; }      // EndpointSyncRemote on generated endpoint methods
+class AppSyncController<R extends SyncReplica, W extends SyncWriter, S extends HostedSpaceSession>
+    implements SyncSessionHost<R, W> {  // guard → syncOnce → reservations → syncContinuously; backoff;
+  Stream<UuidValue> get merges;         //   pause when hidden; DeviceRowCap; weekly purge
+  ValueNotifier<bool> connected; ValueNotifier<int> cycles; ValueNotifier<Object?> lastError;
+  Future<UuidValue> createInReservedSpace(Future<void> Function(UuidValue space) create);
+  @protected S registerSession(S session);
+}
+// Session building blocks (DeckSession mirrors SyncedWorkbookSession on them):
+class SpaceWriteQueue { enqueue(changes, {plan, label, actorKind}); flush(); pendingOverlay; status({online}); }
+class JournalIngestion { spaceKey; cursor; needsReload; Future<void> ingest(); }   // applyRows / reloadRows hooks
+abstract final class SpaceOpening { waitForSpace(…); roleOf(AccessRole); roleFromMembership(…); }
+// Lifecycle and shell glue:
+abstract class ReplicaInstallation<R, C> { attach(); detach(); ready(timeout); reset(user); … }  // per signed-in user
+class ReplicaOfflineProvider implements OfflineDataProvider { … }   // Settings › Offline & storage
+class ShellSyncConnectivity implements SyncConnectivity { … }
+abstract final class ReplicaRecoveryReader { static Future<List<RecoveredSpace>?> read(String path, SyncTableSet tables); }
+abstract final class ReplicaFiles { path; delete; moveAside; }   Future<bool> offlineStorageLimited();
 ```
+
+The local bookkeeping tables (`reserved_space`, `sheets_dirty_space`, `sheets_row_journal`,
+`sheets_journal_space`) are `database: client` models present in every replica of the generated
+client; each app's replica is its own file, so Slides reuses them as they are.
 
 ### 5.3 `DeckSession` (app, `features/model/deck_session.dart`)
 
@@ -540,6 +749,70 @@ abstract class DeckSession {
 // previews, AI suggest mode).
 ```
 
+**As built (SL-3).**
+
+- **Write path in core.** `package:wonky_slides_core/session.dart` holds the logic every
+  session shares: the mixin `DeckWritePath` (`model`, `userId`, `planner`, `limits`, `ids`,
+  `isOwner`; `planContext()`, `execute(op)` = plan → `checkPlan` → `model.applyPlan` →
+  `persist`, `applyChanges`, `applyRemote(changes)` = `model.applyChanges(origin: remote)`,
+  never persisted; it is the kit's `RowsUndoTarget`), the pure-Dart `MemoryDeck` (records
+  `PersistedWrite`s; `onPersist` hook) and the undo domain: `slidesRowsDomain`,
+  `SlidesRowsUndoEntry` (+ `fromJson`), `SlidesRowsUndoHandler(() => target, onPartial:)` with
+  `SlidesUndoHooks.coupled/columnwise`; `slidesServerChangeDomain` is the name of the server
+  domain (SL-39). The undo types live in core (Sheets keeps them in its app) so server, MCP and
+  core tests share them.
+- **App contract** (`wonky_slides/lib/features/model/`): `deck_session.dart` is the sketch
+  above; `execute` returns `SlidesPlan` (= `MutationPlan<SlidesChangeSummary>`), the session
+  `implements RowsUndoTarget` (`currentRows` = `model`), `images` is the core
+  `SlideImageResolver` (`interfaces.dart`; `cachedBytes`/`bytes`/`url`,
+  `MemorySlideImageResolver`). `memory_deck_session.dart`: `DeckSessionBase extends DeckSession
+  with DeckWritePath` (notifiers `loadStateNotifier`/`syncStatusNotifier`, `roleValue`,
+  `remoteBatches` = remote batches of `model.changes`, `checkPlan` refuses non-editors with
+  `PlanException(permission)`, `dispose` flushes and disposes the model) and
+  `MemoryDeckSession` (`persisted`, `persistedLabels`; `MemoryDeckSession.blank(planner: …)`
+  runs `CreateDeck`). The planner is a constructor argument until SL-7 ships the default.
+- **What `SyncedDeckSession` (SL-9) needs**: extend `DeckSessionBase`; override
+  `persist(changes, plan:, label:, actorKind:)` to enqueue into the kit's `SpaceWriteQueue`
+  (`SlidesWriter` = `SyncWriter` with `summarize` → `SlidesChangeSummary.of(changes, current:
+  model)`, `writeChangeLog` → `DeckChangeLog`, `columnsIfVisible`), and `flush()`; open with
+  `SpaceOpening.waitForSpace`, load rows of `SlidesTableSet.tables.modelTables` into
+  `DeckModel.fromRows`/`applyChanges(origin: load)`, set `loadStateNotifier` (`DeckLoading`
+  with progress → `DeckReady`/`DeckUnavailable`), map the space role to `roleValue`, mirror
+  `SyncStatus` from the queue, and feed `JournalIngestion` results through `applyRemote`
+  (pending local writes overlaid by `RowPatch.build` with `rank: SlidesTables.rank`).
+- **Harness** (`wonky_slides/test/harness/deck_harness.dart`): `DeckHarness.open({role,
+  fixture, planner})` = SL-1's `slidesHarness()` + a `MemoryDeckSession` over a `DeckBuilder`
+  fixture + an active `HarnessDeckDocument` (the `slides.rows` handler; SL-11's
+  `DeckDocumentController` replaces it); `registerOp(id, op, argsSchema:)` registers an
+  undoable command that executes the op and records a `SlidesRowsUndoEntry` — the pattern of
+  every Slides command; `run`/`undo`/`redo`/`undoLabels`.
+- **Model API** (`package:wonky_slides_core/model.dart`, `core/model/api/`): map-backed
+  immutable records per table (`DeckRec`, `DeckThemeRec`, `SlideMasterRec`, `SlideLayoutRec`,
+  `SlideGroupRec`, `SlideRec`, `SlideElementRec`, `SlideTableAxisRec`, `SlideTableCellRec`,
+  `SlideBuildRec`, `CodeStateRec`, `ChartLinkRec`, `GenericSlidesRecord`) holding the full row
+  (missing columns null) with typed getters and core enums (`ElementKind`, `SlideBuildKind`,
+  `SlideBuildTrigger`, `TableAxisDimension`, `ElementOwnerKind`; placeholder types and
+  appearance reuse SL-6's `SlidePlaceholderType`/`SlideAppearance`); `DeckReader`
+  (`CurrentRowReader` + typed lookups, `themes`, `defaultTheme`, `mastersOf`, `layoutsOf`,
+  `groups`, flattened `slides` with orphans last, `slidesInGroup`, `elementsOf(owner,
+  parentId:)`, `allElementsOf`, `axesOf`, `cellsOf`, `buildsOf`, `codeStatesOf`,
+  `chartLinkOf`); `DeckModel` (`fromRows`, `applyChanges(changes, origin:, silent:)`,
+  `applyPlan`, synchronous `changes` stream + `addListener`, `version`, canonical `dump()`)
+  with parent-bucket indexes; events `DeckChanged`, `SlidesChanged`, `OrderChanged`,
+  `ElementsChanged` (dependent rows report their element), `ThemeChanged` (layout/master
+  elements too), `BuildsChanged`, `OtherRowsChanged` in a `DeckChangeBatch` with
+  `DeckChangeOrigin {local, remote, load}`; no-op writes emit nothing. SL-7 adds `SlideOrder`,
+  `ElementTree`, `PlaceholderIndex`, resolvers behind this API.
+- **Operations** (`ops.dart`): every op of 02 §12.1 plus `CreateDeck` (02 §9.3), master/layout
+  CRUD named `AddMaster`, `AddLayout`, `UpdateMasterOrLayout`, `DeleteMastersOrLayouts`; nullable
+  columns are set through `Patch<T>` (`null` = unchanged, `Patch(null)` = clear); targets
+  `TopLevel`/`InGroup` (`SlideTarget`) and `ElementText`/`CellText`/`NotesText`
+  (`TextTarget`). `SlidesMutationPlanner` is an interface (`plan(op, DeckModel, ctx)`); SL-7
+  implements it. Until then `FakeSlidesPlanner` (`testing.dart`) plans `CreateDeck`,
+  `SetDeckProps`, `AddSlides`, `DeleteSlides`, `MoveSlides`, `SetSlideProps`, `CreateGroup`,
+  `InsertElements`, `UpdateFrames`, `SetElementProps`, `DeleteElements`, `SetText`, `SetCells`
+  and refuses the rest with `PlanException(unsupported)`.
+
 ### 5.4 Element renderer API
 
 - `ElementKindHandler` (app, 03 §1.3) registry.
@@ -564,12 +837,42 @@ abstract interface class TextLayoutEngine {
 // results to the PDF writer so client PDFs match the screen exactly (10).
 ```
 
+**As built (SL-3).** `package:wonky_slides_core/scene.dart` (`core/scene/nodes/`). The nodes
+are named `GroupNode`, `PathNode`, `ImageNode`, `TextNode`, `ChartNode`, `CodeNode`,
+`PromptNode` (not `SGroup`, … — `wonky_charts` exports `SGroup`/`SPath`/`SText`/`SClip`/
+`SStroke`, and the scene builder and PDF renderer import both); `GroupNode.transform` is a
+`vector_math_64` `Matrix4` (the same type as Flutter's), fills are SL-6's `ResolvedFill`,
+strokes `NodeStroke` (chart engine `SStrokeCap`/`SStrokeJoin`, arrowheads), effects
+`NodeEffects`/`NodeShadow`, clips `NodeClip`, images `SlideImageRef` (`wonky-file://<uuid>` or
+a proxied URL). `ScenePath` wraps the chart engine's `PathCmd`s (re-exported with
+`PathBuilder`), so path code is shared. `SlideScene {slideId, width, height, background:
+ResolvedBackground, nodes}` with `nodesOf(elementId)`. `SceneContext {theme: ResolvedTheme,
+textLayout, editing}`. Text: `TextBody` (Delta ops; `fromJson`, `plain`, `plainText`),
+`ResolvedTextStyles {styles, defaultStyle, box: BoxTextStyle?}`, `TextLayoutResult {width,
+height, lines: [TextLineBox {runs: [TextRunBox]}], fitScale, overflows, lineBreaks}`.
+`CodeScene` (lines of colored runs, 07) is a stub SL-26 fills. `ElementKindHandler` +
+`ElementKindRegistry` are in the app (`features/elements/element_kind_handler.dart`) as in 03
+§1.3, with `HandleSpec`, `SnapPoint`, `ElementActivation`, `EditingTarget`; deviations:
+`hitTest` takes a Flutter `Offset`, `inspectorSections(selection)` returns section **ids** of
+SL-11's registry (no `BuildContext`), `ElementSelection` is a `List<ResolvedElement>`, and
+`snapPoints` defaults to the frame corners and center. `ResolvedElement` (`model.dart`) is a
+stub with `record`, effective `frame`, `rotation`, flips, `opacity`, `inherited`,
+`children`; SL-7 adds the resolved styles.
+
 ### 5.5 Timeline API (owned by 06 §9)
 
 `SlideTimelineCompiler.compile(SlideMotionInput) → SlideTimeline` (`initial`, `endOfStep`,
 `frameAt`, `finalFrame`, `printFrame`), `TransitionCompiler` / `MagicMoveMatcher` →
 `TransitionPlan`, `SlideFrame`/`ElementVisualState` consumed by `SlideStage`. M9 stub: every
 slide compiles to zero steps; `printFrame` = edit frame.
+
+**As built (SL-3).** `package:wonky_slides_core/motion.dart` (`core/motion/stub/timeline.dart`):
+`SlideTimeline` (`steps` = `[step 0]`, `stepCount` 0, every frame `SlideFrame.edit`,
+`describe()`), `TimelinePosition`, `TimelineStep`, `ScheduledEffect`, `TimelineWarning`,
+`SlideFrame` (`stateOf(id)`), `ElementVisualState` (subset of 06 §9.2: `visible`, `opacity`,
+`transform` `Matrix4`, `blurSigma`, `drawProgress`, code state/step), `SlideMotionInput {slide,
+builds}`, `SlideTimelineCompiler.compile` and `TransitionCompiler.compile` →
+`TransitionPlan.cut`. SL-24/SL-25 replace the compilers and extend the types (`motion/`).
 
 ### 5.6 Code and charts
 
@@ -590,6 +893,24 @@ abstract interface class SlidesPdfRenderer {        // core; options per 10
   Stream<List<int>> render(DeckModel deck, SlidesPdfOptions options, FontProvider fonts, ImageProvider images);
 }
 ```
+
+**As built (SL-3).** `package:wonky_slides_core/interfaces.dart` (pure Dart, `core/interfaces/`):
+`SlidesPdfRenderer.render(DeckModel, SlidesPdfOptions, SlidesExportResources) →
+Future<SlidesPdfResult {bytes, pageCount, warnings}>` (10 §11.3's shape; the options carry
+every field of 10 §11.1 — named `Slides…` because Write exports `PdfExportOptions`;
+resources = `FontProvider` (`wonky_fonts`), `SlideImageResolver`, optional
+`TextLayoutEngine` and `lineBreakHints`). The server contracts are generic over the server's
+context so core stays free of Serverpod: `DeckChangeLogConsumer<C>` (`id`, `consume(C context,
+String deckId, List<DeckChangeLogEntry> rows)`; `DeckChangeLogEntry` = the row as plain
+values), `HeadlessDeck {model, execute(op, actorKind: 'mcp') → Future<SlidesPlan>}` and
+`HeadlessDeckProvider<C>.open(C context, String deckId)`; the server binds `C` = `Session`
+(SL-5, SL-8).
+
+As built (SL-5): the core contract is generic (`DeckChangeLogConsumer<C>` with
+`consume(C, String deckId, List<DeckChangeLogEntry>)`); the server binds
+`C = DeckConsumerContext` (session, the deck's `DriveItem`, `actorOf(entry)`) and registers
+plugins with `DeckChangeLogProcessor.register` (ids `drive`, `activity`, `storage`; later
+`comments`, `versions`, `agents`, `headless`).
 
 ---
 

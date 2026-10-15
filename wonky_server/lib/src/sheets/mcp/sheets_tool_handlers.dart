@@ -231,6 +231,7 @@ abstract final class SheetsToolHandlers {
         'item': DriveToolHandlers.itemJson(view),
         'spreadsheet': t.$1.uuid.uuid,
         'change_id': changeId,
+        'storage': await DriveToolHandlers.storageJson(ctx),
       },
       text: 'Created spreadsheet "${view.name}" (${view.uuid.uuid})',
     );

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:async';
 
 import 'package:clock/clock.dart';
@@ -90,9 +91,15 @@ class FakeDriveRepository implements DriveRepository {
     bool starred = false,
     DateTime? trashedAt,
     UuidValue? uuid,
+    FileCategory? fileCategory,
+    int countedBytes = 0,
   }) {
     final now = clock.now();
     final v = DriveItemView(
+      countedBytes: countedBytes,
+      fileCategory:
+          fileCategory ??
+          (kind == DriveItemKind.file ? FileCategory.other : null),
       uuid: uuid ?? _ids.next(),
       kind: kind,
       name: name,
@@ -186,6 +193,16 @@ class FakeDriveRepository implements DriveRepository {
     };
     final kinds = filter.kinds;
     if (kinds != null) out = out.where((i) => kinds.contains(i.kind));
+    final cats = filter.fileCategories;
+    if (cats != null) out = out.where((i) => cats.contains(i.fileCategory));
+    // The server's `kindMask` rule (suite 05 §3.2), computed here.
+    final containing = filter.foldersContaining;
+    if (containing != null) {
+      out = out.where(
+        (i) =>
+            i.kind != DriveItemKind.folder || containsKind(i.uuid, containing),
+      );
+    }
     out = switch (filter.owner) {
       DriveOwnerFilter.anyone => out,
       DriveOwnerFilter.me => out.where((i) => i.owner.id == me.id),
@@ -198,6 +215,19 @@ class FakeDriveRepository implements DriveRepository {
       items: all.sublist(start, end),
       nextCursor: end < all.length ? '$end' : null,
     );
+  }
+
+  /// Whether folder [folder] contains — recursively, ignoring trashed
+  /// items — an item of [kind] (the server's `DriveItem.kindMask`).
+  bool containsKind(UuidValue folder, DriveItemKind kind) {
+    for (final i in _items.values) {
+      if (i.parentUuid != folder || _isTrashed(i)) continue;
+      if (i.kind == kind) return true;
+      if (i.kind == DriveItemKind.folder && containsKind(i.uuid, kind)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @override
@@ -296,6 +326,40 @@ class FakeDriveRepository implements DriveRepository {
     DriveChangeKind.created,
     'registerSpreadsheet',
   );
+
+  @override
+  Future<DriveItemView> createPresentation({
+    UuidValue? parentUuid,
+    required String name,
+    UuidValue? templateUuid,
+  }) async {
+    final v = _create(name, DriveItemKind.presentation, parentUuid);
+    return _put(
+      v.copyWith(contentRef: v.uuid),
+      DriveChangeKind.created,
+      'createPresentation',
+    );
+  }
+
+  /// The item uuid is the space uuid (Slides 02 §9.3); idempotent.
+  @override
+  Future<DriveItemView> registerPresentation({
+    required UuidValue spaceUuid,
+    UuidValue? parentUuid,
+    required String name,
+  }) async {
+    final known = _items[spaceUuid];
+    if (known != null) return known;
+    return _put(
+      _create(
+        name,
+        DriveItemKind.presentation,
+        parentUuid,
+      ).copyWith(uuid: spaceUuid, contentRef: spaceUuid),
+      DriveChangeKind.created,
+      'registerPresentation',
+    );
+  }
 
   DriveItemView _touch(DriveItemView v) =>
       v.copyWith(modifiedAt: clock.now(), modifiedBy: me);
@@ -533,6 +597,8 @@ class FakeUserRepository implements UserRepository {
       notificationSettings:
           patch.notificationSettings ?? p.notificationSettings,
       aiEnabled: patch.aiEnabled ?? p.aiEnabled,
+      // (v2) Merged key by key like the server (null removes a key).
+      driveDefaults: _mergeJson(p.driveDefaults, patch.driveDefaults),
     );
     if (patch.clearAccentColor == true) {
       _prefs = UserPreferences.fromJson({
@@ -543,6 +609,22 @@ class FakeUserRepository implements UserRepository {
       _prefs = _prefs.copyWith(accentColor: patch.accentColor);
     }
     return _prefs;
+  }
+
+  static String _mergeJson(String current, String? patch) {
+    if (patch == null) return current;
+    Map<String, Object?> decode(String json) {
+      try {
+        final v = jsonDecode(json);
+        return v is Map ? v.cast<String, Object?>() : {};
+      } catch (_) {
+        return {};
+      }
+    }
+
+    return jsonEncode(
+      {...decode(current), ...decode(patch)}..removeWhere((_, v) => v == null),
+    );
   }
 
   @override

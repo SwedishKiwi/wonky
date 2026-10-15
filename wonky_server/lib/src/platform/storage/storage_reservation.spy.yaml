@@ -1,0 +1,21 @@
+### (v2) Quota held for an upload that has not completed (Drive 03 §5).
+class: StorageReservation
+table: storage_reservation
+serverOnly: true
+fields:
+  userId: int, relation(parent=user_profile, onDelete=Cascade)
+  ### The StoredFile being uploaded.
+  fileUuid: UuidValue
+  itemId: int?, relation(parent=drive_item, onDelete=Cascade)
+  bytes: int
+  createdAt: DateTime
+  ### createdAt + 24 h.
+  expiresAt: DateTime
+indexes:
+  storage_reservation_file_idx:
+    fields: fileUuid
+    unique: true
+  storage_reservation_user_idx:
+    fields: userId
+  storage_reservation_expiry_idx:
+    fields: expiresAt

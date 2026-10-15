@@ -5,11 +5,14 @@ import 'package:wonky_ui/wonky_ui.dart';
 
 import '../../l10n/wonky_app_localizations.dart';
 import '../../shell/dialogs.dart';
+import '../../commands/command.dart';
 import '../../shell/shell_services.dart';
 
-/// Settings › Keyboard shortcuts (suite 08 §1.2): searchable table of all
-/// commands; record a binding, conflict detection with Replace / Cancel,
-/// reset per row and Reset all.
+/// Wonky Work settings › Keyboard shortcuts (suite 08 §1.2, suite 04 §4.2
+/// Q10): searchable table of the shell's commands (*Shared*) and the current
+/// app's (named after the app); record a binding, conflict detection with Replace /
+/// Cancel, reset per row and Reset all. Overrides are one JSON for every
+/// app: the other apps' entries are kept untouched (also by Reset all).
 class KeyboardSection extends StatefulWidget {
   const KeyboardSection({super.key, required this.services});
 
@@ -82,94 +85,141 @@ class _KeyboardSectionState extends State<KeyboardSection> {
                     c.id.value.contains(_q)))
               c,
         ]..sort((a, b) => a.title(context).compareTo(b.title(context)));
+        final shared = [
+          for (final c in commands)
+            if (isSharedCommand(c.id.value)) c,
+        ];
+        final own = [
+          for (final c in commands)
+            if (!isSharedCommand(c.id.value)) c,
+        ];
+        final listed = {for (final c in s.registry.all) c.id.value};
+        final resettable = s.keymap.overrides.keys.any(listed.contains);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: ShadInput(
-                    key: const ValueKey<String>('settings.keyboard.search'),
-                    placeholder: Text(l.shortcutsSearch),
-                    leading: const Icon(LucideIcons.search, size: 16),
-                    onChanged: (v) => setState(() => _q = v),
+            LayoutBuilder(
+              builder: (context, c) {
+                final search = ShadInput(
+                  key: const ValueKey<String>('settings.keyboard.search'),
+                  placeholder: Text(l.shortcutsSearch),
+                  leading: const Icon(LucideIcons.search, size: 16),
+                  onChanged: (v) => setState(() => _q = v),
+                );
+                final buttons = [
+                  ShadButton.outline(
+                    key: const ValueKey<String>('settings.keyboard.resetAll'),
+                    enabled: resettable,
+                    onPressed: () => s.keymap.resetAll(where: listed.contains),
+                    child: Text(l.shortcutResetAll),
                   ),
-                ),
-                const SizedBox(width: 8),
-                ShadButton.outline(
-                  key: const ValueKey<String>('settings.keyboard.resetAll'),
-                  enabled: s.keymap.overrides.isNotEmpty,
-                  onPressed: s.keymap.resetAll,
-                  child: Text(l.shortcutResetAll),
-                ),
-                const SizedBox(width: 8),
-                ShadButton.ghost(
-                  leading: const Icon(LucideIcons.keyboard, size: 16),
-                  onPressed: () => s.dispatcher.invoke(
-                    'shell.help.shortcuts',
-                    context: context,
+                  ShadButton.ghost(
+                    leading: const Icon(LucideIcons.keyboard, size: 16),
+                    onPressed: () => s.dispatcher.invoke(
+                      'shell.help.shortcuts',
+                      context: context,
+                    ),
+                    child: Text(l.cmdKeyboardShortcuts),
                   ),
-                  child: Text(l.cmdKeyboardShortcuts),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            for (final c in commands)
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: theme.colorScheme.border),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                ];
+                // Narrow pages: the buttons wrap below the search field.
+                return c.maxWidth < 520
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        spacing: 8,
                         children: [
-                          Text(c.title(context), style: theme.textTheme.small),
-                          Text(
-                            c.id.value,
-                            style: theme.textTheme.muted.copyWith(
-                              fontSize: 11,
-                              fontFamily: WonkyTheme.monoFamily,
-                            ),
-                          ),
+                          search,
+                          Wrap(spacing: 8, runSpacing: 8, children: buttons),
                         ],
-                      ),
+                      )
+                    : Row(
+                        spacing: 8,
+                        children: [
+                          Expanded(child: search),
+                          ...buttons,
+                        ],
+                      );
+              },
+            ),
+            for (final (id, title, group) in [
+              ('shared', l.shortcutsGroupShared, shared),
+              ('app', s.config.shortAppName, own),
+            ])
+              if (group.isNotEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.only(top: 20, bottom: 4),
+                  child: Semantics(
+                    header: true,
+                    child: Text(
+                      title,
+                      key: ValueKey<String>('settings.keyboard.group.$id'),
+                      style: theme.textTheme.large,
                     ),
-                    KeyboardShortcutRecorder(
-                      key: ValueKey<String>('settings.keyboard.${c.id.value}'),
-                      labels: s.keymap.labelsOf(c.id.value) ?? const [],
-                      conflict: _conflicts[c.id.value],
-                      semanticLabel: c.title(context),
-                      onRecorded: (chord) => _record(c.id.value, chord),
-                      onClear: () => s.keymap.setOverride(c.id.value, const []),
-                    ),
-                    SizedBox(
-                      width: 36,
-                      child: s.keymap.overrides.containsKey(c.id.value)
-                          ? ShadTooltip(
-                              builder: (_) => Text(l.shortcutReset),
-                              child: ShadIconButton.ghost(
-                                width: 28,
-                                height: 28,
-                                iconSize: 14,
-                                semanticLabel: l.shortcutReset,
-                                icon: const Icon(LucideIcons.rotateCcw),
-                                onPressed: () =>
-                                    s.keymap.resetOverride(c.id.value),
-                              ),
-                            )
-                          : null,
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+                for (final c in group) _row(context, c),
+              ],
           ],
         );
       },
     );
   }
+
+  Widget _row(BuildContext context, Command<CommandArgs> c) {
+    final l = WonkyAppLocalizations.of(context);
+    final theme = ShadTheme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: theme.colorScheme.border)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(c.title(context), style: theme.textTheme.small),
+                Text(
+                  c.id.value,
+                  style: theme.textTheme.muted.copyWith(
+                    fontSize: 11,
+                    fontFamily: WonkyTheme.monoFamily,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          KeyboardShortcutRecorder(
+            key: ValueKey<String>('settings.keyboard.${c.id.value}'),
+            labels: s.keymap.labelsOf(c.id.value) ?? const [],
+            conflict: _conflicts[c.id.value],
+            semanticLabel: c.title(context),
+            onRecorded: (chord) => _record(c.id.value, chord),
+            onClear: () => s.keymap.setOverride(c.id.value, const []),
+          ),
+          SizedBox(
+            width: 36,
+            child: s.keymap.overrides.containsKey(c.id.value)
+                ? ShadTooltip(
+                    builder: (_) => Text(l.shortcutReset),
+                    child: ShadIconButton.ghost(
+                      width: 28,
+                      height: 28,
+                      iconSize: 14,
+                      semanticLabel: l.shortcutReset,
+                      icon: const Icon(LucideIcons.rotateCcw),
+                      onPressed: () => s.keymap.resetOverride(c.id.value),
+                    ),
+                  )
+                : null,
+          ),
+        ],
+      ),
+    );
+  }
 }
+
+/// Whether [commandId] is a shared (shell) command, listed under *Shared*;
+/// every other registered command belongs to the current app.
+bool isSharedCommand(String commandId) => commandId.startsWith('shell.');

@@ -1,5 +1,5 @@
 import 'package:wonky_core/wonky_core.dart'
-    show McpToolDefinition, UiSheetsTools, UiTools, UiWriteTools;
+    show McpToolDefinition, UiDriveTools, UiSheetsTools, UiTools, UiWriteTools;
 
 import 'tool_executor.dart';
 import 'tool_support.dart';
@@ -16,6 +16,8 @@ abstract final class UiToolHandlers {
       if (d.name != UiTools.listSessions.name) _relay(d),
     for (final d in UiWriteTools.all) _relay(d, app: 'write'),
     for (final d in UiSheetsTools.all) _relay(d, app: 'sheets'),
+    // (v2, P1) Implemented by Wonky Drive windows (Drive 04 §13).
+    for (final d in UiDriveTools.all) _relay(d, app: 'drive'),
   ];
 
   static Future<ToolResult> listSessions(ToolContext ctx, ToolArgs a) async {
@@ -28,8 +30,8 @@ abstract final class UiToolHandlers {
         'sessions': [for (final w in windows) w.toJson()],
       },
       text: windows.isEmpty
-          ? 'No window allows MCP control. Open Wonky Write or Wonky Sheets '
-                'and enable '
+          ? 'No window allows MCP control. Open a Wonky Work app (Write, '
+                'Sheets, Drive) and enable '
                 'Settings › Developer › "Allow MCP to control this window".'
           : [
               for (final w in windows)

@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_client/wonky_client.dart';
 
+import '../bootstrap/app_urls.dart';
 import '../branding/product_icon.dart';
 import '../l10n/wonky_app_localizations.dart';
 import '../notifications/notifications_button.dart';
@@ -173,9 +174,10 @@ class _DriveSearchFieldState extends State<DriveSearchField> {
     }
     _debounce = Timer(const Duration(milliseconds: 200), () async {
       try {
+        // App homes search their kind only (suite 03 §3.3).
         final p = await s.drive.search(
           q,
-          filters: DriveSearchFilters(),
+          filters: DriveSearchFilters(kinds: s.config.homeScope?.searchKinds),
           limit: 6,
         );
         if (mounted && _text.text == q) setState(() => _matches = p.items);
@@ -252,6 +254,29 @@ class _DriveSearchFieldState extends State<DriveSearchField> {
                   leading: const Icon(LucideIcons.search, size: 16),
                   onPressed: () => _submit(q),
                   child: Text(l.searchFor(q)),
+                ),
+              if (q.isNotEmpty && s.config.homeScope?.kind != null)
+                ShadButton.ghost(
+                  key: const ValueKey<String>('drive.search.allDrive'),
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  leading: const WonkyProductIcon(
+                    WonkyProduct.drive,
+                    size: 16,
+                    semanticLabel: '',
+                  ),
+                  onPressed: () {
+                    _popover.hide();
+                    s.crossApp.open(
+                      WonkyAppKind.drive,
+                      '/search?q=${Uri.encodeQueryComponent(q)}',
+                    );
+                  },
+                  child: Expanded(
+                    child: Text(
+                      l.searchAllDrive(q),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ),
             ],
           ),

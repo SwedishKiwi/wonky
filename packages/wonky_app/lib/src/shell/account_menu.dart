@@ -10,6 +10,14 @@ import '../drive/drive_format.dart';
 import '../l10n/wonky_app_localizations.dart';
 import 'shell_services.dart';
 
+/// The product icon of an app.
+WonkyProduct productOf(WonkyAppKind app) => switch (app) {
+  WonkyAppKind.drive => WonkyProduct.drive,
+  WonkyAppKind.write => WonkyProduct.write,
+  WonkyAppKind.sheets => WonkyProduct.sheets,
+  WonkyAppKind.slides => WonkyProduct.slides,
+};
+
 void _invoke(
   ShellServices s,
   BuildContext context,
@@ -24,8 +32,8 @@ void _invoke(
   );
 }
 
-/// The account avatar menu (suite 05 §3.1): name, email, Settings, switch
-/// app, theme, Sign out.
+/// The account avatar menu (suite 03 §3.3): name, email, app settings,
+/// Wonky Work settings, *Open ▸* Drive / Write / Sheets / Slides, Sign out.
 class AccountMenuButton extends StatelessWidget {
   const AccountMenuButton({super.key, required this.services, this.size = 32});
 
@@ -39,22 +47,32 @@ class AccountMenuButton extends StatelessWidget {
       valueListenable: services.currentUser,
       builder: (context, me, _) {
         final summary = me?.summary;
-        final other = services.config.app == WonkyAppKind.write
-            ? l.cmdOpenSheets
-            : l.cmdOpenWrite;
         return WonkyDropdownMenu(
           anchor: const ShadAnchor(
             childAlignment: AlignmentDirectional.bottomEnd,
             overlayAlignment: AlignmentDirectional.topEnd,
             offset: Offset(0, 6),
           ),
+          // Name and email, *<App> settings*, *Wonky Work settings*, *Open ▸*
+          // the four apps, Sign out (suite 03 §3.3).
           entries: () => [
             if (summary != null)
               WonkyMenuLabel('${summary.displayName} · ${summary.email}'),
             WonkyMenuItem(
+              key: const ValueKey<String>('account.appSettings'),
+              label: l.cmdAppSettings(services.config.shortAppName),
+              icon: LucideIcons.settings2,
+              onSelected: () =>
+                  _invoke(services, context, 'shell.settings.openApp'),
+            ),
+            WonkyMenuItem(
               key: const ValueKey<String>('account.settings'),
-              label: l.cmdSettings,
-              icon: LucideIcons.settings,
+              label: l.cmdWorkSettings,
+              leading: const WonkyProductIcon(
+                WonkyProduct.work,
+                size: 16,
+                semanticLabel: '',
+              ),
               onSelected: () => _invoke(
                 services,
                 context,
@@ -62,18 +80,28 @@ class AccountMenuButton extends StatelessWidget {
                 {'section': 'account'},
               ),
             ),
-            WonkyMenuItem(
-              key: const ValueKey<String>('account.switchApp'),
-              label: other,
-              leading: WonkyProductIcon(
-                services.config.app == WonkyAppKind.write
-                    ? WonkyProduct.sheets
-                    : WonkyProduct.write,
-                size: 16,
-                semanticLabel: '',
-              ),
-              onSelected: () =>
-                  _invoke(services, context, 'shell.account.switchApp'),
+            WonkyMenuSubmenu(
+              key: const ValueKey<String>('account.open'),
+              label: l.menuOpenApp,
+              icon: LucideIcons.layoutGrid,
+              children: [
+                for (final k in WonkyAppKind.values)
+                  WonkyMenuItem(
+                    key: ValueKey<String>('account.open.${k.name}'),
+                    label: k.productName,
+                    leading: WonkyProductIcon(
+                      productOf(k),
+                      size: 16,
+                      semanticLabel: '',
+                    ),
+                    onSelected: () => _invoke(
+                      services,
+                      context,
+                      'shell.account.switchApp',
+                      {'app': k.name},
+                    ),
+                  ),
+              ],
             ),
             const WonkyMenuSeparator(),
             WonkyMenuItem(

@@ -13,6 +13,7 @@ import '../../platform/users/user_service.dart';
 import '../../platform/versions/version_service.dart';
 import '../ot/document_service.dart';
 import '../ot/document_store.dart';
+import '../../platform/storage/storage_service.dart';
 
 /// Write version history (Write 08 §4.3).
 abstract final class WriteHistoryService {
@@ -201,6 +202,7 @@ abstract final class WriteHistoryService {
       parentUuid: parentUuid,
       content: content,
       source: doc,
+      quotaReason: QuotaReason.restoreVersionCopy,
     );
   }
 

@@ -1,0 +1,579 @@
+import 'dart:async';
+
+import 'package:flutter/widgets.dart';
+import 'package:shad/shad.dart';
+import 'package:wonky_client/wonky_client.dart';
+import 'package:wonky_core/wonky_core.dart' show InvocationSource;
+import 'package:wonky_ui/wonky_ui.dart';
+
+import '../bootstrap/app_urls.dart';
+import '../branding/product_icon.dart';
+import '../config/home_scope.dart';
+import '../data/models_ext.dart';
+import '../l10n/wonky_app_localizations.dart';
+import '../menus/menu_resolver.dart';
+import '../shell/account_menu.dart' show productOf;
+import '../shell/shell_services.dart';
+import '../storage/storage_meter.dart';
+import 'drive_location.dart';
+import 'item_actions.dart';
+
+/// The left menu of every home (suite 03 §3.3, Drive 04 §2): the app
+/// section (four apps, the current one highlighted), *+ New*, the app's
+/// navigation (`WonkyAppConfig.homeNav`, Drive: with the folder tree) and
+/// the bottom section (app settings, Wonky Work settings, *Report a bug*,
+/// storage meter). Below `md` it is shown in a drawer ([onNavigate] closes
+/// it after a navigation).
+class HomeSidebar extends StatefulWidget {
+  const HomeSidebar({
+    super.key,
+    required this.services,
+    required this.location,
+    this.onNavigate,
+    this.activeDestination,
+  });
+
+  /// Width of the left menu.
+  static const double width = 256;
+
+  final ShellServices services;
+  final DriveLocation location;
+
+  /// Called before a navigation from the menu (closes the drawer).
+  final VoidCallback? onNavigate;
+
+  /// The highlighted destination of a page that is not a drive location
+  /// (Drive's Storage page); null: derived from [location].
+  final HomeNavDestination? activeDestination;
+
+  @override
+  State<HomeSidebar> createState() => _HomeSidebarState();
+}
+
+class _HomeSidebarState extends State<HomeSidebar> {
+  late final WonkyTreeController<DriveItemView> _tree =
+      WonkyTreeController<DriveItemView>(loader: _load);
+  bool _treeOpen = false;
+  StreamSubscription<DriveChange>? _sub;
+
+  ShellServices get s => widget.services;
+
+  @override
+  void initState() {
+    super.initState();
+    _sub = s.driveChanges.listen((c) {
+      if (c.item?.isFolder ?? true) _tree.refresh(c.item?.parentUuid?.uuid);
+    });
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    _tree.dispose();
+    super.dispose();
+  }
+
+  Future<List<WonkyTreeNode<DriveItemView>>> _load(
+    WonkyTreeNode<DriveItemView>? parent,
+  ) async {
+    final page = await s.drive.list(
+      folderUuid: parent?.value.uuid,
+      filter: DriveListFilter(
+        view: DriveView.folder,
+        kinds: [DriveItemKind.folder],
+        foldersContaining: s.config.homeScope?.foldersContaining,
+      ),
+      sort: DriveSort(field: DriveSortField.name, descending: false),
+      limit: 200,
+    );
+    return [
+      for (final f in page.items)
+        if (f.isFolder && !f.isTrashed)
+          WonkyTreeNode(
+            id: f.uuid.uuid,
+            label: f.name,
+            value: f,
+            icon: LucideIcons.folder,
+          ),
+    ];
+  }
+
+  void _go(String path) {
+    widget.onNavigate?.call();
+    s.router.go(path);
+  }
+
+  void _invoke(String id, [Map<String, Object?> args = const {}]) {
+    widget.onNavigate?.call();
+    unawaited(
+      s.dispatcher.invoke(
+        id,
+        args: args,
+        source: InvocationSource.menu,
+        context: context,
+      ),
+    );
+  }
+
+  bool _isActive(HomeNavItem item) {
+    final active = widget.activeDestination;
+    if (active != null) return item.destination == active;
+    final k = widget.location.kind;
+    return switch (item.destination) {
+      HomeNavDestination.home => k == DriveLocationKind.home,
+      HomeNavDestination.recent =>
+        item.route == '/'
+            ? k == DriveLocationKind.home
+            : k == DriveLocationKind.recent,
+      HomeNavDestination.myFiles => k == DriveLocationKind.myDrive,
+      HomeNavDestination.shared => k == DriveLocationKind.shared,
+      HomeNavDestination.starred => k == DriveLocationKind.starred,
+      HomeNavDestination.offline => k == DriveLocationKind.offline,
+      HomeNavDestination.trash => k == DriveLocationKind.trash,
+      HomeNavDestination.storage => false,
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = WonkyAppLocalizations.of(context);
+    final scope = s.config.homeScope;
+    final nav = s.config.homeNav;
+    // Item drags onto folders: Drive and the v1 homes (app homes manage no
+    // folders, suite 03 §3.3).
+    final dragMoves = scope == null || scope.managesFolders;
+
+    Widget navRow(HomeNavItem item) {
+      final (icon, label) = homeNavLabel(l, item.destination, scope: scope);
+      final key = 'drive.nav.${item.destination.name}';
+      final row = DragTarget<DriveDragData>(
+        onWillAcceptWithDetails: (_) =>
+            dragMoves && item.destination == HomeNavDestination.myFiles,
+        onAcceptWithDetails: (d) => dropIntoFolder(s, d.data, null),
+        builder: (context, cand, _) => SidebarNavButton(
+          key: ValueKey<String>(key),
+          icon: icon,
+          label: label,
+          active: _isActive(item) || cand.isNotEmpty,
+          onPressed: () => _go(item.route),
+        ),
+      );
+      if (!(nav.folderTree && item.destination == HomeNavDestination.myFiles)) {
+        return row;
+      }
+      return Row(
+        children: [
+          Expanded(child: row),
+          ShadIconButton.ghost(
+            key: const ValueKey<String>('drive.nav.tree'),
+            width: 28,
+            height: 28,
+            iconSize: 14,
+            semanticLabel: _treeOpen ? l.collapseFolders : l.expandFolders,
+            icon: Icon(
+              _treeOpen ? LucideIcons.chevronDown : LucideIcons.chevronRight,
+            ),
+            onPressed: () => setState(() => _treeOpen = !_treeOpen),
+          ),
+        ],
+      );
+    }
+
+    final top = <Widget>[
+      AppLinksSection(services: s, onNavigate: widget.onNavigate),
+      const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: ShadSeparator.horizontal(margin: EdgeInsets.zero),
+      ),
+      HomeNewButton(services: s, onNavigate: widget.onNavigate),
+      for (final item in nav.items) ...[
+        navRow(item),
+        if (_treeOpen &&
+            nav.folderTree &&
+            item.destination == HomeNavDestination.myFiles)
+          SizedBox(
+            height: 240,
+            child: WonkyTreeView<DriveItemView>(
+              keyPrefix: 'drive.tree',
+              controller: _tree,
+              semanticLabel: l.folderTree,
+              onActivate: (n) => _go('/f/${n.id}'),
+              dragData: (n) =>
+                  dragMoves && n.value.canManage ? DriveDragData([n.id]) : null,
+              canAcceptDrop: (data, target, pos) =>
+                  dragMoves &&
+                  data is DriveDragData &&
+                  pos == WonkyTreeDropPosition.inside &&
+                  target.value.canEdit &&
+                  !data.uuids.contains(target.id),
+              onDrop: (data, target, pos) {
+                if (data is DriveDragData) dropIntoFolder(s, data, target.id);
+              },
+            ),
+          ),
+      ],
+    ];
+
+    return SizedBox(
+      key: const ValueKey<String>('home.sidebar'),
+      width: HomeSidebar.width,
+      child: CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+            sliver: SliverList.list(children: top),
+          ),
+          // The bottom section sits at the bottom and scrolls with the menu
+          // when the window is short (Drive 04 §2).
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [HomeSidebarFooter(services: s, onInvoke: _invoke)],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Icon and label of a left-menu destination; *My files* is *My Drive* in
+/// Drive and the v1 homes.
+(IconData, String) homeNavLabel(
+  WonkyAppLocalizations l,
+  HomeNavDestination d, {
+  HomeScope? scope,
+}) => switch (d) {
+  HomeNavDestination.home => (LucideIcons.house, l.navHome),
+  HomeNavDestination.recent => (LucideIcons.clock, l.navRecent),
+  HomeNavDestination.myFiles => (
+    LucideIcons.hardDrive,
+    scope == null || scope.isAll ? l.navMyDrive : l.navMyFiles,
+  ),
+  HomeNavDestination.shared => (LucideIcons.users, l.navShared),
+  HomeNavDestination.starred => (LucideIcons.star, l.navStarred),
+  HomeNavDestination.offline => (LucideIcons.cloudDownload, l.navOffline),
+  HomeNavDestination.trash => (LucideIcons.trash2, l.navTrash),
+  HomeNavDestination.storage => (LucideIcons.chartPie, l.navStorage),
+};
+
+/// The app section of the left menu (Drive 04 §2): Wonky Drive, Write,
+/// Sheets and Slides with their product icons; the current app is
+/// highlighted and not clickable, the others switch apps in the same tab
+/// (`shell.account.switchApp {app}`).
+class AppLinksSection extends StatelessWidget {
+  const AppLinksSection({super.key, required this.services, this.onNavigate});
+
+  final ShellServices services;
+  final VoidCallback? onNavigate;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = WonkyAppLocalizations.of(context);
+    return Semantics(
+      container: true,
+      explicitChildNodes: true,
+      label: l.navApps,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final app in WonkyAppKind.values)
+            SidebarNavButton(
+              key: ValueKey<String>('home.app.${app.name}'),
+              leading: WonkyProductIcon(
+                productOf(app),
+                size: 18,
+                semanticLabel: '',
+              ),
+              label: app.productName,
+              height: 32,
+              active: app == services.config.app,
+              onPressed: app == services.config.app
+                  ? null
+                  : () {
+                      onNavigate?.call();
+                      unawaited(
+                        services.dispatcher.invoke(
+                          'shell.account.switchApp',
+                          args: {'app': app.name},
+                          source: InvocationSource.menu,
+                          context: context,
+                        ),
+                      );
+                    },
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// *+ New* of the left menu with the home's New menu (suite 03 §3.3,
+/// Drive 04 §3.1): Drive — folder, file upload, document, spreadsheet,
+/// presentation, template; app homes — their kind and *From template…*;
+/// v1 homes — as in v1.
+class HomeNewButton extends StatelessWidget {
+  const HomeNewButton({super.key, required this.services, this.onNavigate});
+
+  final ShellServices services;
+  final VoidCallback? onNavigate;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = WonkyAppLocalizations.of(context);
+    final theme = ShadTheme.of(context);
+    return WonkyDropdownMenu(
+      entries: () => homeNewMenuEntries(context, services),
+      builder: (context, c) => Padding(
+        padding: const EdgeInsets.only(top: 4, bottom: 12),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: ShadButton.outline(
+            key: const ValueKey<String>('drive.new'),
+            height: 48,
+            padding: const EdgeInsets.fromLTRB(12, 0, 20, 0),
+            leading: const Icon(LucideIcons.plus, size: 20),
+            onPressed: c.toggle,
+            decoration: const ShadDecoration(
+              shadows: [
+                BoxShadow(
+                  color: Color(0x22000000),
+                  blurRadius: 4,
+                  offset: Offset(0, 1),
+                ),
+              ],
+            ),
+            child: Text(
+              l.newButton,
+              style: theme.textTheme.small.copyWith(fontSize: 15),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The entries of the home's New menu (left menu *+ New*).
+List<WonkyMenuEntry> homeNewMenuEntries(BuildContext context, ShellServices s) {
+  final l = WonkyAppLocalizations.of(context);
+  final r = MenuResolver(s);
+  final scope = s.config.homeScope;
+  String kindLabel(DriveItemKind k) => switch (k) {
+    DriveItemKind.spreadsheet => l.menuNewSpreadsheet,
+    DriveItemKind.presentation => l.menuNewPresentation,
+    _ => l.menuNewDocument,
+  };
+  WonkyMenuEntry? newKind(DriveItemKind k, {String? label}) => r.commandEntry(
+    context,
+    'shell.file.new',
+    args: {'kind': k.name},
+    label: label ?? kindLabel(k),
+    key: 'new.${k.name}',
+  );
+  if (scope == null) {
+    // v1: the primary kind first, then the other, folder, upload, template.
+    final primaryDoc = s.config.primaryKind != DriveItemKind.spreadsheet;
+    return [
+      ?r.commandEntry(
+        context,
+        'shell.file.new',
+        args: {'kind': primaryDoc ? 'document' : 'spreadsheet'},
+        label: primaryDoc ? l.menuNewDocument : l.menuNewSpreadsheet,
+        key: 'new.primary',
+      ),
+      ?r.commandEntry(
+        context,
+        'shell.file.new',
+        args: {'kind': primaryDoc ? 'spreadsheet' : 'document'},
+        label: primaryDoc ? l.menuNewSpreadsheet : l.menuNewDocument,
+        key: 'new.other',
+      ),
+      ?r.commandEntry(context, 'shell.drive.newFolder'),
+      const WonkyMenuSeparator(),
+      ?r.commandEntry(context, 'shell.drive.upload'),
+      ?r.commandEntry(context, 'shell.file.newFromTemplate'),
+    ];
+  }
+  if (scope.isAll) {
+    return [
+      ?r.commandEntry(context, 'shell.drive.newFolder'),
+      const WonkyMenuSeparator(),
+      ?r.commandEntry(context, 'shell.drive.upload', label: l.menuFileUpload),
+      const WonkyMenuSeparator(),
+      for (final k in scope.newKinds) ?newKind(k),
+      ?r.commandEntry(context, 'shell.file.newFromTemplate'),
+    ];
+  }
+  // App homes: the kind, *From template…* and *Import file…* (the app's
+  // convertible types, suite 05 §3.0; D-16).
+  final import = s.config.importHandler == null
+      ? null
+      : r.commandEntry(
+          context,
+          'shell.drive.upload',
+          label: l.menuImportFile,
+          key: 'new.import',
+        );
+  return [
+    for (final k in scope.newKinds) ?newKind(k),
+    ?r.commandEntry(context, 'shell.file.newFromTemplate'),
+    if (import != null) ...[const WonkyMenuSeparator(), import],
+  ];
+}
+
+/// The bottom section of the left menu (Drive 04 §2): the app settings,
+/// *Wonky Work settings*, *Report a bug* and the storage meter.
+class HomeSidebarFooter extends StatelessWidget {
+  const HomeSidebarFooter({
+    super.key,
+    required this.services,
+    required this.onInvoke,
+  });
+
+  final ShellServices services;
+  final void Function(String id, [Map<String, Object?> args]) onInvoke;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = WonkyAppLocalizations.of(context);
+    final s = services;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(bottom: 8),
+          child: ShadSeparator.horizontal(margin: EdgeInsets.zero),
+        ),
+        SidebarNavButton(
+          key: const ValueKey<String>('home.footer.appSettings'),
+          icon: LucideIcons.settings,
+          label: l.cmdAppSettings(s.config.shortAppName),
+          onPressed: () => onInvoke('shell.settings.openApp'),
+        ),
+        SidebarNavButton(
+          key: const ValueKey<String>('home.footer.workSettings'),
+          leading: const WonkyProductIcon(
+            WonkyProduct.work,
+            size: 18,
+            semanticLabel: '',
+          ),
+          label: l.cmdWorkSettings,
+          onPressed: () =>
+              onInvoke('shell.settings.open', const {'section': 'account'}),
+        ),
+        SidebarNavButton(
+          key: const ValueKey<String>('home.footer.reportBug'),
+          icon: LucideIcons.bug,
+          label: l.cmdReportBug,
+          onPressed: () => onInvoke('shell.help.reportBug'),
+        ),
+        const SizedBox(height: 8),
+        StorageMeterSlot(
+          services: s,
+          onOpen: () => onInvoke('shell.storage.open'),
+        ),
+      ],
+    );
+  }
+}
+
+/// The storage meter slot of the left menu (Drive 03 §6.1): D-11's
+/// [StorageMeter] on `ShellServices.storage`, opening the Storage page.
+class StorageMeterSlot extends StatelessWidget {
+  const StorageMeterSlot({super.key, required this.services, this.onOpen});
+
+  final ShellServices services;
+  final VoidCallback? onOpen;
+
+  @override
+  Widget build(BuildContext context) => KeyedSubtree(
+    key: const ValueKey<String>('home.storage'),
+    child: StorageMeter(services: services, onOpen: onOpen),
+  );
+}
+
+/// A left-menu row (pill highlight when active): an [icon] or a [leading]
+/// widget (product icons) and a label. A null [onPressed] with [active]
+/// is the current, non-clickable entry (the current app).
+class SidebarNavButton extends StatelessWidget {
+  const SidebarNavButton({
+    super.key,
+    this.icon,
+    this.leading,
+    required this.label,
+    required this.onPressed,
+    this.active = false,
+    this.height = 36,
+  });
+
+  final IconData? icon;
+  final Widget? leading;
+  final String label;
+  final VoidCallback? onPressed;
+  final bool active;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    final lead = leading ?? (icon == null ? null : Icon(icon, size: 18));
+    final text = Text(
+      label,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: theme.textTheme.small.copyWith(
+        fontWeight: active ? FontWeight.w600 : FontWeight.normal,
+        color: theme.colorScheme.foreground,
+      ),
+    );
+    if (onPressed == null) {
+      // The current app: highlighted, not a button.
+      return Semantics(
+        selected: active,
+        label: label,
+        excludeSemantics: true,
+        child: Container(
+          height: height,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: active ? theme.colorScheme.sidebarAccent : null,
+            borderRadius: BorderRadius.circular(height / 2),
+          ),
+          child: Row(
+            children: [
+              ?lead,
+              if (lead != null) const SizedBox(width: 8),
+              Flexible(child: text),
+            ],
+          ),
+        ),
+      );
+    }
+    return Semantics(
+      selected: active,
+      child: ShadButton.ghost(
+        height: height,
+        width: double.infinity,
+        mainAxisAlignment: MainAxisAlignment.start,
+        backgroundColor: active ? theme.colorScheme.sidebarAccent : null,
+        hoverBackgroundColor: active
+            ? theme.colorScheme.sidebarAccent
+            : theme.colorScheme.accent,
+        decoration: ShadDecoration(
+          border: ShadBorder(
+            radius: BorderRadius.all(Radius.circular(height / 2)),
+          ),
+        ),
+        leading: lead,
+        onPressed: onPressed,
+        child: Flexible(child: text),
+      ),
+    );
+  }
+}

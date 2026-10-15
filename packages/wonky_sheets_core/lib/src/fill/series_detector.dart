@@ -1,8 +1,6 @@
+import 'package:wonky_numfmt/wonky_numfmt.dart';
+
 import '../content/cell_content.dart';
-import '../format/number_format/decimal_digits.dart';
-import '../format/number_format/format_info.dart';
-import '../format/number_format/locale_data.dart';
-import '../format/number_format/serial_calendar.dart';
 import '../mutations/operations.dart' show FillMode;
 
 /// Direction of a fill along its axis.

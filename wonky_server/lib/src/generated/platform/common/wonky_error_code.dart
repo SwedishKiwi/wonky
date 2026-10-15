@@ -45,7 +45,11 @@ enum WonkyErrorCode implements _is.SerializableModel {
   unavailable,
 
   /// A concurrent operation holds the lock; retry later.
-  busy;
+  busy,
+
+  /// (v2) Not enough storage for a byte-adding operation (Drive 03 §7.1);
+  /// `detailsJson` is a [QuotaExceededDetails].
+  quotaExceeded;
 
   static WonkyErrorCode fromJson(String name) {
     switch (name) {
@@ -71,6 +75,8 @@ enum WonkyErrorCode implements _is.SerializableModel {
         return WonkyErrorCode.unavailable;
       case 'busy':
         return WonkyErrorCode.busy;
+      case 'quotaExceeded':
+        return WonkyErrorCode.quotaExceeded;
       default:
         throw ArgumentError(
           'Value "$name" cannot be converted to "WonkyErrorCode"',

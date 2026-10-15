@@ -45,7 +45,7 @@ final class PlannerHarness {
   /// Undoes the last applied plan.
   void undo() {
     final p = history.removeLast();
-    model.applyChanges(UndoInverter.invert(p, model));
+    model.applyChanges(SheetsUndo.invert(p, model));
   }
 
   ResolvedRange range(String a1) => model.parseA1(a1, contextSheetId: sheetId);

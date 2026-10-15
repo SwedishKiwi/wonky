@@ -68,6 +68,17 @@ drive:
   - listTemplates:
   - setTemplate:
   - import:
+  - registerPresentation:
+  - createPresentation:
+  - createFileUpload:
+  - completeFileUpload:
+  - cancelFileUpload:
+  - fileUploadStatus:
+  - convertFile:
+  - fileContentUrl:
+  - updateFileMeta:
+  - checkRoom:
+  - listByStorage:
   - storageUsage:
   - setThumbnail:
   - activity:
@@ -81,6 +92,7 @@ file:
   - createUpload:
   - completeUpload:
   - getUrl:
+  - copyToItem:
   - getUrls:
 uiBridge:
   - connect:
@@ -181,6 +193,16 @@ sheetsVersion:
   - changes:
   - diff:
   - copyExtras:
+slides:
+  - reserveSpaces:
+  - subscribe:
+  - unsubscribe:
+  - ensureSubscribed:
+  - spaceStats:
+  - revertChange:
+  - reapplyChange:
+slidesSync:
+  - sync:
 document:
   - connect:
   - getInfo:

@@ -9,6 +9,7 @@ import '../../shell/shell_services.dart';
 import '../../undo/drive_undo.dart';
 import '../command.dart';
 import 'shell_command_base.dart';
+import '../../storage/quota_dialog.dart' show QuotaReasons;
 
 /// `shell.drive.*` (suite 05 §3.3, 08 §5). Move, rename, star, trash,
 /// restore and folder creation are undoable on the shell stack; permanent
@@ -216,6 +217,16 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
           req = await showCopyDialog(c, s, item);
         }
         if (req == null) return const CommandResult.cancelled();
+        // Drive 03 §7.2: the copy is charged to the copier (pre-check with
+        // the known usage; the server refuses with `quotaExceeded` anyway).
+        if (!ctx.source.isAgent &&
+            !await s.storageChecks.ensureRoom(
+              item.countedBytes,
+              reason: QuotaReasons.copy,
+              askServer: false,
+            )) {
+          return const CommandResult.cancelled();
+        }
         final v = await drive.copy(
           item.uuid,
           newName: req.name,
@@ -475,9 +486,18 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
       'shell.drive.upload',
       title: (l) => l.cmdUpload,
       icon: LucideIcons.upload,
+      bindings: const [KeyBinding('U', shift: true)],
+      scope: KeyScope.drive,
       category: (l) => l.categoryDrive,
+      args: const JsonSchema.object(
+        properties: {'parentUuid': JsonSchema.string(format: 'uuid')},
+      ),
+      // Drive queues uploads offline (Drive 02 §4.2); imports need the
+      // server.
       enabled: (ctx, a) =>
-          s.config.importHandler != null && s.connectivity.online,
+          s.config.importHandler != null &&
+          (s.connectivity.online ||
+              (s.config.homeScope?.uploadsFiles ?? false)),
       run: (ctx, a) async {
         final handler = s.config.importHandler;
         final c = ctx.dialogContext;
@@ -486,11 +506,14 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
         }
         final files = await handler.pickFiles(c);
         if (files.isEmpty || !c.mounted) return const CommandResult.cancelled();
+        final parent = a.string('parentUuid');
         final items = await handler.importFiles(
           c,
           s,
           files,
-          parentUuid: s.currentFolder.value?.uuid,
+          parentUuid: parent != null
+              ? UuidValue.fromString(parent)
+              : s.currentFolder.value?.uuid,
         );
         for (final v in items) {
           s.emitDriveChange(
@@ -540,8 +563,7 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
 /// The shareable URL of [item] (its app's base URL + path).
 String itemUrl(ShellServices s, DriveItemView item) => switch (item.kind) {
   DriveItemKind.folder => s.urls.urlFor(s.config.app, item.path),
-  DriveItemKind.document ||
-  DriveItemKind.spreadsheet => s.urls.urlFor(appForKind(item.kind), item.path),
+  _ => s.urls.urlFor(appForKind(item.kind), item.path),
 };
 
 extension<T> on T {

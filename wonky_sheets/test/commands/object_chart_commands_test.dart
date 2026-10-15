@@ -98,7 +98,7 @@ void main() {
         'charted', () async {
       await s.select('B3');
       final id = await insertChart();
-      final rr = s.sheet.resolve(specOf(id).data.ranges.single)!;
+      final rr = s.sheet.resolve(specOf(id).data.gridRanges.single)!;
       expect(rr.rect.a1, 'A1:C5');
     });
 
@@ -284,7 +284,7 @@ void main() {
       final pasted = objects().selectedId!;
       expect(objects().anchorCell(fresh(pasted)), (19, 7));
       expect(
-        s.sheet.resolve(specOf(pasted).data.ranges.single)!.rect.a1,
+        s.sheet.resolve(specOf(pasted).data.gridRanges.single)!.rect.a1,
         'A1:C5',
       );
     });

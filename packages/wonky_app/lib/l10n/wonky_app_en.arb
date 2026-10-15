@@ -112,6 +112,14 @@
       }
     }
   },
+  "activityUploaded": "{who} uploaded this",
+  "@activityUploaded": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
   "addShortcutAction": "Add shortcut",
   "addShortcutTitle": "Add shortcut to My Drive",
   "agentUndoLabel": "AI: {label}",
@@ -181,9 +189,9 @@
   "authSetPassword": "Set password and sign in",
   "authShowPassword": "Show password",
   "authSignIn": "Sign in",
-  "authSignInSubtitle": "One account for Wonky Write and Wonky Sheets.",
+  "authSignInSubtitle": "One account for every Wonky Work app.",
   "authSignInTitle": "Sign in",
-  "authSignUpSubtitle": "Create one account for Wonky Write and Wonky Sheets.",
+  "authSignUpSubtitle": "Create one account for every Wonky Work app.",
   "authSignUpTitle": "Create your account",
   "authTerms": "I agree to the terms of service and privacy policy",
   "authTermsLink": "Terms of service",
@@ -223,6 +231,16 @@
   "categoryView": "View",
   "cmdAbout": "About",
   "cmdAddShortcut": "Add shortcut to Drive",
+  "cmdAppSettings": "{app} settings",
+  "@cmdAppSettings": {
+    "description": "Opens the current app's settings, e.g. 'Write settings'.",
+    "placeholders": {
+      "app": {
+        "type": "String",
+        "example": "Write"
+      }
+    }
+  },
   "cmdAssistant": "Assistant",
   "cmdAssistantNewThread": "New assistant chat",
   "cmdAssistantSend": "Send to assistant",
@@ -248,6 +266,10 @@
   "cmdKeyboardShortcuts": "Keyboard shortcuts",
   "cmdMakeAvailableOffline": "Make available offline",
   "cmdMakeCopy": "Make a copy",
+  "cmdManageStorage": "Manage storage",
+  "@cmdManageStorage": {
+    "description": "Opens Wonky Drive's Storage page."
+  },
   "cmdMove": "Move",
   "cmdMoveToTrash": "Move to trash",
   "cmdNameCurrentVersion": "Name current version",
@@ -261,6 +283,10 @@
   "cmdOpen": "Open",
   "cmdOpenComment": "Open comment",
   "cmdOpenFile": "Open…",
+  "cmdOpenInDrive": "Open in Wonky Drive",
+  "@cmdOpenInDrive": {
+    "description": "Opens the current folder or view in Wonky Drive (app homes)."
+  },
   "cmdOpenPanel": "Open panel",
   "cmdOpenSheets": "Open Wonky Sheets",
   "cmdOpenWrite": "Open Wonky Write",
@@ -282,6 +308,10 @@
   "cmdRename": "Rename",
   "cmdReopen": "Reopen",
   "cmdReply": "Reply",
+  "cmdReportBug": "Report a bug",
+  "@cmdReportBug": {
+    "description": "Opens a prefilled GitHub issue form (after a confirm)."
+  },
   "cmdReportProblem": "Report a problem",
   "cmdRequestAccess": "Request access",
   "cmdResolve": "Resolve",
@@ -312,6 +342,10 @@
   "cmdUpload": "Upload file…",
   "cmdVersionsPanel": "Version history panel",
   "cmdWhatsNew": "What's new",
+  "cmdWorkSettings": "Wonky Work settings",
+  "@cmdWorkSettings": {
+    "description": "Opens the suite settings (account, appearance, …)."
+  },
   "cmdZoom": "Zoom",
   "collapseFolders": "Collapse folders",
   "columnModified": "Last modified",
@@ -446,6 +480,24 @@
   "emptyFolderTitle": "This folder is empty",
   "emptyHomeBody": "Create a document or open one shared with you.",
   "emptyHomeTitle": "Welcome to your drive",
+  "emptyAppHomeTitle": "Welcome to {appName}",
+  "@emptyAppHomeTitle": {
+    "description": "Empty state of a scoped home (v2): the app's product name, e.g. Wonky Write.",
+    "placeholders": {
+      "appName": {
+        "type": "String"
+      }
+    }
+  },
+  "emptyAppHomeBody": "{kind, select, spreadsheet{Create a spreadsheet or open one shared with you.} presentation{Create a presentation or open one shared with you.} all{Create a document, spreadsheet or presentation, or upload files.} other{Create a document or open one shared with you.}}",
+  "@emptyAppHomeBody": {
+    "description": "Empty state of a scoped home (v2) by the kind it lists; all = Wonky Drive.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
   "emptyOfflineBody": "Use “Make available offline” on files you need without a connection.",
   "emptyOfflineTitle": "No offline files",
   "emptySearchBody": "Try other words or fewer filters.",
@@ -467,6 +519,14 @@
   "errorNameTooLong": "Use at most 255 characters.",
   "errorRequired": "Required",
   "expandFolders": "Expand folders",
+  "externalLinkOpen": "Open",
+  "@externalLinkOpen": {
+    "description": "Confirm button: open the external link in the browser."
+  },
+  "externalLinkTitle": "Open external link?",
+  "@externalLinkTitle": {
+    "description": "Title of the confirm before opening a link outside Wonky Work."
+  },
   "feedbackDescription": "Tell us what happened or what you'd like to see.",
   "feedbackFailed": "Your report could not be sent",
   "feedbackKind": "Type",
@@ -475,6 +535,34 @@
   "feedbackMessage": "Message",
   "feedbackThanks": "Thanks for the feedback!",
   "feedbackTitle": "Report a problem",
+  "fileCategoryArchives": "Archives",
+  "@fileCategoryArchives": {
+    "description": "Type filter (Drive): ZIP and other archives."
+  },
+  "fileCategoryAudio": "Audio",
+  "@fileCategoryAudio": {
+    "description": "Type filter (Drive): audio files."
+  },
+  "fileCategoryImages": "Images",
+  "@fileCategoryImages": {
+    "description": "Type filter (Drive): image files."
+  },
+  "fileCategoryOther": "Other files",
+  "@fileCategoryOther": {
+    "description": "Type filter (Drive): files of any other type."
+  },
+  "fileCategoryPdfs": "PDFs",
+  "@fileCategoryPdfs": {
+    "description": "Type filter (Drive): PDF files."
+  },
+  "fileCategoryText": "Text & code",
+  "@fileCategoryText": {
+    "description": "Type filter (Drive): text and source files."
+  },
+  "fileCategoryVideo": "Videos",
+  "@fileCategoryVideo": {
+    "description": "Type filter (Drive): video files."
+  },
   "folderTree": "Folders",
   "foldersOnTop": "Folders on top",
   "goHome": "Go to Home",
@@ -491,7 +579,9 @@
   "inviteInvalid": "This link is not valid",
   "inviteTitle": "Opening shared file",
   "kindDocument": "Document",
+  "kindFile": "File",
   "kindFolder": "Folder",
+  "kindPresentation": "Presentation",
   "kindSpreadsheet": "Spreadsheet",
   "layoutGrid": "Grid view",
   "layoutList": "List view",
@@ -505,12 +595,28 @@
   "menuEdit": "Edit",
   "menuExplore": "Explore",
   "menuFile": "File",
+  "menuFileUpload": "File upload",
+  "@menuFileUpload": {
+    "description": "New menu (Drive): upload files."
+  },
   "menuHelp": "Help",
+  "menuImportFile": "Import file…",
+  "@menuImportFile": {
+    "description": "New menu of app homes (v2): import a file of the app's convertible types as a new item."
+  },
   "menuMakeCopy": "Make a copy",
   "menuMode": "Mode",
   "menuNew": "New",
   "menuNewDocument": "Document",
+  "menuNewPresentation": "Presentation",
+  "@menuNewPresentation": {
+    "description": "New menu: a new Wonky Slides presentation."
+  },
   "menuNewSpreadsheet": "Spreadsheet",
+  "menuOpenApp": "Open",
+  "@menuOpenApp": {
+    "description": "Account menu submenu listing the four apps."
+  },
   "menuPanels": "Panels",
   "menuPreferences": "Preferences",
   "menuShare": "Share",
@@ -541,12 +647,24 @@
   },
   "nameVersionLabel": "Version name",
   "nameVersionTitle": "Name this version",
+  "navApps": "Apps",
+  "@navApps": {
+    "description": "Semantics label of the left menu's app section."
+  },
   "navHome": "Home",
   "navMyDrive": "My Drive",
+  "navMyFiles": "My files",
+  "@navMyFiles": {
+    "description": "Left menu of app homes: the root of the user's drive."
+  },
   "navOffline": "Offline",
   "navRecent": "Recent",
   "navShared": "Shared with me",
   "navStarred": "Starred",
+  "navStorage": "Storage",
+  "@navStorage": {
+    "description": "Left menu (Drive): the Storage page; storage meter label."
+  },
   "navTrash": "Trash",
   "newButton": "New",
   "newFolderLabel": "Folder name",
@@ -637,6 +755,7 @@
       }
     }
   },
+  "notifStorage": "Your Wonky Work storage needs attention",
   "notifSuggestion": "{who} suggested an edit in {item}",
   "@notifSuggestion": {
     "placeholders": {
@@ -749,6 +868,10 @@
   "renameLabel": "Name",
   "renameTitle": "Rename",
   "replyPlaceholder": "Reply or add others with @",
+  "reportBugNote": "Issues on GitHub are public: don't include private content.",
+  "@reportBugNote": {
+    "description": "Shown in the confirm before opening the GitHub issue form."
+  },
   "requestAccessDescription": "The owner will be notified and can share the file with you.",
   "requestAccessFailed": "The request could not be sent",
   "requestAccessMessage": "Message (optional)",
@@ -762,6 +885,27 @@
   "roleEditor": "Editor",
   "roleOwner": "Owner",
   "roleViewer": "Viewer",
+  "routeCreating": "Creating…",
+  "@routeCreating": {
+    "description": "Shown while the /new route creates an item."
+  },
+  "routeImportInvalid": "This link doesn't name a file to import.",
+  "@routeImportInvalid": {
+    "description": "Toast: /import without a valid file id."
+  },
+  "routeImporting": "Importing…",
+  "@routeImporting": {
+    "description": "Shown while the /import route imports a Drive file."
+  },
+  "searchAllDrive": "Search all of Wonky Drive for “{query}”",
+  "@searchAllDrive": {
+    "description": "Last row of an app home's search suggestions.",
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
   "searchFor": "Search for “{query}”",
   "@searchFor": {
     "placeholders": {
@@ -815,16 +959,58 @@
   "settingsLanguageHint": "Used for dates, numbers and new spreadsheets.",
   "settingsLayout": "Layout",
   "settingsNotifications": "Notifications",
-  "settingsOffline": "Offline & storage",
+  "settingsOffline": "Offline & device data",
   "settingsOfflineHint": "Files you open recently stay available on this device.",
   "settingsPasswordHint": "We'll email you a code to set a new password.",
   "settingsProfile": "Profile",
   "settingsReduceMotion": "Reduce motion",
   "settingsReduceMotionHint": "Turns off non-essential animations.",
+  "settingsAccountProfile": "Account & profile",
+  "@settingsAccountProfile": {
+    "description": "Wonky Work settings section: avatar, display name, email, delete account."
+  },
+  "settingsOpeningOtherApp": "Opening {settings}…",
+  "@settingsOpeningOtherApp": {
+    "description": "Shown while an old settings link hands over to another app, e.g. 'Opening Sheets settings…'.",
+    "placeholders": {
+      "settings": {
+        "type": "String",
+        "example": "Sheets settings"
+      }
+    }
+  },
+  "settingsOtherApps": "Settings of other apps",
+  "@settingsOtherApps": {
+    "description": "Settings nav entry that lists the other apps' settings (they open in that app)."
+  },
+  "settingsSectionPicker": "Settings section",
+  "@settingsSectionPicker": {
+    "description": "Screen reader label of the section select of the settings screen on narrow screens."
+  },
+  "settingsStorage": "Storage",
+  "@settingsStorage": {
+    "description": "Wonky Work settings section with the storage quota."
+  },
+  "settingsStorageDocuments": "Documents",
+  "settingsStorageFiles": "Files",
+  "settingsStorageLoading": "Loading storage…",
+  "settingsStorageManage": "Manage storage in Wonky Drive",
+  "settingsStoragePresentations": "Presentations",
+  "settingsStorageQuota": "Your storage",
+  "settingsStorageQuotaHint": "One quota for all Wonky Work apps.",
+  "settingsStorageSpreadsheets": "Spreadsheets",
+  "settingsStorageTrash": "Trash",
+  "settingsStorageUnavailable": "Storage usage isn't available right now.",
+  "settingsStorageWhatCounts": "What counts",
+  "settingsStorageWhatCountsBody": "Documents, spreadsheets, presentations, uploaded files and images in your files, including the trash. Version history, thumbnails and exports don't count. Files shared with you count against their owner's storage.",
+  "shortcutsGroupShared": "Shared",
+  "@shortcutsGroupShared": {
+    "description": "Keyboard shortcuts settings: heading of the commands shared by every Wonky Work app."
+  },
   "settingsSaved": "Saved",
   "settingsSecurity": "Sign-in & security",
   "settingsSheets": "Wonky Sheets",
-  "settingsSignOutHint": "Signs you out of Wonky Write and Wonky Sheets on this device.",
+  "settingsSignOutHint": "Signs you out of Wonky Work on this device.",
   "settingsTheme": "Theme",
   "settingsTimeZone": "Time zone",
   "settingsTimeZoneHint": "IANA name, e.g. Europe/Stockholm. Empty follows this device.",
@@ -966,6 +1152,18 @@
   "sortName": "Name",
   "sortOpenedByMe": "Last opened by me",
   "sortSize": "File size",
+  "storageMeterValue": "{usage}, {percent} percent",
+  "@storageMeterValue": {
+    "description": "Screen reader value of the storage meter.",
+    "placeholders": {
+      "usage": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
   "storageUsed": "{size} used",
   "@storageUsed": {
     "placeholders": {
@@ -973,6 +1171,225 @@
         "type": "String"
       }
     }
+  },
+  "storageUsedOf": "{used} of {quota} used",
+  "@storageUsedOf": {
+    "description": "Storage meter, e.g. '12.3 MB of 50 MB used'.",
+    "placeholders": {
+      "used": {
+        "type": "String",
+        "example": "12.3 MB"
+      },
+      "quota": {
+        "type": "String",
+        "example": "50 MB"
+      }
+    }
+  },
+  "storageUsedOfOver": "{used} of {quota} used — over quota",
+  "@storageUsedOfOver": {
+    "description": "Storage meter at or above the quota.",
+    "placeholders": {
+      "used": {
+        "type": "String",
+        "example": "50.4 MB"
+      },
+      "quota": {
+        "type": "String",
+        "example": "50 MB"
+      }
+    }
+  },
+  "storageCalculating": "Calculating storage…",
+  "@storageCalculating": {
+    "description": "Storage meter while the server computes the usage for the first time."
+  },
+  "storageMeterTooltip": "Storage is shared by Wonky Drive, Write, Sheets and Slides.",
+  "@storageMeterTooltip": {
+    "description": "Tooltip of the storage meter."
+  },
+  "storageMeterTooltipOffline": "Storage is shared by Wonky Drive, Write, Sheets and Slides. (offline)",
+  "@storageMeterTooltipOffline": {
+    "description": "Tooltip of the storage meter while it shows the last known value offline."
+  },
+  "storageBannerWarning": "You've used {used} of your {quota} storage.",
+  "@storageBannerWarning": {
+    "description": "Storage banner at 90 % of the quota.",
+    "placeholders": {
+      "used": {
+        "type": "String",
+        "example": "46.1 MB"
+      },
+      "quota": {
+        "type": "String",
+        "example": "50 MB"
+      }
+    }
+  },
+  "storageBannerOver": "You're out of storage. You can keep editing, but you can't upload files, add images, import, or make copies until you free up space.",
+  "@storageBannerOver": {
+    "description": "Storage banner when over the quota."
+  },
+  "storageBannerDismiss": "Dismiss",
+  "@storageBannerDismiss": {
+    "description": "Tooltip of the storage banner's close button."
+  },
+  "quotaOwnTitle": "You're out of storage",
+  "@quotaOwnTitle": {
+    "description": "Out of storage dialog: the user's own quota."
+  },
+  "quotaOwnBody": "This needs {needed}, but you have {available} left of your {quota}. Free up space in Wonky Drive by deleting files you no longer need and emptying the trash.",
+  "@quotaOwnBody": {
+    "placeholders": {
+      "needed": {
+        "type": "String",
+        "example": "12.4 MB"
+      },
+      "available": {
+        "type": "String",
+        "example": "3.1 MB"
+      },
+      "quota": {
+        "type": "String",
+        "example": "50 MB"
+      }
+    }
+  },
+  "quotaOwnBodyUnknown": "You have {available} left of your {quota}. Free up space in Wonky Drive by deleting files you no longer need and emptying the trash.",
+  "@quotaOwnBodyUnknown": {
+    "description": "Out of storage dialog when the needed size is unknown.",
+    "placeholders": {
+      "available": {
+        "type": "String",
+        "example": "3.1 MB"
+      },
+      "quota": {
+        "type": "String",
+        "example": "50 MB"
+      }
+    }
+  },
+  "quotaOwnerTitle": "{owner} is out of storage",
+  "@quotaOwnerTitle": {
+    "description": "Out of storage dialog: the owner of the item is full.",
+    "placeholders": {
+      "owner": {
+        "type": "String",
+        "example": "Anna Berg"
+      }
+    }
+  },
+  "quotaOwnerImageBody": "{kind, select, spreadsheet{Images added to this spreadsheet count against the owner's storage. Ask {owner} to free up space, or add the image to a spreadsheet you own.} presentation{Images added to this presentation count against the owner's storage. Ask {owner} to free up space, or add the image to a presentation you own.} other{Images added to this document count against the owner's storage. Ask {owner} to free up space, or add the image to a document you own.}}",
+  "@quotaOwnerImageBody": {
+    "description": "kind: document, spreadsheet or presentation.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      },
+      "owner": {
+        "type": "String",
+        "example": "Anna Berg"
+      }
+    }
+  },
+  "quotaOwnerBody": "Content added to this file counts against the owner's storage. Ask {owner} to free up space first.",
+  "@quotaOwnerBody": {
+    "description": "Out of storage dialog: the owner is full (imports, other content).",
+    "placeholders": {
+      "owner": {
+        "type": "String",
+        "example": "Anna Berg"
+      }
+    }
+  },
+  "quotaBatchTitle": "Not enough storage for all files",
+  "quotaBatchBody": "These {count} files need {needed}, but you have {available} left. Upload the files that fit, or free up space first.",
+  "@quotaBatchBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "needed": {
+        "type": "String",
+        "example": "62.0 MB"
+      },
+      "available": {
+        "type": "String",
+        "example": "18.5 MB"
+      }
+    }
+  },
+  "quotaBatchFit": "Upload the files that fit",
+  "quotaTransferTitle": "{name} doesn't have enough storage",
+  "@quotaTransferTitle": {
+    "description": "Ownership transfer refused: the new owner is full.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Bo Chen"
+      }
+    }
+  },
+  "quotaTransferBody": "{name} needs {needed} free to take ownership of “{item}”. Ask them to free up space first.",
+  "@quotaTransferBody": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Bo Chen"
+      },
+      "needed": {
+        "type": "String",
+        "example": "8.2 MB"
+      },
+      "item": {
+        "type": "String",
+        "example": "Q3 deck"
+      }
+    }
+  },
+  "quotaTransferAcceptTitle": "You don't have enough storage",
+  "@quotaTransferAcceptTitle": {
+    "description": "Accepting an ownership transfer refused."
+  },
+  "quotaTransferAcceptBody": "Taking ownership of “{item}” needs {needed}, but you have {available} left.",
+  "@quotaTransferAcceptBody": {
+    "placeholders": {
+      "item": {
+        "type": "String",
+        "example": "Q3 deck"
+      },
+      "needed": {
+        "type": "String",
+        "example": "8.2 MB"
+      },
+      "available": {
+        "type": "String",
+        "example": "2.0 MB"
+      }
+    }
+  },
+  "quotaTooLargeTitle": "This file is too large",
+  "quotaTooLargeBody": "Files can be at most {max}.",
+  "@quotaTooLargeBody": {
+    "placeholders": {
+      "max": {
+        "type": "String",
+        "example": "50 MB"
+      }
+    }
+  },
+  "quotaTooLargeNowBody": "Files can be at most {max} right now, because that's how much storage you have left.",
+  "@quotaTooLargeNowBody": {
+    "placeholders": {
+      "max": {
+        "type": "String",
+        "example": "18.5 MB"
+      }
+    }
+  },
+  "quotaItemFallback": "this item",
+  "@quotaItemFallback": {
+    "description": "Ownership transfer dialog when the item's name is unknown."
   },
   "strengthEmpty": "Enter a password",
   "strengthFair": "Fair",
@@ -1075,8 +1492,20 @@
   "tokensTitle": "Personal access tokens",
   "trashedBanner": "This file is in the trash.",
   "typeAll": "All types",
+  "typeAllFiles": "All files",
+  "@typeAllFiles": {
+    "description": "Type filter (Drive): every uploaded file."
+  },
   "typeDocuments": "Documents",
+  "typeFiles": "Files",
+  "@typeFiles": {
+    "description": "Type filter (Drive): uploaded files."
+  },
   "typeFolders": "Folders",
+  "typePresentations": "Presentations",
+  "@typePresentations": {
+    "description": "Type filter: presentations."
+  },
   "typeSpreadsheets": "Spreadsheets",
   "undoHistoryEmpty": "Nothing to undo",
   "undoHistoryTitle": "Undo history",
@@ -1225,12 +1654,14 @@
       }
     }
   },
-  "mcpScopeDriveRead": "Drive: read (list, search, export)",
-  "mcpScopeDriveWrite": "Drive: write (create, rename, move, trash, share)",
+  "mcpScopeDriveRead": "Drive: read (list, search, export, download files, storage)",
+  "mcpScopeDriveWrite": "Drive: write (create, rename, move, trash, share, upload and convert files)",
   "mcpScopeWriteRead": "Documents: read",
   "mcpScopeWriteEdit": "Documents: edit (content, comments, suggestions)",
   "mcpScopeSheetsRead": "Spreadsheets: read",
   "mcpScopeSheetsEdit": "Spreadsheets: edit",
+  "mcpScopeSlidesRead": "Presentations: read",
+  "mcpScopeSlidesEdit": "Presentations: edit",
   "mcpScopeScriptsRun": "Scripts: run",
   "mcpScopeUiControl": "Control app windows (ui.* tools)",
   "tokenCreateHint": "The token acts as you with the permissions you choose. You can revoke it at any time.",
@@ -1371,5 +1802,27 @@
   "exportFormatHtml": "HTML (.html)",
   "exportFormatPdf": "PDF (.pdf)",
   "exportFormatText": "Plain text (.txt)",
-  "badgePendingCreate": "Created offline. It is added to your Drive when you're back online."
+  "badgePendingCreate": "Created offline. It is added to your Drive when you're back online.",
+  "dropToUploadInto": "Drop files to upload to {folder}",
+  "@dropToUploadInto": {
+    "description": "Drop overlay of Wonky Drive while files are dragged over the list (Drive 04 §3.5).",
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "dropUploadToFolder": "Upload to {folder}",
+  "@dropUploadToFolder": {
+    "description": "Drop overlay while files dragged from the OS hover a folder row.",
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "driveItemUploading": "Uploading…",
+  "@driveItemUploading": {
+    "description": "Last-modified column of a file that is still uploading."
+  }
 }

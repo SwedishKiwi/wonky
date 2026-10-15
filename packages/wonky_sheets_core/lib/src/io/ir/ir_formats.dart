@@ -1,6 +1,7 @@
+import 'package:wonky_numfmt/wonky_numfmt.dart';
+
 import '../../format/attributes.dart';
 import '../../format/borders.dart';
-import '../../format/number_format/presets.dart';
 import '../../model/schema.dart';
 import 'workbook_document.dart';
 

@@ -4,14 +4,12 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_sheets_core/model.dart';
+import 'package:wonky_charts_flutter/wonky_charts_flutter.dart';
 
 import '../../../l10n/sheets_l10n.dart';
-import '../../charts3d/chart3d_gpu.dart';
-import '../../charts3d/orbit/chart_orbit.dart';
 import '../../formatting/sheets_user_defaults.dart';
 import '../../objects/objects_controller.dart';
 import '../controller/chart_controller.dart';
-import '../render/chart_painter.dart';
 
 /// When dragging a 3D chart orbits it (08 §23.6).
 enum ChartOrbitMode {

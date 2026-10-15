@@ -1,0 +1,8 @@
+### What starts an animation step (Slides 02 §3.11, 06 §4.1). Append-only;
+### `onElementClick` is reserved for P2 (A-06-2).
+enum: BuildTrigger
+serialized: byName
+values:
+  - onClick
+  - withPrevious
+  - afterPrevious

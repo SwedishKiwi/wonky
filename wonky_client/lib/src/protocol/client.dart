@@ -73,8 +73,16 @@ import 'package:wonky_client/src/protocol/platform/drive/drive_search_filters.da
     as _icvnufpf;
 import 'package:wonky_client/src/protocol/platform/drive/drive_sort.dart'
     as _ikhtp6t5;
+import 'package:wonky_client/src/protocol/platform/drive/file_upload_progress.dart'
+    as _izjlog7o;
+import 'package:wonky_client/src/protocol/platform/drive/file_upload_request.dart'
+    as _igc8ti2y;
+import 'package:wonky_client/src/protocol/platform/drive/file_upload_start.dart'
+    as _ismkx81d;
 import 'package:wonky_client/src/protocol/platform/drive/import_report_view.dart'
     as _irwfmef9;
+import 'package:wonky_client/src/protocol/platform/drive/storage_list_filter.dart'
+    as _i3az7xi1;
 import 'package:wonky_client/src/protocol/platform/drive/storage_usage.dart'
     as _i5ixb3en;
 import 'package:wonky_client/src/protocol/platform/drive/template_category.dart'
@@ -1113,6 +1121,160 @@ class EndpointDrive extends _isc.EndpointRef {
     },
   );
 
+  /// Registers a deck created locally in a reserved `deck` space
+  /// (idempotent; Slides 02 §9.3). The item uuid is the space uuid. Never
+  /// refused for quota (content arrives through sync).
+  _ida.Future<_iatsgjjq.DriveItemView> registerPresentation(
+    _isc.UuidValue spaceUuid,
+    _isc.UuidValue? parentUuid,
+    String name,
+  ) => caller.callServerEndpoint<_iatsgjjq.DriveItemView>(
+    'drive',
+    'registerPresentation',
+    {
+      'spaceUuid': spaceUuid,
+      'parentUuid': parentUuid,
+      'name': name,
+    },
+  );
+
+  /// Creates a presentation server-side (online; Slides 02 §9.3): a blank
+  /// deck with the default theme and a title slide, or with [templateUuid]
+  /// a copy of that presentation (SL-8; built-in presentation templates:
+  /// SL-22).
+  _ida.Future<_iatsgjjq.DriveItemView> createPresentation(
+    _isc.UuidValue? parentUuid,
+    String name,
+    _isc.UuidValue? templateUuid,
+  ) => caller.callServerEndpoint<_iatsgjjq.DriveItemView>(
+    'drive',
+    'createPresentation',
+    {
+      'parentUuid': parentUuid,
+      'name': name,
+      'templateUuid': templateUuid,
+    },
+  );
+
+  /// Starts the upload of a `file` item (Drive 02 §3.3): checks the role on
+  /// the parent (Editor+), name, size ≤ `maxFileUploadBytes` and reserves
+  /// quota; inserts the item (`uploading`) and its `driveFile` StoredFile.
+  /// Idempotent on (itemUuid, fileUuid). Errors: forbidden, notFound,
+  /// invalidArgument, tooLarge, quotaExceeded, limitExceeded, conflict.
+  _ida.Future<_ismkx81d.FileUploadStart> createFileUpload(
+    _igc8ti2y.FileUploadRequest request,
+  ) => caller.callServerEndpoint<_ismkx81d.FileUploadStart>(
+    'drive',
+    'createFileUpload',
+    {'request': request},
+  );
+
+  /// Verifies the stored bytes (size, sniffing), marks the item `ready` and
+  /// turns the reservation into usage (Drive 02 §3.3).
+  _ida.Future<_iatsgjjq.DriveItemView> completeFileUpload(
+    _isc.UuidValue itemUuid,
+  ) => caller.callServerEndpoint<_iatsgjjq.DriveItemView>(
+    'drive',
+    'completeFileUpload',
+    {'itemUuid': itemUuid},
+  );
+
+  /// Cancels an upload: deletes the item and partial bytes, releases the
+  /// reservation.
+  _ida.Future<void> cancelFileUpload(_isc.UuidValue itemUuid) =>
+      caller.callServerEndpoint<void>(
+        'drive',
+        'cancelFileUpload',
+        {'itemUuid': itemUuid},
+      );
+
+  /// Upload state for resuming (Drive 02 §4.3).
+  _ida.Future<_izjlog7o.FileUploadProgress> fileUploadStatus(
+    _isc.UuidValue itemUuid,
+  ) => caller.callServerEndpoint<_izjlog7o.FileUploadProgress>(
+    'drive',
+    'fileUploadStatus',
+    {'itemUuid': itemUuid},
+  );
+
+  /// *Open with* on the server (Drive 02 §7.2): imports a `file` item's
+  /// bytes as a [target] item (document or spreadsheet). Viewer+ on the
+  /// file, Editor+ on the target folder (else My Drive); quota checked
+  /// before and after (Drive 03 §7.2).
+  _ida.Future<_irwfmef9.ImportReportView> convertFile(
+    _isc.UuidValue fileItemUuid,
+    _i37vo1p2.DriveItemKind target,
+    _idv1evlb.DriveImportOptions options,
+  ) => caller.callServerEndpoint<_irwfmef9.ImportReportView>(
+    'drive',
+    'convertFile',
+    {
+      'fileItemUuid': fileItemUuid,
+      'target': target,
+      'options': options,
+    },
+  );
+
+  /// A signed URL (15 min) of a file item's bytes for previews, or with
+  /// [download] the `GET /files/d/…` download route (Drive 02 §6.1, §8).
+  _ida.Future<_i4i1hokq.FileUrlView> fileContentUrl(
+    _isc.UuidValue itemUuid, {
+    required bool download,
+  }) => caller.callServerEndpoint<_i4i1hokq.FileUrlView>(
+    'drive',
+    'fileContentUrl',
+    {
+      'itemUuid': itemUuid,
+      'download': download,
+    },
+  );
+
+  /// Client-measured metadata of a file item (e.g. PDF `{pages}`), Editor+
+  /// (Drive 02 §6.3).
+  _ida.Future<_iatsgjjq.DriveItemView> updateFileMeta(
+    _isc.UuidValue itemUuid,
+    String fileMetaJson,
+  ) => caller.callServerEndpoint<_iatsgjjq.DriveItemView>(
+    'drive',
+    'updateFileMeta',
+    {
+      'itemUuid': itemUuid,
+      'fileMetaJson': fileMetaJson,
+    },
+  );
+
+  /// Quota pre-check without reserving (Drive 03 §7.2): throws
+  /// `quotaExceeded` when [bytes] don't fit. With [itemUuid], the item's
+  /// owner is charged (images added to someone else's item); else the
+  /// caller.
+  _ida.Future<void> checkRoom(
+    int bytes,
+    _isc.UuidValue? itemUuid,
+  ) => caller.callServerEndpoint<void>(
+    'drive',
+    'checkRoom',
+    {
+      'bytes': bytes,
+      'itemUuid': itemUuid,
+    },
+  );
+
+  /// The caller's owned items (incl. trashed) by counted size, descending
+  /// (Storage page, Drive 03 §6.4). Pass `nextCursor` for the next page.
+  _ida.Future<_iawn6g1o.DriveListPage> listByStorage(
+    _i3az7xi1.StorageListFilter filter,
+    String? cursor,
+    int limit,
+  ) => caller.callServerEndpoint<_iawn6g1o.DriveListPage>(
+    'drive',
+    'listByStorage',
+    {
+      'filter': filter,
+      'cursor': cursor,
+      'limit': limit,
+    },
+  );
+
   _ida.Future<_i5ixb3en.StorageUsage> storageUsage() =>
       caller.callServerEndpoint<_i5ixb3en.StorageUsage>(
         'drive',
@@ -1244,6 +1406,24 @@ class EndpointFile extends _isc.EndpointRef {
         'getUrl',
         {'fileUuid': fileUuid},
       );
+
+  /// (v2, Slides 03 A-03-3) Copies an image the caller can read into
+  /// [targetItemUuid] as [newFileUuid] (idempotent on [newFileUuid];
+  /// quota of the target's owner). Errors: notFound, forbidden,
+  /// quotaExceeded, conflict.
+  _ida.Future<_i4i1hokq.FileUrlView> copyToItem(
+    _isc.UuidValue sourceFileUuid,
+    _isc.UuidValue newFileUuid,
+    _isc.UuidValue targetItemUuid,
+  ) => caller.callServerEndpoint<_i4i1hokq.FileUrlView>(
+    'file',
+    'copyToItem',
+    {
+      'sourceFileUuid': sourceFileUuid,
+      'newFileUuid': newFileUuid,
+      'targetItemUuid': targetItemUuid,
+    },
+  );
 
   _ida.Future<List<_i4i1hokq.FileUrlView>> getUrls(
     List<_isc.UuidValue> fileUuids,
@@ -2431,6 +2611,105 @@ class EndpointSheetsVersion extends _isc.EndpointRef {
   );
 }
 
+/// Online-only Slides operations on deck spaces (Slides 02 §9, suite 12
+/// §2.6): reservations for offline creation, subscriptions (membership
+/// mirrored from the ACL), the pending-change guard and download progress.
+/// {@category Endpoint}
+class EndpointSlides extends _isc.EndpointRef {
+  EndpointSlides(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'slides';
+
+  /// Reserves up to [count] (≤ 5) empty deck spaces for offline creation.
+  _ida.Future<List<_isc.UuidValue>> reserveSpaces(int count) =>
+      caller.callServerEndpoint<List<_isc.UuidValue>>(
+        'slides',
+        'reserveSpaces',
+        {'count': count},
+      );
+
+  /// Grants membership of the deck's space (role mirrored from the ACL) and
+  /// adds it to the caller's active set of decks.
+  _ida.Future<_ii9ou7kh.SubscribeResult> subscribe(_isc.UuidValue itemUuid) =>
+      caller.callServerEndpoint<_ii9ou7kh.SubscribeResult>(
+        'slides',
+        'subscribe',
+        {'itemUuid': itemUuid},
+      );
+
+  _ida.Future<void> unsubscribe(_isc.UuidValue itemUuid) =>
+      caller.callServerEndpoint<void>(
+        'slides',
+        'unsubscribe',
+        {'itemUuid': itemUuid},
+      );
+
+  /// Pending-change guard: re-grants deck spaces with unsynced local
+  /// changes.
+  _ida.Future<List<_isc.UuidValue>> ensureSubscribed(
+    List<_isc.UuidValue> spaces,
+  ) => caller.callServerEndpoint<List<_isc.UuidValue>>(
+    'slides',
+    'ensureSubscribed',
+    {'spaces': spaces},
+  );
+
+  /// Row counts of the deck's space for download progress.
+  _ida.Future<_imzum1ra.SpaceStats> spaceStats(_isc.UuidValue itemUuid) =>
+      caller.callServerEndpoint<_imzum1ra.SpaceStats>(
+        'slides',
+        'spaceStats',
+        {'itemUuid': itemUuid},
+      );
+
+  /// Undo of a server-side change (`slides.serverChange`: MCP, AI,
+  /// templates, restores): applies the recorded inverse with the
+  /// per-column skip rule (columns others changed since stay; coupled
+  /// columns stay together). Editor+.
+  _ida.Future<_i107v8u3.RevertResult> revertChange(_isc.UuidValue changeId) =>
+      caller.callServerEndpoint<_i107v8u3.RevertResult>(
+        'slides',
+        'revertChange',
+        {'changeId': changeId},
+      );
+
+  /// Redo of a reverted server-side change ([changeId] of the original or
+  /// of its revert).
+  _ida.Future<_i107v8u3.RevertResult> reapplyChange(_isc.UuidValue changeId) =>
+      caller.callServerEndpoint<_i107v8u3.RevertResult>(
+        'slides',
+        'reapplyChange',
+        {'changeId': changeId},
+      );
+}
+
+/// The Slides sync stream (Slides 02 §9.1, suite 12 §2.5–2.6): the engine's
+/// sync over deck spaces + the personal space (patch OS-8) with
+/// `onMergeSuccess` processing of the deck change log. Clients use it as
+/// their `OfflineSyncClient` transport.
+/// {@category Endpoint}
+class EndpointSlidesSync extends _isc.EndpointRef {
+  EndpointSlidesSync(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'slidesSync';
+
+  _ida.Stream<_ipulbpi2.OfflineSyncStreamEvent> sync({
+    required _ida.Stream<_ipulbpi2.OfflineSyncStreamEvent> changes,
+    required bool once,
+  }) =>
+      caller.callStreamingServerEndpoint<
+        _ida.Stream<_ipulbpi2.OfflineSyncStreamEvent>,
+        _ipulbpi2.OfflineSyncStreamEvent
+      >(
+        'slidesSync',
+        'sync',
+        {'once': once},
+        {'changes': changes},
+      );
+}
+
 /// Write documents: the OT editing stream and helpers (Write 03 §1).
 /// {@category Endpoint}
 class EndpointDocument extends _isc.EndpointRef {
@@ -2868,6 +3147,8 @@ class Client extends _isc.ServerpodClientShared {
     sheetsImport = EndpointSheetsImport(this);
     script = EndpointScript(this);
     sheetsVersion = EndpointSheetsVersion(this);
+    slides = EndpointSlides(this);
+    slidesSync = EndpointSlidesSync(this);
     document = EndpointDocument(this);
     writeExport = EndpointWriteExport(this);
     writeHistory = EndpointWriteHistory(this);
@@ -2923,6 +3204,10 @@ class Client extends _isc.ServerpodClientShared {
 
   late final EndpointSheetsVersion sheetsVersion;
 
+  late final EndpointSlides slides;
+
+  late final EndpointSlidesSync slidesSync;
+
   late final EndpointDocument document;
 
   late final EndpointWriteExport writeExport;
@@ -2959,6 +3244,8 @@ class Client extends _isc.ServerpodClientShared {
     'sheetsImport': sheetsImport,
     'script': script,
     'sheetsVersion': sheetsVersion,
+    'slides': slides,
+    'slidesSync': slidesSync,
     'document': document,
     'writeExport': writeExport,
     'writeHistory': writeHistory,

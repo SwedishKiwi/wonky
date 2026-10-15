@@ -23,7 +23,7 @@ void main() {
     });
 
     test('when nobody changed the cell then the undo deletes it', () {
-      final inverse = UndoInverter.invertChanges([
+      final inverse = SheetsUndo.invertChanges([
         insert,
       ], _Rows({id: insert.columnsAfter}));
 
@@ -33,7 +33,7 @@ void main() {
     test('when someone else changed its value then the value is skipped and '
         'only the insert\'s untouched columns are cleared', () {
       final skipped = <String>[];
-      final inverse = UndoInverter.invertChanges(
+      final inverse = SheetsUndo.invertChanges(
         [insert],
         _Rows({
           id: {...insert.columnsAfter, CellCols.content: 's:Bo'},
@@ -47,7 +47,7 @@ void main() {
     });
 
     test('when someone else added a format then the cell is kept', () {
-      final inverse = UndoInverter.invertChanges(
+      final inverse = SheetsUndo.invertChanges(
         [insert],
         _Rows({
           id: {...insert.columnsAfter, CellCols.bold: true},

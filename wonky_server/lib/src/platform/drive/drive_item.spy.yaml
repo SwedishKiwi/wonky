@@ -10,10 +10,31 @@ fields:
   ### Null = the owner's root.
   parentId: int?, relation(parent=drive_item, onDelete=SetNull)
   description: String?
-  ### Documents: Document.uuid; spreadsheets: the sync space UUID (= Spreadsheet.id).
+  ### Documents: Document.uuid; spreadsheets: the sync space UUID (= Spreadsheet.id);
+  ### presentations: the deck's space UUID (= Deck.id = item uuid); files: the
+  ### `driveFile` StoredFile.fileUuid of the current content.
   contentRef: UuidValue?
   thumbnailFileId: UuidValue?
+  ### Counted content size (Drive 03 §2): the content estimate, or the file
+  ### size for files.
   sizeBytes: int, default=0
+  ### (v2) Bytes of images/attachments stored for this item, charged to its
+  ### owner (Drive 03 §2). Counted size = sizeBytes + attachmentBytes.
+  attachmentBytes: int, default=0
+  ### (v2) Folders: bit set of the kinds contained recursively, ignoring
+  ### trashed items (bit = 1 << DriveItemKind.index; suite 05 §3.2).
+  kindMask: int, default=0
+  ### (v2) Files: the effective (sniffed) MIME type; null for other kinds.
+  mimeType: String?
+  ### (v2) Files: category for icons, filters and the preview viewer.
+  fileCategory: FileCategory?
+  ### (v2) Files: upload state (Drive 02 §2). Null for other kinds.
+  uploadState: FileUploadState?
+  ### (v2) Files: kind-specific metadata JSON: {width, height} (images),
+  ### {pages} (PDF), {lines, encoding} (text), {durationMs} (audio, P2).
+  fileMetaJson: String?
+  ### (v2) Files: downscaled preview image (StoredFileKind.preview). Not counted.
+  previewFileId: UuidValue?
   createdAt: DateTime
   createdById: int
   ### Last content modification (any user).
@@ -42,3 +63,6 @@ indexes:
     fields: contentRef
   drive_item_template_idx:
     fields: templateOf
+  ### (v2) `drive.expireUploads`: files still uploading after 24 h.
+  drive_item_upload_idx:
+    fields: uploadState, createdAt

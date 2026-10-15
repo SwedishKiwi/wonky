@@ -1,6 +1,5 @@
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shad/shad.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_core/wonky_core.dart';
@@ -11,12 +10,14 @@ import '../features/ai/ai_commands.dart';
 import '../commands/theme_commands.dart';
 import '../features/document/write_collab_commands.dart';
 import '../features/history/write_version_renderer.dart';
+import '../features/import/import_route.dart';
 import '../features/import/import_service.dart';
 import '../features/print/print_preview_screen.dart';
 import '../features/screen/write_document_screen.dart';
+import '../features/settings/write_settings.dart';
+import '../features/settings/write_settings_commands.dart';
 import '../features/theme_editor/theme_editor_screen.dart';
 import '../features/themes/document_theme.dart';
-import '../features/themes/theme_settings.dart';
 import '../l10n/write_l10n.dart';
 import '../mcp/ui_write_tools.dart';
 import 'write_menus.dart';
@@ -122,6 +123,7 @@ class WriteAppConfig extends WonkyAppConfig {
     ...themeCommands(services, themeCatalogFor(services)),
     ...writeCollabCommands(services),
     ...writeAiCommands(services),
+    ...writeSettingsCommands(services),
   ];
 
   /// Installs the AI assistant (suite 10) after sign-in.
@@ -169,16 +171,19 @@ class WriteAppConfig extends WonkyAppConfig {
   @override
   ImportHandler? get importHandler => const WriteImportHandler();
 
+  /// (v2) The Write home lists only documents and the folders that contain
+  /// them (suite 03 §3.3, Write 05 §2).
   @override
-  List<SettingsSectionSpec> settingsSections(ShellServices services) => [
-    SettingsSectionSpec(
-      id: 'themes',
-      title: (c) => writeL10n(c).settingsDocumentThemes,
-      icon: LucideIcons.palette,
-      builder: (_) => ThemeSettingsSection(
-        services: services,
-        themes: themeCatalogFor(services),
-      ),
-    ),
-  ];
+  HomeScope? get homeScope => const HomeScope.kind(DriveItemKind.document);
+
+  /// `/import?file=<fileItemUuid>`: Drive's *Open with ▸ Wonky Write*
+  /// (Drive 02 §7.2).
+  @override
+  ImportRouteHandler? get importRoute => importDriveFileAsDocument;
+
+  /// Write settings: Editor, Page & export, Document themes, Spelling
+  /// (`/settings/app/:section`, Write 05 §13.3).
+  @override
+  List<SettingsSectionSpec> appSettingsSections(ShellServices services) =>
+      writeSettingsSections(services);
 }

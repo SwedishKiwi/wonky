@@ -1,12 +1,14 @@
 import 'package:serverpod/serverpod.dart';
 
 import '../../sheets/changelog/change_log_consumer.dart';
-import '../../sheets/spaces/space_service.dart';
+import '../spaces/space_service.dart';
 import '../../sheets/sync/server_sheets_writer.dart';
 import '../../write/ot/document_service.dart';
 import '../../write/themes/theme_service.dart';
 import '../../write/versions/write_history_service.dart';
+import '../drive/drive_file_service.dart';
 import '../drive/drive_service.dart';
+import '../drive/kind_masks.dart';
 import '../files/file_service.dart';
 import '../notifications/notification_service.dart';
 import '../sharing/sharing_service.dart';
@@ -49,7 +51,8 @@ class MaintenanceFutureCall extends FutureCall {
     () => FileService.cleanupExpired(session),
   );
 
-  /// Daily: trash purge, version thinning, op-log and change-log pruning,
+  /// Daily: trash purge, (v2) expired uploads and folder kind masks,
+  /// version thinning, op-log and change-log pruning,
   /// active-set eviction, expired grants, server change records, deleted
   /// themes and the diff cache.
   Future<void> daily(Session session) async {
@@ -57,6 +60,16 @@ class MaintenanceFutureCall extends FutureCall {
       session,
       'drive.purgeTrash',
       () => DriveService.purgeExpiredTrash(session),
+    );
+    await _run(
+      session,
+      'drive.expireUploads',
+      () => DriveFileService.expireUploads(session),
+    );
+    await _run(
+      session,
+      'drive.recomputeKindMasks',
+      () => KindMasks.recomputeAll(session),
     );
     await _run(session, 'versions.thin', () => VersionService.thin(session));
     await _run(

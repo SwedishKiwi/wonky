@@ -4,7 +4,6 @@ import 'package:wonky_sync_models/ids.dart';
 
 import '../../addressing/a1.dart';
 import '../../addressing/grid_geometry.dart';
-import '../../charts/spec/image_spec.dart';
 import '../../content/rich_text.dart';
 import '../../data_tools/names/name_rules.dart';
 import '../../engine_bridge/stored_formula.dart';
@@ -21,6 +20,7 @@ import '../../mutations/handlers/sheets.dart' show sheetChildren;
 import '../../mutations/plan_builder.dart';
 import '../../mutations/row_change.dart';
 import '../../objects/anchor.dart';
+import '../../objects/image_spec.dart';
 import '../formula/formula_tokens.dart';
 import '../ir/import_warning.dart';
 import '../ir/ir_chart_spec.dart';
@@ -46,7 +46,7 @@ import 'planned_workbook_view.dart';
 /// - The cell limit (§3.4) is enforced: `PlanException('cell_limit_exceeded')`.
 ///
 /// The plan is one undo step for imports into an existing spreadsheet
-/// (`plan.inverse()` / `UndoInverter`); apply it with `model.applyPlan` and
+/// (`plan.inverse()` / `SheetsUndo`); apply it with `model.applyPlan` and
 /// write it in [MutationPlan.chunks].
 abstract final class IrToRowsPlanner {
   /// Plans [doc] into [model] at [ImportOptions.location].

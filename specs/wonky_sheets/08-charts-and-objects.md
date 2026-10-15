@@ -1235,3 +1235,12 @@ section keeps opaque source references (`ChartDataSpec.ranges` as stored strings
 resolver interprets, so Slides can store a data snapshot instead of ranges. The extraction is
 verified by the existing chart unit/golden tests moving with the code and by the unchanged
 Sheets goldens.
+
+**Done (M8, D-3).** `packages/wonky_numfmt`, `packages/wonky_charts` and
+`packages/wonky_charts_flutter` exist; `model.dart` re-exports `wonky_charts` and `wonky_numfmt`,
+so Sheets and server imports are unchanged except: `ChartPipeline.resolve/build/export*/
+printSceneFor/exportTheme` are now `SheetsChartPipeline.*` (`ChartPipeline.layout` is the
+generic engine call), `ChartDataSpec.ranges` holds `DataRangeRef`s (`spec.data.gridRanges`,
+`GridRange.fromRef`/`toRef`), the painter/3D GPU/orbit/glyph code is imported from
+`package:wonky_charts_flutter/wonky_charts_flutter.dart` (GPU backend: `…/gpu.dart`). Stored
+spec JSON is unchanged. Details and deviations: [Slides 08 §2.10](../wonky_slides/08-charts-from-sheets.md).

@@ -33,6 +33,8 @@ class MetaEndpoint extends Endpoint {
         maxImageUploadBytes: c.maxImageUploadBytes,
         maxImportUploadBytes: c.maxImportUploadBytes,
         scriptTimeoutMs: c.scriptTimeoutMs,
+        maxFileUploadBytes: c.maxFileUploadBytes,
+        quotaBytesPerUser: c.quotaBytesPerUser,
       ),
       serverTime: nowUtc(),
     );

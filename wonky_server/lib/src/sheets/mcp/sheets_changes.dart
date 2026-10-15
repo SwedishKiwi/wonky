@@ -8,7 +8,7 @@ import '../../platform/common/actor.dart';
 import '../../platform/common/models.dart';
 import '../../platform/mcp/tool_support.dart';
 import '../headless/headless_workbook_provider.dart';
-import '../spaces/space_service.dart';
+import '../../platform/spaces/space_service.dart';
 import 'sheets_bulk_writer.dart';
 import 'sheets_mcp_support.dart';
 import 'sheets_writes.dart';

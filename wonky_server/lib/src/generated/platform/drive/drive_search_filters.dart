@@ -14,6 +14,7 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:wonky_server/src/generated/protocol.dart' as _il4umwa0;
 import '../../platform/drive/drive_item_kind.dart' as _i26ubj99;
 import '../../platform/drive/drive_owner_filter.dart' as _ir62qy36;
+import '../../platform/drive/file_category.dart' as _idj2ejj9;
 
 /// Filters of `drive.search`.
 abstract class DriveSearchFilters
@@ -24,6 +25,7 @@ abstract class DriveSearchFilters
     this.modifiedAfter,
     this.modifiedBefore,
     bool? sharedOnly,
+    this.fileCategories,
   }) : owner = owner ?? _ir62qy36.DriveOwnerFilter.anyone,
        sharedOnly = sharedOnly ?? false;
 
@@ -33,6 +35,7 @@ abstract class DriveSearchFilters
     DateTime? modifiedAfter,
     DateTime? modifiedBefore,
     bool? sharedOnly,
+    List<_idj2ejj9.FileCategory>? fileCategories,
   }) = _DriveSearchFiltersImpl;
 
   factory DriveSearchFilters.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -60,6 +63,11 @@ abstract class DriveSearchFilters
       sharedOnly: jsonSerialization['sharedOnly'] == null
           ? null
           : _is.BoolJsonExtension.fromJson(jsonSerialization['sharedOnly']),
+      fileCategories: jsonSerialization['fileCategories'] == null
+          ? null
+          : _il4umwa0.Protocol().deserialize<List<_idj2ejj9.FileCategory>>(
+              jsonSerialization['fileCategories'],
+            ),
     );
   }
 
@@ -74,6 +82,9 @@ abstract class DriveSearchFilters
   /// Only items shared with or by the caller.
   bool sharedOnly;
 
+  /// (v2) Files only: restrict `file` items to these categories. Null = all.
+  List<_idj2ejj9.FileCategory>? fileCategories;
+
   /// Returns a shallow copy of this [DriveSearchFilters]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
@@ -84,6 +95,8 @@ abstract class DriveSearchFilters
     DateTime? modifiedAfter = const _is.$UndefinedDateTime(),
     DateTime? modifiedBefore = const _is.$UndefinedDateTime(),
     bool? sharedOnly,
+    List<_idj2ejj9.FileCategory>? fileCategories =
+        const _is.$UndefinedList<_idj2ejj9.FileCategory>(),
   });
   @override
   Map<String, dynamic> toJson() {
@@ -94,6 +107,10 @@ abstract class DriveSearchFilters
       if (modifiedAfter != null) 'modifiedAfter': modifiedAfter?.toJson(),
       if (modifiedBefore != null) 'modifiedBefore': modifiedBefore?.toJson(),
       'sharedOnly': sharedOnly,
+      if (fileCategories != null)
+        'fileCategories': fileCategories?.toJson(
+          valueToJson: (v) => v.toJson(),
+        ),
     };
   }
 
@@ -106,6 +123,10 @@ abstract class DriveSearchFilters
       if (modifiedAfter != null) 'modifiedAfter': modifiedAfter?.toJson(),
       if (modifiedBefore != null) 'modifiedBefore': modifiedBefore?.toJson(),
       'sharedOnly': sharedOnly,
+      if (fileCategories != null)
+        'fileCategories': fileCategories?.toJson(
+          valueToJson: (v) => v.toJson(),
+        ),
     };
   }
 
@@ -122,12 +143,14 @@ class _DriveSearchFiltersImpl extends DriveSearchFilters {
     DateTime? modifiedAfter,
     DateTime? modifiedBefore,
     bool? sharedOnly,
+    List<_idj2ejj9.FileCategory>? fileCategories,
   }) : super._(
          kinds: kinds,
          owner: owner,
          modifiedAfter: modifiedAfter,
          modifiedBefore: modifiedBefore,
          sharedOnly: sharedOnly,
+         fileCategories: fileCategories,
        );
 
   /// Returns a shallow copy of this [DriveSearchFilters]
@@ -141,6 +164,8 @@ class _DriveSearchFiltersImpl extends DriveSearchFilters {
     DateTime? modifiedAfter = const _is.$UndefinedDateTime(),
     DateTime? modifiedBefore = const _is.$UndefinedDateTime(),
     bool? sharedOnly,
+    List<_idj2ejj9.FileCategory>? fileCategories =
+        const _is.$UndefinedList<_idj2ejj9.FileCategory>(),
   }) {
     return DriveSearchFilters(
       kinds: kinds is _is.UndefinedSentinel
@@ -154,6 +179,9 @@ class _DriveSearchFiltersImpl extends DriveSearchFilters {
           ? this.modifiedBefore
           : modifiedBefore,
       sharedOnly: sharedOnly ?? this.sharedOnly,
+      fileCategories: fileCategories is _is.UndefinedSentinel
+          ? this.fileCategories?.map((e0) => e0).toList()
+          : fileCategories,
     );
   }
 }

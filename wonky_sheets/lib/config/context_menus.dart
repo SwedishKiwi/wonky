@@ -44,10 +44,12 @@ List<WonkyMenuEntry> gridContextMenu(
         if (pivot != null) ...[
           ui.item('sheets.pivot.openEditor', source: _cm),
           ui.item('sheets.pivot.refresh', source: _cm),
-          if (pivot.cellAt(
-                ed.selection.resolved.activeRow,
-                ed.selection.resolved.activeCol,
-              )?.isValue ??
+          if (pivot
+                  .cellAt(
+                    ed.selection.resolved.activeRow,
+                    ed.selection.resolved.activeCol,
+                  )
+                  ?.isValue ??
               false)
             ui.item('sheets.pivot.drillDown', source: _cm),
           if (ui.state('sheets.pivot.groupSelection').enabled)

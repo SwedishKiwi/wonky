@@ -13,6 +13,7 @@ import '../common/errors.dart';
 import '../common/json.dart';
 import '../common/time.dart';
 import '../../write/themes/builtin_theme_ids.dart';
+import '../storage/storage_counters.dart';
 
 /// Users, profiles and preferences (specs/04 §3, §5).
 abstract final class UserService {
@@ -141,6 +142,13 @@ abstract final class UserService {
           updatedAt: now,
         ),
         transaction: tx,
+      );
+      // (v2) A new user's storage counters start reconciled (Drive 03 §9).
+      await StorageCounters.ensureRow(
+        session,
+        profile.id!,
+        transaction: tx,
+        newUser: true,
       );
       // Pending invites (specs/06 §2): convert to grants for this user.
       await DriveItemPermission.db.updateWhere(
@@ -369,6 +377,9 @@ abstract final class UserService {
       keymapOverrides: merge(prefs.keymapOverrides, patch.keymapOverrides),
       writeDefaults: merge(prefs.writeDefaults, patch.writeDefaults),
       sheetsDefaults: merge(prefs.sheetsDefaults, patch.sheetsDefaults),
+      slidesDefaults: merge(prefs.slidesDefaults, patch.slidesDefaults),
+      slidesPresenter: merge(prefs.slidesPresenter, patch.slidesPresenter),
+      driveDefaults: merge(prefs.driveDefaults, patch.driveDefaults),
       notificationSettings: merge(
         prefs.notificationSettings,
         patch.notificationSettings,
@@ -388,6 +399,9 @@ abstract final class UserService {
             keymapOverrides: updated.keymapOverrides,
             writeDefaults: updated.writeDefaults,
             sheetsDefaults: updated.sheetsDefaults,
+            slidesDefaults: updated.slidesDefaults,
+            slidesPresenter: updated.slidesPresenter,
+            driveDefaults: updated.driveDefaults,
             notificationSettings: updated.notificationSettings,
             aiEnabled: updated.aiEnabled,
             updatedAt: updated.updatedAt,

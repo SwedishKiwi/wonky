@@ -14,12 +14,18 @@
 import 'dart:async' as _ida;
 import 'package:clock/clock.dart' as _io0w16m8;
 import 'package:serverpod/serverpod.dart' as _is;
+import '../platform/files/file_preview_future_call.dart' as _iw6v1fyh;
 import '../platform/jobs/maintenance_future_call.dart' as _imgsvm9k;
 import '../platform/notifications/notification_email_future_call.dart'
     as _i1dis1nt;
+import '../platform/storage/storage_future_call.dart' as _iel4dsm1;
 import '../sheets/scripts/script_scheduler_future_call.dart' as _iq0nfb3f;
+import 'future_calls_generated_models/file_preview_future_call_generate_model.dart'
+    as _ilpvgw0t;
 import 'future_calls_generated_models/notification_email_future_call_send_model.dart'
     as _inb6x2l0;
+import 'future_calls_generated_models/storage_future_call_refresh_item_size_model.dart'
+    as _io4auc29;
 
 /// Invokes a future call.
 typedef _InvokeFutureCall =
@@ -63,12 +69,16 @@ class FutureCalls extends _is.FutureCallDispatch<_FutureCallRef> {
     String serverId,
   ) {
     var registeredFutureCalls = <String, _is.InvokableFutureCall>{
+      'FilePreviewGenerateFutureCall': FilePreviewGenerateFutureCall(),
       'MaintenanceCaptureVersionsFutureCall':
           MaintenanceCaptureVersionsFutureCall(),
       'MaintenanceSendDigestsFutureCall': MaintenanceSendDigestsFutureCall(),
       'MaintenanceCleanupFilesFutureCall': MaintenanceCleanupFilesFutureCall(),
       'MaintenanceDailyFutureCall': MaintenanceDailyFutureCall(),
       'NotificationEmailSendFutureCall': NotificationEmailSendFutureCall(),
+      'StorageBackfillFutureCall': StorageBackfillFutureCall(),
+      'StorageReconcileFutureCall': StorageReconcileFutureCall(),
+      'StorageRefreshItemSizeFutureCall': StorageRefreshItemSizeFutureCall(),
       'ScriptSchedulerTickFutureCall': ScriptSchedulerTickFutureCall(),
       'ScriptSchedulerPruneFutureCall': ScriptSchedulerPruneFutureCall(),
     };
@@ -191,15 +201,33 @@ class _FutureCallRef {
 
   final _InvokeFutureCall _invokeFutureCall;
 
+  late final filePreview = _FilePreviewFutureCallDispatcher(_invokeFutureCall);
+
   late final maintenance = _MaintenanceFutureCallDispatcher(_invokeFutureCall);
 
   late final notificationEmail = _NotificationEmailFutureCallDispatcher(
     _invokeFutureCall,
   );
 
+  late final storage = _StorageFutureCallDispatcher(_invokeFutureCall);
+
   late final scriptScheduler = _ScriptSchedulerFutureCallDispatcher(
     _invokeFutureCall,
   );
+}
+
+class _FilePreviewFutureCallDispatcher {
+  _FilePreviewFutureCallDispatcher(this._invokeFutureCall);
+
+  final _InvokeFutureCall _invokeFutureCall;
+
+  Future<void> generate(int itemId) {
+    var object = _ilpvgw0t.FilePreviewFutureCallGenerateModel(itemId: itemId);
+    return _invokeFutureCall(
+      'FilePreviewGenerateFutureCall',
+      object,
+    );
+  }
 }
 
 class _MaintenanceFutureCallDispatcher {
@@ -252,6 +280,36 @@ class _NotificationEmailFutureCallDispatcher {
   }
 }
 
+class _StorageFutureCallDispatcher {
+  _StorageFutureCallDispatcher(this._invokeFutureCall);
+
+  final _InvokeFutureCall _invokeFutureCall;
+
+  Future<void> backfill() {
+    return _invokeFutureCall(
+      'StorageBackfillFutureCall',
+      null,
+    );
+  }
+
+  Future<void> reconcile() {
+    return _invokeFutureCall(
+      'StorageReconcileFutureCall',
+      null,
+    );
+  }
+
+  Future<void> refreshItemSize(int itemId) {
+    var object = _io4auc29.StorageFutureCallRefreshItemSizeModel(
+      itemId: itemId,
+    );
+    return _invokeFutureCall(
+      'StorageRefreshItemSizeFutureCall',
+      object,
+    );
+  }
+}
+
 class _ScriptSchedulerFutureCallDispatcher {
   _ScriptSchedulerFutureCallDispatcher(this._invokeFutureCall);
 
@@ -269,6 +327,24 @@ class _ScriptSchedulerFutureCallDispatcher {
       'ScriptSchedulerPruneFutureCall',
       null,
     );
+  }
+}
+
+class FilePreviewGenerateFutureCall
+    extends _is.FutureCall<_ilpvgw0t.FilePreviewFutureCallGenerateModel>
+    implements
+        _is.InvokableFutureCall<_ilpvgw0t.FilePreviewFutureCallGenerateModel> {
+  @override
+  _ida.Future<void> invoke(
+    _is.Session session,
+    _ilpvgw0t.FilePreviewFutureCallGenerateModel? object,
+  ) async {
+    if (object != null) {
+      await _iw6v1fyh.FilePreviewFutureCall().generate(
+        session,
+        object.itemId,
+      );
+    }
   }
 }
 
@@ -308,7 +384,8 @@ class MaintenanceCleanupFilesFutureCall extends _is.FutureCall
   }
 }
 
-/// Daily: trash purge, version thinning, op-log and change-log pruning,
+/// Daily: trash purge, (v2) expired uploads and folder kind masks,
+/// version thinning, op-log and change-log pruning,
 /// active-set eviction, expired grants, server change records, deleted
 /// themes and the diff cache.
 class MaintenanceDailyFutureCall extends _is.FutureCall
@@ -337,6 +414,52 @@ class NotificationEmailSendFutureCall
       await _i1dis1nt.NotificationEmailFutureCall().send(
         session,
         object.notificationId,
+      );
+    }
+  }
+}
+
+/// Backfill of users without reconciled counters (idempotent,
+/// resumable; serialized across instances).
+class StorageBackfillFutureCall extends _is.FutureCall
+    implements _is.InvokableFutureCall {
+  @override
+  _ida.Future<void> invoke(
+    _is.Session session,
+    _is.SerializableModel? object,
+  ) async {
+    await _iel4dsm1.StorageFutureCall().backfill(session);
+  }
+}
+
+/// Nightly: recomputes every user's counters from the sources.
+class StorageReconcileFutureCall extends _is.FutureCall
+    implements _is.InvokableFutureCall {
+  @override
+  _ida.Future<void> invoke(
+    _is.Session session,
+    _is.SerializableModel? object,
+  ) async {
+    await _iel4dsm1.StorageFutureCall().reconcile(session);
+  }
+}
+
+/// The trailing size estimate of a space item (Drive 03 §2 cadence).
+class StorageRefreshItemSizeFutureCall
+    extends _is.FutureCall<_io4auc29.StorageFutureCallRefreshItemSizeModel>
+    implements
+        _is.InvokableFutureCall<
+          _io4auc29.StorageFutureCallRefreshItemSizeModel
+        > {
+  @override
+  _ida.Future<void> invoke(
+    _is.Session session,
+    _io4auc29.StorageFutureCallRefreshItemSizeModel? object,
+  ) async {
+    if (object != null) {
+      await _iel4dsm1.StorageFutureCall().refreshItemSize(
+        session,
+        object.itemId,
       );
     }
   }

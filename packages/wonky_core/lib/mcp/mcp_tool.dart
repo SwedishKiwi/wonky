@@ -11,6 +11,12 @@ abstract final class McpScope {
   static const scriptsRun = 'scripts:run';
   static const uiControl = 'ui:control';
 
+  /// (v2) Read presentations (Slides 11 §2.4): read tools, exports, renders.
+  static const slidesRead = 'slides:read';
+
+  /// (v2) Edit presentations (Slides 11 §2.4).
+  static const slidesEdit = 'slides:edit';
+
   /// Every scope, in display order.
   static const all = [
     driveRead,
@@ -19,6 +25,8 @@ abstract final class McpScope {
     writeEdit,
     sheetsRead,
     sheetsEdit,
+    slidesRead,
+    slidesEdit,
     scriptsRun,
     uiControl,
   ];
@@ -112,7 +120,47 @@ abstract final class McpSchemas {
     description: 'Access role to grant.',
   );
   static const kind = JsonSchema.string(
-    enumValues: ['folder', 'document', 'spreadsheet'],
+    enumValues: ['folder', 'document', 'spreadsheet', 'presentation', 'file'],
+    description:
+        'Item kind: folder, document (Wonky Write), spreadsheet (Wonky '
+        'Sheets), presentation (Wonky Slides) or file (an uploaded file).',
+  );
+
+  /// (v2) Several kinds (`drive.search`, `drive.list_folder`).
+  static const kinds = JsonSchema.array(
+    kind,
+    minItems: 1,
+    description: 'Only items of these kinds (folders are kept only if listed).',
+  );
+
+  /// (v2) The category of an uploaded file (Drive 02 §1.2).
+  static const fileCategory = JsonSchema.string(
+    enumValues: [
+      'image',
+      'pdf',
+      'text',
+      'audio',
+      'video',
+      'archive',
+      'document',
+      'spreadsheet',
+      'presentation',
+      'other',
+    ],
+    description:
+        'Uploaded files only: restrict file items to this category '
+        '(document/spreadsheet/presentation = office files such as docx, '
+        'xlsx, pptx). Other kinds are not affected.',
+  );
+
+  /// (v2) The caller's storage in results of byte-adding tools (suite 09 §4).
+  static const storage = JsonSchema.object(
+    additionalProperties: true,
+    properties: {
+      'used_bytes': JsonSchema.integer(),
+      'quota_bytes': JsonSchema.integer(),
+      'available_bytes': JsonSchema.integer(),
+    },
   );
 
   /// The shape of a drive item in results.
@@ -126,6 +174,10 @@ abstract final class McpSchemas {
       'owner': JsonSchema.string(),
       'modified_at': JsonSchema.string(format: 'date-time'),
       'url': JsonSchema.string(),
+      'size_bytes': JsonSchema.integer(),
+      'mime_type': JsonSchema.string(),
+      'file_category': JsonSchema.string(),
+      'upload_state': JsonSchema.string(),
     },
   );
 
@@ -139,6 +191,10 @@ abstract final class McpSchemas {
 
   static const changeResult = JsonSchema.object(
     additionalProperties: true,
-    properties: {'change_id': JsonSchema.string(), 'item': item},
+    properties: {
+      'change_id': JsonSchema.string(),
+      'item': item,
+      'storage': storage,
+    },
   );
 }

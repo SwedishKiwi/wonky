@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:wonky_numfmt/wonky_numfmt.dart';
 
 import '../../addressing/a1.dart';
 import '../../addressing/grid_geometry.dart';
-import '../../charts/spec/image_spec.dart';
 import '../../content/cell_content.dart';
 import '../../engine_bridge/model_workbook_view.dart';
 import '../../engine_bridge/pivot_outputs.dart';
@@ -11,7 +11,6 @@ import '../../pivot/pivot_layout.dart';
 import '../../engine_bridge/stored_formula.dart';
 import '../../engine_bridge/value_bridge.dart';
 import '../../format/attributes.dart';
-import '../../format/number_format/presets.dart';
 import '../../formula/codec/formula_codec.dart';
 import '../../formula/model/workbook_view.dart';
 import '../../formula/recalc/formula_engine.dart';
@@ -22,6 +21,7 @@ import '../../model/schema.dart';
 import '../../model/sheet_model.dart';
 import '../../model/workbook_model.dart';
 import '../../objects/anchor.dart';
+import '../../objects/image_spec.dart';
 import '../ir/import_warning.dart';
 import '../ir/ir_chart_spec.dart';
 import '../ir/ir_range.dart';

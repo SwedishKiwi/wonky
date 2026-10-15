@@ -10,8 +10,8 @@ import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_sheets_core/model.dart';
 import 'package:wonky_ui/wonky_ui.dart';
+import 'package:wonky_charts_flutter/wonky_charts_flutter.dart';
 
-import '../charts3d/orbit/chart_orbit.dart';
 import '../collab/sheets_collab.dart';
 import '../charts/controller/chart_controller.dart';
 import '../charts/view/chart_sheet_view.dart';
@@ -786,6 +786,18 @@ class _ObjectBox extends StatelessWidget {
         content = ImageObjectView(
           service: images,
           spec: ImageSpec.fromJson(o.specJson),
+          onRemove: ed.canEdit
+              ? () => unawaited(
+                  ed.services.dispatcher.invoke(
+                    'sheets.object.delete',
+                    args: {
+                      'objectIds': [o.id],
+                    },
+                    source: InvocationSource.ui,
+                    context: context,
+                  ),
+                )
+              : null,
         );
         final alt = o.altText?.trim() ?? '';
         label = alt.isNotEmpty ? alt : (o.title ?? '');

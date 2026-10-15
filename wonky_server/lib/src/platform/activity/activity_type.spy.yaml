@@ -12,3 +12,5 @@ values:
   - trashed
   - restored
   - exported
+  ### (v2) A file was uploaded (Drive 02 §3.3).
+  - uploaded

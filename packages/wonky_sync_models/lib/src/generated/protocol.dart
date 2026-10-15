@@ -46,6 +46,26 @@ import 'script_user_property.dart' as _i28e4cu9;
 import 'sheet.dart' as _ig4g76zp;
 import 'sheet_column.dart' as _isl6cgsg;
 import 'sheet_row.dart' as _ihygasqj;
+import 'slides/chart_link.dart' as _idbbyz5o;
+import 'slides/code_state.dart' as _ild4hnlk;
+import 'slides/deck.dart' as _i5rkrncd;
+import 'slides/deck_change_log.dart' as _iq02mgkm;
+import 'slides/deck_theme.dart' as _ifho1iaj;
+import 'slides/enums/build_kind.dart' as _i28s2inw;
+import 'slides/enums/build_trigger.dart' as _ihn6hgce;
+import 'slides/enums/deck_appearance.dart' as _i24j0uh3;
+import 'slides/enums/placeholder_type.dart' as _i8b7xui8;
+import 'slides/enums/slide_element_kind.dart' as _i2w8xpqg;
+import 'slides/enums/slide_size_preset.dart' as _ixx3p5q7;
+import 'slides/enums/table_dimension.dart' as _i2fu17sc;
+import 'slides/slide.dart' as _iad1oxgb;
+import 'slides/slide_build.dart' as _i6oyv19i;
+import 'slides/slide_element.dart' as _iiliulbi;
+import 'slides/slide_group.dart' as _ic4eqfvq;
+import 'slides/slide_layout.dart' as _i1s0dhb4;
+import 'slides/slide_master.dart' as _ii2umwrw;
+import 'slides/slide_table_axis.dart' as _ie2n7e76;
+import 'slides/slide_table_cell.dart' as _iuzroerr;
 import 'spreadsheet.dart' as _ikok0gb2;
 export 'banding.dart';
 export 'basic_filter.dart';
@@ -80,6 +100,26 @@ export 'script_user_property.dart';
 export 'sheet.dart';
 export 'sheet_column.dart';
 export 'sheet_row.dart';
+export 'slides/chart_link.dart';
+export 'slides/code_state.dart';
+export 'slides/deck.dart';
+export 'slides/deck_change_log.dart';
+export 'slides/deck_theme.dart';
+export 'slides/enums/build_kind.dart';
+export 'slides/enums/build_trigger.dart';
+export 'slides/enums/deck_appearance.dart';
+export 'slides/enums/placeholder_type.dart';
+export 'slides/enums/slide_element_kind.dart';
+export 'slides/enums/slide_size_preset.dart';
+export 'slides/enums/table_dimension.dart';
+export 'slides/slide.dart';
+export 'slides/slide_build.dart';
+export 'slides/slide_element.dart';
+export 'slides/slide_group.dart';
+export 'slides/slide_layout.dart';
+export 'slides/slide_master.dart';
+export 'slides/slide_table_axis.dart';
+export 'slides/slide_table_cell.dart';
 export 'spreadsheet.dart';
 
 class Protocol extends _isd.DatabaseSerializationManager
@@ -130,6 +170,26 @@ class Protocol extends _isd.DatabaseSerializationManager
           _iss.getType<_ig4g76zp.Sheet>,
           _iss.getType<_isl6cgsg.SheetColumn>,
           _iss.getType<_ihygasqj.SheetRow>,
+          _iss.getType<_idbbyz5o.ChartLink>,
+          _iss.getType<_ild4hnlk.CodeState>,
+          _iss.getType<_i5rkrncd.Deck>,
+          _iss.getType<_iq02mgkm.DeckChangeLog>,
+          _iss.getType<_ifho1iaj.DeckTheme>,
+          _iss.getType<_i28s2inw.BuildKind>,
+          _iss.getType<_ihn6hgce.BuildTrigger>,
+          _iss.getType<_i24j0uh3.DeckAppearance>,
+          _iss.getType<_i8b7xui8.PlaceholderType>,
+          _iss.getType<_i2w8xpqg.SlideElementKind>,
+          _iss.getType<_ixx3p5q7.SlideSizePreset>,
+          _iss.getType<_i2fu17sc.TableDimension>,
+          _iss.getType<_iad1oxgb.Slide>,
+          _iss.getType<_i6oyv19i.SlideBuild>,
+          _iss.getType<_iiliulbi.SlideElement>,
+          _iss.getType<_ic4eqfvq.SlideGroup>,
+          _iss.getType<_i1s0dhb4.SlideLayout>,
+          _iss.getType<_ii2umwrw.SlideMaster>,
+          _iss.getType<_ie2n7e76.SlideTableAxis>,
+          _iss.getType<_iuzroerr.SlideTableCell>,
           _iss.getType<_ikok0gb2.Spreadsheet>,
           _iss.getType<_igaoyygq.Banding?>,
           _iss.getType<_ir527j7r.BasicFilter?>,
@@ -164,6 +224,26 @@ class Protocol extends _isd.DatabaseSerializationManager
           _iss.getType<_ig4g76zp.Sheet?>,
           _iss.getType<_isl6cgsg.SheetColumn?>,
           _iss.getType<_ihygasqj.SheetRow?>,
+          _iss.getType<_idbbyz5o.ChartLink?>,
+          _iss.getType<_ild4hnlk.CodeState?>,
+          _iss.getType<_i5rkrncd.Deck?>,
+          _iss.getType<_iq02mgkm.DeckChangeLog?>,
+          _iss.getType<_ifho1iaj.DeckTheme?>,
+          _iss.getType<_i28s2inw.BuildKind?>,
+          _iss.getType<_ihn6hgce.BuildTrigger?>,
+          _iss.getType<_i24j0uh3.DeckAppearance?>,
+          _iss.getType<_i8b7xui8.PlaceholderType?>,
+          _iss.getType<_i2w8xpqg.SlideElementKind?>,
+          _iss.getType<_ixx3p5q7.SlideSizePreset?>,
+          _iss.getType<_i2fu17sc.TableDimension?>,
+          _iss.getType<_iad1oxgb.Slide?>,
+          _iss.getType<_i6oyv19i.SlideBuild?>,
+          _iss.getType<_iiliulbi.SlideElement?>,
+          _iss.getType<_ic4eqfvq.SlideGroup?>,
+          _iss.getType<_i1s0dhb4.SlideLayout?>,
+          _iss.getType<_ii2umwrw.SlideMaster?>,
+          _iss.getType<_ie2n7e76.SlideTableAxis?>,
+          _iss.getType<_iuzroerr.SlideTableCell?>,
           _iss.getType<_ikok0gb2.Spreadsheet?>,
         ],
         modules: const [],
@@ -682,6 +762,257 @@ class Protocol extends _isd.DatabaseSerializationManager
       managed: true,
     ),
     _isd.TableDefinition(
+      name: 'chart_link',
+      dartName: 'ChartLink',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isd.ColumnDefinition(
+          name: 'id',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+          columnDefault: 'random_v7',
+        ),
+        _isd.ColumnDefinition(
+          name: 'spaceId',
+          columnType: _isd.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'elementId',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isd.ColumnDefinition(
+          name: 'spreadsheetItemUuid',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isd.ColumnDefinition(
+          name: 'chartObjectId',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isd.ColumnDefinition(
+          name: 'sheetId',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'sourceSpecJson',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isd.ColumnDefinition(
+          name: 'dataSnapshotJson',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isd.ColumnDefinition(
+          name: 'sourceVersion',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isd.ColumnDefinition(
+          name: 'updatedAt',
+          columnType: _isd.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isd.ColumnDefinition(
+          name: 'updatedBy',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isd.ColumnDefinition(
+          name: 'autoUpdate',
+          columnType: _isd.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _isd.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isd.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isd.ForeignKeyDefinition(
+          constraintName: 'chart_link_fk_0',
+          columns: ['spaceId'],
+          referenceTable: 'offline_sync_spaces',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+        _isd.ForeignKeyDefinition(
+          constraintName: 'chart_link_fk_1',
+          columns: ['elementId'],
+          referenceTable: 'slide_element',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+          deferrable: _isd.DeferrableConstraint.initiallyDeferred,
+        ),
+      ],
+      indexes: [
+        _isd.IndexDefinition(
+          indexName: 'chart_link_element_idx',
+          tableSpace: null,
+          elements: [
+            _isd.IndexElementDefinition(
+              type: _isd.IndexElementDefinitionType.column,
+              definition: 'elementId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isd.TableDefinition(
+      name: 'code_state',
+      dartName: 'CodeState',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isd.ColumnDefinition(
+          name: 'id',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+          columnDefault: 'random_v7',
+        ),
+        _isd.ColumnDefinition(
+          name: 'spaceId',
+          columnType: _isd.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'elementId',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isd.ColumnDefinition(
+          name: 'sortKey',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isd.ColumnDefinition(
+          name: 'label',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'code',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isd.ColumnDefinition(
+          name: 'language',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'title',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'highlight',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'annotationsJson',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'transitionJson',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isd.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isd.ForeignKeyDefinition(
+          constraintName: 'code_state_fk_0',
+          columns: ['spaceId'],
+          referenceTable: 'offline_sync_spaces',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+        _isd.ForeignKeyDefinition(
+          constraintName: 'code_state_fk_1',
+          columns: ['elementId'],
+          referenceTable: 'slide_element',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+          deferrable: _isd.DeferrableConstraint.initiallyDeferred,
+        ),
+      ],
+      indexes: [
+        _isd.IndexDefinition(
+          indexName: 'code_state_element_idx',
+          tableSpace: null,
+          elements: [
+            _isd.IndexElementDefinition(
+              type: _isd.IndexElementDefinitionType.column,
+              definition: 'elementId',
+            ),
+            _isd.IndexElementDefinition(
+              type: _isd.IndexElementDefinitionType.column,
+              definition: 'sortKey',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isd.TableDefinition(
       name: 'conditional_format_rule',
       dartName: 'ConditionalFormatRule',
       schema: 'public',
@@ -858,6 +1189,400 @@ class Protocol extends _isd.DatabaseSerializationManager
         ),
       ],
       indexes: [],
+      managed: true,
+    ),
+    _isd.TableDefinition(
+      name: 'deck',
+      dartName: 'Deck',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isd.ColumnDefinition(
+          name: 'id',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+          columnDefault: 'random_v7',
+        ),
+        _isd.ColumnDefinition(
+          name: 'spaceId',
+          columnType: _isd.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'title',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isd.ColumnDefinition(
+          name: 'width',
+          columnType: _isd.ColumnType.doublePrecision,
+          isNullable: false,
+          dartType: 'double',
+          columnDefault: '1920.0',
+        ),
+        _isd.ColumnDefinition(
+          name: 'height',
+          columnType: _isd.ColumnType.doublePrecision,
+          isNullable: false,
+          dartType: 'double',
+          columnDefault: '1080.0',
+        ),
+        _isd.ColumnDefinition(
+          name: 'sizePreset',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'wonky_sync_models:SlideSizePreset',
+          columnDefault: '\'widescreen16x9\'',
+        ),
+        _isd.ColumnDefinition(
+          name: 'themeId',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'appearance',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'wonky_sync_models:DeckAppearance',
+          columnDefault: '\'light\'',
+        ),
+        _isd.ColumnDefinition(
+          name: 'language',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'showSlideNumbers',
+          columnType: _isd.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _isd.ColumnDefinition(
+          name: 'hideNumberOnTitle',
+          columnType: _isd.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'true',
+        ),
+        _isd.ColumnDefinition(
+          name: 'firstSlideNumber',
+          columnType: _isd.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '1',
+        ),
+        _isd.ColumnDefinition(
+          name: 'footerText',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'defaultsJson',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'guidesJson',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'presentJson',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'createdBy',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isd.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isd.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isd.ForeignKeyDefinition(
+          constraintName: 'deck_fk_0',
+          columns: ['spaceId'],
+          referenceTable: 'offline_sync_spaces',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
+      indexes: [],
+      managed: true,
+    ),
+    _isd.TableDefinition(
+      name: 'deck_change_log',
+      dartName: 'DeckChangeLog',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isd.ColumnDefinition(
+          name: 'id',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+          columnDefault: 'random_v7',
+        ),
+        _isd.ColumnDefinition(
+          name: 'spaceId',
+          columnType: _isd.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'deckId',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isd.ColumnDefinition(
+          name: 'userId',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isd.ColumnDefinition(
+          name: 'actorKind',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'wonky_sync_models:ActorKind',
+        ),
+        _isd.ColumnDefinition(
+          name: 'sessionId',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isd.ColumnDefinition(
+          name: 'label',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isd.ColumnDefinition(
+          name: 'summaryJson',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isd.ColumnDefinition(
+          name: 'detailJson',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'at',
+          columnType: _isd.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isd.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isd.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isd.ForeignKeyDefinition(
+          constraintName: 'deck_change_log_fk_0',
+          columns: ['spaceId'],
+          referenceTable: 'offline_sync_spaces',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+        _isd.ForeignKeyDefinition(
+          constraintName: 'deck_change_log_fk_1',
+          columns: ['deckId'],
+          referenceTable: 'deck',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+          deferrable: _isd.DeferrableConstraint.initiallyDeferred,
+        ),
+      ],
+      indexes: [
+        _isd.IndexDefinition(
+          indexName: 'deck_change_log_at_idx',
+          tableSpace: null,
+          elements: [
+            _isd.IndexElementDefinition(
+              type: _isd.IndexElementDefinitionType.column,
+              definition: 'deckId',
+            ),
+            _isd.IndexElementDefinition(
+              type: _isd.IndexElementDefinitionType.column,
+              definition: 'at',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isd.TableDefinition(
+      name: 'deck_theme',
+      dartName: 'DeckTheme',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isd.ColumnDefinition(
+          name: 'id',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+          columnDefault: 'random_v7',
+        ),
+        _isd.ColumnDefinition(
+          name: 'spaceId',
+          columnType: _isd.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'deckId',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isd.ColumnDefinition(
+          name: 'name',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isd.ColumnDefinition(
+          name: 'sourceKey',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'colorsJson',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isd.ColumnDefinition(
+          name: 'fontsJson',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isd.ColumnDefinition(
+          name: 'textStylesJson',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isd.ColumnDefinition(
+          name: 'backgroundJson',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isd.ColumnDefinition(
+          name: 'shapeStyleJson',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'tableStyleJson',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'codeStyleJson',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'chartStyleJson',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'sortKey',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isd.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isd.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isd.ForeignKeyDefinition(
+          constraintName: 'deck_theme_fk_0',
+          columns: ['spaceId'],
+          referenceTable: 'offline_sync_spaces',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+        _isd.ForeignKeyDefinition(
+          constraintName: 'deck_theme_fk_1',
+          columns: ['deckId'],
+          referenceTable: 'deck',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+          deferrable: _isd.DeferrableConstraint.initiallyDeferred,
+        ),
+      ],
+      indexes: [
+        _isd.IndexDefinition(
+          indexName: 'deck_theme_deck_idx',
+          tableSpace: null,
+          elements: [
+            _isd.IndexElementDefinition(
+              type: _isd.IndexElementDefinitionType.column,
+              definition: 'deckId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
       managed: true,
     ),
     _isd.TableDefinition(
@@ -2453,6 +3178,1193 @@ class Protocol extends _isd.DatabaseSerializationManager
       managed: true,
     ),
     _isd.TableDefinition(
+      name: 'slide',
+      dartName: 'Slide',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isd.ColumnDefinition(
+          name: 'id',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+          columnDefault: 'random_v7',
+        ),
+        _isd.ColumnDefinition(
+          name: 'spaceId',
+          columnType: _isd.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'deckId',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isd.ColumnDefinition(
+          name: 'sortKey',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isd.ColumnDefinition(
+          name: 'groupId',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'layoutId',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'backgroundJson',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'skipped',
+          columnType: _isd.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _isd.ColumnDefinition(
+          name: 'notes',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'transitionJson',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'hideMasterElements',
+          columnType: _isd.ColumnType.boolean,
+          isNullable: true,
+          dartType: 'bool?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'timingsJson',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isd.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isd.ForeignKeyDefinition(
+          constraintName: 'slide_fk_0',
+          columns: ['spaceId'],
+          referenceTable: 'offline_sync_spaces',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+        _isd.ForeignKeyDefinition(
+          constraintName: 'slide_fk_1',
+          columns: ['deckId'],
+          referenceTable: 'deck',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+          deferrable: _isd.DeferrableConstraint.initiallyDeferred,
+        ),
+      ],
+      indexes: [
+        _isd.IndexDefinition(
+          indexName: 'slide_order_idx',
+          tableSpace: null,
+          elements: [
+            _isd.IndexElementDefinition(
+              type: _isd.IndexElementDefinitionType.column,
+              definition: 'deckId',
+            ),
+            _isd.IndexElementDefinition(
+              type: _isd.IndexElementDefinitionType.column,
+              definition: 'sortKey',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isd.TableDefinition(
+      name: 'slide_build',
+      dartName: 'SlideBuild',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isd.ColumnDefinition(
+          name: 'id',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+          columnDefault: 'random_v7',
+        ),
+        _isd.ColumnDefinition(
+          name: 'spaceId',
+          columnType: _isd.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'slideId',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isd.ColumnDefinition(
+          name: 'elementId',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isd.ColumnDefinition(
+          name: 'kind',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'wonky_sync_models:BuildKind',
+        ),
+        _isd.ColumnDefinition(
+          name: 'effect',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isd.ColumnDefinition(
+          name: 'sortKey',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isd.ColumnDefinition(
+          name: 'trigger',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'wonky_sync_models:BuildTrigger',
+        ),
+        _isd.ColumnDefinition(
+          name: 'delayMs',
+          columnType: _isd.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isd.ColumnDefinition(
+          name: 'durationMs',
+          columnType: _isd.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isd.ColumnDefinition(
+          name: 'easing',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isd.ColumnDefinition(
+          name: 'optionsJson',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isd.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isd.ForeignKeyDefinition(
+          constraintName: 'slide_build_fk_0',
+          columns: ['spaceId'],
+          referenceTable: 'offline_sync_spaces',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+        _isd.ForeignKeyDefinition(
+          constraintName: 'slide_build_fk_1',
+          columns: ['slideId'],
+          referenceTable: 'slide',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+          deferrable: _isd.DeferrableConstraint.initiallyDeferred,
+        ),
+        _isd.ForeignKeyDefinition(
+          constraintName: 'slide_build_fk_2',
+          columns: ['elementId'],
+          referenceTable: 'slide_element',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+          deferrable: _isd.DeferrableConstraint.initiallyDeferred,
+        ),
+      ],
+      indexes: [
+        _isd.IndexDefinition(
+          indexName: 'slide_build_slide_idx',
+          tableSpace: null,
+          elements: [
+            _isd.IndexElementDefinition(
+              type: _isd.IndexElementDefinitionType.column,
+              definition: 'slideId',
+            ),
+            _isd.IndexElementDefinition(
+              type: _isd.IndexElementDefinitionType.column,
+              definition: 'sortKey',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isd.IndexDefinition(
+          indexName: 'slide_build_element_idx',
+          tableSpace: null,
+          elements: [
+            _isd.IndexElementDefinition(
+              type: _isd.IndexElementDefinitionType.column,
+              definition: 'elementId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isd.TableDefinition(
+      name: 'slide_element',
+      dartName: 'SlideElement',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isd.ColumnDefinition(
+          name: 'id',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+          columnDefault: 'random_v7',
+        ),
+        _isd.ColumnDefinition(
+          name: 'spaceId',
+          columnType: _isd.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'slideId',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'layoutId',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'masterId',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'parentId',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'kind',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'wonky_sync_models:SlideElementKind',
+        ),
+        _isd.ColumnDefinition(
+          name: 'name',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'x',
+          columnType: _isd.ColumnType.doublePrecision,
+          isNullable: true,
+          dartType: 'double?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'y',
+          columnType: _isd.ColumnType.doublePrecision,
+          isNullable: true,
+          dartType: 'double?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'width',
+          columnType: _isd.ColumnType.doublePrecision,
+          isNullable: true,
+          dartType: 'double?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'height',
+          columnType: _isd.ColumnType.doublePrecision,
+          isNullable: true,
+          dartType: 'double?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'rotation',
+          columnType: _isd.ColumnType.doublePrecision,
+          isNullable: true,
+          dartType: 'double?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'flipH',
+          columnType: _isd.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _isd.ColumnDefinition(
+          name: 'flipV',
+          columnType: _isd.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _isd.ColumnDefinition(
+          name: 'zKey',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isd.ColumnDefinition(
+          name: 'readingKey',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'locked',
+          columnType: _isd.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _isd.ColumnDefinition(
+          name: 'hidden',
+          columnType: _isd.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _isd.ColumnDefinition(
+          name: 'placeholderType',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'wonky_sync_models:PlaceholderType?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'placeholderOf',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'matchKey',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isd.ColumnDefinition(
+          name: 'text',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'textStyleJson',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'fillJson',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'strokeJson',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'effectsJson',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'opacity',
+          columnType: _isd.ColumnType.doublePrecision,
+          isNullable: true,
+          dartType: 'double?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'dataJson',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'linkJson',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'altText',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'decorative',
+          columnType: _isd.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _isd.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isd.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isd.ForeignKeyDefinition(
+          constraintName: 'slide_element_fk_0',
+          columns: ['spaceId'],
+          referenceTable: 'offline_sync_spaces',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+        _isd.ForeignKeyDefinition(
+          constraintName: 'slide_element_fk_1',
+          columns: ['slideId'],
+          referenceTable: 'slide',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+          deferrable: _isd.DeferrableConstraint.initiallyDeferred,
+        ),
+        _isd.ForeignKeyDefinition(
+          constraintName: 'slide_element_fk_2',
+          columns: ['layoutId'],
+          referenceTable: 'slide_layout',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+          deferrable: _isd.DeferrableConstraint.initiallyDeferred,
+        ),
+        _isd.ForeignKeyDefinition(
+          constraintName: 'slide_element_fk_3',
+          columns: ['masterId'],
+          referenceTable: 'slide_master',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+          deferrable: _isd.DeferrableConstraint.initiallyDeferred,
+        ),
+        _isd.ForeignKeyDefinition(
+          constraintName: 'slide_element_fk_4',
+          columns: ['parentId'],
+          referenceTable: 'slide_element',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+          deferrable: _isd.DeferrableConstraint.initiallyDeferred,
+        ),
+      ],
+      indexes: [
+        _isd.IndexDefinition(
+          indexName: 'slide_element_slide_idx',
+          tableSpace: null,
+          elements: [
+            _isd.IndexElementDefinition(
+              type: _isd.IndexElementDefinitionType.column,
+              definition: 'slideId',
+            ),
+            _isd.IndexElementDefinition(
+              type: _isd.IndexElementDefinitionType.column,
+              definition: 'zKey',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isd.IndexDefinition(
+          indexName: 'slide_element_layout_idx',
+          tableSpace: null,
+          elements: [
+            _isd.IndexElementDefinition(
+              type: _isd.IndexElementDefinitionType.column,
+              definition: 'layoutId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isd.IndexDefinition(
+          indexName: 'slide_element_master_idx',
+          tableSpace: null,
+          elements: [
+            _isd.IndexElementDefinition(
+              type: _isd.IndexElementDefinitionType.column,
+              definition: 'masterId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isd.IndexDefinition(
+          indexName: 'slide_element_parent_idx',
+          tableSpace: null,
+          elements: [
+            _isd.IndexElementDefinition(
+              type: _isd.IndexElementDefinitionType.column,
+              definition: 'parentId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isd.TableDefinition(
+      name: 'slide_group',
+      dartName: 'SlideGroup',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isd.ColumnDefinition(
+          name: 'id',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+          columnDefault: 'random_v7',
+        ),
+        _isd.ColumnDefinition(
+          name: 'spaceId',
+          columnType: _isd.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'deckId',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isd.ColumnDefinition(
+          name: 'title',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isd.ColumnDefinition(
+          name: 'sortKey',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isd.ColumnDefinition(
+          name: 'parentId',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'color',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'skipped',
+          columnType: _isd.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _isd.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isd.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isd.ForeignKeyDefinition(
+          constraintName: 'slide_group_fk_0',
+          columns: ['spaceId'],
+          referenceTable: 'offline_sync_spaces',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+        _isd.ForeignKeyDefinition(
+          constraintName: 'slide_group_fk_1',
+          columns: ['deckId'],
+          referenceTable: 'deck',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+          deferrable: _isd.DeferrableConstraint.initiallyDeferred,
+        ),
+      ],
+      indexes: [
+        _isd.IndexDefinition(
+          indexName: 'slide_group_order_idx',
+          tableSpace: null,
+          elements: [
+            _isd.IndexElementDefinition(
+              type: _isd.IndexElementDefinitionType.column,
+              definition: 'deckId',
+            ),
+            _isd.IndexElementDefinition(
+              type: _isd.IndexElementDefinitionType.column,
+              definition: 'sortKey',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isd.TableDefinition(
+      name: 'slide_layout',
+      dartName: 'SlideLayout',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isd.ColumnDefinition(
+          name: 'id',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+          columnDefault: 'random_v7',
+        ),
+        _isd.ColumnDefinition(
+          name: 'spaceId',
+          columnType: _isd.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'masterId',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isd.ColumnDefinition(
+          name: 'name',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isd.ColumnDefinition(
+          name: 'key',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'sortKey',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isd.ColumnDefinition(
+          name: 'backgroundJson',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'hideMasterElements',
+          columnType: _isd.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _isd.ColumnDefinition(
+          name: 'hidden',
+          columnType: _isd.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _isd.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isd.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isd.ForeignKeyDefinition(
+          constraintName: 'slide_layout_fk_0',
+          columns: ['spaceId'],
+          referenceTable: 'offline_sync_spaces',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+        _isd.ForeignKeyDefinition(
+          constraintName: 'slide_layout_fk_1',
+          columns: ['masterId'],
+          referenceTable: 'slide_master',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+          deferrable: _isd.DeferrableConstraint.initiallyDeferred,
+        ),
+      ],
+      indexes: [
+        _isd.IndexDefinition(
+          indexName: 'slide_layout_master_idx',
+          tableSpace: null,
+          elements: [
+            _isd.IndexElementDefinition(
+              type: _isd.IndexElementDefinitionType.column,
+              definition: 'masterId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isd.TableDefinition(
+      name: 'slide_master',
+      dartName: 'SlideMaster',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isd.ColumnDefinition(
+          name: 'id',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+          columnDefault: 'random_v7',
+        ),
+        _isd.ColumnDefinition(
+          name: 'spaceId',
+          columnType: _isd.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'themeId',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isd.ColumnDefinition(
+          name: 'name',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isd.ColumnDefinition(
+          name: 'sortKey',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isd.ColumnDefinition(
+          name: 'backgroundJson',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isd.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isd.ForeignKeyDefinition(
+          constraintName: 'slide_master_fk_0',
+          columns: ['spaceId'],
+          referenceTable: 'offline_sync_spaces',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+        _isd.ForeignKeyDefinition(
+          constraintName: 'slide_master_fk_1',
+          columns: ['themeId'],
+          referenceTable: 'deck_theme',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+          deferrable: _isd.DeferrableConstraint.initiallyDeferred,
+        ),
+      ],
+      indexes: [
+        _isd.IndexDefinition(
+          indexName: 'slide_master_theme_idx',
+          tableSpace: null,
+          elements: [
+            _isd.IndexElementDefinition(
+              type: _isd.IndexElementDefinitionType.column,
+              definition: 'themeId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isd.TableDefinition(
+      name: 'slide_table_axis',
+      dartName: 'SlideTableAxis',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isd.ColumnDefinition(
+          name: 'id',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+          columnDefault: 'random_v7',
+        ),
+        _isd.ColumnDefinition(
+          name: 'spaceId',
+          columnType: _isd.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'elementId',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isd.ColumnDefinition(
+          name: 'dimension',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'wonky_sync_models:TableDimension',
+        ),
+        _isd.ColumnDefinition(
+          name: 'sortKey',
+          columnType: _isd.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isd.ColumnDefinition(
+          name: 'size',
+          columnType: _isd.ColumnType.doublePrecision,
+          isNullable: true,
+          dartType: 'double?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'header',
+          columnType: _isd.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _isd.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isd.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isd.ForeignKeyDefinition(
+          constraintName: 'slide_table_axis_fk_0',
+          columns: ['spaceId'],
+          referenceTable: 'offline_sync_spaces',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+        _isd.ForeignKeyDefinition(
+          constraintName: 'slide_table_axis_fk_1',
+          columns: ['elementId'],
+          referenceTable: 'slide_element',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+          deferrable: _isd.DeferrableConstraint.initiallyDeferred,
+        ),
+      ],
+      indexes: [
+        _isd.IndexDefinition(
+          indexName: 'slide_table_axis_element_idx',
+          tableSpace: null,
+          elements: [
+            _isd.IndexElementDefinition(
+              type: _isd.IndexElementDefinitionType.column,
+              definition: 'elementId',
+            ),
+            _isd.IndexElementDefinition(
+              type: _isd.IndexElementDefinitionType.column,
+              definition: 'sortKey',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isd.TableDefinition(
+      name: 'slide_table_cell',
+      dartName: 'SlideTableCell',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isd.ColumnDefinition(
+          name: 'id',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+          columnDefault: 'random_v7',
+        ),
+        _isd.ColumnDefinition(
+          name: 'spaceId',
+          columnType: _isd.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'elementId',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isd.ColumnDefinition(
+          name: 'rowId',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isd.ColumnDefinition(
+          name: 'columnId',
+          columnType: _isd.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isd.ColumnDefinition(
+          name: 'text',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'fill',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'borderTop',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'borderRight',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'borderBottom',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'borderLeft',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'vAlign',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'padding',
+          columnType: _isd.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'rowSpan',
+          columnType: _isd.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'colSpan',
+          columnType: _isd.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isd.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isd.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isd.ForeignKeyDefinition(
+          constraintName: 'slide_table_cell_fk_0',
+          columns: ['spaceId'],
+          referenceTable: 'offline_sync_spaces',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+        _isd.ForeignKeyDefinition(
+          constraintName: 'slide_table_cell_fk_1',
+          columns: ['elementId'],
+          referenceTable: 'slide_element',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+          deferrable: _isd.DeferrableConstraint.initiallyDeferred,
+        ),
+        _isd.ForeignKeyDefinition(
+          constraintName: 'slide_table_cell_fk_2',
+          columns: ['rowId'],
+          referenceTable: 'slide_table_axis',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+          deferrable: _isd.DeferrableConstraint.initiallyDeferred,
+        ),
+        _isd.ForeignKeyDefinition(
+          constraintName: 'slide_table_cell_fk_3',
+          columns: ['columnId'],
+          referenceTable: 'slide_table_axis',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isd.ForeignKeyAction.noAction,
+          onDelete: _isd.ForeignKeyAction.cascade,
+          matchType: null,
+          deferrable: _isd.DeferrableConstraint.initiallyDeferred,
+        ),
+      ],
+      indexes: [
+        _isd.IndexDefinition(
+          indexName: 'slide_table_cell_element_idx',
+          tableSpace: null,
+          elements: [
+            _isd.IndexElementDefinition(
+              type: _isd.IndexElementDefinitionType.column,
+              definition: 'elementId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isd.TableDefinition(
       name: 'spreadsheet',
       dartName: 'Spreadsheet',
       schema: 'public',
@@ -2703,6 +4615,66 @@ class Protocol extends _isd.DatabaseSerializationManager
     if (t == _ihygasqj.SheetRow) {
       return _ihygasqj.SheetRow.fromJson(data) as T;
     }
+    if (t == _idbbyz5o.ChartLink) {
+      return _idbbyz5o.ChartLink.fromJson(data) as T;
+    }
+    if (t == _ild4hnlk.CodeState) {
+      return _ild4hnlk.CodeState.fromJson(data) as T;
+    }
+    if (t == _i5rkrncd.Deck) {
+      return _i5rkrncd.Deck.fromJson(data) as T;
+    }
+    if (t == _iq02mgkm.DeckChangeLog) {
+      return _iq02mgkm.DeckChangeLog.fromJson(data) as T;
+    }
+    if (t == _ifho1iaj.DeckTheme) {
+      return _ifho1iaj.DeckTheme.fromJson(data) as T;
+    }
+    if (t == _i28s2inw.BuildKind) {
+      return _i28s2inw.BuildKind.fromJson(data) as T;
+    }
+    if (t == _ihn6hgce.BuildTrigger) {
+      return _ihn6hgce.BuildTrigger.fromJson(data) as T;
+    }
+    if (t == _i24j0uh3.DeckAppearance) {
+      return _i24j0uh3.DeckAppearance.fromJson(data) as T;
+    }
+    if (t == _i8b7xui8.PlaceholderType) {
+      return _i8b7xui8.PlaceholderType.fromJson(data) as T;
+    }
+    if (t == _i2w8xpqg.SlideElementKind) {
+      return _i2w8xpqg.SlideElementKind.fromJson(data) as T;
+    }
+    if (t == _ixx3p5q7.SlideSizePreset) {
+      return _ixx3p5q7.SlideSizePreset.fromJson(data) as T;
+    }
+    if (t == _i2fu17sc.TableDimension) {
+      return _i2fu17sc.TableDimension.fromJson(data) as T;
+    }
+    if (t == _iad1oxgb.Slide) {
+      return _iad1oxgb.Slide.fromJson(data) as T;
+    }
+    if (t == _i6oyv19i.SlideBuild) {
+      return _i6oyv19i.SlideBuild.fromJson(data) as T;
+    }
+    if (t == _iiliulbi.SlideElement) {
+      return _iiliulbi.SlideElement.fromJson(data) as T;
+    }
+    if (t == _ic4eqfvq.SlideGroup) {
+      return _ic4eqfvq.SlideGroup.fromJson(data) as T;
+    }
+    if (t == _i1s0dhb4.SlideLayout) {
+      return _i1s0dhb4.SlideLayout.fromJson(data) as T;
+    }
+    if (t == _ii2umwrw.SlideMaster) {
+      return _ii2umwrw.SlideMaster.fromJson(data) as T;
+    }
+    if (t == _ie2n7e76.SlideTableAxis) {
+      return _ie2n7e76.SlideTableAxis.fromJson(data) as T;
+    }
+    if (t == _iuzroerr.SlideTableCell) {
+      return _iuzroerr.SlideTableCell.fromJson(data) as T;
+    }
     if (t == _ikok0gb2.Spreadsheet) {
       return _ikok0gb2.Spreadsheet.fromJson(data) as T;
     }
@@ -2820,6 +4792,74 @@ class Protocol extends _isd.DatabaseSerializationManager
     if (t == _iss.getType<_ihygasqj.SheetRow?>()) {
       return (data != null ? _ihygasqj.SheetRow.fromJson(data) : null) as T;
     }
+    if (t == _iss.getType<_idbbyz5o.ChartLink?>()) {
+      return (data != null ? _idbbyz5o.ChartLink.fromJson(data) : null) as T;
+    }
+    if (t == _iss.getType<_ild4hnlk.CodeState?>()) {
+      return (data != null ? _ild4hnlk.CodeState.fromJson(data) : null) as T;
+    }
+    if (t == _iss.getType<_i5rkrncd.Deck?>()) {
+      return (data != null ? _i5rkrncd.Deck.fromJson(data) : null) as T;
+    }
+    if (t == _iss.getType<_iq02mgkm.DeckChangeLog?>()) {
+      return (data != null ? _iq02mgkm.DeckChangeLog.fromJson(data) : null)
+          as T;
+    }
+    if (t == _iss.getType<_ifho1iaj.DeckTheme?>()) {
+      return (data != null ? _ifho1iaj.DeckTheme.fromJson(data) : null) as T;
+    }
+    if (t == _iss.getType<_i28s2inw.BuildKind?>()) {
+      return (data != null ? _i28s2inw.BuildKind.fromJson(data) : null) as T;
+    }
+    if (t == _iss.getType<_ihn6hgce.BuildTrigger?>()) {
+      return (data != null ? _ihn6hgce.BuildTrigger.fromJson(data) : null) as T;
+    }
+    if (t == _iss.getType<_i24j0uh3.DeckAppearance?>()) {
+      return (data != null ? _i24j0uh3.DeckAppearance.fromJson(data) : null)
+          as T;
+    }
+    if (t == _iss.getType<_i8b7xui8.PlaceholderType?>()) {
+      return (data != null ? _i8b7xui8.PlaceholderType.fromJson(data) : null)
+          as T;
+    }
+    if (t == _iss.getType<_i2w8xpqg.SlideElementKind?>()) {
+      return (data != null ? _i2w8xpqg.SlideElementKind.fromJson(data) : null)
+          as T;
+    }
+    if (t == _iss.getType<_ixx3p5q7.SlideSizePreset?>()) {
+      return (data != null ? _ixx3p5q7.SlideSizePreset.fromJson(data) : null)
+          as T;
+    }
+    if (t == _iss.getType<_i2fu17sc.TableDimension?>()) {
+      return (data != null ? _i2fu17sc.TableDimension.fromJson(data) : null)
+          as T;
+    }
+    if (t == _iss.getType<_iad1oxgb.Slide?>()) {
+      return (data != null ? _iad1oxgb.Slide.fromJson(data) : null) as T;
+    }
+    if (t == _iss.getType<_i6oyv19i.SlideBuild?>()) {
+      return (data != null ? _i6oyv19i.SlideBuild.fromJson(data) : null) as T;
+    }
+    if (t == _iss.getType<_iiliulbi.SlideElement?>()) {
+      return (data != null ? _iiliulbi.SlideElement.fromJson(data) : null) as T;
+    }
+    if (t == _iss.getType<_ic4eqfvq.SlideGroup?>()) {
+      return (data != null ? _ic4eqfvq.SlideGroup.fromJson(data) : null) as T;
+    }
+    if (t == _iss.getType<_i1s0dhb4.SlideLayout?>()) {
+      return (data != null ? _i1s0dhb4.SlideLayout.fromJson(data) : null) as T;
+    }
+    if (t == _iss.getType<_ii2umwrw.SlideMaster?>()) {
+      return (data != null ? _ii2umwrw.SlideMaster.fromJson(data) : null) as T;
+    }
+    if (t == _iss.getType<_ie2n7e76.SlideTableAxis?>()) {
+      return (data != null ? _ie2n7e76.SlideTableAxis.fromJson(data) : null)
+          as T;
+    }
+    if (t == _iss.getType<_iuzroerr.SlideTableCell?>()) {
+      return (data != null ? _iuzroerr.SlideTableCell.fromJson(data) : null)
+          as T;
+    }
     if (t == _iss.getType<_ikok0gb2.Spreadsheet?>()) {
       return (data != null ? _ikok0gb2.Spreadsheet.fromJson(data) : null) as T;
     }
@@ -2861,6 +4901,26 @@ class Protocol extends _isd.DatabaseSerializationManager
       _ig4g76zp.Sheet => 'Sheet',
       _isl6cgsg.SheetColumn => 'SheetColumn',
       _ihygasqj.SheetRow => 'SheetRow',
+      _idbbyz5o.ChartLink => 'ChartLink',
+      _ild4hnlk.CodeState => 'CodeState',
+      _i5rkrncd.Deck => 'Deck',
+      _iq02mgkm.DeckChangeLog => 'DeckChangeLog',
+      _ifho1iaj.DeckTheme => 'DeckTheme',
+      _i28s2inw.BuildKind => 'BuildKind',
+      _ihn6hgce.BuildTrigger => 'BuildTrigger',
+      _i24j0uh3.DeckAppearance => 'DeckAppearance',
+      _i8b7xui8.PlaceholderType => 'PlaceholderType',
+      _i2w8xpqg.SlideElementKind => 'SlideElementKind',
+      _ixx3p5q7.SlideSizePreset => 'SlideSizePreset',
+      _i2fu17sc.TableDimension => 'TableDimension',
+      _iad1oxgb.Slide => 'Slide',
+      _i6oyv19i.SlideBuild => 'SlideBuild',
+      _iiliulbi.SlideElement => 'SlideElement',
+      _ic4eqfvq.SlideGroup => 'SlideGroup',
+      _i1s0dhb4.SlideLayout => 'SlideLayout',
+      _ii2umwrw.SlideMaster => 'SlideMaster',
+      _ie2n7e76.SlideTableAxis => 'SlideTableAxis',
+      _iuzroerr.SlideTableCell => 'SlideTableCell',
       _ikok0gb2.Spreadsheet => 'Spreadsheet',
       _ => null,
     };
@@ -2942,6 +5002,46 @@ class Protocol extends _isd.DatabaseSerializationManager
         return 'SheetColumn';
       case _ihygasqj.SheetRow():
         return 'SheetRow';
+      case _idbbyz5o.ChartLink():
+        return 'ChartLink';
+      case _ild4hnlk.CodeState():
+        return 'CodeState';
+      case _i5rkrncd.Deck():
+        return 'Deck';
+      case _iq02mgkm.DeckChangeLog():
+        return 'DeckChangeLog';
+      case _ifho1iaj.DeckTheme():
+        return 'DeckTheme';
+      case _i28s2inw.BuildKind():
+        return 'BuildKind';
+      case _ihn6hgce.BuildTrigger():
+        return 'BuildTrigger';
+      case _i24j0uh3.DeckAppearance():
+        return 'DeckAppearance';
+      case _i8b7xui8.PlaceholderType():
+        return 'PlaceholderType';
+      case _i2w8xpqg.SlideElementKind():
+        return 'SlideElementKind';
+      case _ixx3p5q7.SlideSizePreset():
+        return 'SlideSizePreset';
+      case _i2fu17sc.TableDimension():
+        return 'TableDimension';
+      case _iad1oxgb.Slide():
+        return 'Slide';
+      case _i6oyv19i.SlideBuild():
+        return 'SlideBuild';
+      case _iiliulbi.SlideElement():
+        return 'SlideElement';
+      case _ic4eqfvq.SlideGroup():
+        return 'SlideGroup';
+      case _i1s0dhb4.SlideLayout():
+        return 'SlideLayout';
+      case _ii2umwrw.SlideMaster():
+        return 'SlideMaster';
+      case _ie2n7e76.SlideTableAxis():
+        return 'SlideTableAxis';
+      case _iuzroerr.SlideTableCell():
+        return 'SlideTableCell';
       case _ikok0gb2.Spreadsheet():
         return 'Spreadsheet';
     }
@@ -3052,6 +5152,66 @@ class Protocol extends _isd.DatabaseSerializationManager
     }
     if (dataClassName == 'SheetRow') {
       return deserialize<_ihygasqj.SheetRow>(data['data']);
+    }
+    if (dataClassName == 'ChartLink') {
+      return deserialize<_idbbyz5o.ChartLink>(data['data']);
+    }
+    if (dataClassName == 'CodeState') {
+      return deserialize<_ild4hnlk.CodeState>(data['data']);
+    }
+    if (dataClassName == 'Deck') {
+      return deserialize<_i5rkrncd.Deck>(data['data']);
+    }
+    if (dataClassName == 'DeckChangeLog') {
+      return deserialize<_iq02mgkm.DeckChangeLog>(data['data']);
+    }
+    if (dataClassName == 'DeckTheme') {
+      return deserialize<_ifho1iaj.DeckTheme>(data['data']);
+    }
+    if (dataClassName == 'BuildKind') {
+      return deserialize<_i28s2inw.BuildKind>(data['data']);
+    }
+    if (dataClassName == 'BuildTrigger') {
+      return deserialize<_ihn6hgce.BuildTrigger>(data['data']);
+    }
+    if (dataClassName == 'DeckAppearance') {
+      return deserialize<_i24j0uh3.DeckAppearance>(data['data']);
+    }
+    if (dataClassName == 'PlaceholderType') {
+      return deserialize<_i8b7xui8.PlaceholderType>(data['data']);
+    }
+    if (dataClassName == 'SlideElementKind') {
+      return deserialize<_i2w8xpqg.SlideElementKind>(data['data']);
+    }
+    if (dataClassName == 'SlideSizePreset') {
+      return deserialize<_ixx3p5q7.SlideSizePreset>(data['data']);
+    }
+    if (dataClassName == 'TableDimension') {
+      return deserialize<_i2fu17sc.TableDimension>(data['data']);
+    }
+    if (dataClassName == 'Slide') {
+      return deserialize<_iad1oxgb.Slide>(data['data']);
+    }
+    if (dataClassName == 'SlideBuild') {
+      return deserialize<_i6oyv19i.SlideBuild>(data['data']);
+    }
+    if (dataClassName == 'SlideElement') {
+      return deserialize<_iiliulbi.SlideElement>(data['data']);
+    }
+    if (dataClassName == 'SlideGroup') {
+      return deserialize<_ic4eqfvq.SlideGroup>(data['data']);
+    }
+    if (dataClassName == 'SlideLayout') {
+      return deserialize<_i1s0dhb4.SlideLayout>(data['data']);
+    }
+    if (dataClassName == 'SlideMaster') {
+      return deserialize<_ii2umwrw.SlideMaster>(data['data']);
+    }
+    if (dataClassName == 'SlideTableAxis') {
+      return deserialize<_ie2n7e76.SlideTableAxis>(data['data']);
+    }
+    if (dataClassName == 'SlideTableCell') {
+      return deserialize<_iuzroerr.SlideTableCell>(data['data']);
     }
     if (dataClassName == 'Spreadsheet') {
       return deserialize<_ikok0gb2.Spreadsheet>(data['data']);
@@ -3164,6 +5324,32 @@ class Protocol extends _isd.DatabaseSerializationManager
         return _isl6cgsg.SheetColumn.t;
       case _ihygasqj.SheetRow:
         return _ihygasqj.SheetRow.t;
+      case _idbbyz5o.ChartLink:
+        return _idbbyz5o.ChartLink.t;
+      case _ild4hnlk.CodeState:
+        return _ild4hnlk.CodeState.t;
+      case _i5rkrncd.Deck:
+        return _i5rkrncd.Deck.t;
+      case _iq02mgkm.DeckChangeLog:
+        return _iq02mgkm.DeckChangeLog.t;
+      case _ifho1iaj.DeckTheme:
+        return _ifho1iaj.DeckTheme.t;
+      case _iad1oxgb.Slide:
+        return _iad1oxgb.Slide.t;
+      case _i6oyv19i.SlideBuild:
+        return _i6oyv19i.SlideBuild.t;
+      case _iiliulbi.SlideElement:
+        return _iiliulbi.SlideElement.t;
+      case _ic4eqfvq.SlideGroup:
+        return _ic4eqfvq.SlideGroup.t;
+      case _i1s0dhb4.SlideLayout:
+        return _i1s0dhb4.SlideLayout.t;
+      case _ii2umwrw.SlideMaster:
+        return _ii2umwrw.SlideMaster.t;
+      case _ie2n7e76.SlideTableAxis:
+        return _ie2n7e76.SlideTableAxis.t;
+      case _iuzroerr.SlideTableCell:
+        return _iuzroerr.SlideTableCell.t;
       case _ikok0gb2.Spreadsheet:
         return _ikok0gb2.Spreadsheet.t;
     }

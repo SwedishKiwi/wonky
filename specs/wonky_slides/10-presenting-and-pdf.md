@@ -435,7 +435,7 @@ the navigator's optional duration badges (View › *Show timings*, P1), and MCP 
 
 ## 11. PDF export
 
-### 11.1 Options (`PdfExportOptions`; dialog, MCP and last-used defaults per user)
+### 11.1 Options (`SlidesPdfOptions`; dialog, MCP and last-used defaults per user)
 
 | Option | Values | Default |
 |--------|--------|---------|
@@ -483,8 +483,9 @@ as authored.
 
 ### 11.3 Rendering pipeline (`wonky_slides_core/lib/src/export/pdf/`)
 
-`SlidesPdfRenderer.render(DeckModel deck, PdfExportOptions o, ExportResources r) →
-PdfExportResult {bytes, pageCount, warnings}` — pure Dart, low-level `pdf` API (`PdfDocument`,
+`SlidesPdfRenderer.render(DeckModel deck, SlidesPdfOptions o, SlidesExportResources r) →
+SlidesPdfResult {bytes, pageCount, warnings}` (contract in `package:wonky_slides_core/interfaces.dart`,
+12 §5.7; `Slides…` names because Write exports `PdfExportOptions`) — pure Dart, low-level `pdf` API (`PdfDocument`,
 `PdfGraphics`) like Write's exporter (Write 07 §5.2):
 
 1. Resolve the page list: slides in range (minus skipped unless included) → per slide the frames

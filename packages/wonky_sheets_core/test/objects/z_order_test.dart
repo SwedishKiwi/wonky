@@ -1,6 +1,6 @@
 import 'package:test/test.dart';
-import 'package:wonky_sheets_core/src/charts/scene/geometry.dart';
 import 'package:wonky_sheets_core/src/objects/objects.dart';
+import 'package:wonky_charts/wonky_charts.dart';
 
 void main() {
   const overlapA = ChartRect(0, 0, 100, 100);

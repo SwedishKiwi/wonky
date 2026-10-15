@@ -14,6 +14,9 @@ import '../../platform/config/wonky_config.dart';
 import '../../platform/drive/drive_service.dart';
 import '../../platform/files/file_service.dart';
 import '../ot/document_store.dart';
+import '../../platform/storage/content_sizes.dart';
+import '../../platform/storage/storage_hooks.dart';
+import '../../platform/storage/storage_service.dart';
 
 /// Server-side document imports (Write 07 §3.2): Markdown (and Markdown
 /// zips), plain text, HTML, DOCX, ODT and RTF are converted with the shared
@@ -183,12 +186,23 @@ abstract final class WriteImportService {
     UuidValue? parentUuid,
     Map<String, dynamic> options = const {},
     Map<String, Object?> activityExtra = const {},
+    String quotaReason = QuotaReason.import,
   }) async {
+    // (v2) Quota (Drive 03 §7.2): the source size before the work, the
+    // real content size (text + images) before anything is stored.
+    await StorageHooks.checkCaller(session, actor, bytes.length, quotaReason);
     final converted = await convert(
       bytes,
       fileName: fileName,
       format: format,
       options: options,
+    );
+    await StorageHooks.checkCaller(
+      session,
+      actor,
+      DocumentSize.of(converted.delta) +
+          converted.images.fold<int>(0, (n, i) => n + i.bytes.length),
+      quotaReason,
     );
     final (result, images) = await storeImages(session, actor, converted);
     final warnings = warningsOf(result);
@@ -218,14 +232,14 @@ abstract final class WriteImportService {
         'importedFrom': _sourceFormat(format, fileName),
         ...activityExtra,
       },
+      quotaReason: null, // checked above
     );
     final doc = await DocumentStore.byUuid(session, view.contentRef!);
     if (doc != null) {
       final item = await DriveItem.db.findById(session, doc.itemId);
       if (item != null) {
-        for (final f in images) {
-          await FileService.attachToItem(session, f, item);
-        }
+        // The imported images count for the new document's owner.
+        await StorageHooks.attachImages(session, item, images);
       }
       if (warnings.isNotEmpty) {
         await DocumentImportReport.db.insertRow(

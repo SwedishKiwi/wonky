@@ -18,7 +18,7 @@ enum WonkyProduct {
   /// Wonky Sheets.
   sheets('Wonky Sheets'),
 
-  /// Wonky Slides (not built yet).
+  /// Wonky Slides.
   slides('Wonky Slides');
 
   const WonkyProduct(this.label);

@@ -52,6 +52,21 @@ abstract class DriveRepository {
     required String name,
   });
 
+  /// Creates a blank presentation on the server (online; Slides 02 §9.3).
+  Future<DriveItemView> createPresentation({
+    UuidValue? parentUuid,
+    required String name,
+    UuidValue? templateUuid,
+  });
+
+  /// Registers a deck created locally in a reserved `deck` space
+  /// (idempotent; queued while offline by the cached repository).
+  Future<DriveItemView> registerPresentation({
+    required UuidValue spaceUuid,
+    UuidValue? parentUuid,
+    required String name,
+  });
+
   Future<DriveItemView> rename(UuidValue uuid, String name);
 
   Future<DriveItemView> updateDescription(UuidValue uuid, String? description);
@@ -176,6 +191,24 @@ class ServerDriveRepository implements DriveRepository {
     required String name,
   }) => api.guard(
     (c) => c.drive.registerSpreadsheet(spaceUuid, parentUuid, name),
+  );
+
+  @override
+  Future<DriveItemView> createPresentation({
+    UuidValue? parentUuid,
+    required String name,
+    UuidValue? templateUuid,
+  }) => api.guard(
+    (c) => c.drive.createPresentation(parentUuid, name, templateUuid),
+  );
+
+  @override
+  Future<DriveItemView> registerPresentation({
+    required UuidValue spaceUuid,
+    UuidValue? parentUuid,
+    required String name,
+  }) => api.guard(
+    (c) => c.drive.registerPresentation(spaceUuid, parentUuid, name),
   );
 
   @override

@@ -5,7 +5,7 @@ import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
 
-import '../../fonts/font_registry.dart';
+import 'package:wonky_fonts/wonky_fonts.dart';
 import '../model/color_ref.dart';
 import '../model/json_util.dart';
 import '../model/length.dart';

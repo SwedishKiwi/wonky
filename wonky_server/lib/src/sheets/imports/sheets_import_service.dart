@@ -18,6 +18,9 @@ import '../../platform/drive/drive_service.dart';
 import '../../platform/files/file_service.dart';
 import '../../platform/sharing/access_service.dart';
 import '../mcp/sheets_bulk_writer.dart';
+import '../../platform/storage/content_sizes.dart';
+import '../../platform/storage/storage_hooks.dart';
+import '../../platform/storage/storage_service.dart';
 
 /// Server-side spreadsheet imports (Sheets 11 §3.3): CSV/TSV/XLSX/ODS bytes
 /// → IR (`SheetsFileImporter`) → `IrToRowsPlanner` (location *Create new
@@ -108,6 +111,13 @@ abstract final class SheetsImportService {
           : (base.isEmpty ? 'Imported spreadsheet' : base),
     );
     final opts = options.copyWith(location: core.ImportLocation.createNew);
+    // (v2) Quota before any work (Drive 03 §7.2); no item on refusal.
+    await StorageHooks.checkCaller(
+      session,
+      actor,
+      bytes.length,
+      QuotaReason.import,
+    );
     final parsed = await parse(
       bytes,
       fileName: fileName,
@@ -189,20 +199,22 @@ abstract final class SheetsImportService {
       parentUuid: parentUuid,
       name: title,
     );
-    if (result.imageUploads.isNotEmpty) {
-      final item = await DriveItem.db.findFirstRow(
-        session,
-        where: (t) => t.uuid.equals(view.uuid),
-      );
-      if (item != null) {
-        for (final img in result.imageUploads) {
-          final f = await FileService.byUuid(
-            session,
-            UuidValue.fromString(img.fileUuid),
-          );
-          if (f != null) await FileService.attachToItem(session, f, item);
-        }
+    final item = await DriveItem.db.findFirstRow(
+      session,
+      where: (t) => t.uuid.equals(view.uuid),
+    );
+    if (item != null) {
+      final images = <StoredFile>[];
+      for (final img in result.imageUploads) {
+        final f = await FileService.byUuid(
+          session,
+          UuidValue.fromString(img.fileUuid),
+        );
+        if (f != null) images.add(f);
       }
+      // The images and the content count for the importer (Drive 03 §2).
+      await StorageHooks.attachImages(session, item, images);
+      await ContentSizes.refresh(session, item);
     }
     return ImportReportView(
       item: view,

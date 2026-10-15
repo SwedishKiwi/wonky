@@ -203,15 +203,17 @@ MenuRoot writeMenus(ShellMenus shell, {WriteLocalizations? l10n}) {
           _c('write.prefs.setCopyAsMarkdown'),
           _c('write.prefs.setSelectionToolbar'),
           MenuSpec.separator(),
+          // (v2, suite 04 §4) Write settings and Wonky Work settings.
+          _c('shell.settings.openApp', menuId: 'tools.writePrefs.all'),
           _c(
             'shell.settings.open',
-            label: l.menuAllPreferences,
-            args: {'section': 'write'},
-            menuId: 'tools.writePrefs.all',
+            args: {'section': 'account'},
+            menuId: 'tools.writePrefs.work',
           ),
         ]),
       ])
-      .remove('tools.preferences');
+      .remove(ShellMenuIds.toolsAppSettings)
+      .remove(ShellMenuIds.toolsWorkSettings);
 
   // ---- Help (§7.7) ----
   root = root.insertAfter('shell.help.shortcuts', [

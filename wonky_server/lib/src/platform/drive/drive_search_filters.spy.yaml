@@ -7,3 +7,5 @@ fields:
   modifiedBefore: DateTime?
   ### Only items shared with or by the caller.
   sharedOnly: bool, default=false
+  ### (v2) Files only: restrict `file` items to these categories. Null = all.
+  fileCategories: List<FileCategory>?

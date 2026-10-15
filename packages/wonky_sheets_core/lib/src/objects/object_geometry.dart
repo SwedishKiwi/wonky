@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
-import '../charts/scene/geometry.dart';
+import 'package:wonky_charts/wonky_charts.dart';
+
 import '../model/axis_index.dart';
 import 'anchor.dart';
 

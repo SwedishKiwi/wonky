@@ -115,12 +115,16 @@ class OfflineSyncDatabase implements Database {
   }
 
   /// Runs a symmetric CRDT sync session over a bidirectional event stream.
+  ///
+  /// [spaceFilter] (patch OS-8, authoritative peers only) narrows the shared
+  /// spaces the session syncs; see [OfflineSyncEngine.sync].
   Stream<OfflineSyncStreamEvent> sync({
     required Stream<OfflineSyncStreamEvent> inbound,
     required OfflineSyncPeerMode mode,
     UuidValue? userId,
     bool once = false,
     OfflineSyncOnMergeSuccess? onMergeSuccess,
+    OfflineSyncSpaceFilter? spaceFilter,
   }) async* {
     await _ensureInitialized();
     final effectiveUserId = await _requireUserId(userId);
@@ -131,6 +135,7 @@ class OfflineSyncDatabase implements Database {
       once: once,
       onMergeSuccess: onMergeSuccess,
       mode: mode,
+      spaceFilter: spaceFilter,
     );
   }
 

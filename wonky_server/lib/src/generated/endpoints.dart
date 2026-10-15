@@ -42,6 +42,10 @@ import 'package:wonky_server/src/generated/platform/drive/drive_search_filters.d
     as _iub85lgd;
 import 'package:wonky_server/src/generated/platform/drive/drive_sort.dart'
     as _il6plm80;
+import 'package:wonky_server/src/generated/platform/drive/file_upload_request.dart'
+    as _i6y6tdjl;
+import 'package:wonky_server/src/generated/platform/drive/storage_list_filter.dart'
+    as _i7yliwmh;
 import 'package:wonky_server/src/generated/platform/drive/template_category.dart'
     as _inlkiawi;
 import 'package:wonky_server/src/generated/platform/feedback/feedback_submission.dart'
@@ -92,6 +96,8 @@ import '../sheets/endpoints/sheets_sync_endpoint.dart' as _iijmdr93;
 import '../sheets/imports/sheets_import_endpoint.dart' as _ixh3mo4r;
 import '../sheets/scripts/script_endpoint.dart' as _in9oll5w;
 import '../sheets/versions/sheets_version_endpoint.dart' as _izzz2y3b;
+import '../slides/endpoints/slides_endpoint.dart' as _i90mpuoj;
+import '../slides/endpoints/slides_sync_endpoint.dart' as _i7tlujv0;
 import '../write/endpoints/document_endpoint.dart' as _iiabxp2u;
 import '../write/endpoints/write_export_endpoint.dart' as _ia4kadx2;
 import '../write/endpoints/write_history_endpoint.dart' as _izdjh3zj;
@@ -244,6 +250,18 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'sheetsVersion',
+          null,
+        ),
+      'slides': _i90mpuoj.SlidesEndpoint()
+        ..initialize(
+          server,
+          'slides',
+          null,
+        ),
+      'slidesSync': _i7tlujv0.SlidesSyncEndpoint()
+        ..initialize(
+          server,
+          'slidesSync',
           null,
         ),
       'document': _iiabxp2u.DocumentEndpoint()
@@ -1841,6 +1859,281 @@ class Endpoints extends _is.EndpointDispatch {
                 params['options'],
               ),
         ),
+        'registerPresentation': _is.MethodConnector(
+          name: 'registerPresentation',
+          params: {
+            'spaceUuid': _is.ParameterDescription(
+              name: 'spaceUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'parentUuid': _is.ParameterDescription(
+              name: 'parentUuid',
+              type: _is.getType<_is.UuidValue?>(),
+              nullable: true,
+            ),
+            'name': _is.ParameterDescription(
+              name: 'name',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['drive'] as _ijanxtjh.DriveEndpoint)
+                  .registerPresentation(
+                    session,
+                    params['spaceUuid'],
+                    params['parentUuid'],
+                    params['name'],
+                  ),
+        ),
+        'createPresentation': _is.MethodConnector(
+          name: 'createPresentation',
+          params: {
+            'parentUuid': _is.ParameterDescription(
+              name: 'parentUuid',
+              type: _is.getType<_is.UuidValue?>(),
+              nullable: true,
+            ),
+            'name': _is.ParameterDescription(
+              name: 'name',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'templateUuid': _is.ParameterDescription(
+              name: 'templateUuid',
+              type: _is.getType<_is.UuidValue?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['drive'] as _ijanxtjh.DriveEndpoint)
+                  .createPresentation(
+                    session,
+                    params['parentUuid'],
+                    params['name'],
+                    params['templateUuid'],
+                  ),
+        ),
+        'createFileUpload': _is.MethodConnector(
+          name: 'createFileUpload',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_i6y6tdjl.FileUploadRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['drive'] as _ijanxtjh.DriveEndpoint)
+                  .createFileUpload(
+                    session,
+                    params['request'],
+                  ),
+        ),
+        'completeFileUpload': _is.MethodConnector(
+          name: 'completeFileUpload',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['drive'] as _ijanxtjh.DriveEndpoint)
+                  .completeFileUpload(
+                    session,
+                    params['itemUuid'],
+                  ),
+        ),
+        'cancelFileUpload': _is.MethodConnector(
+          name: 'cancelFileUpload',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['drive'] as _ijanxtjh.DriveEndpoint)
+                  .cancelFileUpload(
+                    session,
+                    params['itemUuid'],
+                  ),
+        ),
+        'fileUploadStatus': _is.MethodConnector(
+          name: 'fileUploadStatus',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['drive'] as _ijanxtjh.DriveEndpoint)
+                  .fileUploadStatus(
+                    session,
+                    params['itemUuid'],
+                  ),
+        ),
+        'convertFile': _is.MethodConnector(
+          name: 'convertFile',
+          params: {
+            'fileItemUuid': _is.ParameterDescription(
+              name: 'fileItemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'target': _is.ParameterDescription(
+              name: 'target',
+              type: _is.getType<_i0549mj7.DriveItemKind>(),
+              nullable: false,
+            ),
+            'options': _is.ParameterDescription(
+              name: 'options',
+              type: _is.getType<_iyihga8r.DriveImportOptions>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['drive'] as _ijanxtjh.DriveEndpoint).convertFile(
+                    session,
+                    params['fileItemUuid'],
+                    params['target'],
+                    params['options'],
+                  ),
+        ),
+        'fileContentUrl': _is.MethodConnector(
+          name: 'fileContentUrl',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'download': _is.ParameterDescription(
+              name: 'download',
+              type: _is.getType<bool>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['drive'] as _ijanxtjh.DriveEndpoint)
+                  .fileContentUrl(
+                    session,
+                    params['itemUuid'],
+                    download: params['download'],
+                  ),
+        ),
+        'updateFileMeta': _is.MethodConnector(
+          name: 'updateFileMeta',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'fileMetaJson': _is.ParameterDescription(
+              name: 'fileMetaJson',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['drive'] as _ijanxtjh.DriveEndpoint)
+                  .updateFileMeta(
+                    session,
+                    params['itemUuid'],
+                    params['fileMetaJson'],
+                  ),
+        ),
+        'checkRoom': _is.MethodConnector(
+          name: 'checkRoom',
+          params: {
+            'bytes': _is.ParameterDescription(
+              name: 'bytes',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['drive'] as _ijanxtjh.DriveEndpoint).checkRoom(
+                    session,
+                    params['bytes'],
+                    params['itemUuid'],
+                  ),
+        ),
+        'listByStorage': _is.MethodConnector(
+          name: 'listByStorage',
+          params: {
+            'filter': _is.ParameterDescription(
+              name: 'filter',
+              type: _is.getType<_i7yliwmh.StorageListFilter>(),
+              nullable: false,
+            ),
+            'cursor': _is.ParameterDescription(
+              name: 'cursor',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+            'limit': _is.ParameterDescription(
+              name: 'limit',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['drive'] as _ijanxtjh.DriveEndpoint).listByStorage(
+                    session,
+                    params['filter'],
+                    params['cursor'],
+                    params['limit'],
+                  ),
+        ),
         'storageUsage': _is.MethodConnector(
           name: 'storageUsage',
           params: {},
@@ -2102,6 +2395,37 @@ class Endpoints extends _is.EndpointDispatch {
                 session,
                 params['fileUuid'],
               ),
+        ),
+        'copyToItem': _is.MethodConnector(
+          name: 'copyToItem',
+          params: {
+            'sourceFileUuid': _is.ParameterDescription(
+              name: 'sourceFileUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'newFileUuid': _is.ParameterDescription(
+              name: 'newFileUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'targetItemUuid': _is.ParameterDescription(
+              name: 'targetItemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['file'] as _iokth3bn.FileEndpoint).copyToItem(
+                    session,
+                    params['sourceFileUuid'],
+                    params['newFileUuid'],
+                    params['targetItemUuid'],
+                  ),
         ),
         'getUrls': _is.MethodConnector(
           name: 'getUrls',
@@ -4262,6 +4586,183 @@ class Endpoints extends _is.EndpointDispatch {
                         params['copyComments'],
                         params['copySharing'],
                       ),
+        ),
+      },
+    );
+    connectors['slides'] = _is.EndpointConnector(
+      name: 'slides',
+      endpoint: endpoints['slides']!,
+      methodConnectors: {
+        'reserveSpaces': _is.MethodConnector(
+          name: 'reserveSpaces',
+          params: {
+            'count': _is.ParameterDescription(
+              name: 'count',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['slides'] as _i90mpuoj.SlidesEndpoint)
+                  .reserveSpaces(
+                    session,
+                    params['count'],
+                  ),
+        ),
+        'subscribe': _is.MethodConnector(
+          name: 'subscribe',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['slides'] as _i90mpuoj.SlidesEndpoint).subscribe(
+                    session,
+                    params['itemUuid'],
+                  ),
+        ),
+        'unsubscribe': _is.MethodConnector(
+          name: 'unsubscribe',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['slides'] as _i90mpuoj.SlidesEndpoint).unsubscribe(
+                    session,
+                    params['itemUuid'],
+                  ),
+        ),
+        'ensureSubscribed': _is.MethodConnector(
+          name: 'ensureSubscribed',
+          params: {
+            'spaces': _is.ParameterDescription(
+              name: 'spaces',
+              type: _is.getType<List<_is.UuidValue>>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['slides'] as _i90mpuoj.SlidesEndpoint)
+                  .ensureSubscribed(
+                    session,
+                    params['spaces'],
+                  ),
+        ),
+        'spaceStats': _is.MethodConnector(
+          name: 'spaceStats',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['slides'] as _i90mpuoj.SlidesEndpoint).spaceStats(
+                    session,
+                    params['itemUuid'],
+                  ),
+        ),
+        'revertChange': _is.MethodConnector(
+          name: 'revertChange',
+          params: {
+            'changeId': _is.ParameterDescription(
+              name: 'changeId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['slides'] as _i90mpuoj.SlidesEndpoint)
+                  .revertChange(
+                    session,
+                    params['changeId'],
+                  ),
+        ),
+        'reapplyChange': _is.MethodConnector(
+          name: 'reapplyChange',
+          params: {
+            'changeId': _is.ParameterDescription(
+              name: 'changeId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['slides'] as _i90mpuoj.SlidesEndpoint)
+                  .reapplyChange(
+                    session,
+                    params['changeId'],
+                  ),
+        ),
+      },
+    );
+    connectors['slidesSync'] = _is.EndpointConnector(
+      name: 'slidesSync',
+      endpoint: endpoints['slidesSync']!,
+      methodConnectors: {
+        'sync': _is.MethodStreamConnector(
+          name: 'sync',
+          params: {
+            'once': _is.ParameterDescription(
+              name: 'once',
+              type: _is.getType<bool>(),
+              nullable: false,
+            ),
+          },
+          streamParams: {
+            'changes':
+                _is.StreamParameterDescription<
+                  _izehhkf5.OfflineSyncStreamEvent
+                >(
+                  name: 'changes',
+                  nullable: false,
+                ),
+          },
+          returnType: _is.MethodStreamReturnType.streamType,
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+                Map<String, Stream> streamParams,
+              ) => (endpoints['slidesSync'] as _i7tlujv0.SlidesSyncEndpoint)
+                  .sync(
+                    session,
+                    changes: streamParams['changes']!
+                        .cast<_izehhkf5.OfflineSyncStreamEvent>(),
+                    once: params['once'],
+                  ),
         ),
       },
     );

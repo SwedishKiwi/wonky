@@ -779,6 +779,82 @@ class WriteLocalizationsEn extends WriteLocalizations {
   String get settingsDocumentThemes => 'Document themes';
 
   @override
+  String get settingsWriteEditor => 'Editor';
+
+  @override
+  String get settingsWritePage => 'Page & export';
+
+  @override
+  String get settingsWriteSpelling => 'Spelling';
+
+  @override
+  String get settingsWriteTyping => 'Typing';
+
+  @override
+  String get settingsWriteDisplay => 'Display';
+
+  @override
+  String get settingsWriteDefaultMode => 'Default mode for shared documents';
+
+  @override
+  String get settingsWriteDefaultModeHint =>
+      'How documents you can edit open when someone shares them with you.';
+
+  @override
+  String get settingsWritePageGroup => 'Page';
+
+  @override
+  String get settingsWriteDefaultLayout => 'Default layout';
+
+  @override
+  String get settingsWriteDefaultPageSetup => 'Default page setup';
+
+  @override
+  String get settingsWritePageSetupSaved =>
+      'Saved with File › Page setup › Set as default.';
+
+  @override
+  String get settingsWritePageSetupHint =>
+      'Save one with File › Page setup › Set as default in a document.';
+
+  @override
+  String get settingsWriteResetPageSetup => 'Reset';
+
+  @override
+  String get settingsWriteExportGroup => 'Export';
+
+  @override
+  String get settingsWriteSpellingGroup => 'Spell check';
+
+  @override
+  String get settingsWriteDictionary => 'Personal dictionary';
+
+  @override
+  String get settingsWriteDictionaryHint =>
+      'Words you add from the spelling menu are never marked as misspelled.';
+
+  @override
+  String get settingsWriteDictionaryEmpty => 'No words yet.';
+
+  @override
+  String settingsWriteDictionaryRemove(String word) {
+    return 'Remove $word';
+  }
+
+  @override
+  String get cmdPrefsSetDefaultLayout => 'Default layout of new documents';
+
+  @override
+  String get cmdPrefsSetExportFormat => 'Default export format';
+
+  @override
+  String get cmdPrefsResetPageSetup => 'Reset default page setup';
+
+  @override
+  String get cmdPrefsRemoveDictionaryWord =>
+      'Remove word from personal dictionary';
+
+  @override
   String get cmdCommentsPrevious => 'Previous comment';
 
   @override
@@ -4154,6 +4230,32 @@ class WriteLocalizationsEn extends WriteLocalizations {
   String get importBannerDismiss => 'Dismiss';
 
   @override
+  String get importRouteOffline =>
+      'You\'re offline. Connect to the internet to open this file in Wonky Write.';
+
+  @override
+  String get importRouteNotAFile => 'This item isn\'t an uploaded file.';
+
+  @override
+  String importRouteUnsupported(String fileName) {
+    return 'Wonky Write can\'t open “$fileName”.';
+  }
+
+  @override
+  String importRouteUploading(String fileName) {
+    return '“$fileName” is still uploading. Try again when the upload has finished.';
+  }
+
+  @override
+  String get imageNotUploadedOutOfStorage => 'Not uploaded — out of storage';
+
+  @override
+  String get imageRetry => 'Retry';
+
+  @override
+  String get imageRemove => 'Remove';
+
+  @override
   String get printNoServer => 'No server connection';
 
   @override
@@ -5044,6 +5146,84 @@ class WriteLocalizationsEnXa extends WriteLocalizationsEn {
 
   @override
   String get settingsDocumentThemes => '[Ðöçûɱéñţ ţĥéɱéš one t]';
+
+  @override
+  String get settingsWriteEditor => '[Éðîţöŕ one]';
+
+  @override
+  String get settingsWritePage => '[Þåĝé & éẋþöŕţ one]';
+
+  @override
+  String get settingsWriteSpelling => '[Šþéļļîñĝ one]';
+
+  @override
+  String get settingsWriteTyping => '[Ţýþîñĝ one]';
+
+  @override
+  String get settingsWriteDisplay => '[Ðîšþļåý one]';
+
+  @override
+  String get settingsWriteDefaultMode =>
+      '[Ðéƒåûļţ ɱöðé ƒöŕ šĥåŕéð ðöçûɱéñţš one two thr]';
+
+  @override
+  String get settingsWriteDefaultModeHint =>
+      '[Ĥöŵ ðöçûɱéñţš ýöû çåñ éðîţ öþéñ ŵĥéñ šöɱéöñé šĥåŕéš ţĥéɱ ŵîţĥ ýöû. one two three four f]';
+
+  @override
+  String get settingsWritePageGroup => '[Þåĝé on]';
+
+  @override
+  String get settingsWriteDefaultLayout => '[Ðéƒåûļţ ļåýöûţ one t]';
+
+  @override
+  String get settingsWriteDefaultPageSetup => '[Ðéƒåûļţ þåĝé šéţûþ one tw]';
+
+  @override
+  String get settingsWritePageSetupSaved =>
+      '[Šåṽéð ŵîţĥ Ƒîļé › Þåĝé šéţûþ › Šéţ åš ðéƒåûļţ. one two three]';
+
+  @override
+  String get settingsWritePageSetupHint =>
+      '[Šåṽé öñé ŵîţĥ Ƒîļé › Þåĝé šéţûþ › Šéţ åš ðéƒåûļţ îñ å ðöçûɱéñţ. one two three four]';
+
+  @override
+  String get settingsWriteResetPageSetup => '[Ŕéšéţ on]';
+
+  @override
+  String get settingsWriteExportGroup => '[Éẋþöŕţ one]';
+
+  @override
+  String get settingsWriteSpellingGroup => '[Šþéļļ çĥéçķ one]';
+
+  @override
+  String get settingsWriteDictionary => '[Þéŕšöñåļ ðîçţîöñåŕý one two]';
+
+  @override
+  String get settingsWriteDictionaryHint =>
+      '[Ŵöŕðš ýöû åðð ƒŕöɱ ţĥé šþéļļîñĝ ɱéñû åŕé ñéṽéŕ ɱåŕķéð åš ɱîššþéļļéð. one two three four f]';
+
+  @override
+  String get settingsWriteDictionaryEmpty => '[Ñö ŵöŕðš ýéţ. one]';
+
+  @override
+  String settingsWriteDictionaryRemove(String word) {
+    return '[Ŕéɱöṽé $word one]';
+  }
+
+  @override
+  String get cmdPrefsSetDefaultLayout =>
+      '[Ðéƒåûļţ ļåýöûţ öƒ ñéŵ ðöçûɱéñţš one two th]';
+
+  @override
+  String get cmdPrefsSetExportFormat => '[Ðéƒåûļţ éẋþöŕţ ƒöŕɱåţ one two]';
+
+  @override
+  String get cmdPrefsResetPageSetup => '[Ŕéšéţ ðéƒåûļţ þåĝé šéţûþ one two]';
+
+  @override
+  String get cmdPrefsRemoveDictionaryWord =>
+      '[Ŕéɱöṽé ŵöŕð ƒŕöɱ þéŕšöñåļ ðîçţîöñåŕý one two thre]';
 
   @override
   String get cmdCommentsPrevious => '[Þŕéṽîöûš çöɱɱéñţ one tw]';
@@ -8458,6 +8638,34 @@ class WriteLocalizationsEnXa extends WriteLocalizationsEn {
 
   @override
   String get importBannerDismiss => '[Ðîšɱîšš one]';
+
+  @override
+  String get importRouteOffline =>
+      '[Ýöû\'ŕé öƒƒļîñé. Çöññéçţ ţö ţĥé îñţéŕñéţ ţö öþéñ ţĥîš ƒîļé îñ Ŵöñķý Ŵŕîţé. one two three four fiv]';
+
+  @override
+  String get importRouteNotAFile =>
+      '[Ţĥîš îţéɱ îšñ\'ţ åñ ûþļöåðéð ƒîļé. one two th]';
+
+  @override
+  String importRouteUnsupported(String fileName) {
+    return '[Ŵöñķý Ŵŕîţé çåñ\'ţ öþéñ “$fileName”. one two]';
+  }
+
+  @override
+  String importRouteUploading(String fileName) {
+    return '[“$fileName” îš šţîļļ ûþļöåðîñĝ. Ţŕý åĝåîñ ŵĥéñ ţĥé ûþļöåð ĥåš ƒîñîšĥéð. one two three four]';
+  }
+
+  @override
+  String get imageNotUploadedOutOfStorage =>
+      '[Ñöţ ûþļöåðéð — öûţ öƒ šţöŕåĝé one two t]';
+
+  @override
+  String get imageRetry => '[Ŕéţŕý on]';
+
+  @override
+  String get imageRemove => '[Ŕéɱöṽé one]';
 
   @override
   String get printNoServer => '[Ñö šéŕṽéŕ çöññéçţîöñ one two]';

@@ -31,7 +31,8 @@ abstract class TemplateView
     this.thumbnailFileId,
     this.themeKey,
     this.previewStyle,
-  });
+    int? sizeBytes,
+  }) : sizeBytes = sizeBytes ?? 0;
 
   factory TemplateView({
     required _isc.UuidValue uuid,
@@ -45,6 +46,7 @@ abstract class TemplateView
     _isc.UuidValue? thumbnailFileId,
     String? themeKey,
     _i23vdgk2.TemplatePreviewStyle? previewStyle,
+    int? sizeBytes,
   }) = _TemplateViewImpl;
 
   factory TemplateView.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -72,6 +74,7 @@ abstract class TemplateView
           : _i8pkqg1o.Protocol().deserialize<_i23vdgk2.TemplatePreviewStyle>(
               jsonSerialization['previewStyle'],
             ),
+      sizeBytes: jsonSerialization['sizeBytes'] as int?,
     );
   }
 
@@ -103,6 +106,10 @@ abstract class TemplateView
   /// Colors and traits of the card's miniature page; null = neutral page.
   _i23vdgk2.TemplatePreviewStyle? previewStyle;
 
+  /// (v2) Counted size of an item created from this template (Drive 03
+  /// §6.5: disabled with "Not enough storage" when it doesn't fit).
+  int sizeBytes;
+
   /// Returns a shallow copy of this [TemplateView]
   /// with some or all fields replaced by the given arguments.
   @_isc.useResult
@@ -119,6 +126,7 @@ abstract class TemplateView
     String? themeKey,
     _i23vdgk2.TemplatePreviewStyle? previewStyle =
         const _UndefinedTemplateView$previewStyle(),
+    int? sizeBytes,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -135,6 +143,7 @@ abstract class TemplateView
       if (thumbnailFileId != null) 'thumbnailFileId': thumbnailFileId?.toJson(),
       if (themeKey != null) 'themeKey': themeKey,
       if (previewStyle != null) 'previewStyle': previewStyle?.toJson(),
+      'sizeBytes': sizeBytes,
     };
   }
 
@@ -154,6 +163,7 @@ abstract class TemplateView
       if (themeKey != null) 'themeKey': themeKey,
       if (previewStyle != null)
         'previewStyle': previewStyle?.toJsonForProtocol(),
+      'sizeBytes': sizeBytes,
     };
   }
 
@@ -183,6 +193,7 @@ class _TemplateViewImpl extends TemplateView {
     _isc.UuidValue? thumbnailFileId,
     String? themeKey,
     _i23vdgk2.TemplatePreviewStyle? previewStyle,
+    int? sizeBytes,
   }) : super._(
          uuid: uuid,
          key: key,
@@ -195,6 +206,7 @@ class _TemplateViewImpl extends TemplateView {
          thumbnailFileId: thumbnailFileId,
          themeKey: themeKey,
          previewStyle: previewStyle,
+         sizeBytes: sizeBytes,
        );
 
   /// Returns a shallow copy of this [TemplateView]
@@ -214,6 +226,7 @@ class _TemplateViewImpl extends TemplateView {
     Object? themeKey = _Undefined,
     _i23vdgk2.TemplatePreviewStyle? previewStyle =
         const _UndefinedTemplateView$previewStyle(),
+    int? sizeBytes,
   }) {
     return TemplateView(
       uuid: uuid ?? this.uuid,
@@ -231,6 +244,7 @@ class _TemplateViewImpl extends TemplateView {
       previewStyle: previewStyle is _isc.UndefinedSentinel
           ? this.previewStyle?.copyWith()
           : previewStyle,
+      sizeBytes: sizeBytes ?? this.sizeBytes,
     );
   }
 }

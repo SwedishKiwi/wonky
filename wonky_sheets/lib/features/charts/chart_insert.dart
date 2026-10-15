@@ -97,7 +97,7 @@ abstract final class ChartInsert {
     if (list.isEmpty) {
       return ChartSpec(
         type: type ?? ChartType.column,
-        data: ChartDataSpec(ranges: ranges),
+        data: ChartDataSpec(ranges: ranges.toRefs()),
       );
     }
     if (type != null) {

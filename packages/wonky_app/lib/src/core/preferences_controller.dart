@@ -27,6 +27,9 @@ class PreferencesController extends ChangeNotifier {
   String _keymap = '{}';
   Map<String, Object?> _write = {};
   Map<String, Object?> _sheets = {};
+  Map<String, Object?> _slides = {};
+  Map<String, Object?> _slidesPresenter = {};
+  Map<String, Object?> _drive = {};
   Map<String, Object?> _notifications = {};
   bool _aiEnabled = true;
   final Map<String, Object?> _deviceValues = {};
@@ -45,6 +48,16 @@ class PreferencesController extends ChangeNotifier {
   String get keymapOverrides => _keymap;
   Map<String, Object?> get writeDefaults => Map.unmodifiable(_write);
   Map<String, Object?> get sheetsDefaults => Map.unmodifiable(_sheets);
+
+  /// (v2) Slides settings (`UserPreferences.slidesDefaults`, Slides 04).
+  Map<String, Object?> get slidesDefaults => Map.unmodifiable(_slides);
+
+  /// (v2) Presenter preferences (`UserPreferences.slidesPresenter`).
+  Map<String, Object?> get slidesPresenter =>
+      Map.unmodifiable(_slidesPresenter);
+
+  /// (v2) Drive settings (`UserPreferences.driveDefaults`, Drive 04 §8).
+  Map<String, Object?> get driveDefaults => Map.unmodifiable(_drive);
   Map<String, Object?> get notificationSettings =>
       Map.unmodifiable(_notifications);
   bool get aiEnabled => _aiEnabled;
@@ -89,6 +102,9 @@ class PreferencesController extends ChangeNotifier {
     _keymap = p.keymapOverrides;
     _write = _decode(p.writeDefaults);
     _sheets = _decode(p.sheetsDefaults);
+    _slides = _decode(p.slidesDefaults);
+    _slidesPresenter = _decode(p.slidesPresenter);
+    _drive = _decode(p.driveDefaults);
     _notifications = _decode(p.notificationSettings);
     _aiEnabled = p.aiEnabled;
     if (notify) notifyListeners();
@@ -124,6 +140,9 @@ class PreferencesController extends ChangeNotifier {
     keymapOverrides: _keymap,
     writeDefaults: jsonEncode(_write),
     sheetsDefaults: jsonEncode(_sheets),
+    slidesDefaults: jsonEncode(_slides),
+    slidesPresenter: jsonEncode(_slidesPresenter),
+    driveDefaults: jsonEncode(_drive),
     notificationSettings: jsonEncode(_notifications),
     aiEnabled: _aiEnabled,
   );
@@ -150,9 +169,17 @@ class PreferencesController extends ChangeNotifier {
     return _save(UserPreferencesPatch(reduceMotion: value));
   }
 
+  /// Replaces the keymap overrides with [json]. The server merges patches
+  /// key by key, so commands whose override was removed (reset) are sent
+  /// as `null` to delete them there too.
   Future<void> setKeymapOverrides(String json) {
+    final removed = _decode(_keymap).keys.toSet()
+      ..removeAll(_decode(json).keys);
     _keymap = json;
-    return _save(UserPreferencesPatch(keymapOverrides: json));
+    final patch = removed.isEmpty
+        ? json
+        : jsonEncode({..._decode(json), for (final k in removed) k: null});
+    return _save(UserPreferencesPatch(keymapOverrides: patch));
   }
 
   Future<void> setAiEnabled(bool value) {
@@ -168,6 +195,29 @@ class PreferencesController extends ChangeNotifier {
   Future<void> setSheetsDefault(String key, Object? value) {
     _sheets = {..._sheets, key: value};
     return _save(UserPreferencesPatch(sheetsDefaults: jsonEncode(_sheets)));
+  }
+
+  /// Sets one Slides setting (`slidesDefaults`; null removes the key).
+  Future<void> setSlidesDefault(String key, Object? value) {
+    _slides = {..._slides, key: value}..removeWhere((_, v) => v == null);
+    return _save(
+      UserPreferencesPatch(slidesDefaults: jsonEncode({key: value})),
+    );
+  }
+
+  /// Sets one presenter preference (`slidesPresenter`; null removes it).
+  Future<void> setSlidesPresenter(String key, Object? value) {
+    _slidesPresenter = {..._slidesPresenter, key: value}
+      ..removeWhere((_, v) => v == null);
+    return _save(
+      UserPreferencesPatch(slidesPresenter: jsonEncode({key: value})),
+    );
+  }
+
+  /// Sets one Drive setting (`driveDefaults`; null removes the key).
+  Future<void> setDriveDefault(String key, Object? value) {
+    _drive = {..._drive, key: value}..removeWhere((_, v) => v == null);
+    return _save(UserPreferencesPatch(driveDefaults: jsonEncode({key: value})));
   }
 
   Future<void> setNotificationSetting(String key, Object? value) {

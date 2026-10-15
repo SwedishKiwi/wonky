@@ -1,9 +1,10 @@
 /// Embedded objects on the grid: anchors, placement, move/resize, snapping,
-/// z-order and anchor maintenance (Sheets 08 §1, §9, §10.1, §11).
+/// z-order, anchor maintenance and the image spec (Sheets 08 §1, §9, §10.1, §11).
 library;
 
 export 'align.dart' show ObjectAlign;
 export 'anchor.dart' show ObjectAnchor;
+export 'image_spec.dart';
 export 'maintenance.dart' show AnchorMaintenance;
 export 'object_geometry.dart'
     show

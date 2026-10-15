@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/super_editor.dart';
 
+import '../../../l10n/write_l10n.dart';
+
 import '../mapping/wonky_embed_node.dart';
 import '../mapping/wonky_schema.dart';
 import '../model/code_languages.dart';
@@ -22,6 +24,10 @@ abstract final class WonkyEditorKeys {
   static const codeCopy = 'write.editor.codeCopy';
   static const tableEdit = 'write.editor.tableEdit';
   static const imageRetry = 'write.editor.imageRetry';
+  static const imageUploadFailed = 'write.editor.imageUploadFailed';
+  static const imageOutOfStorage = 'write.editor.imageOutOfStorage';
+  static const imageUploadRetry = 'write.editor.imageUploadRetry';
+  static const imageUploadRemove = 'write.editor.imageUploadRemove';
 }
 
 // -----------------------------------------------------------------------------
@@ -363,9 +369,18 @@ class _WonkyImageState extends State<_WonkyImage> {
                       onCancel: () => widget.services.cancel(widget.src),
                     ),
                   ),
-                if (upload != null && upload.phase == ImageUploadPhase.failed)
+                if (upload != null &&
+                    (upload.phase == ImageUploadPhase.failed ||
+                        upload.phase == ImageUploadPhase.outOfStorage))
                   Positioned.fill(
                     child: _FailedOverlay(
+                      key: ValueKey<String>(
+                        upload.phase == ImageUploadPhase.outOfStorage
+                            ? WonkyEditorKeys.imageOutOfStorage
+                            : WonkyEditorKeys.imageUploadFailed,
+                      ),
+                      outOfStorage:
+                          upload.phase == ImageUploadPhase.outOfStorage,
                       onRetry: _retry,
                       onRemove: widget.callbacks.onRemoveImage == null
                           ? null
@@ -477,48 +492,68 @@ class _UploadOverlay extends StatelessWidget {
   }
 }
 
+/// Red overlay of an image whose upload failed ("Upload failed") or was
+/// refused on quota ("Not uploaded — out of storage", Drive 03 §6.3), with
+/// *Retry* and *Remove*.
 class _FailedOverlay extends StatelessWidget {
-  const _FailedOverlay({required this.onRetry, this.onRemove});
+  const _FailedOverlay({
+    super.key,
+    required this.onRetry,
+    this.onRemove,
+    this.outOfStorage = false,
+  });
 
   final VoidCallback onRetry;
   final VoidCallback? onRemove;
+  final bool outOfStorage;
 
   @override
   Widget build(BuildContext context) {
+    final l = writeL10n(context);
     return ColoredBox(
       color: const Color(0x99b91c1c),
       child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Upload failed',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextButton(
-                  onPressed: onRetry,
-                  child: const Text(
-                    'Retry',
-                    style: TextStyle(color: Colors.white),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  outOfStorage
+                      ? l.imageNotUploadedOutOfStorage
+                      : 'Upload failed',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                if (onRemove != null)
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   TextButton(
-                    onPressed: onRemove,
-                    child: const Text(
-                      'Remove',
-                      style: TextStyle(color: Colors.white),
+                    key: const ValueKey(WonkyEditorKeys.imageUploadRetry),
+                    onPressed: onRetry,
+                    child: Text(
+                      l.imageRetry,
+                      style: const TextStyle(color: Colors.white),
                     ),
                   ),
-              ],
-            ),
-          ],
+                  if (onRemove != null)
+                    TextButton(
+                      key: const ValueKey(WonkyEditorKeys.imageUploadRemove),
+                      onPressed: onRemove,
+                      child: Text(
+                        l.imageRemove,
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -18,6 +18,7 @@ import '../presence/presence_session.dart';
 import '../routing/misc_pages.dart';
 import '../shell/account_menu.dart';
 import '../shell/shell_services.dart';
+import '../storage/storage_banner.dart';
 import '../versions/versions_list.dart';
 import '../document/document_controller.dart';
 import 'package:flutter/foundation.dart';
@@ -51,6 +52,7 @@ class EditorScaffold extends StatefulWidget {
     this.statusRight,
     this.panels = const [],
     this.titleRowExtras,
+    this.titleActions,
     this.onItemLoaded,
     this.customMenuItems = const MenuCustomItems(),
     this.syncStatus,
@@ -79,6 +81,10 @@ class EditorScaffold extends StatefulWidget {
 
   /// Extra widgets in the title row before the presence avatars.
   final List<Widget> Function(BuildContext context)? titleRowExtras;
+
+  /// (v2) App buttons in the title row right before *Share* (Slides'
+  /// *Present* split button; Slides 04 A-04-4).
+  final List<Widget> Function(BuildContext context)? titleActions;
 
   /// Called once the drive item is known (role, name).
   final ValueChanged<DriveItemView>? onItemLoaded;
@@ -392,6 +398,12 @@ class _EditorScaffoldState extends State<EditorScaffold> {
                       ),
                     ),
                   ?widget.belowToolbar?.call(context),
+                  // Drive 03 §6.2: only for items the user owns.
+                  StorageBanner(
+                    services: s,
+                    place: StorageBannerPlace.editor,
+                    item: item,
+                  ),
                   Expanded(
                     child: WonkySplitView(
                       controller: s.panels,
@@ -610,6 +622,24 @@ class _EditorScaffoldState extends State<EditorScaffold> {
               ),
             ),
             const SizedBox(width: 8),
+            // (v2) *Report a bug* (suite 03 §3.1, §3.4): hidden below `sm`
+            // (still in Help).
+            if (MediaQuery.sizeOf(context).width >= 640)
+              ShadTooltip(
+                builder: (_) => Text(l.cmdReportBug),
+                child: ShadIconButton.ghost(
+                  key: const ValueKey<String>('editor.reportBug'),
+                  width: 32,
+                  height: 32,
+                  iconSize: 18,
+                  semanticLabel: l.cmdReportBug,
+                  icon: Icon(
+                    LucideIcons.bug,
+                    color: theme.colorScheme.mutedForeground,
+                  ),
+                  onPressed: () => _invoke('shell.help.reportBug'),
+                ),
+              ),
             if (widget.commentsButton)
               ListenableBuilder(
                 listenable: _comments,
@@ -637,6 +667,7 @@ class _EditorScaffoldState extends State<EditorScaffold> {
                 ),
               ),
             const SizedBox(width: 6),
+            ...?widget.titleActions?.call(context),
             if (item != null)
               ShadButton(
                 key: const ValueKey<String>('editor.share'),

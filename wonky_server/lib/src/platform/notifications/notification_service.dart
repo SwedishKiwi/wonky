@@ -70,6 +70,7 @@ abstract final class NotificationService {
     NotificationKind.suggestion => 'suggestions',
     NotificationKind.suggestionDecided => 'suggestions',
     NotificationKind.scriptFailure => 'scripts',
+    NotificationKind.storage => 'storage',
   };
 
   /// Older settings stored access requests under `shares`.

@@ -11,7 +11,7 @@ import 'dart:convert';
 
 import 'package:collection/collection.dart';
 
-import '../../fonts/font_provider.dart';
+import 'package:wonky_fonts/wonky_fonts.dart';
 import '../model/color_ref.dart';
 import '../model/json_util.dart';
 import '../model/style_enums.dart';

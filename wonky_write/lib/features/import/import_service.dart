@@ -225,6 +225,17 @@ class WriteImportHandler implements ImportHandler {
     final l = writeL10nOf(services);
     final created = <DriveItemView>[];
     final problems = <String>[];
+    // Drive 03 §7.2: client-side pre-check of the imported bytes (the
+    // server checks again; offline imports aren't blocked).
+    final bytes = files
+        .where((f) => writeImportExtensions.contains(f.extension))
+        .fold<int>(0, (n, f) => n + f.bytes.length);
+    if (!await services.storageChecks.ensureRoom(
+      bytes,
+      reason: QuotaReasons.import,
+    )) {
+      return created;
+    }
     for (final f in files) {
       if (!writeImportExtensions.contains(f.extension)) {
         problems.add(l.importProblemUnsupported(f.name));
@@ -242,6 +253,8 @@ class WriteImportHandler implements ImportHandler {
           problems.add(l.importProblemInexact(f.name, r.warnings.length));
         }
       } catch (e) {
+        // Out of storage: the dialog explains it; the rest won't fit either.
+        if (services.quotaErrors.present(e)) break;
         problems.add(l.importProblemFailed(f.name, errorMessage(e)));
       }
     }

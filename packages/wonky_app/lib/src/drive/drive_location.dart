@@ -45,11 +45,12 @@ class DriveLocation {
     _ => DriveView.folder,
   };
 
-  /// The route of this location.
+  /// The route of this location. *My files* is `/my-drive` here; app homes
+  /// redirect it to `/my-files` (`HomeNavSpec.myFilesRoute`).
   String get path => switch (kind) {
     DriveLocationKind.home => '/',
     DriveLocationKind.myDrive => '/my-drive',
-    DriveLocationKind.folder => '/drive/$folderUuid',
+    DriveLocationKind.folder => '/f/$folderUuid',
     DriveLocationKind.shared => '/shared',
     DriveLocationKind.starred => '/starred',
     DriveLocationKind.recent => '/recent',

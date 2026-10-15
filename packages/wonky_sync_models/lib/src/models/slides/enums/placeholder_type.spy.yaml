@@ -1,0 +1,20 @@
+### Placeholder type of a layout/master placeholder or a slide's placeholder
+### instance (Slides 02 §3.11, 05 §5). Append-only.
+enum: PlaceholderType
+serialized: byName
+values:
+  - title
+  - subtitle
+  - body
+  - picture
+  - chart
+  - table
+  - code
+  - caption
+  - bigNumber
+  - quote
+  - attribution
+  - slideNumber
+  - footer
+  - date
+  - object

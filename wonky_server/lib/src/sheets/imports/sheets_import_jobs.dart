@@ -16,8 +16,11 @@ import '../headless/headless_workbook_provider.dart';
 import '../mcp/sheets_bulk_writer.dart';
 import '../mcp/sheets_mcp_support.dart';
 import '../mcp/sheets_writes.dart';
-import '../spaces/space_service.dart';
+import '../../platform/spaces/space_service.dart';
 import 'sheets_import_service.dart';
+import '../../platform/storage/content_sizes.dart';
+import '../../platform/storage/storage_hooks.dart';
+import '../../platform/storage/storage_service.dart';
 
 /// Server import jobs into an existing spreadsheet (Sheets 11 §3.3, A-11-2).
 ///
@@ -87,6 +90,15 @@ abstract final class SheetsImportJobs {
       actor,
       uploadId,
       kind: StoredFileKind.importSource,
+    );
+    // (v2) Imports into a spreadsheet grow its owner's storage (Drive 03
+    // §7.2): refused before the job is queued.
+    await StorageHooks.checkOwnerOf(
+      session,
+      actor,
+      item,
+      file.sizeBytes,
+      QuotaReason.import,
     );
     final format = _formatOf(file.fileName);
     if (!SheetsImportService.formats.contains(format)) {
@@ -474,6 +486,7 @@ abstract final class SheetsImportJobs {
         fileUuid: UuidValue.fromString(img.fileUuid),
       );
       await FileService.attachToItem(session, f, item);
+      await StorageHooks.chargeImage(session, item, f);
     }
 
     final applied = <core.RowChange>[];
@@ -535,6 +548,7 @@ abstract final class SheetsImportJobs {
       applied: applied,
     );
     await SheetsWrites.afterCommit(session, space);
+    await ContentSizes.refresh(session, item);
     await _finish(
       session,
       job,

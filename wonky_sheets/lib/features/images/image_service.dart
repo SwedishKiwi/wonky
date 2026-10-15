@@ -259,6 +259,15 @@ class SheetsImageService {
         return;
       } catch (e) {
         debugPrint('Image upload failed (attempt $attempt): $e');
+        if (QuotaErrorPresenter.isQuotaExceeded(e)) {
+          // Drive 03 §6.3: "Not uploaded — out of storage" until Retry /
+          // Remove, and the *Out of storage* dialog.
+          _uploading.remove(uuid);
+          _refused[uuid] = image;
+          _uploadStates.value++;
+          _s.quotaErrors.present(e, reason: QuotaReasons.image);
+          return;
+        }
         if (attempt >= 6) {
           _uploading.remove(uuid);
           return;
@@ -270,10 +279,47 @@ class SheetsImageService {
     }
   }
 
+  /// Direct uploads (no queue) the server refused on quota.
+  final Map<String, PickedImage> _refused = {};
+  final ValueNotifier<int> _uploadStates = ValueNotifier(0);
+
+  /// Notifies when [isOutOfStorage] may have changed (direct uploads and
+  /// the device's upload queue).
+  Listenable get uploadStates =>
+      Listenable.merge([_uploadStates, ?SheetsPendingUploads.of(_s)]);
+
+  /// Whether the server refused the upload of [fileUuid] from this device
+  /// because the storage quota is full (Drive 03 §6.3, 08 §10).
+  bool isOutOfStorage(String fileUuid) =>
+      _refused.containsKey(fileUuid) ||
+      (SheetsPendingUploads.of(_s)?.isOutOfStorage(fileUuid) ?? false);
+
+  /// *Retry* on a refused image.
+  void retryUpload(String fileUuid) {
+    final image = _refused.remove(fileUuid);
+    if (image != null) {
+      _uploading.add(fileUuid);
+      _uploadStates.value++;
+      unawaited(_upload(fileUuid, image));
+      return;
+    }
+    SheetsPendingUploads.of(_s)?.retry(fileUuid);
+  }
+
+  /// Forgets a refused upload (*Remove* deletes the image object).
+  void forgetUpload(String fileUuid) {
+    if (_refused.remove(fileUuid) != null) _uploadStates.value++;
+    final queue = SheetsPendingUploads.of(_s);
+    if (queue != null && queue.contains(fileUuid)) {
+      unawaited(queue.cancel(fileUuid));
+    }
+  }
+
   /// Whether [fileUuid] is still uploading from this device.
   bool isUploading(String fileUuid) =>
-      _uploading.contains(fileUuid) ||
-      (SheetsPendingUploads.of(_s)?.contains(fileUuid) ?? false);
+      !isOutOfStorage(fileUuid) &&
+      (_uploading.contains(fileUuid) ||
+          (SheetsPendingUploads.of(_s)?.contains(fileUuid) ?? false));
 
   /// The load state of [src] (`wonky-file://…`, a file uuid, or `https://…`);
   /// starts loading on first use.

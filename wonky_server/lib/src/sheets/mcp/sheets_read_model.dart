@@ -287,7 +287,7 @@ abstract final class SheetsReadModel {
       'title': title.isEmpty ? o.title : title,
       'type': spec.typeId,
       'data_ranges': [
-        for (final g in spec.data.ranges)
+        for (final g in spec.data.gridRanges)
           if (wb.model.resolve(g) case final ResolvedRange rr)
             wb.model.a1Of(rr),
       ],

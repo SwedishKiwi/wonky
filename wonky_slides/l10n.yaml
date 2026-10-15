@@ -1,0 +1,6 @@
+arb-dir: lib/l10n
+template-arb-file: slides_en.arb
+output-dir: lib/l10n/gen
+output-localization-file: slides_localizations.dart
+output-class: SlidesLocalizations
+nullable-getter: false

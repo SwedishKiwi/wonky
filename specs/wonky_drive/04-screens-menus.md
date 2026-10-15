@@ -313,6 +313,16 @@ Shown in the settings frame's app group "Wonky Drive" (suite 04 §4). One sectio
 
 Each change is the command `drive.prefs.set {key, value}` (not undoable, suite 04 §4).
 
+As built (D-17): `DriveSettingsSection` (`wonky_drive/lib/features/settings/`) has the groups
+*Files list* (layout, sort field, sort order, folders on top, file extensions) and *Uploads*
+(name conflicts, convert uploads); *Confirm before moving items into shared folders* waits for
+its P1 confirm. Values are checked by `DriveSettings.validators` (`sortField` ∈ name, modifiedAt,
+lastOpenedByMe, lastModifiedByMe, size). A new list default also clears this device's
+remembered choice (`drive.view.layout`, `drive.view.sortField`, `drive.view.sortDescending`,
+`drive.view.foldersOnTop` device keys) and applies to the shown list at once; the app homes keep
+v1's unpersisted sort and the shared `drive.layout` key. *Show file extensions* off goes through
+`WonkyAppConfig.listItemName` (list rows, grid cards, the Storage table).
+
 ## 9. Commands
 
 Shared drive commands keep their `shell.drive.*` ids (suite 08 §5) and work in every home;
@@ -331,7 +341,7 @@ Drive-only commands use `drive.<area>.<action>` and are registered by `wonky_dri
 | `drive.upload.togglePanel` | Show uploads | — | — | — |
 | `drive.file.preview` | Preview | `{uuid}` | `Space`, `Enter` (files) | — |
 | `drive.file.openWith` | Open with … | `{uuid, app: write\|sheets}` | — | — (creates an item through the app's import) |
-| `drive.file.download` | Download | `{uuids}` | `Mod+Shift+D` (P1) | — |
+| `drive.file.download` | Download | `{uuids}` (default: the open preview, else the selected files) | `Mod+Shift+D` | — |
 | `drive.file.uploadNewVersion` (P2) | Upload new version… | `{uuid}` | — | ✓ |
 | `drive.file.manageVersions` (P2) | Manage versions | `{uuid}` | — | — |
 | `drive.preview.next` / `.previous` | Next / Previous file | — | `→` / `←` (preview scope) | — |
@@ -345,6 +355,7 @@ Drive-only commands use `drive.<area>.<action>` and are registered by `wonky_dri
 | `drive.view.sort` | Sort by … | `{field, descending}` | — | — |
 | `drive.view.toggleFoldersOnTop` | Folders on top | — | — | — |
 | `drive.prefs.set` | (settings) | `{key, value}` | — | — |
+| `drive.storage.show` | Show storage | `{filter?: all\|documents\|spreadsheets\|presentations\|files\|trash\|large\|notOpened}` → `/storage?filter=` | — | — |
 | `drive.ai.askAboutItem` (P1) | Ask the assistant about this file | `{uuid}` | — | — |
 
 Shell commands used (unchanged ids): `shell.drive.newFolder` (`Shift+F`), `rename` (`F2`),
@@ -396,7 +407,14 @@ fields), as today.
 - `ui.drive.*` (P1, `wonky_drive/lib/mcp/`): `ui.drive.get_selection`,
   `ui.drive.select_items {uuids}`, `ui.drive.get_upload_queue`, `ui.drive.open_preview {uuid}`,
   `ui.drive.get_preview_state` (type, page, zoom). Uploading bytes goes through headless
-  `drive.upload_file` (suite 09 §4), not the bridge.
+  `drive.upload_file` (suite 09 §4), not the bridge. As built (D-17, `UiDriveToolHandlers`): `get_selection`
+  reports `view` (`home`, `my_drive`, `folder`, `shared`, `starred`, `recent`, `trash`,
+  `search`, `storage` with its `filter`, or `preview`), the folder `{uuid, name, path}` and the
+  selected items `{uuid, name, kind, file_category, size_bytes, trashed}`; `select_items` works
+  on the shown list (home or Storage page), focuses the first item and returns `not_found`
+  (`unavailable` when no list is shown); `get_upload_queue` lists `upload_id`, `item_uuid`,
+  `state`, `sent_bytes`, `error`, `converted_to` and totals; `get_preview_state` adds
+  `phase`, `page_count`, `fit`, `rotation`, `wrap`, `has_next/has_previous`.
 
 ## 14. Widget inventory (new)
 

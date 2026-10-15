@@ -230,7 +230,7 @@ void main() {
       type(sb, 4, 2, 'Bo');
       await reconnect();
       var skipped = 0;
-      final inverse = UndoInverter.invertChanges(
+      final inverse = SheetsUndo.invertChanges(
         plan.changes,
         sa.model,
         skipped: (_, _, _) => skipped++,

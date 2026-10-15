@@ -92,6 +92,23 @@ abstract final class PresenceService {
               ),
             );
           }
+        case 'probe':
+          // (v2, Slides 11 §2.1) A server-side observer (headless soft-lock
+          // check) asks who is here without joining the roster.
+          if (me != null) {
+            unawaited(
+              ClusterBus.post(
+                session,
+                ch,
+                PresenceBusMessage(
+                  type: 'here',
+                  sessionId: sessionId,
+                  participant: me,
+                  replyTo: m.sessionId,
+                ),
+              ).catchError((Object _) {}),
+            );
+          }
         case 'here':
           if (m.replyTo != sessionId || m.participant == null) return;
           if (!roster.containsKey(m.sessionId)) {

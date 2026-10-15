@@ -4,7 +4,7 @@ library;
 import 'dart:convert';
 import 'dart:typed_data';
 
-import '../../fonts/font_provider.dart';
+import 'package:wonky_fonts/wonky_fonts.dart';
 import '../../ir/anchors.dart';
 import '../../ir/doc_tree.dart';
 import '../../theme/mappers/css_writer.dart';

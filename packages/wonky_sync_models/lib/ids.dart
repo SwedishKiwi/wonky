@@ -1,5 +1,6 @@
-/// Pure-Dart id helpers of Wonky Sheets (specs/wonky_sheets/02 §2): deterministic
-/// UUIDv5 ids, fractional indexing and the 22-character base-62 UUID codec.
+/// Pure-Dart id helpers of Wonky Sheets (specs/wonky_sheets/02 §2) and Wonky
+/// Slides (specs/wonky_slides/02 §2): deterministic UUIDv5 ids, fractional
+/// indexing and the 22-character base-62 UUID codec.
 ///
 /// This library has no Serverpod imports, so `wonky_sheets_core` and any pure
 /// Dart code can use it without pulling in the generated models.
@@ -14,3 +15,4 @@ export 'src/ids/sheets_ids.dart'
         SequentialIdGenerator,
         SheetsIds,
         UuidV7IdGenerator;
+export 'src/ids/slides_ids.dart' show SlidesIds;

@@ -2,20 +2,20 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/super_editor.dart';
+import 'package:wonky_code/wonky_code.dart';
 
 import '../attributions/wonky_attributions.dart';
 import '../mapping/wonky_schema.dart';
-import '../model/code_languages.dart';
-import 'code_highlighter.dart';
 import 'write_stylesheet.dart';
 
 /// Overlays presentation-only [CodeTokenAttribution]s on code block view
 /// models (Write 04 §15.4). The document is never changed.
 ///
-/// Tokens come from [CodeHighlighter] (`syntax_highlight` grammars). A
-/// grammar is loaded the first time a block needs it; the block renders plain
-/// until then and is restyled when it arrives. Languages without a grammar
-/// ([CodeLanguages.grammarFor]) stay plain.
+/// Tokens come from the shared [TextMateTokenizer] (`wonky_code`, Write 04
+/// §15.5). Its grammars are embedded, so blocks are highlighted on their
+/// first frame. Languages without a TextMate grammar
+/// ([CodeLanguages.grammarFor]) stay plain until the editor switches to
+/// `DefaultCodeTokenizer` together with the exports (M10).
 ///
 /// Results are cached per (node, text, language). Large blocks are tokenized
 /// after a debounce so that typing stays responsive; until then the block
@@ -37,8 +37,8 @@ class CodeHighlightStylePhase extends SingleColumnLayoutStylePhase {
 
   // No `dispose` override: super_editor disposes style phases whenever it
   // recreates its layout presenter (stylesheet, zoom or theme change) and
-  // then keeps using the same phase objects, so pending tokenizations and
-  // grammar loads must survive it. The editor calls [close] instead.
+  // then keeps using the same phase objects, so pending tokenizations must
+  // survive it. The editor calls [close] instead.
 
   /// Cancels pending work for good (when the editor is disposed).
   void close() {
@@ -70,29 +70,21 @@ class CodeHighlightStylePhase extends SingleColumnLayoutStylePhase {
     if (model is! TextComponentViewModel) return model;
     final node = document.getNodeById(model.nodeId);
     if (node == null || !isCodeBlockNode(node)) return model;
-    final grammar = CodeLanguages.grammarFor(codeLanguageOf(node));
-    if (grammar == null) return model;
-    if (!CodeHighlighter.isLoaded(grammar)) {
-      unawaited(
-        CodeHighlighter.load(grammar).then((loaded) {
-          if (loaded && !_closed) markDirty();
-        }),
-      );
-      return model;
-    }
+    final language = codeLanguageOf(node);
+    if (!_tokenizer.supports(language)) return model;
     final text = model.text;
     final plain = text.toPlainText(includePlaceholders: false);
 
     final cached = _cache[node.id];
-    if (cached == null || cached.text != plain || cached.grammar != grammar) {
+    if (cached == null || cached.text != plain || cached.language != language) {
       if (plain.length <= syncLimit) {
         _cache[node.id] = _Highlighted(
           plain,
-          grammar,
-          CodeHighlighter.tokenize(plain, grammar),
+          language,
+          tokenize(plain, language),
         );
       } else {
-        _schedule(node.id, plain, grammar);
+        _schedule(node.id, plain, language);
         return model;
       }
     }
@@ -114,35 +106,36 @@ class CodeHighlightStylePhase extends SingleColumnLayoutStylePhase {
     return copy;
   }
 
-  void _schedule(String nodeId, String text, String grammar) {
+  void _schedule(String nodeId, String text, String language) {
     if (_closed) return;
     _pending[nodeId]?.cancel();
     _pending[nodeId] = Timer(debounce, () {
       _pending.remove(nodeId);
-      _cache[nodeId] = _Highlighted(
-        text,
-        grammar,
-        CodeHighlighter.tokenize(text, grammar),
-      );
+      _cache[nodeId] = _Highlighted(text, language, tokenize(text, language));
       markDirty();
     });
   }
 
+  static const CodeTokenizer _tokenizer = TextMateTokenizer.instance;
+
   /// Token spans `(start, end, class)` of [code] in [language] (a
-  /// normalised language id); empty when the language has no grammar or the
-  /// grammar is not loaded yet.
-  static List<(int, int, String)> tokenize(String code, String language) {
-    final grammar = CodeLanguages.grammarFor(language);
-    if (grammar == null) return const [];
-    return CodeHighlighter.tokenize(code, grammar);
-  }
+  /// normalised language id); empty when the language has no grammar. The
+  /// class is the key of the token's color in `EditorTheme.syntax`.
+  static List<(int, int, String)> tokenize(String code, String language) => [
+    for (final token in _tokenizer.tokenize(code, language))
+      (token.start, token.end, syntaxClassOf(token.token)),
+  ];
+
+  /// The `EditorTheme.syntax` key of [token] (`builtin` is `built_in`).
+  static String syntaxClassOf(SyntaxToken token) =>
+      token == SyntaxToken.builtin ? 'built_in' : token.name;
 }
 
 class _Highlighted {
-  _Highlighted(this.text, this.grammar, this.spans);
+  _Highlighted(this.text, this.language, this.spans);
 
   final String text;
-  final String grammar;
+  final String language;
   final List<(int, int, String)> spans;
 }
 

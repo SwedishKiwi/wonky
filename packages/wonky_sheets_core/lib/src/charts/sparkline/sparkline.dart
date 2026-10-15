@@ -1,11 +1,10 @@
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import 'package:wonky_charts/wonky_charts.dart';
+
 import '../../formula/functions/web/rich_values.dart';
 import '../../formula/values/fvalue.dart';
-import '../data/data_algorithms.dart';
-import '../scene/geometry.dart';
-import '../scene/scene.dart';
 
 /// `SPARKLINE` chart types (05 §17).
 enum SparklineType { line, column, winloss, bar }

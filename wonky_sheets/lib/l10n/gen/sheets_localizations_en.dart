@@ -250,6 +250,15 @@ class SheetsLocalizationsEn extends SheetsLocalizations {
   String get settingsSearch => 'Search';
 
   @override
+  String get sheetsSettingsDefaults => 'Defaults';
+
+  @override
+  String get sheetsSettingsNewSpreadsheets => 'New spreadsheets';
+
+  @override
+  String get cmdSheetsPrefsSet => 'Change a Sheets setting';
+
+  @override
   String get sheetsSettingsNewHint =>
       'Defaults for new spreadsheets you create. Each spreadsheet keeps its own settings (File › Settings).';
 
@@ -4494,6 +4503,27 @@ class SheetsLocalizationsEn extends SheetsLocalizations {
   String get importFailed => 'Import failed';
 
   @override
+  String get importRouteOffline =>
+      'You\'re offline. Connect to the internet to open this file in Wonky Sheets.';
+
+  @override
+  String get importRouteNotAFile => 'This item isn\'t an uploaded file.';
+
+  @override
+  String importRouteUnsupported(String fileName) {
+    return 'Wonky Sheets can\'t open “$fileName”.';
+  }
+
+  @override
+  String importRouteUploading(String fileName) {
+    return '“$fileName” is still uploading. Try again when the upload has finished.';
+  }
+
+  @override
+  String get importRouteDownloadFailed =>
+      'The file could not be loaded from Wonky Drive.';
+
+  @override
   String get importSummaryTitle => 'Import summary';
 
   @override
@@ -6991,6 +7021,15 @@ class SheetsLocalizationsEn extends SheetsLocalizations {
 
   @override
   String get imageUploading => 'Image uploading…';
+
+  @override
+  String get imageNotUploadedOutOfStorage => 'Not uploaded — out of storage';
+
+  @override
+  String get imageRetryUpload => 'Retry';
+
+  @override
+  String get imageRemove => 'Remove';
 
   @override
   String get objectMenuCopyChart => 'Copy chart';

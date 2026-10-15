@@ -4,7 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:wonky_write_core/wonky_write_core.dart';
 
-/// One bundled static TTF face (`assets/fonts/`).
+/// One bundled static TTF face (a `wonky_fonts` package asset,
+/// `packages/wonky_fonts/fonts/`).
 @immutable
 class BundledFace {
   const BundledFace(this.family, this.weight, this.italic, this.asset);
@@ -17,8 +18,8 @@ class BundledFace {
 
 /// The document fonts bundled with Wonky Write (Write 06 §8).
 ///
-/// They are declared as plain `assets:` (not `fonts:`), so Flutter web does
-/// not download them at start-up: [WriteFonts.ensureLoaded] registers a
+/// They are plain package assets of `wonky_fonts` (not `fonts:`), so Flutter
+/// web does not download them at start-up: [WriteFonts.ensureLoaded] registers a
 /// family with the engine the first time a theme needs it, and
 /// [AssetFontProvider] hands the same bytes to the PDF exporter (static TTF
 /// instances — the `pdf` package cannot embed variable fonts).
@@ -37,47 +38,13 @@ abstract final class WriteFonts {
   static const shadGeist = 'packages/shad/Geist';
   static const shadGeistMono = 'packages/shad/GeistMono';
 
-  static const faces = <BundledFace>[
-    BundledFace(openSans, 400, false, 'assets/fonts/OpenSans-Regular.ttf'),
-    BundledFace(openSans, 400, true, 'assets/fonts/OpenSans-Italic.ttf'),
-    BundledFace(openSans, 600, false, 'assets/fonts/OpenSans-SemiBold.ttf'),
-    BundledFace(openSans, 700, false, 'assets/fonts/OpenSans-Bold.ttf'),
-    BundledFace(openSans, 700, true, 'assets/fonts/OpenSans-BoldItalic.ttf'),
-    BundledFace(ebGaramond, 400, false, 'assets/fonts/EBGaramond-Regular.ttf'),
-    BundledFace(ebGaramond, 400, true, 'assets/fonts/EBGaramond-Italic.ttf'),
-    BundledFace(ebGaramond, 600, false, 'assets/fonts/EBGaramond-SemiBold.ttf'),
-    BundledFace(ebGaramond, 700, false, 'assets/fonts/EBGaramond-Bold.ttf'),
-    BundledFace(
-      ebGaramond,
-      700,
-      true,
-      'assets/fonts/EBGaramond-BoldItalic.ttf',
-    ),
-    BundledFace(
-      jetBrainsMono,
-      400,
-      false,
-      'assets/fonts/JetBrainsMono-Regular.ttf',
-    ),
-    BundledFace(
-      jetBrainsMono,
-      400,
-      true,
-      'assets/fonts/JetBrainsMono-Italic.ttf',
-    ),
-    BundledFace(
-      jetBrainsMono,
-      700,
-      false,
-      'assets/fonts/JetBrainsMono-Bold.ttf',
-    ),
-    BundledFace(
-      jetBrainsMono,
-      700,
-      true,
-      'assets/fonts/JetBrainsMono-BoldItalic.ttf',
-    ),
-  ];
+  /// Write's bundled faces: the Open Sans, EB Garamond and JetBrains Mono
+  /// faces of the shared `wonky_fonts` package assets.
+  static final List<BundledFace> faces = List.unmodifiable([
+    for (final f in BundledFonts.faces)
+      if (_bundledFamilies.contains(f.family))
+        BundledFace(f.family, f.weight, f.italic, f.assetKey),
+  ]);
 
   static const _bundledFamilies = {openSans, ebGaramond, jetBrainsMono};
 
@@ -224,12 +191,13 @@ void registerWriteFontLicenses() {
   if (_licensesRegistered) return;
   _licensesRegistered = true;
   LicenseRegistry.addLicense(() async* {
-    for (final (family, file) in const [
-      (WriteFonts.openSans, 'OFL-OpenSans.txt'),
-      (WriteFonts.ebGaramond, 'OFL-EBGaramond.txt'),
-      (WriteFonts.jetBrainsMono, 'OFL-JetBrainsMono.txt'),
+    for (final family in const [
+      WriteFonts.openSans,
+      WriteFonts.ebGaramond,
+      WriteFonts.jetBrainsMono,
     ]) {
-      final text = await rootBundle.loadString('assets/fonts/$file');
+      final file = BundledFonts.licenseFiles[family]!;
+      final text = await rootBundle.loadString(BundledFonts.assetKey(file));
       yield LicenseEntryWithLineBreaks([family], text);
     }
   });

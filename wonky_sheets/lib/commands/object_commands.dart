@@ -771,7 +771,7 @@ Map<String, Object?> _describe(
     final spec = ChartSpec.fromJson(o.specJson);
     m['type'] = spec.typeId;
     m['ranges'] = [
-      for (final g in spec.data.ranges)
+      for (final g in spec.data.gridRanges)
         if (ed.model.sheet(g.sheetId)?.resolve(g) case final rr?)
           ed.model.a1Of(rr),
     ];

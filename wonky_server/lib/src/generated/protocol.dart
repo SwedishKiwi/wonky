@@ -52,8 +52,12 @@ import 'package:wonky_server/src/generated/write/models/write_theme_revision_vie
 import 'package:wonky_server/src/generated/write/models/write_theme_view.dart'
     as _ipbzt39t;
 import 'package:wonky_sync_models/wonky_sync_models.dart' as _i810rwvy;
+import 'future_calls_generated_models/file_preview_future_call_generate_model.dart'
+    as _ilpvgw0t;
 import 'future_calls_generated_models/notification_email_future_call_send_model.dart'
     as _inb6x2l0;
+import 'future_calls_generated_models/storage_future_call_refresh_item_size_model.dart'
+    as _io4auc29;
 import 'platform/activity/activity_dashboard.dart' as _izr1y672;
 import 'platform/activity/activity_event.dart' as _iatdjl5p;
 import 'platform/activity/activity_event_view.dart' as _isa7sjzq;
@@ -114,12 +118,19 @@ import 'platform/drive/drive_search_filters.dart' as _i6k3d1nc;
 import 'platform/drive/drive_sort.dart' as _iu13r4v2;
 import 'platform/drive/drive_sort_field.dart' as _ix0g8yw4;
 import 'platform/drive/drive_view.dart' as _ipww3kqy;
+import 'platform/drive/file_category.dart' as _iez45i4u;
+import 'platform/drive/file_upload_progress.dart' as _ilt75p4e;
+import 'platform/drive/file_upload_request.dart' as _iqpb2qv1;
+import 'platform/drive/file_upload_start.dart' as _imf3tnfq;
+import 'platform/drive/file_upload_state.dart' as _ia04wt6m;
 import 'platform/drive/import_report_view.dart' as _i68yhxa0;
 import 'platform/drive/import_warning_view.dart' as _i48sm9f2;
+import 'platform/drive/storage_list_filter.dart' as _i8hnug6t;
 import 'platform/drive/storage_usage.dart' as _i26hsnhw;
 import 'platform/drive/template_category.dart' as _iiedu4vz;
 import 'platform/drive/template_preview_style.dart' as _i6rg3vdh;
 import 'platform/drive/template_view.dart' as _i2ox7ta1;
+import 'platform/drive/upload_conflict_mode.dart' as _io3ccr8w;
 import 'platform/feedback/feedback_kind.dart' as _iv1sk0e8;
 import 'platform/feedback/feedback_report.dart' as _iu565i0a;
 import 'platform/feedback/feedback_submission.dart' as _ilhpki98;
@@ -155,6 +166,9 @@ import 'platform/sharing/permission_view.dart' as _iead0ok9;
 import 'platform/sharing/share_link.dart' as _it712lg1;
 import 'platform/sharing/share_link_view.dart' as _iw2xoohn;
 import 'platform/sharing/sharing_info.dart' as _itd24os1;
+import 'platform/storage/quota_exceeded_details.dart' as _ifxa4vxf;
+import 'platform/storage/storage_reservation.dart' as _if4kaxov;
+import 'platform/storage/user_storage.dart' as _is05u0nw;
 import 'platform/users/access_token_view.dart' as _izha9j5m;
 import 'platform/users/account_deletion_preview.dart' as _iq4dupwy;
 import 'platform/users/app_theme_mode.dart' as _i6azdr3n;
@@ -201,6 +215,7 @@ import 'sheets/models/sheets_journal_space.dart' as _i6vovdef;
 import 'sheets/models/sheets_merged_signal.dart' as _izigafhu;
 import 'sheets/models/sheets_row_journal.dart' as _i09o85d1;
 import 'sheets/models/sheets_snapshot_index.dart' as _iwl8v9t3;
+import 'sheets/models/space_kind.dart' as _i19n72yw;
 import 'sheets/models/space_reservation.dart' as _i9g7m0kd;
 import 'sheets/models/space_stats.dart' as _izbczo40;
 import 'sheets/models/space_subscription.dart' as _i1qxq8ae;
@@ -218,6 +233,7 @@ import 'sheets/scripts/models/script_quota_usage.dart' as _itn7c5zm;
 import 'sheets/scripts/models/script_run_response.dart' as _is0mvar3;
 import 'sheets/scripts/models/script_runtime_kind.dart' as _iy0fj18f;
 import 'sheets/scripts/models/script_trigger_state.dart' as _ixysij0q;
+import 'slides/models/deck_change_log_receipt.dart' as _ircoml6y;
 import 'write/mcp/headless_change.dart' as _iilidizm;
 import 'write/messages/doc_bus_message.dart' as _i8zfu67r;
 import 'write/messages/doc_client_message.dart' as _imbts8if;
@@ -307,12 +323,19 @@ export 'platform/drive/drive_search_filters.dart';
 export 'platform/drive/drive_sort.dart';
 export 'platform/drive/drive_sort_field.dart';
 export 'platform/drive/drive_view.dart';
+export 'platform/drive/file_category.dart';
+export 'platform/drive/file_upload_progress.dart';
+export 'platform/drive/file_upload_request.dart';
+export 'platform/drive/file_upload_start.dart';
+export 'platform/drive/file_upload_state.dart';
 export 'platform/drive/import_report_view.dart';
 export 'platform/drive/import_warning_view.dart';
+export 'platform/drive/storage_list_filter.dart';
 export 'platform/drive/storage_usage.dart';
 export 'platform/drive/template_category.dart';
 export 'platform/drive/template_preview_style.dart';
 export 'platform/drive/template_view.dart';
+export 'platform/drive/upload_conflict_mode.dart';
 export 'platform/feedback/feedback_kind.dart';
 export 'platform/feedback/feedback_report.dart';
 export 'platform/feedback/feedback_submission.dart';
@@ -348,6 +371,9 @@ export 'platform/sharing/permission_view.dart';
 export 'platform/sharing/share_link.dart';
 export 'platform/sharing/share_link_view.dart';
 export 'platform/sharing/sharing_info.dart';
+export 'platform/storage/quota_exceeded_details.dart';
+export 'platform/storage/storage_reservation.dart';
+export 'platform/storage/user_storage.dart';
 export 'platform/users/access_token_view.dart';
 export 'platform/users/account_deletion_preview.dart';
 export 'platform/users/app_theme_mode.dart';
@@ -394,6 +420,7 @@ export 'sheets/models/sheets_journal_space.dart';
 export 'sheets/models/sheets_merged_signal.dart';
 export 'sheets/models/sheets_row_journal.dart';
 export 'sheets/models/sheets_snapshot_index.dart';
+export 'sheets/models/space_kind.dart';
 export 'sheets/models/space_reservation.dart';
 export 'sheets/models/space_stats.dart';
 export 'sheets/models/space_subscription.dart';
@@ -411,6 +438,7 @@ export 'sheets/scripts/models/script_quota_usage.dart';
 export 'sheets/scripts/models/script_run_response.dart';
 export 'sheets/scripts/models/script_runtime_kind.dart';
 export 'sheets/scripts/models/script_trigger_state.dart';
+export 'slides/models/deck_change_log_receipt.dart';
 export 'write/mcp/headless_change.dart';
 export 'write/messages/doc_bus_message.dart';
 export 'write/messages/doc_client_message.dart';
@@ -455,7 +483,9 @@ class Protocol extends _is.DatabaseSerializationManager
       _is.ProtocolDeserialization.cached(
         this,
         types: const [
+          _is.getType<_ilpvgw0t.FilePreviewFutureCallGenerateModel>,
           _is.getType<_inb6x2l0.NotificationEmailFutureCallSendModel>,
+          _is.getType<_io4auc29.StorageFutureCallRefreshItemSizeModel>,
           _is.getType<_izr1y672.ActivityDashboard>,
           _is.getType<_iatdjl5p.ActivityEvent>,
           _is.getType<_isa7sjzq.ActivityEventView>,
@@ -516,12 +546,19 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_iu13r4v2.DriveSort>,
           _is.getType<_ix0g8yw4.DriveSortField>,
           _is.getType<_ipww3kqy.DriveView>,
+          _is.getType<_iez45i4u.FileCategory>,
+          _is.getType<_ilt75p4e.FileUploadProgress>,
+          _is.getType<_iqpb2qv1.FileUploadRequest>,
+          _is.getType<_imf3tnfq.FileUploadStart>,
+          _is.getType<_ia04wt6m.FileUploadState>,
           _is.getType<_i68yhxa0.ImportReportView>,
           _is.getType<_i48sm9f2.ImportWarningView>,
+          _is.getType<_i8hnug6t.StorageListFilter>,
           _is.getType<_i26hsnhw.StorageUsage>,
           _is.getType<_iiedu4vz.TemplateCategory>,
           _is.getType<_i6rg3vdh.TemplatePreviewStyle>,
           _is.getType<_i2ox7ta1.TemplateView>,
+          _is.getType<_io3ccr8w.UploadConflictMode>,
           _is.getType<_iv1sk0e8.FeedbackKind>,
           _is.getType<_iu565i0a.FeedbackReport>,
           _is.getType<_ilhpki98.FeedbackSubmission>,
@@ -569,6 +606,9 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_it712lg1.ShareLink>,
           _is.getType<_iw2xoohn.ShareLinkView>,
           _is.getType<_itd24os1.SharingInfo>,
+          _is.getType<_ifxa4vxf.QuotaExceededDetails>,
+          _is.getType<_if4kaxov.StorageReservation>,
+          _is.getType<_is05u0nw.UserStorage>,
           _is.getType<_izha9j5m.AccessTokenView>,
           _is.getType<_iq4dupwy.AccountDeletionPreview>,
           _is.getType<_i6azdr3n.AppThemeMode>,
@@ -615,6 +655,7 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_izigafhu.SheetsMergedSignal>,
           _is.getType<_i09o85d1.SheetsRowJournal>,
           _is.getType<_iwl8v9t3.SheetsSnapshotIndex>,
+          _is.getType<_i19n72yw.SpaceKind>,
           _is.getType<_i9g7m0kd.SpaceReservation>,
           _is.getType<_izbczo40.SpaceStats>,
           _is.getType<_i1qxq8ae.SpaceSubscription>,
@@ -632,6 +673,7 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_is0mvar3.ScriptRunResponse>,
           _is.getType<_iy0fj18f.ScriptRuntimeKind>,
           _is.getType<_ixysij0q.ScriptTriggerState>,
+          _is.getType<_ircoml6y.DeckChangeLogReceipt>,
           _is.getType<_iilidizm.HeadlessChange>,
           _is.getType<_icpkpcrn.DocAck>,
           _is.getType<_i8zfu67r.DocBusMessage>,
@@ -675,7 +717,9 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_ick3mhj2.WriteThemeRevisionView>,
           _is.getType<_ixbjd26z.WriteThemeView>,
           _is.getType<_is9bkd9t.WriteVersionDocument>,
+          _is.getType<_ilpvgw0t.FilePreviewFutureCallGenerateModel?>,
           _is.getType<_inb6x2l0.NotificationEmailFutureCallSendModel?>,
+          _is.getType<_io4auc29.StorageFutureCallRefreshItemSizeModel?>,
           _is.getType<_izr1y672.ActivityDashboard?>,
           _is.getType<_iatdjl5p.ActivityEvent?>,
           _is.getType<_isa7sjzq.ActivityEventView?>,
@@ -736,12 +780,19 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_iu13r4v2.DriveSort?>,
           _is.getType<_ix0g8yw4.DriveSortField?>,
           _is.getType<_ipww3kqy.DriveView?>,
+          _is.getType<_iez45i4u.FileCategory?>,
+          _is.getType<_ilt75p4e.FileUploadProgress?>,
+          _is.getType<_iqpb2qv1.FileUploadRequest?>,
+          _is.getType<_imf3tnfq.FileUploadStart?>,
+          _is.getType<_ia04wt6m.FileUploadState?>,
           _is.getType<_i68yhxa0.ImportReportView?>,
           _is.getType<_i48sm9f2.ImportWarningView?>,
+          _is.getType<_i8hnug6t.StorageListFilter?>,
           _is.getType<_i26hsnhw.StorageUsage?>,
           _is.getType<_iiedu4vz.TemplateCategory?>,
           _is.getType<_i6rg3vdh.TemplatePreviewStyle?>,
           _is.getType<_i2ox7ta1.TemplateView?>,
+          _is.getType<_io3ccr8w.UploadConflictMode?>,
           _is.getType<_iv1sk0e8.FeedbackKind?>,
           _is.getType<_iu565i0a.FeedbackReport?>,
           _is.getType<_ilhpki98.FeedbackSubmission?>,
@@ -789,6 +840,9 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_it712lg1.ShareLink?>,
           _is.getType<_iw2xoohn.ShareLinkView?>,
           _is.getType<_itd24os1.SharingInfo?>,
+          _is.getType<_ifxa4vxf.QuotaExceededDetails?>,
+          _is.getType<_if4kaxov.StorageReservation?>,
+          _is.getType<_is05u0nw.UserStorage?>,
           _is.getType<_izha9j5m.AccessTokenView?>,
           _is.getType<_iq4dupwy.AccountDeletionPreview?>,
           _is.getType<_i6azdr3n.AppThemeMode?>,
@@ -835,6 +889,7 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_izigafhu.SheetsMergedSignal?>,
           _is.getType<_i09o85d1.SheetsRowJournal?>,
           _is.getType<_iwl8v9t3.SheetsSnapshotIndex?>,
+          _is.getType<_i19n72yw.SpaceKind?>,
           _is.getType<_i9g7m0kd.SpaceReservation?>,
           _is.getType<_izbczo40.SpaceStats?>,
           _is.getType<_i1qxq8ae.SpaceSubscription?>,
@@ -852,6 +907,7 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_is0mvar3.ScriptRunResponse?>,
           _is.getType<_iy0fj18f.ScriptRuntimeKind?>,
           _is.getType<_ixysij0q.ScriptTriggerState?>,
+          _is.getType<_ircoml6y.DeckChangeLogReceipt?>,
           _is.getType<_iilidizm.HeadlessChange?>,
           _is.getType<_icpkpcrn.DocAck?>,
           _is.getType<_i8zfu67r.DocBusMessage?>,
@@ -908,6 +964,8 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<Map<String, List<int>>>,
           _is.getType<List<_i8mh39wa.DriveItemKind>>,
           _is.getType<List<_i8mh39wa.DriveItemKind>?>,
+          _is.getType<List<_iez45i4u.FileCategory>>,
+          _is.getType<List<_iez45i4u.FileCategory>?>,
           _is.getType<List<_infxyf98.DriveItemView>>,
           _is.getType<List<_i48sm9f2.ImportWarningView>>,
           _is.getType<List<_izfzk9h3.NotificationView>>,
@@ -2091,6 +2149,85 @@ class Protocol extends _is.DatabaseSerializationManager
       managed: true,
     ),
     _isp.TableDefinition(
+      name: 'deck_change_log_receipt',
+      dartName: 'DeckChangeLogReceipt',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'changeLogId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'deckUuid',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'processedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'completedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'doneConsumers',
+          columnType: _isp.ColumnType.json,
+          isNullable: false,
+          dartType: 'List<String>',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'deck_change_log_receipt_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'changeLogId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'deck_change_log_receipt_deck_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'deckUuid',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'processedAt',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
       name: 'document',
       dartName: 'Document',
       schema: 'public',
@@ -2688,6 +2825,50 @@ class Protocol extends _is.DatabaseSerializationManager
           columnDefault: '0',
         ),
         _isp.ColumnDefinition(
+          name: 'attachmentBytes',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'kindMask',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'mimeType',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'fileCategory',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'protocol:FileCategory?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'uploadState',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'protocol:FileUploadState?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'fileMetaJson',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'previewFileId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isp.ColumnDefinition(
           name: 'createdAt',
           columnType: _isp.ColumnType.timestampWithoutTimeZone,
           isNullable: false,
@@ -2849,6 +3030,23 @@ class Protocol extends _is.DatabaseSerializationManager
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
               definition: 'templateOf',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'drive_item_upload_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'uploadState',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'createdAt',
             ),
           ],
           type: 'btree',
@@ -5232,6 +5430,13 @@ class Protocol extends _is.DatabaseSerializationManager
           dartType: 'UuidValue',
         ),
         _isp.ColumnDefinition(
+          name: 'kind',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:SpaceKind',
+          columnDefault: '\'spreadsheet\'',
+        ),
+        _isp.ColumnDefinition(
           name: 'createdAt',
           columnType: _isp.ColumnType.timestampWithoutTimeZone,
           isNullable: false,
@@ -5322,6 +5527,13 @@ class Protocol extends _is.DatabaseSerializationManager
           dartType: 'UuidValue',
         ),
         _isp.ColumnDefinition(
+          name: 'kind',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:SpaceKind',
+          columnDefault: '\'spreadsheet\'',
+        ),
+        _isp.ColumnDefinition(
           name: 'reason',
           columnType: _isp.ColumnType.text,
           isNullable: false,
@@ -5394,6 +5606,121 @@ class Protocol extends _is.DatabaseSerializationManager
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
               definition: 'spaceUuid',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'storage_reservation',
+      dartName: 'StorageReservation',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'userId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'fileUuid',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'itemId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'bytes',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'expiresAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'storage_reservation_fk_0',
+          columns: ['userId'],
+          referenceTable: 'user_profile',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+        _isp.ForeignKeyDefinition(
+          constraintName: 'storage_reservation_fk_1',
+          columns: ['itemId'],
+          referenceTable: 'drive_item',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'storage_reservation_file_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'fileUuid',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'storage_reservation_user_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'userId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'storage_reservation_expiry_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'expiresAt',
             ),
           ],
           type: 'btree',
@@ -5690,6 +6017,27 @@ class Protocol extends _is.DatabaseSerializationManager
           columnDefault: '\'{}\'',
         ),
         _isp.ColumnDefinition(
+          name: 'slidesDefaults',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+          columnDefault: '\'{}\'',
+        ),
+        _isp.ColumnDefinition(
+          name: 'slidesPresenter',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+          columnDefault: '\'{}\'',
+        ),
+        _isp.ColumnDefinition(
+          name: 'driveDefaults',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+          columnDefault: '\'{}\'',
+        ),
+        _isp.ColumnDefinition(
           name: 'notificationSettings',
           columnType: _isp.ColumnType.text,
           isNullable: false,
@@ -5846,6 +6194,128 @@ class Protocol extends _is.DatabaseSerializationManager
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
               definition: 'email',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'user_storage',
+      dartName: 'UserStorage',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'userId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'usedBytes',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'reservedBytes',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'documentsBytes',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'spreadsheetsBytes',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'presentationsBytes',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'filesBytes',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'trashBytes',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'quotaBytesOverride',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'overQuotaSince',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'reconciledAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'updatedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'user_storage_fk_0',
+          columns: ['userId'],
+          referenceTable: 'user_profile',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'user_storage_user_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'userId',
             ),
           ],
           type: 'btree',
@@ -6207,8 +6677,15 @@ class Protocol extends _is.DatabaseSerializationManager
       }
     }
 
+    if (t == _ilpvgw0t.FilePreviewFutureCallGenerateModel) {
+      return _ilpvgw0t.FilePreviewFutureCallGenerateModel.fromJson(data) as T;
+    }
     if (t == _inb6x2l0.NotificationEmailFutureCallSendModel) {
       return _inb6x2l0.NotificationEmailFutureCallSendModel.fromJson(data) as T;
+    }
+    if (t == _io4auc29.StorageFutureCallRefreshItemSizeModel) {
+      return _io4auc29.StorageFutureCallRefreshItemSizeModel.fromJson(data)
+          as T;
     }
     if (t == _izr1y672.ActivityDashboard) {
       return _izr1y672.ActivityDashboard.fromJson(data) as T;
@@ -6390,11 +6867,29 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == _ipww3kqy.DriveView) {
       return _ipww3kqy.DriveView.fromJson(data) as T;
     }
+    if (t == _iez45i4u.FileCategory) {
+      return _iez45i4u.FileCategory.fromJson(data) as T;
+    }
+    if (t == _ilt75p4e.FileUploadProgress) {
+      return _ilt75p4e.FileUploadProgress.fromJson(data) as T;
+    }
+    if (t == _iqpb2qv1.FileUploadRequest) {
+      return _iqpb2qv1.FileUploadRequest.fromJson(data) as T;
+    }
+    if (t == _imf3tnfq.FileUploadStart) {
+      return _imf3tnfq.FileUploadStart.fromJson(data) as T;
+    }
+    if (t == _ia04wt6m.FileUploadState) {
+      return _ia04wt6m.FileUploadState.fromJson(data) as T;
+    }
     if (t == _i68yhxa0.ImportReportView) {
       return _i68yhxa0.ImportReportView.fromJson(data) as T;
     }
     if (t == _i48sm9f2.ImportWarningView) {
       return _i48sm9f2.ImportWarningView.fromJson(data) as T;
+    }
+    if (t == _i8hnug6t.StorageListFilter) {
+      return _i8hnug6t.StorageListFilter.fromJson(data) as T;
     }
     if (t == _i26hsnhw.StorageUsage) {
       return _i26hsnhw.StorageUsage.fromJson(data) as T;
@@ -6407,6 +6902,9 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (t == _i2ox7ta1.TemplateView) {
       return _i2ox7ta1.TemplateView.fromJson(data) as T;
+    }
+    if (t == _io3ccr8w.UploadConflictMode) {
+      return _io3ccr8w.UploadConflictMode.fromJson(data) as T;
     }
     if (t == _iv1sk0e8.FeedbackKind) {
       return _iv1sk0e8.FeedbackKind.fromJson(data) as T;
@@ -6549,6 +7047,15 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == _itd24os1.SharingInfo) {
       return _itd24os1.SharingInfo.fromJson(data) as T;
     }
+    if (t == _ifxa4vxf.QuotaExceededDetails) {
+      return _ifxa4vxf.QuotaExceededDetails.fromJson(data) as T;
+    }
+    if (t == _if4kaxov.StorageReservation) {
+      return _if4kaxov.StorageReservation.fromJson(data) as T;
+    }
+    if (t == _is05u0nw.UserStorage) {
+      return _is05u0nw.UserStorage.fromJson(data) as T;
+    }
     if (t == _izha9j5m.AccessTokenView) {
       return _izha9j5m.AccessTokenView.fromJson(data) as T;
     }
@@ -6687,6 +7194,9 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == _iwl8v9t3.SheetsSnapshotIndex) {
       return _iwl8v9t3.SheetsSnapshotIndex.fromJson(data) as T;
     }
+    if (t == _i19n72yw.SpaceKind) {
+      return _i19n72yw.SpaceKind.fromJson(data) as T;
+    }
     if (t == _i9g7m0kd.SpaceReservation) {
       return _i9g7m0kd.SpaceReservation.fromJson(data) as T;
     }
@@ -6737,6 +7247,9 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (t == _ixysij0q.ScriptTriggerState) {
       return _ixysij0q.ScriptTriggerState.fromJson(data) as T;
+    }
+    if (t == _ircoml6y.DeckChangeLogReceipt) {
+      return _ircoml6y.DeckChangeLogReceipt.fromJson(data) as T;
     }
     if (t == _iilidizm.HeadlessChange) {
       return _iilidizm.HeadlessChange.fromJson(data) as T;
@@ -6867,9 +7380,21 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == _is9bkd9t.WriteVersionDocument) {
       return _is9bkd9t.WriteVersionDocument.fromJson(data) as T;
     }
+    if (t == _is.getType<_ilpvgw0t.FilePreviewFutureCallGenerateModel?>()) {
+      return (data != null
+              ? _ilpvgw0t.FilePreviewFutureCallGenerateModel.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _is.getType<_inb6x2l0.NotificationEmailFutureCallSendModel?>()) {
       return (data != null
               ? _inb6x2l0.NotificationEmailFutureCallSendModel.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_io4auc29.StorageFutureCallRefreshItemSizeModel?>()) {
+      return (data != null
+              ? _io4auc29.StorageFutureCallRefreshItemSizeModel.fromJson(data)
               : null)
           as T;
     }
@@ -7108,12 +7633,35 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == _is.getType<_ipww3kqy.DriveView?>()) {
       return (data != null ? _ipww3kqy.DriveView.fromJson(data) : null) as T;
     }
+    if (t == _is.getType<_iez45i4u.FileCategory?>()) {
+      return (data != null ? _iez45i4u.FileCategory.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_ilt75p4e.FileUploadProgress?>()) {
+      return (data != null ? _ilt75p4e.FileUploadProgress.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_iqpb2qv1.FileUploadRequest?>()) {
+      return (data != null ? _iqpb2qv1.FileUploadRequest.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_imf3tnfq.FileUploadStart?>()) {
+      return (data != null ? _imf3tnfq.FileUploadStart.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_ia04wt6m.FileUploadState?>()) {
+      return (data != null ? _ia04wt6m.FileUploadState.fromJson(data) : null)
+          as T;
+    }
     if (t == _is.getType<_i68yhxa0.ImportReportView?>()) {
       return (data != null ? _i68yhxa0.ImportReportView.fromJson(data) : null)
           as T;
     }
     if (t == _is.getType<_i48sm9f2.ImportWarningView?>()) {
       return (data != null ? _i48sm9f2.ImportWarningView.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i8hnug6t.StorageListFilter?>()) {
+      return (data != null ? _i8hnug6t.StorageListFilter.fromJson(data) : null)
           as T;
     }
     if (t == _is.getType<_i26hsnhw.StorageUsage?>()) {
@@ -7131,6 +7679,10 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (t == _is.getType<_i2ox7ta1.TemplateView?>()) {
       return (data != null ? _i2ox7ta1.TemplateView.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_io3ccr8w.UploadConflictMode?>()) {
+      return (data != null ? _io3ccr8w.UploadConflictMode.fromJson(data) : null)
+          as T;
     }
     if (t == _is.getType<_iv1sk0e8.FeedbackKind?>()) {
       return (data != null ? _iv1sk0e8.FeedbackKind.fromJson(data) : null) as T;
@@ -7318,6 +7870,19 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (t == _is.getType<_itd24os1.SharingInfo?>()) {
       return (data != null ? _itd24os1.SharingInfo.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_ifxa4vxf.QuotaExceededDetails?>()) {
+      return (data != null
+              ? _ifxa4vxf.QuotaExceededDetails.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_if4kaxov.StorageReservation?>()) {
+      return (data != null ? _if4kaxov.StorageReservation.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_is05u0nw.UserStorage?>()) {
+      return (data != null ? _is05u0nw.UserStorage.fromJson(data) : null) as T;
     }
     if (t == _is.getType<_izha9j5m.AccessTokenView?>()) {
       return (data != null ? _izha9j5m.AccessTokenView.fromJson(data) : null)
@@ -7524,6 +8089,9 @@ class Protocol extends _is.DatabaseSerializationManager
               : null)
           as T;
     }
+    if (t == _is.getType<_i19n72yw.SpaceKind?>()) {
+      return (data != null ? _i19n72yw.SpaceKind.fromJson(data) : null) as T;
+    }
     if (t == _is.getType<_i9g7m0kd.SpaceReservation?>()) {
       return (data != null ? _i9g7m0kd.SpaceReservation.fromJson(data) : null)
           as T;
@@ -7600,6 +8168,12 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (t == _is.getType<_ixysij0q.ScriptTriggerState?>()) {
       return (data != null ? _ixysij0q.ScriptTriggerState.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_ircoml6y.DeckChangeLogReceipt?>()) {
+      return (data != null
+              ? _ircoml6y.DeckChangeLogReceipt.fromJson(data)
+              : null)
           as T;
     }
     if (t == _is.getType<_iilidizm.HeadlessChange?>()) {
@@ -7852,6 +8426,20 @@ class Protocol extends _is.DatabaseSerializationManager
       return (data != null
               ? (data as List)
                     .map((e) => deserialize<_i8mh39wa.DriveItemKind>(e))
+                    .toList()
+              : null)
+          as T;
+    }
+    if (t == List<_iez45i4u.FileCategory>) {
+      return (data as List)
+              .map((e) => deserialize<_iez45i4u.FileCategory>(e))
+              .toList()
+          as T;
+    }
+    if (t == _is.getType<List<_iez45i4u.FileCategory>?>()) {
+      return (data != null
+              ? (data as List)
+                    .map((e) => deserialize<_iez45i4u.FileCategory>(e))
                     .toList()
               : null)
           as T;
@@ -8110,8 +8698,12 @@ class Protocol extends _is.DatabaseSerializationManager
 
   static String? getClassNameForType(Type type) {
     return switch (type) {
+      _ilpvgw0t.FilePreviewFutureCallGenerateModel =>
+        'FilePreviewFutureCallGenerateModel',
       _inb6x2l0.NotificationEmailFutureCallSendModel =>
         'NotificationEmailFutureCallSendModel',
+      _io4auc29.StorageFutureCallRefreshItemSizeModel =>
+        'StorageFutureCallRefreshItemSizeModel',
       _izr1y672.ActivityDashboard => 'ActivityDashboard',
       _iatdjl5p.ActivityEvent => 'ActivityEvent',
       _isa7sjzq.ActivityEventView => 'ActivityEventView',
@@ -8172,12 +8764,19 @@ class Protocol extends _is.DatabaseSerializationManager
       _iu13r4v2.DriveSort => 'DriveSort',
       _ix0g8yw4.DriveSortField => 'DriveSortField',
       _ipww3kqy.DriveView => 'DriveView',
+      _iez45i4u.FileCategory => 'FileCategory',
+      _ilt75p4e.FileUploadProgress => 'FileUploadProgress',
+      _iqpb2qv1.FileUploadRequest => 'FileUploadRequest',
+      _imf3tnfq.FileUploadStart => 'FileUploadStart',
+      _ia04wt6m.FileUploadState => 'FileUploadState',
       _i68yhxa0.ImportReportView => 'ImportReportView',
       _i48sm9f2.ImportWarningView => 'ImportWarningView',
+      _i8hnug6t.StorageListFilter => 'StorageListFilter',
       _i26hsnhw.StorageUsage => 'StorageUsage',
       _iiedu4vz.TemplateCategory => 'TemplateCategory',
       _i6rg3vdh.TemplatePreviewStyle => 'TemplatePreviewStyle',
       _i2ox7ta1.TemplateView => 'TemplateView',
+      _io3ccr8w.UploadConflictMode => 'UploadConflictMode',
       _iv1sk0e8.FeedbackKind => 'FeedbackKind',
       _iu565i0a.FeedbackReport => 'FeedbackReport',
       _ilhpki98.FeedbackSubmission => 'FeedbackSubmission',
@@ -8225,6 +8824,9 @@ class Protocol extends _is.DatabaseSerializationManager
       _it712lg1.ShareLink => 'ShareLink',
       _iw2xoohn.ShareLinkView => 'ShareLinkView',
       _itd24os1.SharingInfo => 'SharingInfo',
+      _ifxa4vxf.QuotaExceededDetails => 'QuotaExceededDetails',
+      _if4kaxov.StorageReservation => 'StorageReservation',
+      _is05u0nw.UserStorage => 'UserStorage',
       _izha9j5m.AccessTokenView => 'AccessTokenView',
       _iq4dupwy.AccountDeletionPreview => 'AccountDeletionPreview',
       _i6azdr3n.AppThemeMode => 'AppThemeMode',
@@ -8271,6 +8873,7 @@ class Protocol extends _is.DatabaseSerializationManager
       _izigafhu.SheetsMergedSignal => 'SheetsMergedSignal',
       _i09o85d1.SheetsRowJournal => 'SheetsRowJournal',
       _iwl8v9t3.SheetsSnapshotIndex => 'SheetsSnapshotIndex',
+      _i19n72yw.SpaceKind => 'SpaceKind',
       _i9g7m0kd.SpaceReservation => 'SpaceReservation',
       _izbczo40.SpaceStats => 'SpaceStats',
       _i1qxq8ae.SpaceSubscription => 'SpaceSubscription',
@@ -8288,6 +8891,7 @@ class Protocol extends _is.DatabaseSerializationManager
       _is0mvar3.ScriptRunResponse => 'ScriptRunResponse',
       _iy0fj18f.ScriptRuntimeKind => 'ScriptRuntimeKind',
       _ixysij0q.ScriptTriggerState => 'ScriptTriggerState',
+      _ircoml6y.DeckChangeLogReceipt => 'DeckChangeLogReceipt',
       _iilidizm.HeadlessChange => 'HeadlessChange',
       _icpkpcrn.DocAck => 'DocAck',
       _i8zfu67r.DocBusMessage => 'DocBusMessage',
@@ -8345,8 +8949,12 @@ class Protocol extends _is.DatabaseSerializationManager
     }
 
     switch (data) {
+      case _ilpvgw0t.FilePreviewFutureCallGenerateModel():
+        return 'FilePreviewFutureCallGenerateModel';
       case _inb6x2l0.NotificationEmailFutureCallSendModel():
         return 'NotificationEmailFutureCallSendModel';
+      case _io4auc29.StorageFutureCallRefreshItemSizeModel():
+        return 'StorageFutureCallRefreshItemSizeModel';
       case _izr1y672.ActivityDashboard():
         return 'ActivityDashboard';
       case _iatdjl5p.ActivityEvent():
@@ -8467,10 +9075,22 @@ class Protocol extends _is.DatabaseSerializationManager
         return 'DriveSortField';
       case _ipww3kqy.DriveView():
         return 'DriveView';
+      case _iez45i4u.FileCategory():
+        return 'FileCategory';
+      case _ilt75p4e.FileUploadProgress():
+        return 'FileUploadProgress';
+      case _iqpb2qv1.FileUploadRequest():
+        return 'FileUploadRequest';
+      case _imf3tnfq.FileUploadStart():
+        return 'FileUploadStart';
+      case _ia04wt6m.FileUploadState():
+        return 'FileUploadState';
       case _i68yhxa0.ImportReportView():
         return 'ImportReportView';
       case _i48sm9f2.ImportWarningView():
         return 'ImportWarningView';
+      case _i8hnug6t.StorageListFilter():
+        return 'StorageListFilter';
       case _i26hsnhw.StorageUsage():
         return 'StorageUsage';
       case _iiedu4vz.TemplateCategory():
@@ -8479,6 +9099,8 @@ class Protocol extends _is.DatabaseSerializationManager
         return 'TemplatePreviewStyle';
       case _i2ox7ta1.TemplateView():
         return 'TemplateView';
+      case _io3ccr8w.UploadConflictMode():
+        return 'UploadConflictMode';
       case _iv1sk0e8.FeedbackKind():
         return 'FeedbackKind';
       case _iu565i0a.FeedbackReport():
@@ -8573,6 +9195,12 @@ class Protocol extends _is.DatabaseSerializationManager
         return 'ShareLinkView';
       case _itd24os1.SharingInfo():
         return 'SharingInfo';
+      case _ifxa4vxf.QuotaExceededDetails():
+        return 'QuotaExceededDetails';
+      case _if4kaxov.StorageReservation():
+        return 'StorageReservation';
+      case _is05u0nw.UserStorage():
+        return 'UserStorage';
       case _izha9j5m.AccessTokenView():
         return 'AccessTokenView';
       case _iq4dupwy.AccountDeletionPreview():
@@ -8665,6 +9293,8 @@ class Protocol extends _is.DatabaseSerializationManager
         return 'SheetsRowJournal';
       case _iwl8v9t3.SheetsSnapshotIndex():
         return 'SheetsSnapshotIndex';
+      case _i19n72yw.SpaceKind():
+        return 'SpaceKind';
       case _i9g7m0kd.SpaceReservation():
         return 'SpaceReservation';
       case _izbczo40.SpaceStats():
@@ -8699,6 +9329,8 @@ class Protocol extends _is.DatabaseSerializationManager
         return 'ScriptRuntimeKind';
       case _ixysij0q.ScriptTriggerState():
         return 'ScriptTriggerState';
+      case _ircoml6y.DeckChangeLogReceipt():
+        return 'DeckChangeLogReceipt';
       case _iilidizm.HeadlessChange():
         return 'HeadlessChange';
       case _icpkpcrn.DocAck():
@@ -8823,8 +9455,18 @@ class Protocol extends _is.DatabaseSerializationManager
     if (dataClassName is! String) {
       return super.deserializeByClassName(data);
     }
+    if (dataClassName == 'FilePreviewFutureCallGenerateModel') {
+      return deserialize<_ilpvgw0t.FilePreviewFutureCallGenerateModel>(
+        data['data'],
+      );
+    }
     if (dataClassName == 'NotificationEmailFutureCallSendModel') {
       return deserialize<_inb6x2l0.NotificationEmailFutureCallSendModel>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'StorageFutureCallRefreshItemSizeModel') {
+      return deserialize<_io4auc29.StorageFutureCallRefreshItemSizeModel>(
         data['data'],
       );
     }
@@ -9008,11 +9650,29 @@ class Protocol extends _is.DatabaseSerializationManager
     if (dataClassName == 'DriveView') {
       return deserialize<_ipww3kqy.DriveView>(data['data']);
     }
+    if (dataClassName == 'FileCategory') {
+      return deserialize<_iez45i4u.FileCategory>(data['data']);
+    }
+    if (dataClassName == 'FileUploadProgress') {
+      return deserialize<_ilt75p4e.FileUploadProgress>(data['data']);
+    }
+    if (dataClassName == 'FileUploadRequest') {
+      return deserialize<_iqpb2qv1.FileUploadRequest>(data['data']);
+    }
+    if (dataClassName == 'FileUploadStart') {
+      return deserialize<_imf3tnfq.FileUploadStart>(data['data']);
+    }
+    if (dataClassName == 'FileUploadState') {
+      return deserialize<_ia04wt6m.FileUploadState>(data['data']);
+    }
     if (dataClassName == 'ImportReportView') {
       return deserialize<_i68yhxa0.ImportReportView>(data['data']);
     }
     if (dataClassName == 'ImportWarningView') {
       return deserialize<_i48sm9f2.ImportWarningView>(data['data']);
+    }
+    if (dataClassName == 'StorageListFilter') {
+      return deserialize<_i8hnug6t.StorageListFilter>(data['data']);
     }
     if (dataClassName == 'StorageUsage') {
       return deserialize<_i26hsnhw.StorageUsage>(data['data']);
@@ -9025,6 +9685,9 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (dataClassName == 'TemplateView') {
       return deserialize<_i2ox7ta1.TemplateView>(data['data']);
+    }
+    if (dataClassName == 'UploadConflictMode') {
+      return deserialize<_io3ccr8w.UploadConflictMode>(data['data']);
     }
     if (dataClassName == 'FeedbackKind') {
       return deserialize<_iv1sk0e8.FeedbackKind>(data['data']);
@@ -9167,6 +9830,15 @@ class Protocol extends _is.DatabaseSerializationManager
     if (dataClassName == 'SharingInfo') {
       return deserialize<_itd24os1.SharingInfo>(data['data']);
     }
+    if (dataClassName == 'QuotaExceededDetails') {
+      return deserialize<_ifxa4vxf.QuotaExceededDetails>(data['data']);
+    }
+    if (dataClassName == 'StorageReservation') {
+      return deserialize<_if4kaxov.StorageReservation>(data['data']);
+    }
+    if (dataClassName == 'UserStorage') {
+      return deserialize<_is05u0nw.UserStorage>(data['data']);
+    }
     if (dataClassName == 'AccessTokenView') {
       return deserialize<_izha9j5m.AccessTokenView>(data['data']);
     }
@@ -9305,6 +9977,9 @@ class Protocol extends _is.DatabaseSerializationManager
     if (dataClassName == 'SheetsSnapshotIndex') {
       return deserialize<_iwl8v9t3.SheetsSnapshotIndex>(data['data']);
     }
+    if (dataClassName == 'SpaceKind') {
+      return deserialize<_i19n72yw.SpaceKind>(data['data']);
+    }
     if (dataClassName == 'SpaceReservation') {
       return deserialize<_i9g7m0kd.SpaceReservation>(data['data']);
     }
@@ -9355,6 +10030,9 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (dataClassName == 'ScriptTriggerState') {
       return deserialize<_ixysij0q.ScriptTriggerState>(data['data']);
+    }
+    if (dataClassName == 'DeckChangeLogReceipt') {
+      return deserialize<_ircoml6y.DeckChangeLogReceipt>(data['data']);
     }
     if (dataClassName == 'HeadlessChange') {
       return deserialize<_iilidizm.HeadlessChange>(data['data']);
@@ -9589,6 +10267,10 @@ class Protocol extends _is.DatabaseSerializationManager
         return _ijwxtu30.OwnershipTransfer.t;
       case _it712lg1.ShareLink:
         return _it712lg1.ShareLink.t;
+      case _if4kaxov.StorageReservation:
+        return _if4kaxov.StorageReservation.t;
+      case _is05u0nw.UserStorage:
+        return _is05u0nw.UserStorage.t;
       case _ijodrcyd.PersonalAccessToken:
         return _ijodrcyd.PersonalAccessToken.t;
       case _i501u5m5.UserPreferences:
@@ -9627,6 +10309,8 @@ class Protocol extends _is.DatabaseSerializationManager
         return _itn7c5zm.ScriptQuotaUsage.t;
       case _ixysij0q.ScriptTriggerState:
         return _ixysij0q.ScriptTriggerState.t;
+      case _ircoml6y.DeckChangeLogReceipt:
+        return _ircoml6y.DeckChangeLogReceipt.t;
       case _iilidizm.HeadlessChange:
         return _iilidizm.HeadlessChange.t;
       case _i4sx4pml.Document:

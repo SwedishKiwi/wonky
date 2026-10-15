@@ -1,0 +1,24 @@
+name: wonky_charts_flutter
+description: "Flutter rendering of the Wonky Work chart engine: scene painter, text measurer, 3D GPU backend (flutter_scene), orbit gesture, chart glyphs."
+publish_to: none
+
+environment:
+  sdk: '^3.12.2'
+  flutter: '^3.44.4'
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # GPU backend of 3D charts (Sheets 08 §23.7): Flutter GPU on native
+  # platforms, WebGL2 on the web. Meshes are built at runtime.
+  flutter_scene: ^0.24.3
+  vector_math: ^2.1.4
+  wonky_charts:
+    path: ../wonky_charts
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: '>=3.0.0 <7.0.0'

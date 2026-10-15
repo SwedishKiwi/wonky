@@ -7,9 +7,11 @@ import '../../platform/common/actor.dart';
 import '../../platform/common/models.dart';
 import '../changelog/change_log_consumer.dart';
 import '../../platform/cluster/cluster_bus.dart';
+import '../../platform/spaces/space_sync.dart';
 
-/// The custom sync endpoint's server side (suite 12 §2.5): wraps
-/// `session.offlineSync.sync` with `onMergeSuccess`, which fans out
+/// The custom sync endpoint's server side (suite 12 §2.5): the engine's
+/// sync over spreadsheet spaces + the personal space only (`SpaceSync`,
+/// patch OS-8, §2.6) with `onMergeSuccess`, which fans out
 /// `sheets:merged:<space>` and runs the change-log consumer.
 abstract final class SheetsSyncService {
   static String mergedChannel(UuidValue space) => 'sheets:merged:${space.uuid}';
@@ -29,11 +31,12 @@ abstract final class SheetsSyncService {
     Actor actor, {
     required Stream<OfflineSyncStreamEvent> changes,
     bool once = false,
-  }) => session.offlineSync.sync(
-    userId: actor.authUserId,
-    inbound: changes,
+  }) => SpaceSync.sync(
+    session,
+    actor,
+    kind: SpaceKind.spreadsheet,
+    changes: changes,
     once: once,
-    mode: OfflineSyncPeerMode.authoritative,
     onMergeSuccess: (space, hlc) => onMerged(session, space, hlc),
   );
 

@@ -27,6 +27,10 @@ abstract final class McpErrorCode {
   static const busy = 'busy';
   static const internal = 'internal_error';
 
+  /// (v2) Not enough storage (Drive 03 §6.6); details are
+  /// `QuotaExceededDetails`.
+  static const quotaExceeded = 'quota_exceeded';
+
   /// UI bridge (suite 09 §6).
   static const noSession = 'no_session';
   static const timeout = 'timeout';
@@ -82,6 +86,7 @@ class McpToolException implements Exception {
       WonkyErrorCode.expired => McpErrorCode.expired,
       WonkyErrorCode.unavailable => McpErrorCode.unavailable,
       WonkyErrorCode.busy => McpErrorCode.busy,
+      WonkyErrorCode.quotaExceeded => McpErrorCode.quotaExceeded,
       _ => e.code.name,
     };
     Object? details;
@@ -93,8 +98,24 @@ class McpToolException implements Exception {
         details = raw;
       }
     }
+    if (e.code == WonkyErrorCode.quotaExceeded && details is Map) {
+      details = quotaDetails(details);
+    }
     return McpToolException(code, e.message, details: details);
   }
+
+  /// (v2) The `details` of `quota_exceeded` (suite 09 §4, Drive 03 §7.1)
+  /// from a `QuotaExceededDetails` JSON object: `{needed_bytes,
+  /// available_bytes, quota_bytes, charged_user: {id, name}, is_caller,
+  /// reason}`.
+  static Map<String, Object?> quotaDetails(Map<dynamic, dynamic> d) => {
+    'needed_bytes': d['neededBytes'],
+    'available_bytes': d['availableBytes'],
+    'quota_bytes': d['quotaBytes'],
+    'charged_user': {'id': d['chargedUserId'], 'name': d['chargedUserName']},
+    'is_caller': d['isCaller'],
+    'reason': d['reason'],
+  };
 }
 
 /// An image returned by a tool (MCP image content).

@@ -19,3 +19,13 @@ void rememberLastApp(String app) {
   web.document.cookie =
       'wonky_last_app=$app; path=/; max-age=31536000; samesite=lax';
 }
+
+/// The browser's user agent (for *Report a bug*'s browser family).
+String? userAgent() => web.window.navigator.userAgent;
+
+/// `history.back()` when this tab has a previous page.
+bool historyBack() {
+  if (web.window.history.length <= 1) return false;
+  web.window.history.back();
+  return true;
+}

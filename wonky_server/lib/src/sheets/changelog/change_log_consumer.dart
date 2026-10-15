@@ -12,6 +12,7 @@ import '../../platform/common/models.dart';
 import '../../platform/common/time.dart';
 import '../../platform/drive/drive_events.dart';
 import '../../platform/drive/drive_service.dart';
+import '../../platform/storage/content_sizes.dart';
 import '../../platform/versions/version_service.dart';
 import '../sync/sync_db.dart';
 import 'agent_cursors.dart';
@@ -130,6 +131,8 @@ abstract final class ChangeLogConsumer {
       }
       if (ids.length < batchSize) break;
     }
+    // (v2) Content size for the owner's storage, throttled (Drive 03 §2).
+    if (total > 0) await ContentSizes.onSpaceChanged(session, item);
     return total;
   }
 

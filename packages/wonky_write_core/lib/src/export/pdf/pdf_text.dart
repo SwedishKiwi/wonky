@@ -6,7 +6,7 @@ import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 
 import '../../delta/delta_utils.dart';
-import '../../fonts/font_provider.dart';
+import 'package:wonky_fonts/wonky_fonts.dart';
 import '../../theme/model/values.dart';
 import '../../theme/resolve/resolved_theme.dart';
 import '../export_api.dart';

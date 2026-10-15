@@ -18,3 +18,6 @@ fields:
   themeKey: String?
   ### Colors and traits of the card's miniature page; null = neutral page.
   previewStyle: TemplatePreviewStyle?
+  ### (v2) Counted size of an item created from this template (Drive 03
+  ### §6.5: disabled with "Not enough storage" when it doesn't fit).
+  sizeBytes: int, default=0

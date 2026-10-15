@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:wonky_write/features/editor/components/wonky_components.dart';
-import 'package:wonky_write/features/editor/styles/code_highlighter.dart';
 import 'package:wonky_write/features/editor/styles/editor_theme.dart';
 import 'package:wonky_write/features/editor/ui/wonky_editor.dart';
 
@@ -111,9 +110,9 @@ void main() {
       expect(families, {'JetBrains Mono'});
     });
 
-    testWidgets('when the grammar is loaded then keywords and comments are '
-        'colored from the theme', (tester) async {
-      await tester.runAsync(() => CodeHighlighter.load('dart'));
+    testWidgets('then keywords and comments are colored from the theme', (
+      tester,
+    ) async {
       final h = await _pump(tester, _codeBlock('dart', lines));
 
       final spans = _spans(tester, _codeNodeId(h));
@@ -153,21 +152,14 @@ void main() {
     });
   });
 
-  testWidgets('Given a Go block whose grammar is not loaded yet when it '
-      'arrives then the block is restyled', (tester) async {
-    expect(CodeHighlighter.isLoaded('go'), isFalse);
+  testWidgets('Given a Go block when it is first shown then it is already '
+      'highlighted (no plain flash while a grammar loads)', (tester) async {
     final h = await _pump(
       tester,
       _codeBlock('go', ['func main() {}']),
       settle: false,
     );
     final nodeId = _codeNodeId(h);
-    expect(
-      {for (final span in _spans(tester, nodeId)) span.style?.color},
-      {theme.codeBlock.color},
-    );
-
-    await tester.pumpAndSettle();
 
     expect(
       _spans(tester, nodeId),

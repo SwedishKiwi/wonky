@@ -17,7 +17,7 @@ import 'row_change.dart';
 /// hooks), never mutates it. The client `SheetsWriter` and the server
 /// `ServerSheetsWriter` apply the resulting [MutationPlan] with named columns
 /// and a `ChangeLog` row; the model ingests it with
-/// `WorkbookModel.applyPlan`. Undo = `UndoInverter.invert(plan, current)`.
+/// `WorkbookModel.applyPlan`. Undo = `SheetsUndo.invert(plan, current)`.
 ///
 /// Throws [PlanException] for refused operations.
 final class SheetsMutationPlanner {

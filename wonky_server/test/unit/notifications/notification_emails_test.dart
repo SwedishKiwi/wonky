@@ -97,6 +97,21 @@ void main() {
       );
     });
 
+    // (v2) Folders open in Wonky Drive (`/drive/f/`), presentations in
+    // Slides and files in Drive's preview (suite 03 §2).
+    for (final (kind, path) in [
+      (DriveItemKind.folder, '/drive/f/'),
+      (DriveItemKind.presentation, '/slides/p/'),
+      (DriveItemKind.file, '/drive/file/'),
+    ]) {
+      test('when linking a ${kind.name} then the link is $path<uuid>', () {
+        expect(
+          emails.linkFor(_n(NotificationKind.shared, itemKind: kind)).path,
+          '${path}0190a8a0-0000-7000-8000-00000000000a',
+        );
+      });
+    }
+
     test('when rendering a mention email then the HTML escapes names and '
         'quotes the comment', () {
       final email = emails.single(

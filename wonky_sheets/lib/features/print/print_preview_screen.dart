@@ -155,7 +155,7 @@ class _SheetsPrintPreviewScreenState extends State<SheetsPrintPreviewScreen> {
     );
     ChartScene? Function(EmbeddedObjectRecord, double, double)? charts;
     try {
-      charts = ChartPipeline.printSceneFor(model, c.ed.engine);
+      charts = SheetsChartPipeline.printSceneFor(model, c.ed.engine);
     } catch (_) {
       charts = null;
     }

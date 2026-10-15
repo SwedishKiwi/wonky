@@ -105,12 +105,19 @@ import 'platform/drive/drive_search_filters.dart' as _i6k3d1nc;
 import 'platform/drive/drive_sort.dart' as _iu13r4v2;
 import 'platform/drive/drive_sort_field.dart' as _ix0g8yw4;
 import 'platform/drive/drive_view.dart' as _ipww3kqy;
+import 'platform/drive/file_category.dart' as _iez45i4u;
+import 'platform/drive/file_upload_progress.dart' as _ilt75p4e;
+import 'platform/drive/file_upload_request.dart' as _iqpb2qv1;
+import 'platform/drive/file_upload_start.dart' as _imf3tnfq;
+import 'platform/drive/file_upload_state.dart' as _ia04wt6m;
 import 'platform/drive/import_report_view.dart' as _i68yhxa0;
 import 'platform/drive/import_warning_view.dart' as _i48sm9f2;
+import 'platform/drive/storage_list_filter.dart' as _i8hnug6t;
 import 'platform/drive/storage_usage.dart' as _i26hsnhw;
 import 'platform/drive/template_category.dart' as _iiedu4vz;
 import 'platform/drive/template_preview_style.dart' as _i6rg3vdh;
 import 'platform/drive/template_view.dart' as _i2ox7ta1;
+import 'platform/drive/upload_conflict_mode.dart' as _io3ccr8w;
 import 'platform/feedback/feedback_kind.dart' as _iv1sk0e8;
 import 'platform/feedback/feedback_submission.dart' as _ilhpki98;
 import 'platform/files/file_upload_ticket.dart' as _irrzp8p9;
@@ -143,6 +150,7 @@ import 'platform/sharing/permission_view.dart' as _iead0ok9;
 import 'platform/sharing/share_link.dart' as _it712lg1;
 import 'platform/sharing/share_link_view.dart' as _iw2xoohn;
 import 'platform/sharing/sharing_info.dart' as _itd24os1;
+import 'platform/storage/quota_exceeded_details.dart' as _ifxa4vxf;
 import 'platform/users/access_token_view.dart' as _izha9j5m;
 import 'platform/users/account_deletion_preview.dart' as _iq4dupwy;
 import 'platform/users/app_theme_mode.dart' as _i6azdr3n;
@@ -179,6 +187,7 @@ import 'sheets/models/sheets_contributor_stat.dart' as _i9yjzgjk;
 import 'sheets/models/sheets_dirty_space.dart' as _ign37bwd;
 import 'sheets/models/sheets_journal_space.dart' as _i6vovdef;
 import 'sheets/models/sheets_row_journal.dart' as _i09o85d1;
+import 'sheets/models/space_kind.dart' as _i19n72yw;
 import 'sheets/models/space_stats.dart' as _izbczo40;
 import 'sheets/models/subscribe_result.dart' as _i6dq35xo;
 import 'sheets/models/subscription_reason.dart' as _ic8hyldr;
@@ -268,12 +277,19 @@ export 'platform/drive/drive_search_filters.dart';
 export 'platform/drive/drive_sort.dart';
 export 'platform/drive/drive_sort_field.dart';
 export 'platform/drive/drive_view.dart';
+export 'platform/drive/file_category.dart';
+export 'platform/drive/file_upload_progress.dart';
+export 'platform/drive/file_upload_request.dart';
+export 'platform/drive/file_upload_start.dart';
+export 'platform/drive/file_upload_state.dart';
 export 'platform/drive/import_report_view.dart';
 export 'platform/drive/import_warning_view.dart';
+export 'platform/drive/storage_list_filter.dart';
 export 'platform/drive/storage_usage.dart';
 export 'platform/drive/template_category.dart';
 export 'platform/drive/template_preview_style.dart';
 export 'platform/drive/template_view.dart';
+export 'platform/drive/upload_conflict_mode.dart';
 export 'platform/feedback/feedback_kind.dart';
 export 'platform/feedback/feedback_submission.dart';
 export 'platform/files/file_upload_ticket.dart';
@@ -306,6 +322,7 @@ export 'platform/sharing/permission_view.dart';
 export 'platform/sharing/share_link.dart';
 export 'platform/sharing/share_link_view.dart';
 export 'platform/sharing/sharing_info.dart';
+export 'platform/storage/quota_exceeded_details.dart';
 export 'platform/users/access_token_view.dart';
 export 'platform/users/account_deletion_preview.dart';
 export 'platform/users/app_theme_mode.dart';
@@ -342,6 +359,7 @@ export 'sheets/models/sheets_contributor_stat.dart';
 export 'sheets/models/sheets_dirty_space.dart';
 export 'sheets/models/sheets_journal_space.dart';
 export 'sheets/models/sheets_row_journal.dart';
+export 'sheets/models/space_kind.dart';
 export 'sheets/models/space_stats.dart';
 export 'sheets/models/subscribe_result.dart';
 export 'sheets/models/subscription_reason.dart';
@@ -447,12 +465,19 @@ class Protocol extends _isd.DatabaseSerializationManager
           _isc.getType<_iu13r4v2.DriveSort>,
           _isc.getType<_ix0g8yw4.DriveSortField>,
           _isc.getType<_ipww3kqy.DriveView>,
+          _isc.getType<_iez45i4u.FileCategory>,
+          _isc.getType<_ilt75p4e.FileUploadProgress>,
+          _isc.getType<_iqpb2qv1.FileUploadRequest>,
+          _isc.getType<_imf3tnfq.FileUploadStart>,
+          _isc.getType<_ia04wt6m.FileUploadState>,
           _isc.getType<_i68yhxa0.ImportReportView>,
           _isc.getType<_i48sm9f2.ImportWarningView>,
+          _isc.getType<_i8hnug6t.StorageListFilter>,
           _isc.getType<_i26hsnhw.StorageUsage>,
           _isc.getType<_iiedu4vz.TemplateCategory>,
           _isc.getType<_i6rg3vdh.TemplatePreviewStyle>,
           _isc.getType<_i2ox7ta1.TemplateView>,
+          _isc.getType<_io3ccr8w.UploadConflictMode>,
           _isc.getType<_iv1sk0e8.FeedbackKind>,
           _isc.getType<_ilhpki98.FeedbackSubmission>,
           _isc.getType<_irrzp8p9.FileUploadTicket>,
@@ -497,6 +522,7 @@ class Protocol extends _isd.DatabaseSerializationManager
           _isc.getType<_it712lg1.ShareLink>,
           _isc.getType<_iw2xoohn.ShareLinkView>,
           _isc.getType<_itd24os1.SharingInfo>,
+          _isc.getType<_ifxa4vxf.QuotaExceededDetails>,
           _isc.getType<_izha9j5m.AccessTokenView>,
           _isc.getType<_iq4dupwy.AccountDeletionPreview>,
           _isc.getType<_i6azdr3n.AppThemeMode>,
@@ -533,6 +559,7 @@ class Protocol extends _isd.DatabaseSerializationManager
           _isc.getType<_ign37bwd.SheetsDirtySpace>,
           _isc.getType<_i6vovdef.SheetsJournalSpace>,
           _isc.getType<_i09o85d1.SheetsRowJournal>,
+          _isc.getType<_i19n72yw.SpaceKind>,
           _isc.getType<_izbczo40.SpaceStats>,
           _isc.getType<_i6dq35xo.SubscribeResult>,
           _isc.getType<_ic8hyldr.SubscriptionReason>,
@@ -636,12 +663,19 @@ class Protocol extends _isd.DatabaseSerializationManager
           _isc.getType<_iu13r4v2.DriveSort?>,
           _isc.getType<_ix0g8yw4.DriveSortField?>,
           _isc.getType<_ipww3kqy.DriveView?>,
+          _isc.getType<_iez45i4u.FileCategory?>,
+          _isc.getType<_ilt75p4e.FileUploadProgress?>,
+          _isc.getType<_iqpb2qv1.FileUploadRequest?>,
+          _isc.getType<_imf3tnfq.FileUploadStart?>,
+          _isc.getType<_ia04wt6m.FileUploadState?>,
           _isc.getType<_i68yhxa0.ImportReportView?>,
           _isc.getType<_i48sm9f2.ImportWarningView?>,
+          _isc.getType<_i8hnug6t.StorageListFilter?>,
           _isc.getType<_i26hsnhw.StorageUsage?>,
           _isc.getType<_iiedu4vz.TemplateCategory?>,
           _isc.getType<_i6rg3vdh.TemplatePreviewStyle?>,
           _isc.getType<_i2ox7ta1.TemplateView?>,
+          _isc.getType<_io3ccr8w.UploadConflictMode?>,
           _isc.getType<_iv1sk0e8.FeedbackKind?>,
           _isc.getType<_ilhpki98.FeedbackSubmission?>,
           _isc.getType<_irrzp8p9.FileUploadTicket?>,
@@ -686,6 +720,7 @@ class Protocol extends _isd.DatabaseSerializationManager
           _isc.getType<_it712lg1.ShareLink?>,
           _isc.getType<_iw2xoohn.ShareLinkView?>,
           _isc.getType<_itd24os1.SharingInfo?>,
+          _isc.getType<_ifxa4vxf.QuotaExceededDetails?>,
           _isc.getType<_izha9j5m.AccessTokenView?>,
           _isc.getType<_iq4dupwy.AccountDeletionPreview?>,
           _isc.getType<_i6azdr3n.AppThemeMode?>,
@@ -722,6 +757,7 @@ class Protocol extends _isd.DatabaseSerializationManager
           _isc.getType<_ign37bwd.SheetsDirtySpace?>,
           _isc.getType<_i6vovdef.SheetsJournalSpace?>,
           _isc.getType<_i09o85d1.SheetsRowJournal?>,
+          _isc.getType<_i19n72yw.SpaceKind?>,
           _isc.getType<_izbczo40.SpaceStats?>,
           _isc.getType<_i6dq35xo.SubscribeResult?>,
           _isc.getType<_ic8hyldr.SubscriptionReason?>,
@@ -785,6 +821,8 @@ class Protocol extends _isd.DatabaseSerializationManager
           _isc.getType<Map<String, List<int>>>,
           _isc.getType<List<_i8mh39wa.DriveItemKind>>,
           _isc.getType<List<_i8mh39wa.DriveItemKind>?>,
+          _isc.getType<List<_iez45i4u.FileCategory>>,
+          _isc.getType<List<_iez45i4u.FileCategory>?>,
           _isc.getType<List<_infxyf98.DriveItemView>>,
           _isc.getType<List<_i48sm9f2.ImportWarningView>>,
           _isc.getType<List<_izfzk9h3.NotificationView>>,
@@ -1217,11 +1255,29 @@ class Protocol extends _isd.DatabaseSerializationManager
     if (t == _ipww3kqy.DriveView) {
       return _ipww3kqy.DriveView.fromJson(data) as T;
     }
+    if (t == _iez45i4u.FileCategory) {
+      return _iez45i4u.FileCategory.fromJson(data) as T;
+    }
+    if (t == _ilt75p4e.FileUploadProgress) {
+      return _ilt75p4e.FileUploadProgress.fromJson(data) as T;
+    }
+    if (t == _iqpb2qv1.FileUploadRequest) {
+      return _iqpb2qv1.FileUploadRequest.fromJson(data) as T;
+    }
+    if (t == _imf3tnfq.FileUploadStart) {
+      return _imf3tnfq.FileUploadStart.fromJson(data) as T;
+    }
+    if (t == _ia04wt6m.FileUploadState) {
+      return _ia04wt6m.FileUploadState.fromJson(data) as T;
+    }
     if (t == _i68yhxa0.ImportReportView) {
       return _i68yhxa0.ImportReportView.fromJson(data) as T;
     }
     if (t == _i48sm9f2.ImportWarningView) {
       return _i48sm9f2.ImportWarningView.fromJson(data) as T;
+    }
+    if (t == _i8hnug6t.StorageListFilter) {
+      return _i8hnug6t.StorageListFilter.fromJson(data) as T;
     }
     if (t == _i26hsnhw.StorageUsage) {
       return _i26hsnhw.StorageUsage.fromJson(data) as T;
@@ -1234,6 +1290,9 @@ class Protocol extends _isd.DatabaseSerializationManager
     }
     if (t == _i2ox7ta1.TemplateView) {
       return _i2ox7ta1.TemplateView.fromJson(data) as T;
+    }
+    if (t == _io3ccr8w.UploadConflictMode) {
+      return _io3ccr8w.UploadConflictMode.fromJson(data) as T;
     }
     if (t == _iv1sk0e8.FeedbackKind) {
       return _iv1sk0e8.FeedbackKind.fromJson(data) as T;
@@ -1367,6 +1426,9 @@ class Protocol extends _isd.DatabaseSerializationManager
     if (t == _itd24os1.SharingInfo) {
       return _itd24os1.SharingInfo.fromJson(data) as T;
     }
+    if (t == _ifxa4vxf.QuotaExceededDetails) {
+      return _ifxa4vxf.QuotaExceededDetails.fromJson(data) as T;
+    }
     if (t == _izha9j5m.AccessTokenView) {
       return _izha9j5m.AccessTokenView.fromJson(data) as T;
     }
@@ -1474,6 +1536,9 @@ class Protocol extends _isd.DatabaseSerializationManager
     }
     if (t == _i09o85d1.SheetsRowJournal) {
       return _i09o85d1.SheetsRowJournal.fromJson(data) as T;
+    }
+    if (t == _i19n72yw.SpaceKind) {
+      return _i19n72yw.SpaceKind.fromJson(data) as T;
     }
     if (t == _izbczo40.SpaceStats) {
       return _izbczo40.SpaceStats.fromJson(data) as T;
@@ -1832,12 +1897,35 @@ class Protocol extends _isd.DatabaseSerializationManager
     if (t == _isc.getType<_ipww3kqy.DriveView?>()) {
       return (data != null ? _ipww3kqy.DriveView.fromJson(data) : null) as T;
     }
+    if (t == _isc.getType<_iez45i4u.FileCategory?>()) {
+      return (data != null ? _iez45i4u.FileCategory.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_ilt75p4e.FileUploadProgress?>()) {
+      return (data != null ? _ilt75p4e.FileUploadProgress.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_iqpb2qv1.FileUploadRequest?>()) {
+      return (data != null ? _iqpb2qv1.FileUploadRequest.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_imf3tnfq.FileUploadStart?>()) {
+      return (data != null ? _imf3tnfq.FileUploadStart.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ia04wt6m.FileUploadState?>()) {
+      return (data != null ? _ia04wt6m.FileUploadState.fromJson(data) : null)
+          as T;
+    }
     if (t == _isc.getType<_i68yhxa0.ImportReportView?>()) {
       return (data != null ? _i68yhxa0.ImportReportView.fromJson(data) : null)
           as T;
     }
     if (t == _isc.getType<_i48sm9f2.ImportWarningView?>()) {
       return (data != null ? _i48sm9f2.ImportWarningView.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_i8hnug6t.StorageListFilter?>()) {
+      return (data != null ? _i8hnug6t.StorageListFilter.fromJson(data) : null)
           as T;
     }
     if (t == _isc.getType<_i26hsnhw.StorageUsage?>()) {
@@ -1855,6 +1943,10 @@ class Protocol extends _isd.DatabaseSerializationManager
     }
     if (t == _isc.getType<_i2ox7ta1.TemplateView?>()) {
       return (data != null ? _i2ox7ta1.TemplateView.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_io3ccr8w.UploadConflictMode?>()) {
+      return (data != null ? _io3ccr8w.UploadConflictMode.fromJson(data) : null)
+          as T;
     }
     if (t == _isc.getType<_iv1sk0e8.FeedbackKind?>()) {
       return (data != null ? _iv1sk0e8.FeedbackKind.fromJson(data) : null) as T;
@@ -2031,6 +2123,12 @@ class Protocol extends _isd.DatabaseSerializationManager
     if (t == _isc.getType<_itd24os1.SharingInfo?>()) {
       return (data != null ? _itd24os1.SharingInfo.fromJson(data) : null) as T;
     }
+    if (t == _isc.getType<_ifxa4vxf.QuotaExceededDetails?>()) {
+      return (data != null
+              ? _ifxa4vxf.QuotaExceededDetails.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _isc.getType<_izha9j5m.AccessTokenView?>()) {
       return (data != null ? _izha9j5m.AccessTokenView.fromJson(data) : null)
           as T;
@@ -2188,6 +2286,9 @@ class Protocol extends _isd.DatabaseSerializationManager
     if (t == _isc.getType<_i09o85d1.SheetsRowJournal?>()) {
       return (data != null ? _i09o85d1.SheetsRowJournal.fromJson(data) : null)
           as T;
+    }
+    if (t == _isc.getType<_i19n72yw.SpaceKind?>()) {
+      return (data != null ? _i19n72yw.SpaceKind.fromJson(data) : null) as T;
     }
     if (t == _isc.getType<_izbczo40.SpaceStats?>()) {
       return (data != null ? _izbczo40.SpaceStats.fromJson(data) : null) as T;
@@ -2474,6 +2575,20 @@ class Protocol extends _isd.DatabaseSerializationManager
       return (data != null
               ? (data as List)
                     .map((e) => deserialize<_i8mh39wa.DriveItemKind>(e))
+                    .toList()
+              : null)
+          as T;
+    }
+    if (t == List<_iez45i4u.FileCategory>) {
+      return (data as List)
+              .map((e) => deserialize<_iez45i4u.FileCategory>(e))
+              .toList()
+          as T;
+    }
+    if (t == _isc.getType<List<_iez45i4u.FileCategory>?>()) {
+      return (data != null
+              ? (data as List)
+                    .map((e) => deserialize<_iez45i4u.FileCategory>(e))
                     .toList()
               : null)
           as T;
@@ -2785,12 +2900,19 @@ class Protocol extends _isd.DatabaseSerializationManager
       _iu13r4v2.DriveSort => 'DriveSort',
       _ix0g8yw4.DriveSortField => 'DriveSortField',
       _ipww3kqy.DriveView => 'DriveView',
+      _iez45i4u.FileCategory => 'FileCategory',
+      _ilt75p4e.FileUploadProgress => 'FileUploadProgress',
+      _iqpb2qv1.FileUploadRequest => 'FileUploadRequest',
+      _imf3tnfq.FileUploadStart => 'FileUploadStart',
+      _ia04wt6m.FileUploadState => 'FileUploadState',
       _i68yhxa0.ImportReportView => 'ImportReportView',
       _i48sm9f2.ImportWarningView => 'ImportWarningView',
+      _i8hnug6t.StorageListFilter => 'StorageListFilter',
       _i26hsnhw.StorageUsage => 'StorageUsage',
       _iiedu4vz.TemplateCategory => 'TemplateCategory',
       _i6rg3vdh.TemplatePreviewStyle => 'TemplatePreviewStyle',
       _i2ox7ta1.TemplateView => 'TemplateView',
+      _io3ccr8w.UploadConflictMode => 'UploadConflictMode',
       _iv1sk0e8.FeedbackKind => 'FeedbackKind',
       _ilhpki98.FeedbackSubmission => 'FeedbackSubmission',
       _irrzp8p9.FileUploadTicket => 'FileUploadTicket',
@@ -2835,6 +2957,7 @@ class Protocol extends _isd.DatabaseSerializationManager
       _it712lg1.ShareLink => 'ShareLink',
       _iw2xoohn.ShareLinkView => 'ShareLinkView',
       _itd24os1.SharingInfo => 'SharingInfo',
+      _ifxa4vxf.QuotaExceededDetails => 'QuotaExceededDetails',
       _izha9j5m.AccessTokenView => 'AccessTokenView',
       _iq4dupwy.AccountDeletionPreview => 'AccountDeletionPreview',
       _i6azdr3n.AppThemeMode => 'AppThemeMode',
@@ -2871,6 +2994,7 @@ class Protocol extends _isd.DatabaseSerializationManager
       _ign37bwd.SheetsDirtySpace => 'SheetsDirtySpace',
       _i6vovdef.SheetsJournalSpace => 'SheetsJournalSpace',
       _i09o85d1.SheetsRowJournal => 'SheetsRowJournal',
+      _i19n72yw.SpaceKind => 'SpaceKind',
       _izbczo40.SpaceStats => 'SpaceStats',
       _i6dq35xo.SubscribeResult => 'SubscribeResult',
       _ic8hyldr.SubscriptionReason => 'SubscriptionReason',
@@ -3041,10 +3165,22 @@ class Protocol extends _isd.DatabaseSerializationManager
         return 'DriveSortField';
       case _ipww3kqy.DriveView():
         return 'DriveView';
+      case _iez45i4u.FileCategory():
+        return 'FileCategory';
+      case _ilt75p4e.FileUploadProgress():
+        return 'FileUploadProgress';
+      case _iqpb2qv1.FileUploadRequest():
+        return 'FileUploadRequest';
+      case _imf3tnfq.FileUploadStart():
+        return 'FileUploadStart';
+      case _ia04wt6m.FileUploadState():
+        return 'FileUploadState';
       case _i68yhxa0.ImportReportView():
         return 'ImportReportView';
       case _i48sm9f2.ImportWarningView():
         return 'ImportWarningView';
+      case _i8hnug6t.StorageListFilter():
+        return 'StorageListFilter';
       case _i26hsnhw.StorageUsage():
         return 'StorageUsage';
       case _iiedu4vz.TemplateCategory():
@@ -3053,6 +3189,8 @@ class Protocol extends _isd.DatabaseSerializationManager
         return 'TemplatePreviewStyle';
       case _i2ox7ta1.TemplateView():
         return 'TemplateView';
+      case _io3ccr8w.UploadConflictMode():
+        return 'UploadConflictMode';
       case _iv1sk0e8.FeedbackKind():
         return 'FeedbackKind';
       case _ilhpki98.FeedbackSubmission():
@@ -3141,6 +3279,8 @@ class Protocol extends _isd.DatabaseSerializationManager
         return 'ShareLinkView';
       case _itd24os1.SharingInfo():
         return 'SharingInfo';
+      case _ifxa4vxf.QuotaExceededDetails():
+        return 'QuotaExceededDetails';
       case _izha9j5m.AccessTokenView():
         return 'AccessTokenView';
       case _iq4dupwy.AccountDeletionPreview():
@@ -3213,6 +3353,8 @@ class Protocol extends _isd.DatabaseSerializationManager
         return 'SheetsJournalSpace';
       case _i09o85d1.SheetsRowJournal():
         return 'SheetsRowJournal';
+      case _i19n72yw.SpaceKind():
+        return 'SpaceKind';
       case _izbczo40.SpaceStats():
         return 'SpaceStats';
       case _i6dq35xo.SubscribeResult():
@@ -3506,11 +3648,29 @@ class Protocol extends _isd.DatabaseSerializationManager
     if (dataClassName == 'DriveView') {
       return deserialize<_ipww3kqy.DriveView>(data['data']);
     }
+    if (dataClassName == 'FileCategory') {
+      return deserialize<_iez45i4u.FileCategory>(data['data']);
+    }
+    if (dataClassName == 'FileUploadProgress') {
+      return deserialize<_ilt75p4e.FileUploadProgress>(data['data']);
+    }
+    if (dataClassName == 'FileUploadRequest') {
+      return deserialize<_iqpb2qv1.FileUploadRequest>(data['data']);
+    }
+    if (dataClassName == 'FileUploadStart') {
+      return deserialize<_imf3tnfq.FileUploadStart>(data['data']);
+    }
+    if (dataClassName == 'FileUploadState') {
+      return deserialize<_ia04wt6m.FileUploadState>(data['data']);
+    }
     if (dataClassName == 'ImportReportView') {
       return deserialize<_i68yhxa0.ImportReportView>(data['data']);
     }
     if (dataClassName == 'ImportWarningView') {
       return deserialize<_i48sm9f2.ImportWarningView>(data['data']);
+    }
+    if (dataClassName == 'StorageListFilter') {
+      return deserialize<_i8hnug6t.StorageListFilter>(data['data']);
     }
     if (dataClassName == 'StorageUsage') {
       return deserialize<_i26hsnhw.StorageUsage>(data['data']);
@@ -3523,6 +3683,9 @@ class Protocol extends _isd.DatabaseSerializationManager
     }
     if (dataClassName == 'TemplateView') {
       return deserialize<_i2ox7ta1.TemplateView>(data['data']);
+    }
+    if (dataClassName == 'UploadConflictMode') {
+      return deserialize<_io3ccr8w.UploadConflictMode>(data['data']);
     }
     if (dataClassName == 'FeedbackKind') {
       return deserialize<_iv1sk0e8.FeedbackKind>(data['data']);
@@ -3656,6 +3819,9 @@ class Protocol extends _isd.DatabaseSerializationManager
     if (dataClassName == 'SharingInfo') {
       return deserialize<_itd24os1.SharingInfo>(data['data']);
     }
+    if (dataClassName == 'QuotaExceededDetails') {
+      return deserialize<_ifxa4vxf.QuotaExceededDetails>(data['data']);
+    }
     if (dataClassName == 'AccessTokenView') {
       return deserialize<_izha9j5m.AccessTokenView>(data['data']);
     }
@@ -3763,6 +3929,9 @@ class Protocol extends _isd.DatabaseSerializationManager
     }
     if (dataClassName == 'SheetsRowJournal') {
       return deserialize<_i09o85d1.SheetsRowJournal>(data['data']);
+    }
+    if (dataClassName == 'SpaceKind') {
+      return deserialize<_i19n72yw.SpaceKind>(data['data']);
     }
     if (dataClassName == 'SpaceStats') {
       return deserialize<_izbczo40.SpaceStats>(data['data']);

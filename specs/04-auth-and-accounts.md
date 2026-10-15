@@ -132,7 +132,8 @@ fields:
   keymapOverrides: String        # JSON {commandId: [binding,…]}
   writeDefaults: String          # JSON: default theme id, spellcheck on, smart quotes, etc.
   sheetsDefaults: String         # JSON: default locale for new sheets, default font, etc.
-  slidesDefaults: String         # (v2) JSON: Slides settings (Slides 04: theme, slide size, presenter, animation, code)
+  slidesDefaults: String         # (v2) JSON: Slides settings (Slides 04: theme, slide size, animation, code; last-used export options under `exportOptions`)
+  slidesPresenter: String        # (v2) JSON: presenter preferences (Slides 10 A-10-4)
   driveDefaults: String          # (v2) JSON: Drive settings (Drive 04 §8: layout, sort, extensions, uploads)
   notificationSettings: String   # JSON: email digests on/off, mention emails, etc.
   aiEnabled: bool, default=true
@@ -247,6 +248,35 @@ groups — *Shared* (shell commands) and *<App>* (the current app's commands). O
 JSON (`keymapOverrides`) covering every app's commands; each app lists only its own and keeps the
 other apps' overrides untouched. One place to look, and shared shortcuts (palette, undo, quick
 switcher) stay consistent across apps.
+
+**As built (D-12).** `SettingsScreen` (`wonky_app/lib/src/settings/`) with `SettingsArea {app,
+work}`; routes from `settingsRoutes(services, page)`: `/settings` → `/settings/account`,
+`/settings/app` → the first app section (or `/settings/account` when the app has none, e.g. Slides
+until SL), `/settings/app/:section` (unknown ids show the first section), `/settings/:section`
+(Wonky Work ids `workSettingsSectionIds`: account, security, appearance, language, keyboard,
+notifications, storage, offline, ai, ai-providers, developer, about). The v1 ids (`legacySettingsTarget`)
+redirect in their own app and show `SettingsHandoffPage` elsewhere, which opens the owning app's
+`/settings/app/<section>` (full page load on web); `shell.settings.open {section}` goes through
+the same routes. The wide nav has the two group headers (product icon, `Semantics(header)`), the
+app's sections, *Settings of other apps* (expands inline to the three other apps; each opens its
+`/settings/app` cross-app) and the Wonky Work sections; below 760 px the nav is one select
+(groups as headers, other apps as options). The page header names the open group; Back returns to
+the last non-settings route of the navigation history, else home. `Mod+,` (desktop) moved from
+`shell.settings.open` to `shell.settings.openApp`. Tools menu: `tools.preferences` is now *<App>
+settings* (`shell.settings.openApp`) followed by `tools.workSettings` (*Wonky Work settings*);
+Write keeps both inside its *Preferences ▸* submenu. Sections: *Account & profile* (profile +
+delete account), *Sign-in & security* (password, sign out — Google link status and *Sign out of
+all devices* are open, TODO.md), *Keyboard shortcuts* grouped *Shared* (`shell.*`) / *<App>*
+(every other registered command), *Reset all* resets only the listed commands
+(`KeymapService.resetAll(where:)`) and removed overrides are sent as `null` so the server's
+key-by-key merge deletes them; *Storage* (D-11's `StorageMeter`, breakdown by kind incl. trash,
+"What counts", *Manage storage in Wonky Drive* = `shell.storage.open`); *Offline & device data*
+(renamed; the per-other-app summary rows are open, TODO.md); *About* + *Report a bug*. App
+sections: Write (`editor`, `page`, `themes`, `spelling`, Write 05 §13.3), Sheets (`defaults`,
+every control through `sheets.prefs.set {key, value}`), Drive (`drive`, a stub until D-17).
+`PreferencesController` exposes `driveDefaults`, `slidesDefaults`, `slidesPresenter` with
+key-wise setters (`setDriveDefault`, `setSlidesDefault`, `setSlidesPresenter`; null removes).
+`WonkyAppConfig.settingsSections` and `sheetsSettings` are removed.
 
 ## 5. Endpoints
 

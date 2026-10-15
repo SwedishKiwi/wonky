@@ -3,9 +3,9 @@ import 'dart:ui' as ui;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wonky_sheets/features/charts/chart_insert.dart';
-import 'package:wonky_sheets/features/charts/render/chart_painter.dart';
 import 'package:wonky_sheets/features/objects/objects_controller.dart';
 import 'package:wonky_sheets_core/model.dart';
+import 'package:wonky_charts_flutter/wonky_charts_flutter.dart';
 
 import '../../support/sheets_harness.dart';
 
@@ -60,7 +60,7 @@ void main() {
           final ranges = ChartInsert.rangesFromA1(s.editor, ['A1:E5']);
           final spec = ChartInsert.specFor(s.editor, ranges, type: t);
           final tokens = dark ? ChartUiTokens.dark : ChartUiTokens.light;
-          final build = ChartPipeline.build(
+          final build = SheetsChartPipeline.build(
             spec: spec,
             model: s.model,
             values: s.editor.engine,
@@ -85,12 +85,12 @@ void main() {
   ) async {
     final ranges = ChartInsert.rangesFromA1(s.editor, ['A1:B5']);
     final spec = ChartInsert.specFor(s.editor, ranges);
-    final scene = ChartPipeline.build(
+    final scene = SheetsChartPipeline.build(
       spec: spec,
       model: s.model,
       values: s.editor.engine,
       size: const ChartSize(200, 120),
-      theme: ChartPipeline.exportTheme(s.model),
+      theme: SheetsChartPipeline.exportTheme(s.model),
       measurer: FlutterTextMeasurer.instance,
     ).scene;
     final png = await tester.runAsync(() => chartSceneToPng(scene));

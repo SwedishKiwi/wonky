@@ -57,7 +57,8 @@ extension _ObjectsApi on ScriptHost {
     final spec = ChartSpec.fromJson(o.specJson);
     final anchor = ObjectAnchor.tryParse(o.anchorJson);
     final ranges = <int>[];
-    for (final g in spec.data.ranges) {
+    for (final ref in spec.data.ranges) {
+      final g = GridRange.fromRef(ref);
       final sheet = _model.sheet(g.sheetId);
       final r = sheet?.resolve(g);
       if (r != null) ranges.add(_rangeHandle(r.sheetId, r.rect));
@@ -200,7 +201,9 @@ extension _ObjectsApi on ScriptHost {
       }
     }
     final base = suggestions.isEmpty
-        ? ChartSpec(data: ChartDataSpec(ranges: ranges))
+        ? ChartSpec(
+            data: ChartDataSpec(ranges: [for (final r in ranges) r.toRef()]),
+          )
         : suggestions.first.spec;
     return wanted == null ? base : base.patch({'type': wanted.id});
   }

@@ -1,0 +1,19 @@
+### (v2) Argument of `drive.createFileUpload` (Drive 02 §3.3). Idempotent on
+### ([itemUuid], [fileUuid]).
+class: FileUploadRequest
+fields:
+  ### Client-generated (UUIDv7); the drive item's uuid.
+  itemUuid: UuidValue
+  ### Client-generated; the `driveFile` StoredFile's uuid.
+  fileUuid: UuidValue
+  ### Null = My Drive root.
+  parentUuid: UuidValue?
+  ### Original file name (display name; sanitized by the server, Drive 02 §5.1).
+  name: String
+  sizeBytes: int
+  ### Browser/OS type, informative only (the server sniffs, Drive 02 §5).
+  declaredMimeType: String?
+  lastModified: DateTime?
+  conflict: UploadConflictMode, default=keepBoth
+  ### P1 resumable upload (Drive 02 §4.3).
+  chunked: bool, default=false

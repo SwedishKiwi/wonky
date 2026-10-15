@@ -2,10 +2,10 @@
 // split text and MCP: keep them stable (03 §8.4, §8.6; 06 §5.9).
 
 import 'package:clock/clock.dart';
+import 'package:wonky_numfmt/wonky_numfmt.dart';
 
 import '../content/cell_content.dart';
 import '../format/number_format/inference.dart';
-import '../format/number_format/locale_data.dart';
 import 'date_input.dart';
 import 'number_input.dart';
 

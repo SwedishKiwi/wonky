@@ -1,0 +1,13 @@
+### (v2) Filter of `drive.listByStorage` (Storage page, Drive 03 §6.4): the
+### caller's owned items (incl. trashed) sorted by counted size, descending.
+class: StorageListFilter
+fields:
+  ### Null = all kinds except folders.
+  kinds: List<DriveItemKind>?
+  ### Only trashed items (the *Trash* type filter).
+  trashedOnly: bool, default=false
+  ### Only items whose counted size is at least this (*Large files*: 1 MB).
+  minCountedBytes: int?
+  ### Only items not opened by the caller since this time, or never
+  ### (*Not opened in 6 months*).
+  notOpenedSince: DateTime?

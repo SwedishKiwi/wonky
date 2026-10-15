@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'dart:math' as math;
 
-/// Spreadsheet theme (`Spreadsheet.themeJson`, 06 §13).
-final class SpreadsheetTheme {
+import 'package:wonky_charts/wonky_charts.dart' show ChartThemeSource;
+
+/// Spreadsheet theme (`Spreadsheet.themeJson`, 06 §13). Charts take their palette, font and
+/// `theme:<key>` colors from it ([ChartThemeSource], 08 §24).
+final class SpreadsheetTheme implements ChartThemeSource {
   /// Creates a theme.
   const SpreadsheetTheme({
     this.name = 'Standard',
@@ -14,6 +17,7 @@ final class SpreadsheetTheme {
   final String name;
 
   /// Default cell font (`fonts.text`).
+  @override
   final String textFont;
 
   /// Colors: `text`, `background`, `accent1`…`accent6`, `link` (`#RRGGBB`).
@@ -210,11 +214,18 @@ final class SpreadsheetTheme {
   }
 
   /// [resolveColor] as opaque ARGB.
+  @override
   int? resolveArgb(String? color) {
     final hex = resolveColor(color);
     if (hex == null) return null;
     return 0xFF000000 | int.parse(hex.substring(1), radix: 16);
   }
+
+  /// Accent colors 1–6 as opaque ARGB (invalid ones `#4285F4`), for charts.
+  @override
+  List<int> get accentArgbs => [
+    for (final a in accents) resolveArgb(a) ?? 0xFF4285F4,
+  ];
 
   /// Accent colors 1–6.
   List<String> get accents => [

@@ -49,7 +49,7 @@ void main() {
 
     test('when exported as SVG then it renders', () {
       final spec = specFor(m, 'A1:D7', type: ChartType.surface);
-      final svg = ChartPipeline.exportSvg(
+      final svg = SheetsChartPipeline.exportSvg(
         spec: spec,
         model: m,
         values: ModelCellSource(m),

@@ -1,8 +1,6 @@
+import 'package:wonky_numfmt/wonky_numfmt.dart';
+
 import '../../content/cell_content.dart';
-import 'ast.dart';
-import 'automatic.dart';
-import 'parser.dart';
-import 'presets.dart';
 
 /// Increase / decrease decimals (06 §5.10, `sheets.format.increaseDecimals`
 /// / `decreaseDecimals`).

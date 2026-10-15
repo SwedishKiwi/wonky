@@ -8,6 +8,8 @@ import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart' show InvocationSource;
 import 'package:wonky_sheets_core/formula.dart' show CellPos, GridRect;
 import 'package:wonky_sheets_core/model.dart';
+import 'package:wonky_charts_flutter/wonky_charts_flutter.dart'
+    show paintChartScene;
 
 import '../features/ai/agent_highlight_layer.dart';
 import '../features/ai/sheets_a1.dart';
@@ -23,7 +25,6 @@ import '../features/charts/controller/chart_controller.dart'
     show chartDarkOf, chartUiTokensOf;
 import '../features/charts/chart_insert.dart' show chartEditorPanelId;
 import '../features/charts/editor/chart_editor_mcp.dart';
-import '../features/charts/render/chart_painter.dart' show paintChartScene;
 import '../features/images/image_object_view.dart' show boxFitOf;
 import '../features/images/image_service.dart';
 import '../features/objects/objects_controller.dart';

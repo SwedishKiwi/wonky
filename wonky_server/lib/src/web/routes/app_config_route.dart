@@ -1,9 +1,12 @@
 import 'package:serverpod/serverpod.dart';
 
+import '../web_apps.dart';
+
 /// Serves `assets/config.json` of the web apps (specs/01 §2.4):
-/// `{apiUrl, webUrl, apps: {write, sheets}, cookieAuth, google?}` with the
-/// API URL, the public web origin (`wonky.work` in production; legal pages),
-/// the base URL of each app on it (for cross-app links), whether the API
+/// `{apiUrl, webUrl, apps: {drive, write, sheets, slides}, cookieAuth,
+/// google?}` with the API URL, the public web origin (`wonky.work` in
+/// production; legal pages), the base URL of each app on it (for cross-app
+/// links; all four apps, also before one is built), whether the API
 /// accepts cookie auth (specs/01 §2.5) and, when Google sign-in is
 /// configured, `{clientId, redirectUri}` for the web OAuth flow (specs/04
 /// §1.6).
@@ -11,15 +14,14 @@ class AppConfigWidget extends JsonWidget {
   AppConfigWidget({
     required String apiUrl,
     required String webUrl,
-    required String writeUrl,
-    required String sheetsUrl,
+    required Map<String, String> apps,
     required bool cookieAuth,
     String? googleClientId,
   }) : super(
          object: {
            'apiUrl': apiUrl,
            'webUrl': webUrl,
-           'apps': {'write': writeUrl, 'sheets': sheetsUrl},
+           'apps': apps,
            'cookieAuth': cookieAuth,
            if (googleClientId != null)
              'google': {
@@ -49,8 +51,10 @@ class AppConfigRoute extends WidgetRoute {
   }) : widget = AppConfigWidget(
          apiUrl: apiConfig.publicUrl.toString(),
          webUrl: webOrigin.resolve('/').toString(),
-         writeUrl: webOrigin.resolve('/write/').toString(),
-         sheetsUrl: webOrigin.resolve('/sheets/').toString(),
+         apps: {
+           for (final app in webApps)
+             app: webOrigin.resolve('/$app/').toString(),
+         },
          cookieAuth: cookieAuth,
          googleClientId: googleClientId,
        );

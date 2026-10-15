@@ -2,7 +2,7 @@ import 'package:serverpod/serverpod.dart';
 import 'package:test/test.dart';
 import 'package:wonky_server/src/platform/common/models.dart' hide Dimension;
 import 'package:wonky_server/src/sheets/headless/headless_workbook_provider.dart';
-import 'package:wonky_server/src/sheets/spaces/space_service.dart';
+import 'package:wonky_server/src/platform/spaces/space_service.dart';
 import 'package:wonky_server/src/sheets/sync/server_sheets_writer.dart';
 import 'package:wonky_sheets_core/wonky_sheets_core.dart'
     hide ActorKind, CellInput, TriggerKind;

@@ -6,8 +6,10 @@ import 'package:wonky_core/wonky_core.dart' hide ActorKind;
 
 import '../auth/auth_controller.dart';
 import '../bootstrap/app_urls.dart';
+import '../bootstrap/cross_app.dart';
 import '../commands/command.dart';
 import '../commands/shell_commands/general_commands.dart';
+import '../config/home_scope.dart';
 import '../config/wonky_app_config.dart';
 import '../core/connectivity_service.dart';
 import '../core/local_store.dart';
@@ -15,19 +17,29 @@ import '../data/collab_repositories.dart';
 import '../data/file_repository.dart';
 import '../data/sharing_repository.dart';
 import '../shell/shell_services.dart';
+import '../storage/storage_controller.dart';
 import '../undo/undo_service.dart';
+import 'fake_cross_app.dart';
 import 'fake_repositories.dart';
 
 /// A minimal [WonkyAppConfig] for tests (a Write-like app whose editor is an
-/// empty box).
+/// empty box). [app] picks the kind (Drive has no primary kind); [scope]
+/// opts into a v2 home scope (`homeScope`, default null = v1 home).
 class TestAppConfig extends WonkyAppConfig {
   const TestAppConfig({
     this.app = WonkyAppKind.write,
     this.extraCommands = const [],
+    this.scope,
   });
 
   @override
   final WonkyAppKind app;
+
+  /// Returned by [homeScope].
+  final HomeScope? scope;
+
+  @override
+  HomeScope? get homeScope => scope;
 
   /// Returned by [commands] (registered next to the shell's).
   final List<Command<CommandArgs>> extraCommands;
@@ -36,9 +48,7 @@ class TestAppConfig extends WonkyAppConfig {
   String get appName => 'Wonky Test';
 
   @override
-  DriveItemKind get primaryKind => app == WonkyAppKind.write
-      ? DriveItemKind.document
-      : DriveItemKind.spreadsheet;
+  DriveItemKind? get primaryKind => app.editorKind;
 
   @override
   Color get brandColor => const Color(0xff2563eb);
@@ -48,7 +58,7 @@ class TestAppConfig extends WonkyAppConfig {
 
   @override
   String itemPath(String uuid) =>
-      app == WonkyAppKind.write ? '/d/$uuid' : '/s/$uuid';
+      WonkyAppKind.itemPathFor(primaryKind ?? DriveItemKind.file, uuid);
 
   @override
   Widget buildEditor(BuildContext context, GoRouterState state, String uuid) =>
@@ -91,11 +101,17 @@ class CommandTestHarness {
     ActivityRepository? activity,
     LocalStore? store,
     UuidV7Generator? ids,
+    StorageController? storage,
+    CrossAppNavigator? crossApp,
     bool registerShellCommands = true,
   }) : drive = drive ?? FakeDriveRepository(ids: ids),
        users = users ?? FakeUserRepository(),
        authRepository = auth ?? FakeAuthRepository() {
     TestWidgetsFlutterBinding.ensureInitialized();
+    final urls = AppUrls(
+      apiUrl: 'http://localhost:8080/',
+      apps: {for (final k in WonkyAppKind.values) k: k.devOrigin},
+    );
     services = ShellServices(
       config: config,
       auth: AuthController(authRepository),
@@ -111,16 +127,12 @@ class CommandTestHarness {
         meta: meta ?? UnfakedMetaRepository(),
         activity: activity,
       ),
-      urls: const AppUrls(
-        apiUrl: 'http://localhost:8080/',
-        apps: {
-          WonkyAppKind.write: 'http://localhost:8101/',
-          WonkyAppKind.sheets: 'http://localhost:8102/',
-        },
-      ),
+      urls: urls,
+      crossApp: crossApp ?? FakeCrossApp(urls),
       connectivity: ConnectivityService(ping: () async {}),
       deviceStore: store ?? MemoryStore(),
       ids: ids,
+      storage: storage,
     );
     services.currentUser.value = this.users.profile;
     if (registerShellCommands) {
@@ -130,6 +142,9 @@ class CommandTestHarness {
   }
 
   late final ShellServices services;
+
+  /// The recording cross-app navigator (when none was passed).
+  FakeCrossApp get crossApp => services.crossApp as FakeCrossApp;
   final FakeDriveRepository drive;
   final FakeUserRepository users;
   final FakeAuthRepository authRepository;

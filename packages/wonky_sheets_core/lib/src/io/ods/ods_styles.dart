@@ -1,11 +1,11 @@
 import 'dart:convert';
 
 import 'package:xml/xml.dart';
+import 'package:wonky_numfmt/wonky_numfmt.dart';
 
 import '../../content/rich_text.dart';
 import '../../format/attributes.dart';
 import '../../format/borders.dart';
-import '../../format/number_format/presets.dart';
 import '../../format/theme.dart';
 import '../../model/schema.dart';
 import '../ir/workbook_document.dart';

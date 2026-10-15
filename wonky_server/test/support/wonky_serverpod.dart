@@ -6,6 +6,8 @@ import 'package:test/test.dart';
 import 'package:wonky_server/server.dart' show registerVersionProviders;
 import 'package:wonky_server/src/generated/sync_tables.dart';
 import 'package:wonky_server/src/sheets/sync/sheets_sync_service.dart';
+import 'package:wonky_server/src/slides/slides_server.dart';
+import 'package:wonky_server/src/slides/sync/slides_sync_service.dart';
 import 'package:wonky_server/src/write/ot/document_cache.dart';
 import 'package:wonky_server/src/write/themes/theme_service.dart';
 
@@ -40,6 +42,8 @@ void withWonkyServerpod(
         }
         registerVersionProviders();
         SheetsSyncService.processInline = true;
+        SlidesSyncService.processInline = true;
+        SlidesServer.ensureRegistered();
         await ThemeService.upsertBuiltins(session);
       });
       tearDownAll(DocumentCache.clear);

@@ -198,7 +198,7 @@ class PendingDriveOp {
   final String id;
 
   /// rename, move, setStarred, setPinnedOffline, trash, restore,
-  /// createDocument, registerSpreadsheet.
+  /// createDocument, registerSpreadsheet, registerPresentation.
   final String kind;
   final Map<String, Object?> args;
   final DateTime createdAt;

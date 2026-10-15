@@ -1,0 +1,69 @@
+# Opened by *Report a bug* in every Wonky Work app (specs/03 §3.4). The app
+# prefills `app`, `version`, `platform` and `browser` through the query string
+# (`/issues/new?template=bug_report.yml&app=write&version=2.0.3&…`); it never
+# sends document content, ids, emails or URLs.
+name: Bug report
+description: Something in Wonky Work doesn't work as expected.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! **Issues on GitHub are public**: please
+        don't include private content, document links or personal data.
+  - type: dropdown
+    id: app
+    attributes:
+      label: App
+      options:
+        - drive
+        - write
+        - sheets
+        - slides
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The build version (Settings › About).
+      placeholder: 2.0.0
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - web
+        - macos
+        - windows
+        - linux
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser / OS
+      placeholder: Chrome 131 on macOS
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open …
+        2. Click …
+        3. See …
+  - type: textarea
+    id: error-details
+    attributes:
+      label: Error details
+      description: If the app showed "Something went wrong", paste *Copy error details* here.
+      render: text

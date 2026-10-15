@@ -4,6 +4,7 @@ import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
 import '../shell/shell_services.dart';
+import '../storage/quota_error_presenter.dart';
 
 /// Dynamic menu content keyed by `MenuSpec.custom` id: either a widget
 /// builder or a function producing entries.
@@ -96,10 +97,13 @@ class MenuResolver {
       services.dispatcher
           .invoke(commandId, args: args, source: source, context: context)
           .catchError((Object e) {
-            services.toasts.error(
-              services.l10n?.commandFailed(title) ?? title,
-              description: '$e',
-            );
+            // `quotaExceeded`: the *Out of storage* dialog instead (D-11).
+            if (!QuotaErrorPresenter.isQuotaExceeded(e)) {
+              services.toasts.error(
+                services.l10n?.commandFailed(title) ?? title,
+                description: '$e',
+              );
+            }
             return const CommandResult.failed('error');
           });
     }

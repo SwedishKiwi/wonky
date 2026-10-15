@@ -206,7 +206,7 @@ ChartSpec specFor(
 }) => ChartSpec(
   type: type,
   data: ChartDataSpec(
-    ranges: [rangeOf(model, a1)],
+    ranges: [rangeOf(model, a1).toRef()],
     headerCount: headerCount,
     switchRowsColumns: switched,
     aggregate: aggregate,

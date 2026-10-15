@@ -9,6 +9,8 @@ workspace:
   - wonky_server
   - wonky_write
   - wonky_sheets
+  - wonky_drive
+  - wonky_slides
   - packages/wonky_core
   - packages/wonky_ui
   - packages/wonky_app
@@ -17,6 +19,17 @@ workspace:
   - packages/wonky_sheets_core
   - packages/wonky_sheets_script
   - packages/wonky_mcp_stdio
+  - packages/wonky_code
+  - packages/wonky_code_flutter
+  - packages/wonky_numfmt
+  - packages/wonky_charts
+  - packages/wonky_charts_flutter
+  - packages/wonky_rich_text
+  - packages/wonky_fonts
+  - packages/wonky_spellcheck
+  - packages/wonky_sync_kit
+  - packages/wonky_sync_kit_flutter
+  - packages/wonky_slides_core
   # Vendored, patched copy (third_party/serverpod_offline_sync/PATCHES.md). A
   # workspace member, not a path override, so Serverpod Cloud uploads it.
   - third_party/serverpod_offline_sync

@@ -19,7 +19,7 @@ import 'package:wonky_sheets_core/model.dart'
 import '../../platform/common/actor.dart';
 import '../../platform/common/models.dart';
 import '../../platform/files/file_service.dart';
-import '../spaces/space_service.dart';
+import '../../platform/spaces/space_service.dart';
 import '../sync/server_sheets_writer.dart';
 import '../sync/sync_db.dart';
 import '../sync/synced_tables.dart';

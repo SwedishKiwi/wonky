@@ -1,5 +1,6 @@
+import 'package:wonky_numfmt/wonky_numfmt.dart';
+
 import '../../input/input_parser.dart';
-import 'presets.dart';
 
 /// Auto-detection of number formats from typed input (06 §5.9), used by
 /// `InputParser`. Detection only applies when the target cell's effective

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Generates wonky_write/assets/emoji/emoji.json (Write 04 §20.1).
+"""Generates packages/wonky_app/assets/emoji/emoji.json (Write 04 §20.1; the
+shared emoji picker moved to wonky_app in Drive 05 D-7).
 
 Source: emojibase-data (MIT, https://emojibase.dev, npm `emojibase-data`),
 files en/data.json, en/messages.json, en/shortcodes/emojibase.json and
@@ -111,8 +112,8 @@ def main():
     ap.add_argument(
         '--out',
         default=os.path.join(
-            os.path.dirname(__file__), '..', '..', 'assets', 'emoji',
-            'emoji.json'),
+            os.path.dirname(__file__), '..', '..', '..', 'packages',
+            'wonky_app', 'assets', 'emoji', 'emoji.json'),
     )
     args = ap.parse_args()
     os.makedirs(args.cache, exist_ok=True)

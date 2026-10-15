@@ -1,11 +1,10 @@
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_sheets_core/model.dart';
+import 'package:wonky_charts_flutter/wonky_charts_flutter.dart';
 
-import '../../charts3d/chart3d_gpu.dart';
 import '../../formatting/sheets_user_defaults.dart';
 import '../../sheet_editor/sheet_editor_controller.dart';
-import '../render/chart_painter.dart';
 
 /// The editor's chart colors (08 §6.4): automatic background, text and
 /// lines follow the app's `card`, `foreground` and `border` tokens.
@@ -252,7 +251,7 @@ class ChartController extends ChangeNotifier {
 
   /// Sheet ids the chart reads from.
   Set<String> get sourceSheets => {
-    for (final r in _spec.data.ranges) r.sheetId,
+    for (final r in _spec.data.gridRanges) r.sheetId,
   };
 
   /// The resolved data (re-resolved when stale).
@@ -260,7 +259,7 @@ class ChartController extends ChangeNotifier {
     if (_dirty || _data == null) {
       final before = _data?.dataVersion;
       try {
-        _data = ChartPipeline.resolve(_spec, editor.model, editor.engine);
+        _data = SheetsChartPipeline.resolve(_spec, editor.model, editor.engine);
       } catch (e) {
         debugPrint('Chart $objectId: resolving data failed: $e');
         _data = ChartData.empty(

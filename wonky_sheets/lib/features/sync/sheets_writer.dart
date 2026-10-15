@@ -1,144 +1,57 @@
-import 'package:clock/clock.dart';
 import 'package:serverpod_database/serverpod_database.dart';
 import 'package:wonky_client/wonky_client.dart' as proto show ActorKind;
 import 'package:wonky_client/wonky_client.dart' hide ActorKind;
 import 'package:wonky_sheets_core/model.dart';
-import 'package:wonky_sync_models/tables.dart';
+import 'package:wonky_sync_kit_flutter/wonky_sync_kit_flutter.dart'
+    show ChangeLogEntry, SyncWriter;
 
 import 'sheets_replica.dart';
 
-/// Applies `RowChange`s to the local replica (Sheets 02 §7, 13 §4.1): the
-/// client implementation of the `SyncTxAdapter` contract.
+/// Applies `RowChange`s to the local Sheets replica (Sheets 02 §7, 13
+/// §4.1): the shared kit's [SyncWriter] (chunked `transactionForUser`,
+/// column-named updates, set-based `bulkWrite` runs, dirty marks) with the
+/// Sheets `ChangeLog` row.
 ///
-/// - One `transactionForUser(user, …, spaceId: spreadsheetId)` per chunk of
-///   ≤ [chunkSize] changes (one space per transaction, suite 12 §2.1).
-/// - **Updates name exactly the touched columns** (`columnValues` built from
-///   `RowChange.columnsAfter`); there is no whole-row update in this file
-///   (`test/sync/columns_lint_test.dart` enforces it).
-/// - Inserts insert full rows; inserting a deleted id revives the tombstone.
-///   An insert whose row is already visible (two devices creating the same
-///   deterministic cell id) becomes an update of the given columns.
-/// - Deletes tombstone.
-/// - Consecutive inserts/updates of one table run as one set-based engine
-///   write (`SyncedTableSpec.bulkWrite`, offline-sync patch OS-7): a few
-///   batched statements per run instead of ~6 queries per row.
-/// - The `ChangeLog` row is written in the transaction of the last chunk.
-class SheetsWriter {
-  SheetsWriter(this.replica);
-
-  final SheetsReplica replica;
+/// An insert whose cell is already visible (two devices creating the same
+/// deterministic cell id) updates the given columns but the cell's foreign
+/// keys (fixed by its deterministic id; rewriting them would force a
+/// projection pass).
+class SheetsWriter extends SyncWriter {
+  SheetsWriter(SheetsReplica super.replica);
 
   /// Max row changes per transaction (02 §7).
-  static const chunkSize = MutationPlan.chunkSize;
+  static const chunkSize = SyncWriter.chunkSize;
 
   /// Max rows per set-based engine write inside a transaction.
-  static const runSize = 1000;
+  static const runSize = SyncWriter.runSize;
 
-  DatabaseSession get _s => replica.session;
+  @override
+  Future<void> writeChangeLog(
+    DatabaseSession session,
+    ChangeLogEntry entry,
+    Transaction transaction,
+  ) => ChangeLog.db.insertRow(
+    session,
+    ChangeLog(
+      spreadsheetId: entry.spaceId,
+      userId: entry.userId,
+      actorKind: _actorKind(entry.actorKind),
+      sessionId: entry.sessionId,
+      label: entry.label,
+      summaryJson: entry.summaryJson,
+      detailJson: entry.detailJson,
+      at: entry.at,
+    ),
+    transaction: transaction,
+  );
 
-  /// Writes [changes] into the space [spaceId] with the `ChangeLog` row
-  /// ([plan] supplies its summary and detail; without a plan they are
-  /// derived from [changes]). [onProgress] is called after each stored
-  /// chunk (changes written so far, total).
-  Future<void> write({
-    required UuidValue spaceId,
-    required List<RowChange> changes,
-    MutationPlan? plan,
-    required String label,
-    required String actorKind,
-    required String sessionId,
-    void Function(int written, int total)? onProgress,
-  }) async {
-    if (changes.isEmpty) return;
-    final summary = plan?.summary ?? summarize(changes);
-    final detailJson = plan?.detailJson;
-    for (var i = 0; i < changes.length; i += chunkSize) {
-      final end = i + chunkSize > changes.length
-          ? changes.length
-          : i + chunkSize;
-      final chunk = changes.sublist(i, end);
-      final last = end == changes.length;
-      await replica.db.transactionForUser(replica.userUuid, (tx) async {
-        await _applyChunk(chunk, tx);
-        if (last) {
-          await ChangeLog.db.insertRow(
-            _s,
-            ChangeLog(
-              spreadsheetId: spaceId,
-              userId: replica.userUuid,
-              actorKind: _actorKind(actorKind),
-              sessionId: sessionId,
-              label: label,
-              summaryJson: summary.encode(),
-              detailJson: detailJson,
-              at: clock.now().toUtc(),
-            ),
-            transaction: tx,
-          );
-        }
-      }, spaceId: spaceId);
-      onProgress?.call(end, changes.length);
-    }
-    await replica.markDirty(spaceId);
-  }
-
-  Future<void> _applyChunk(List<RowChange> chunk, Transaction tx) async {
-    var i = 0;
-    while (i < chunk.length) {
-      final c = chunk[i];
-      final spec = SyncedTables.of(c.table);
-      var j = i + 1;
-      if (c.op == RowOp.delete) {
-        // A run of deletes of one table is one statement per 500 ids.
-        while (j < chunk.length &&
-            chunk[j].op == RowOp.delete &&
-            chunk[j].table == c.table) {
-          j++;
-        }
-        await spec.deleteByIds(_s, [
-          for (final r in chunk.sublist(i, j)) UuidValue.fromString(r.rowId),
-        ], transaction: tx);
-        i = j;
-        continue;
-      }
-      // A run of inserts and updates of one table with distinct ids is one
-      // set-based engine write (offline-sync patch OS-7). Runs are capped
-      // at [runSize] rows so the Dart-side encoding between two awaits stays
-      // within a frame or two.
-      final ids = {c.rowId};
-      while (j < chunk.length &&
-          j - i < runSize &&
-          chunk[j].op != RowOp.delete &&
-          chunk[j].table == c.table &&
-          ids.add(chunk[j].rowId)) {
-        j++;
-      }
-      final writes = [for (final r in chunk.sublist(i, j)) _rowWrite(r)];
-      await spec.bulkWrite(_s, writes, transaction: tx);
-      i = j;
-    }
-  }
-
-  /// The engine write of an insert or update. An insert whose row is
-  /// already visible updates the given columns; a cell's foreign keys are
-  /// left out of that update (they are fixed by its deterministic id, and
-  /// rewriting them would force a projection pass).
-  static SyncedRowWrite _rowWrite(RowChange r) {
-    final id = UuidValue.fromString(r.rowId);
-    if (r.op == RowOp.update) {
-      return SyncedRowWrite.updateColumns(id, r.columnsAfter);
-    }
-    return SyncedRowWrite.insert(
-      id,
-      r.columnsAfter,
-      columnsIfVisible: [
-        for (final k in r.columnsAfter.keys)
-          if (k != Cols.id &&
-              !(r.table == SheetsTables.cell && _cellKeys.contains(k)))
-            k,
-      ],
-    );
-  }
+  @override
+  Iterable<String> columnsIfVisible(RowChange change) => [
+    for (final k in change.columnsAfter.keys)
+      if (k != Cols.id &&
+          !(change.table == SheetsTables.cell && _cellKeys.contains(k)))
+        k,
+  ];
 
   static const _cellKeys = {Cols.sheetId, CellCols.rowId, CellCols.columnId};
 
@@ -151,7 +64,8 @@ class SheetsWriter {
 
   /// A `ChangeLog` summary for changes without a plan (undo/redo, remote
   /// re-application): sheets, kinds and deleted/revived structure ids.
-  static ChangeSummary summarize(List<RowChange> changes) {
+  @override
+  ChangeSummary summarize(List<RowChange> changes) {
     final s = ChangeSummary();
     for (final c in changes) {
       final sheet =

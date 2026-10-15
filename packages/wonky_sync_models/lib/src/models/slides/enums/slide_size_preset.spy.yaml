@@ -1,0 +1,13 @@
+### Slide size preset of a deck (Slides 02 §3.11, 05 §7). `custom` = any
+### other size within the limits of 02 §13.
+enum: SlideSizePreset
+serialized: byName
+values:
+  - widescreen16x9
+  - standard4x3
+  - wide16x10
+  - square
+  - portrait9x16
+  - a4
+  - letter
+  - custom

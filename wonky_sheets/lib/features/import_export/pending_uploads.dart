@@ -294,6 +294,26 @@ class SheetsPendingUploads extends ChangeNotifier {
   /// Whether [fileUuid] waits for upload on this device.
   bool contains(String fileUuid) => _known.contains(fileUuid);
 
+  final Set<String> _outOfStorage = {};
+
+  /// Whether the server refused [fileUuid] because the storage quota is
+  /// full (Drive 03 §6.3): it stays on this device, is not retried on its
+  /// own and shows "Not uploaded — out of storage" until [retry] or
+  /// [cancel].
+  bool isOutOfStorage(String fileUuid) => _outOfStorage.contains(fileUuid);
+
+  /// Tries a refused upload again (*Retry* on the image).
+  void retry(String fileUuid) {
+    if (!_outOfStorage.remove(fileUuid)) return;
+    _attempts[fileUuid] = 0;
+    _notBefore.remove(fileUuid);
+    notifyListeners();
+    _kick();
+  }
+
+  /// Forgets a pending upload (*Remove* on a refused image).
+  Future<void> cancel(String fileUuid) => _complete(fileUuid);
+
   /// Loads the queue and starts uploading.
   Future<void> start() {
     connectivity.addListener(_onConnectivity);
@@ -361,6 +381,7 @@ class SheetsPendingUploads extends ChangeNotifier {
 
   Future<void> _complete(String fileUuid) async {
     _known.remove(fileUuid);
+    _outOfStorage.remove(fileUuid);
     _bytes.remove(fileUuid);
     _attempts.remove(fileUuid);
     _notBefore.remove(fileUuid);
@@ -432,6 +453,7 @@ class SheetsPendingUploads extends ChangeNotifier {
       while (!_disposed && connectivity.online) {
         final now = clock.now();
         final next = _known.where((id) {
+          if (_outOfStorage.contains(id)) return false;
           if ((_attempts[id] ?? 0) >= maxAttempts) return false;
           final nb = _notBefore[id];
           return nb == null || !nb.isAfter(now);
@@ -449,7 +471,9 @@ class SheetsPendingUploads extends ChangeNotifier {
     if (_disposed || _notBefore.isEmpty || !connectivity.online) return;
     final waiting = [
       for (final e in _notBefore.entries)
-        if (_known.contains(e.key) && (_attempts[e.key] ?? 0) < maxAttempts)
+        if (_known.contains(e.key) &&
+            !_outOfStorage.contains(e.key) &&
+            (_attempts[e.key] ?? 0) < maxAttempts)
           e.value,
     ];
     if (waiting.isEmpty) return;
@@ -486,6 +510,15 @@ class SheetsPendingUploads extends ChangeNotifier {
       );
       await _complete(id);
     } catch (e) {
+      if (QuotaErrorPresenter.isQuotaExceeded(e)) {
+        // Out of storage: kept on this device until Retry / Remove.
+        _outOfStorage.add(id);
+        try {
+          await store.recordFailure(id, '$e');
+        } catch (_) {}
+        if (!_disposed) notifyListeners();
+        return;
+      }
       final n = (_attempts[id] ?? 0) + 1;
       _attempts[id] = n;
       final seconds = min(600, 2 * pow(2, n - 1).toInt());

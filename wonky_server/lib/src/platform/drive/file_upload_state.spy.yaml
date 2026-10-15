@@ -1,0 +1,9 @@
+### (v2) Upload state of a `file` drive item (Drive 02 §2).
+enum: FileUploadState
+serialized: byName
+values:
+  ### Created, bytes not yet verified. Listed only for the uploader.
+  - uploading
+  - ready
+  ### Verification failed (size mismatch, storage error); bytes deleted.
+  - failed

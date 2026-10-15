@@ -1,4 +1,5 @@
-import '../charts/scene/geometry.dart';
+import 'package:wonky_charts/wonky_charts.dart';
+
 import '../model/sheet_model.dart';
 import 'anchor.dart';
 

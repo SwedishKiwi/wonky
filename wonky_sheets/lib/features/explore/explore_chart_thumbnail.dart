@@ -1,9 +1,9 @@
 import 'package:flutter/widgets.dart';
 import 'package:wonky_sheets_core/model.dart';
+import 'package:wonky_charts_flutter/wonky_charts_flutter.dart';
 
 import '../charts/controller/chart_controller.dart'
     show chartDarkOf, chartUiTokensOf;
-import '../charts/render/chart_painter.dart';
 import '../sheet_editor/sheet_editor_controller.dart';
 
 /// A miniature of a suggested chart (Explore, 04 §7): the spec resolved
@@ -41,7 +41,7 @@ class _ExploreChartThumbnailState extends State<ExploreChartThumbnail> {
     try {
       // Thumbnails show the shape of the data, not its titles.
       final spec = widget.spec;
-      final data = ChartPipeline.resolve(spec, ed.model, ed.engine);
+      final data = SheetsChartPipeline.resolve(spec, ed.model, ed.engine);
       _scene = ChartPipeline.layout(
         spec,
         data,

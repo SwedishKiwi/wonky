@@ -5,7 +5,7 @@ library;
 import '../../theme/model/style_enums.dart';
 import '../../theme/model/values.dart';
 import '../../theme/resolve/resolved_theme.dart';
-import '../../fonts/font_registry.dart';
+import 'package:wonky_fonts/wonky_fonts.dart';
 import '../office/office_support.dart';
 import 'docx_xml.dart';
 

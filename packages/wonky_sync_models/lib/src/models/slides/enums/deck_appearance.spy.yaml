@@ -1,0 +1,6 @@
+### Which color scheme of the deck's themes is used (Slides 02 §3.11, 05 §2.4).
+enum: DeckAppearance
+serialized: byName
+values:
+  - light
+  - dark

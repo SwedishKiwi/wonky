@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:wonky_charts/wonky_charts.dart';
 import 'package:wonky_sync_models/ids.dart';
 
 import '../../addressing/column_letters.dart';
@@ -9,11 +10,7 @@ import '../../formula/values/format_hint.dart';
 import '../../formula/values/fvalue.dart';
 import '../../model/grid_range.dart';
 import '../../model/workbook_model.dart';
-import '../spec/chart_spec.dart';
-import '../spec/chart_type.dart';
-import 'chart_data.dart';
-import 'data_algorithms.dart';
-import 'value_formatter.dart';
+import 'header_detection.dart';
 
 /// One logical column (row when switched) of the chart's source table.
 final class _Line {
@@ -98,7 +95,7 @@ final class _Resolution {
     final pointCounts = <int>[];
     for (var i = 0; i < data.ranges.length; i++) {
       final before = lines.length;
-      final n = _readRange(i, data.ranges[i], lines);
+      final n = _readRange(i, GridRange.fromRef(data.ranges[i]), lines);
       if (n != null && lines.length > before) pointCounts.add(n);
     }
     if (lines.isEmpty || pointCounts.isEmpty) {
@@ -634,7 +631,7 @@ final class _Resolution {
     String? keyFormat;
     var label = '';
     if (o.keyValueRef != null) {
-      (key, keyFormat) = fromRange(o.keyValueRef!);
+      (key, keyFormat) = fromRange(GridRange.fromRef(o.keyValueRef!));
     } else if (series.isNotEmpty) {
       final s = series.first;
       final vs = s.values.toList();
@@ -650,7 +647,7 @@ final class _Resolution {
     double? baseline;
     String? baselineFormat;
     if (o.baselineRef != null) {
-      final (b, f) = fromRange(o.baselineRef!);
+      final (b, f) = fromRange(GridRange.fromRef(o.baselineRef!));
       if (!b.isNaN) baseline = b;
       baselineFormat = f;
     } else if (o.keyValueRef == null && series.length > 1) {

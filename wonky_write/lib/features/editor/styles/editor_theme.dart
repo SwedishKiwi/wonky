@@ -219,7 +219,7 @@ class EditorTheme {
   final Color mutedColor;
 
   /// Syntax token class (`keyword`, `string`, `title`, `built_in`, …; see
-  /// `CodeHighlighter`) → color.
+  /// `CodeHighlightStylePhase.syntaxClassOf`) → color.
   final Map<String, Color> syntax;
 
   // App overlay tokens (Write 06 §2.6).

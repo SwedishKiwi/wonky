@@ -6,7 +6,7 @@ import 'package:wonky_sheets/features/conditional_format/cf_panel.dart';
 import 'package:wonky_sheets/features/formatting/cell_fonts.dart';
 import 'package:wonky_sheets/features/formatting/formatting_features.dart';
 import 'package:wonky_sheets/features/formatting/formula_field.dart';
-import 'package:wonky_sheets/features/formatting/sheets_settings_section.dart';
+import 'package:wonky_sheets/features/settings/sheets_settings_section.dart';
 import 'package:wonky_sheets/features/formatting/sheets_user_defaults.dart';
 import 'package:wonky_sheets/features/model/memory_workbook_session.dart';
 import 'package:wonky_sheets/features/number_format/custom_currency_dialog.dart';

@@ -9,6 +9,7 @@ import '../common/models.dart';
 import '../common/time.dart';
 import '../config/wonky_config.dart';
 import '../sharing/access_service.dart';
+import '../storage/storage_service.dart';
 
 /// Files in cloud storage (suite 12 §1.1, specs/13 §1): upload descriptions
 /// for client uploads with a client-chosen, idempotent [StoredFile.fileUuid],
@@ -134,25 +135,43 @@ abstract final class FileService {
       );
     }
     final storageId = _storageFor(kind);
-    final file = await StoredFile.db.insertRow(
-      session,
-      StoredFile(
-        fileUuid: fileUuid,
-        ownerId: actor.userId,
-        itemId: item?.id,
-        kind: kind,
-        storageId: storageId,
-        path: 'files/${kind.name}/${fileUuid.uuid}/${_safeName(fileName)}',
-        fileName: _safeName(fileName),
-        mimeType: mime,
-        sizeBytes: size,
-        status: StoredFileStatus.pending,
-        createdAt: nowUtc(),
-        expiresAt: kind == StoredFileKind.importSource
-            ? nowUtc().add(importLifetime)
-            : null,
-      ),
-    );
+    final file = await session.db.transaction((tx) async {
+      final row = await StoredFile.db.insertRow(
+        session,
+        StoredFile(
+          fileUuid: fileUuid,
+          ownerId: actor.userId,
+          itemId: item?.id,
+          kind: kind,
+          storageId: storageId,
+          path: 'files/${kind.name}/${fileUuid.uuid}/${_safeName(fileName)}',
+          fileName: _safeName(fileName),
+          mimeType: mime,
+          sizeBytes: size,
+          status: StoredFileStatus.pending,
+          createdAt: nowUtc(),
+          expiresAt: kind == StoredFileKind.importSource
+              ? nowUtc().add(importLifetime)
+              : null,
+        ),
+        transaction: tx,
+      );
+      // (v2) Images count for the item's owner, reserved before any byte
+      // is sent (Drive 03 §5, §7.2).
+      if (kind == StoredFileKind.image && item != null) {
+        await StorageService.instance.reserve(
+          session,
+          userId: item.ownerId,
+          fileUuid: fileUuid,
+          itemId: item.id,
+          bytes: size,
+          reason: QuotaReason.image,
+          callerUserId: actor.userId,
+          transaction: tx,
+        );
+      }
+      return row;
+    });
     return FileUploadTicket(
       fileUuid: fileUuid,
       uploadDescription: await _description(session, file),
@@ -207,10 +226,29 @@ abstract final class FileService {
         );
       }
     }
-    final updated = await StoredFile.db.updateRow(
-      session,
-      file.copyWith(status: status, completedAt: nowUtc()),
-    );
+    final updated = await session.db.transaction((tx) async {
+      final row = await StoredFile.db.updateRow(
+        session,
+        file.copyWith(status: status, completedAt: nowUtc()),
+        transaction: tx,
+      );
+      // (v2) Reserved → used (images), or released (Drive 03 §5).
+      if (status == StoredFileStatus.ready) {
+        await StorageService.instance.commitReservation(
+          session,
+          file.fileUuid,
+          file.sizeBytes,
+          transaction: tx,
+        );
+      } else {
+        await StorageService.instance.releaseReservation(
+          session,
+          file.fileUuid,
+          transaction: tx,
+        );
+      }
+      return row;
+    });
     if (status == StoredFileStatus.failed) {
       throw Errors.invalid('The file content does not match its type.');
     }
@@ -392,6 +430,68 @@ abstract final class FileService {
     );
   }
 
+  /// (v2, Slides 03 A-03-3) Copies the stored image [sourceFileUuid] into
+  /// [targetItemUuid] as [newFileUuid] (cross-deck paste, deck copies,
+  /// *Insert image from Drive*): the caller must be able to read the
+  /// source (its item or own upload) and edit the target; the bytes count
+  /// against the target owner's quota (attachment bytes). Idempotent on
+  /// [newFileUuid]: a copy that already exists for the same target is
+  /// returned as is.
+  static Future<FileUrlView> copyToItem(
+    Session session,
+    Actor actor, {
+    required UuidValue sourceFileUuid,
+    required UuidValue newFileUuid,
+    required UuidValue targetItemUuid,
+  }) async {
+    final (target, _) = await AccessService.require(
+      session,
+      actor,
+      targetItemUuid,
+      Role.editor,
+    );
+    final existing = await byUuid(session, newFileUuid);
+    if (existing != null) {
+      if (existing.itemId != target.id) {
+        throw Errors.conflict('This file id is already in use.');
+      }
+      return _view(session, existing);
+    }
+    final source = await byUuid(session, sourceFileUuid);
+    if (source == null ||
+        source.kind != StoredFileKind.image ||
+        !await canRead(session, actor, source)) {
+      throw Errors.notFound('File');
+    }
+    if (source.status != StoredFileStatus.ready) {
+      throw Errors.invalid('The file is not uploaded yet.');
+    }
+    await StorageService.instance.checkRoom(
+      session,
+      userId: target.ownerId,
+      bytes: source.sizeBytes,
+      reason: QuotaReason.copy,
+      callerUserId: actor.userId,
+    );
+    final bytes = await readBytes(session, source);
+    final copy = await storeServerFile(
+      session,
+      ownerId: actor.userId,
+      itemId: target.id,
+      kind: StoredFileKind.image,
+      fileName: source.fileName,
+      mimeType: source.mimeType,
+      bytes: bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
+      fileUuid: newFileUuid,
+    );
+    await StorageService.instance.addAttachment(
+      session,
+      target,
+      copy.sizeBytes,
+    );
+    return _view(session, copy);
+  }
+
   static Future<void> deleteFile(Session session, UuidValue fileUuid) async {
     final file = await byUuid(session, fileUuid);
     if (file == null) return;
@@ -411,6 +511,8 @@ abstract final class FileService {
       );
     }
     await StoredFile.db.deleteRow(session, file);
+    // (v2) Abandoned uploads give their reserved quota back.
+    await StorageService.instance.releaseReservation(session, file.fileUuid);
   }
 
   /// Deletes the stored files belonging to [itemIds] (before deleting the

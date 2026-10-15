@@ -8,6 +8,8 @@ build/
 # Ignore the Flutter web app build directories
 web/write
 web/sheets
+web/drive
+web/slides
 
 # Directory created by dartdoc
 doc/api/

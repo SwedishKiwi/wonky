@@ -1,7 +1,6 @@
+import 'package:wonky_numfmt/wonky_numfmt.dart';
+
 import '../format/number_format/inference.dart';
-import '../format/number_format/locale_data.dart';
-import '../format/number_format/presets.dart';
-import '../format/number_format/serial_calendar.dart';
 
 /// Kinds of recognized date/time input.
 enum DateInputKind {

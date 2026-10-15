@@ -322,6 +322,46 @@
   "@settingsDocumentThemes": {
     "description": "Settings section title."
   },
+  "settingsWriteEditor": "Editor",
+  "@settingsWriteEditor": {
+    "description": "Write settings section (Write 05 §13.3)."
+  },
+  "settingsWritePage": "Page & export",
+  "@settingsWritePage": {
+    "description": "Write settings section (Write 05 §13.3)."
+  },
+  "settingsWriteSpelling": "Spelling",
+  "@settingsWriteSpelling": {
+    "description": "Write settings section (Write 05 §13.3)."
+  },
+  "settingsWriteTyping": "Typing",
+  "settingsWriteDisplay": "Display",
+  "settingsWriteDefaultMode": "Default mode for shared documents",
+  "settingsWriteDefaultModeHint": "How documents you can edit open when someone shares them with you.",
+  "settingsWritePageGroup": "Page",
+  "settingsWriteDefaultLayout": "Default layout",
+  "settingsWriteDefaultPageSetup": "Default page setup",
+  "settingsWritePageSetupSaved": "Saved with File › Page setup › Set as default.",
+  "settingsWritePageSetupHint": "Save one with File › Page setup › Set as default in a document.",
+  "settingsWriteResetPageSetup": "Reset",
+  "settingsWriteExportGroup": "Export",
+  "settingsWriteSpellingGroup": "Spell check",
+  "settingsWriteDictionary": "Personal dictionary",
+  "settingsWriteDictionaryHint": "Words you add from the spelling menu are never marked as misspelled.",
+  "settingsWriteDictionaryEmpty": "No words yet.",
+  "settingsWriteDictionaryRemove": "Remove {word}",
+  "@settingsWriteDictionaryRemove": {
+    "description": "Screen reader label of the remove button of a personal dictionary word.",
+    "placeholders": {
+      "word": {
+        "type": "String"
+      }
+    }
+  },
+  "cmdPrefsSetDefaultLayout": "Default layout of new documents",
+  "cmdPrefsSetExportFormat": "Default export format",
+  "cmdPrefsResetPageSetup": "Reset default page setup",
+  "cmdPrefsRemoveDictionaryWord": "Remove word from personal dictionary",
   "cmdCommentsPrevious": "Previous comment",
   "cmdCommentsNext": "Next comment",
   "cmdSuggestionsAcceptAll": "Accept all suggestions",
@@ -2957,6 +2997,33 @@
   "importBannerDetails": "Details",
   "importBannerHideDetails": "Hide details",
   "importBannerDismiss": "Dismiss",
+  "importRouteOffline": "You're offline. Connect to the internet to open this file in Wonky Write.",
+  "@importRouteOffline": {
+    "description": "Error of /import?file= (Drive's Open with ▸ Wonky Write) without a connection."
+  },
+  "importRouteNotAFile": "This item isn't an uploaded file.",
+  "importRouteUnsupported": "Wonky Write can't open “{fileName}”.",
+  "@importRouteUnsupported": {
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "importRouteUploading": "“{fileName}” is still uploading. Try again when the upload has finished.",
+  "@importRouteUploading": {
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "imageNotUploadedOutOfStorage": "Not uploaded — out of storage",
+  "@imageNotUploadedOutOfStorage": {
+    "description": "Overlay of an image whose background upload was refused because the storage quota is full (Drive 03 §6.3)."
+  },
+  "imageRetry": "Retry",
+  "imageRemove": "Remove",
   "printNoServer": "No server connection",
   "printUnavailableTitle": "Printing isn’t available here",
   "printUnavailableBody": "Download the PDF and print it from your PDF viewer.",

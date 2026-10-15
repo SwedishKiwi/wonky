@@ -111,6 +111,13 @@ abstract final class DriveViews {
             editorsCanShare: item.editorsCanShare,
             nonEditorsCanExport: item.nonEditorsCanExport,
             viewersSeeComments: item.viewersSeeComments,
+            attachmentBytes: item.attachmentBytes,
+            countedBytes: item.sizeBytes + item.attachmentBytes,
+            mimeType: item.mimeType,
+            fileCategory: item.fileCategory,
+            uploadState: item.uploadState,
+            fileMetaJson: item.fileMetaJson,
+            previewFileId: item.previewFileId,
           ),
     ];
   }

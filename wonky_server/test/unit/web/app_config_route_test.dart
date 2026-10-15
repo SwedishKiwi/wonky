@@ -15,8 +15,8 @@ void main() {
 
   group('Given production on Serverpod Cloud with the wonky.work domain', () {
     test(
-      'when building config.json then the apps and pages are on wonky.work '
-      'and the Google redirect is its /auth/callback',
+      'when building config.json then the four apps and the pages are on '
+      'wonky.work and the Google redirect is its /auth/callback',
       () {
         final route = AppConfigRoute(
           apiConfig: server('wonkywork.api.serverpod.space'),
@@ -31,8 +31,10 @@ void main() {
           'apiUrl': 'https://wonkywork.api.serverpod.space',
           'webUrl': 'https://wonky.work/',
           'apps': {
+            'drive': 'https://wonky.work/drive/',
             'write': 'https://wonky.work/write/',
             'sheets': 'https://wonky.work/sheets/',
+            'slides': 'https://wonky.work/slides/',
           },
           'cookieAuth': false,
           'google': {

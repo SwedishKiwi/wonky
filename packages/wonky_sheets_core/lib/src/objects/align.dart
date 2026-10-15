@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import '../charts/scene/geometry.dart';
+import 'package:wonky_charts/wonky_charts.dart';
 
 /// Aligning and distributing several selected objects (08 §9.2
 /// multi-selection). Rectangles are sheet px at 100 % zoom; only positions

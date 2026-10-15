@@ -79,6 +79,15 @@
   "settingsDisplayLanguageEnglish": "English",
   "settingsDisplayLanguageNote": "Function names and TRUE/FALSE are shown in this language. English names always work, and formulas are saved in English.",
   "settingsSearch": "Search",
+  "sheetsSettingsDefaults": "Defaults",
+  "@sheetsSettingsDefaults": {
+    "description": "Sheets settings section (suite 04 §4, Sheets 04 §11.24)."
+  },
+  "sheetsSettingsNewSpreadsheets": "New spreadsheets",
+  "cmdSheetsPrefsSet": "Change a Sheets setting",
+  "@cmdSheetsPrefsSet": {
+    "description": "Command (MCP, settings screen) that changes one Sheets setting."
+  },
   "sheetsSettingsNewHint": "Defaults for new spreadsheets you create. Each spreadsheet keeps its own settings (File › Settings).",
   "sheetsSettingsFont": "Default font",
   "sheetsSettingsEditing": "Editing",
@@ -2976,6 +2985,28 @@
     }
   },
   "importFailed": "Import failed",
+  "importRouteOffline": "You're offline. Connect to the internet to open this file in Wonky Sheets.",
+  "@importRouteOffline": {
+    "description": "Error of /import?file= (Drive's Open with ▸ Wonky Sheets) without a connection."
+  },
+  "importRouteNotAFile": "This item isn't an uploaded file.",
+  "importRouteUnsupported": "Wonky Sheets can't open “{fileName}”.",
+  "@importRouteUnsupported": {
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "importRouteUploading": "“{fileName}” is still uploading. Try again when the upload has finished.",
+  "@importRouteUploading": {
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "importRouteDownloadFailed": "The file could not be loaded from Wonky Drive.",
   "importSummaryTitle": "Import summary",
   "importNoReport": "No import report yet.",
   "importUndoLabel": "Import {name}",
@@ -4238,6 +4269,12 @@
   "imageRejectedTooLarge": "The image is too large (max. 50 MB and 25 megapixels)",
   "imageUnavailable": "Image unavailable",
   "imageUploading": "Image uploading…",
+  "imageNotUploadedOutOfStorage": "Not uploaded — out of storage",
+  "@imageNotUploadedOutOfStorage": {
+    "description": "Overlay of an image whose background upload was refused because the storage quota is full (Drive 03 §6.3)."
+  },
+  "imageRetryUpload": "Retry",
+  "imageRemove": "Remove",
   "objectMenuCopyChart": "Copy chart",
   "objectMenuDownload": "Download",
   "objectMenuMoveToSheet": "Move to sheet",

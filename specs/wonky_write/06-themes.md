@@ -145,11 +145,14 @@ Every element key below is optional; missing properties **inherit** (§3). Prope
 "punctuation", "builtin", "literal", "meta", "tag", "attribute", "regexp", "addition",
 "deletion" }` → `{ "color": ColorRef, "fontStyle"?: "italic", "fontWeight"?: int }`.
 Unlisted tokens render in `codeText`. Dark syntax: derived (§4) unless `dark.syntax` is given.
-Exporters tokenize with a pure-Dart highlighter in `wonky_write_core/lib/highlight/` (wraps
-`highlight` 0.7.x — `re_highlight` was rejected because it depends on Flutter; languages: the 40
-most common highlight.js grammars). The editor uses `syntax_highlight`'s TextMate grammars (15
-languages, [04](04-editor.md) §15.4), mapping scopes to the same token kinds, so colors match
-while token boundaries may differ slightly. Unknown language → no highlighting.
+Exporters tokenize with highlight.js (`HighlightJsTokenizer` in the shared `wonky_code`
+package, re-exported by `wonky_write_core` as `SyntaxHighlighter`; wraps `highlight` 0.7.x —
+`re_highlight` was rejected because it depends on Flutter; languages: the 40 most common
+highlight.js grammars). The editor uses `wonky_code`'s `TextMateTokenizer` (the TextMate engine
+copied from `syntax_highlight`, 15 languages, [04](04-editor.md) §15.4/§15.5), mapping scopes to
+the same token kinds, so colors match while token boundaries may differ slightly (both switch to
+`DefaultCodeTokenizer` in M10). `SyntaxToken` is defined in `wonky_code`. Unknown language → no
+highlighting.
 
 ### 2.6 `overlays` (optional overrides of app tokens)
 
@@ -581,9 +584,10 @@ emoji), and CJK (Noto Sans SC/TC/JP/KR — large; web/desktop download on first 
 likewise on demand. All OFL 1.1. License texts are included in the About › Licenses page
 (`LicenseRegistry.addLicense`) and in exported EPUBs that embed fonts.
 
-> Implementation note (iteration 1): the app bundles a subset of static TTFs in
-> `wonky_write/assets/fonts/` — Open Sans, EB Garamond and JetBrains Mono (OFL-1.1, licenses in
-> the same folder and on the About › Licenses page). Families that are not bundled are
+> Implementation note (iteration 1; moved in v2, Drive 05 D-7): the static TTFs and the
+> registry live in the shared package `packages/wonky_fonts` (`fonts/` as package assets,
+> manifest `BundledFonts`); Write loads Open Sans, EB Garamond and JetBrains Mono from it
+> (`packages/wonky_fonts/fonts/…`; OFL-1.1, licenses in the same folder and on the About › Licenses page). Families that are not bundled are
 > substituted by category (sans → Inter from `shad` on screen / Open Sans in PDFs, serif → EB
 > Garamond, mono → JetBrains Mono) by `WriteFonts` (`features/themes/write_fonts.dart`); Open
 > Sans is the PDF glyph fallback (Latin Extended, Greek, Cyrillic). CJK/Arabic fallbacks and the

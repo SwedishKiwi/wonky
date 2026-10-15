@@ -21,7 +21,10 @@ enum NotificationKind implements _isc.SerializableModel {
   suggestion,
   suggestionDecided,
   ownershipTransfer,
-  scriptFailure;
+  scriptFailure,
+
+  /// (v2) Storage notice, e.g. over quota after the backfill (Drive 03 §9).
+  storage;
 
   static NotificationKind fromJson(String name) {
     switch (name) {
@@ -43,6 +46,8 @@ enum NotificationKind implements _isc.SerializableModel {
         return NotificationKind.ownershipTransfer;
       case 'scriptFailure':
         return NotificationKind.scriptFailure;
+      case 'storage':
+        return NotificationKind.storage;
       default:
         throw ArgumentError(
           'Value "$name" cannot be converted to "NotificationKind"',

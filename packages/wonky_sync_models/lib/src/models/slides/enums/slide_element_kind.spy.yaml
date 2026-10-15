@@ -1,0 +1,13 @@
+### Kind of a slide element (Slides 02 §3.11, §6). Append-only.
+enum: SlideElementKind
+serialized: byName
+values:
+  - text
+  - shape
+  - line
+  - image
+  - table
+  - icon
+  - code
+  - chart
+  - group

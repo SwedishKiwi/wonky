@@ -212,7 +212,7 @@ abstract final class ObjectOps {
       final ranges = <String>[];
       if (o.kind == EmbeddedObjectKind.chart) {
         final s = ChartSpec.fromJson(map);
-        for (final g in s.data.ranges) {
+        for (final g in s.data.gridRanges) {
           final sh = ed.model.sheet(g.sheetId);
           final rr = sh?.resolve(g);
           if (sh == null || rr == null) {

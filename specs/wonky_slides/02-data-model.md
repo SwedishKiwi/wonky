@@ -50,6 +50,15 @@ Deterministic ids are UUIDv5 over fixed namespaces (constants, **never change**)
 All UUID strings are normalized to lower case before hashing. Inside JSON values, ids are written
 in the 22-char base-62 form (`Base62Uuid`, as Sheets) to keep JSON small.
 
+**As built (SL-2):** `SlidesIds` is exported by `package:wonky_sync_models/ids.dart` with the five
+namespace constants (`tableCellNamespace`, `placeholderInstanceNamespace`, `themeCopyNamespace`,
+`themePartNamespace`, `chartLinkNamespace` — part of the synced format, never change; the tests
+pin one id per helper). UUIDs inside `sourceKey`/`partKey` are lower-cased too; other key text is
+hashed as given (built-in keys are case-sensitive). Helpers: `builtinThemeSourceKey(key,
+version)` (`builtin:<key>@<v>`), `deckThemeSourceKey(itemUuid, themeId)`, `newMatchKey(ids)`
+(base-62 form of a fresh id, §3.5) and `tableCellUuid`. The UUIDv5 hasher is shared with
+`SheetsIds` (`src/ids/uuid5.dart`).
+
 ### 2.2 Slide units and geometry
 
 - **Slide units (su)**: one unit = one point at the deck's design size. A deck's size is
@@ -94,6 +103,20 @@ next to the Sheets models, so server, generated client and apps share them. Ever
 injected `id: UuidValue` and `spaceId`; non-nullable FKs are `deferred`. Field lists omit
 `id`/`spaceId`; every model has `createdAt: DateTime, defaultModel=now` unless noted. Class names
 avoid Flutter clashes (`SlideElement`, not `Element`; `SlideBuild`, not `Build`).
+
+**As built (SL-2, schema release S-1, §14.1).** The models below are the `.spy.yaml` files with
+these differences: (1) every FK is `relation(onDelete=Cascade, deferred)` and therefore
+non-nullable, except `SlideElement.slide/layout/master/parent`, which are
+`relation(optional, …)` (exactly one owner is set; `parent` is an unnamed self-relation, no
+`slide_element_children` list field); (2) every table has `createdAt`; (3) defaults where a
+value is implied: `Deck.width 1920.0`, `height 1080.0`, `sizePreset widescreen16x9`,
+`appearance light`, `showSlideNumbers false`, `hideNumberOnTitle true`, `firstSlideNumber 1`;
+`skipped`, `hidden`, `hideMasterElements` (layout) `false`; (4) extra non-unique indexes on the
+FK columns the cascades and loaders use (`deck_theme_deck_idx`, `slide_master_theme_idx`,
+`slide_layout_master_idx`, `slide_table_axis_element_idx (elementId, sortKey)`,
+`slide_build_element_idx`, `chart_link_element_idx`); (5) the synced additions of 03–10 known
+at M9 are included: `Deck.guidesJson` (A-03-1), `Deck.presentJson` (A-10-1),
+`Slide.timingsJson` (A-10-2), `ChartLink.sheetId` (A-08-2).
 
 ### 3.1 Deck
 
@@ -621,6 +644,8 @@ the minimum). Both are recomputed by every renderer from the same rows (03 §6.4
 { "v":1, "type":"solid",    "color":"theme:accent1" }
 { "v":1, "type":"gradient", "kind":"linear", "angle":135,
   "stops":[{"at":0,"color":"#4F46E5"},{"at":1,"color":"#EC4899"}] }          // kind: linear | radial
+{ "v":1, "type":"gradient", "kind":"radial", "center":[0,0], "radius":0.9,      // radial: center (fractions, default 0.5,0.5),
+  "stops":[…] }                                                              // radius (fraction of the diagonal, default 0.5)
 { "v":1, "type":"image",    "fileUuid":"…", "fit":"cover", "opacity":1 }     // fit: cover | contain | tile | stretch
 { "v":1, "type":"none" }
 ```
@@ -814,6 +839,13 @@ Collapsed groups are **per user and device** (D6/D11): never synced.
   (`SlidesEndpoint.spaceStats`). Decks are small (typically < 5,000 rows), so the whole deck loads
   before `DeckReady` (no viewport-first loading in v1).
 
+*As built (SL-9):* the client is `wonky_slides/lib/features/sync/` on the shared kit
+(`SlidesReplica`, `SlidesWriter`, `SlidesSyncController`, `SlidesData`) and
+`features/model/synced_deck_session.dart` (`SyncedDeckSession`); details in 12 §4 SL-9. Browsers
+without OPFS (IndexedDB fallback) keep at most 50,000 elements on the device; the decks opened
+least recently leave first (`slides.opened.<deckId>` in the user store). After merges, editors
+write the maintenance repairs of §10 (debounced 1 s).
+
 ### 9.2 Decided (v2 review, Q19): one replica syncing every space kind
 
 The engine syncs **every space the user is a member of** (suite 12 §2.1). Once decks are spaces,
@@ -829,6 +861,12 @@ the Sheets replica would also download decks and the Slides replica spreadsheets
 first deck space exists. Fallback only if it slips: option B with the Slides active set limited
 to decks the user opened in the last 30 days.
 
+**As built (D-4):** `slidesSync.sync` calls `SpaceSync.sync(session, actor, kind: SpaceKind.deck,
+…)` (server `platform/spaces/`); deck spaces must be recorded at birth —
+`SpaceService.reserveSpaces(kind: deck)`, `SpaceService.createSpace(kind: deck)` for server-side
+creation, `useReservation(kind: deck)` in `drive.registerPresentation` — because unrecorded spaces
+count as spreadsheets (suite 12 §2.6 as built).
+
 ### 9.3 Creating decks (offline-first)
 
 - **Reserved spaces**: the Slides replica keeps a pool of 3 reserved spaces
@@ -842,6 +880,18 @@ to decks the user opened in the last 30 days.
 - Server creation paths (templates, copies, MCP `drive.create_presentation`, AI "Generate deck")
   write through `ServerSlidesWriter` (§11) into a server-created space; the drive item UUID is
   always the space UUID (as Sheets).
+- *As built (SL-5):* `drive.createPresentation(parentUuid?, name, templateUuid?)` creates a
+  blank deck server-side (`SlidesDecks.create`: `SpaceService.createSpace(kind: deck)`, the
+  rows of `CreateDeck` — built-in theme copy + title slide — and a "Create presentation"
+  `DeckChangeLog` row through `ServerSlidesWriter`); `templateUuid` waits for the copier. The
+  `DeckChangeLog` consumer's receipts are `DeckChangeLogReceipt` with per-plugin
+  `doneConsumers` (§8; 12 §4 SL-5).
+- *As built (SL-9):* `SlidesData.createPresentation` creates in a reserved space with
+  `SlidesPlanner` (`CreateDeck`) and calls `drive.registerPresentation` through the shell's
+  cached drive repository, which queues it offline (an optimistic item with item uuid = space
+  uuid; replayed into My Drive when the folder went away). Templates, and devices online
+  without a usable reservation, create on the server (`drive.createPresentation`); offline
+  without a reservation nothing is created and a toast asks to connect.
 - **Copy** (*Make a copy*, copy from a version, templates): `DeckCopier` (core,
   `wonky_slides_core/lib/src/copy/`) rewrites every id for the new space (row ids are global):
   fresh UUIDv7 for every row; deterministic ids recomputed (`tableCellId`, `placeholderInstanceId`,
@@ -881,6 +931,26 @@ undo stack).
 
 Sheet-like name uniqueness does not apply: groups and slides may share titles.
 
+**As built (SL-7):** `DeckMaintenance` (`package:wonky_slides_core/maintenance.dart`):
+`detect(model)` lists `DeckViolation`s in rule order (`noTheme`, `missingDeckTheme`,
+`orphanSlide`, `groupCycle`, `foreignParent`, `missingParent`, `emptyGroup`,
+`danglingPlaceholder`, `dupPlaceholder`, `mergeOverlap`, `codeWithoutState`, `orphanBuild`),
+`repairOp(model)` returns the `RepairDeck` the planner turns into deterministic writes (it
+re-checks every violation, so stale or repeated repairs write nothing). Differences: a slide
+whose layout row is gone falls back to the default theme's `blank` layout (the missing layout's
+key is unknown); cycle breakers and children with a foreign or missing parent (`missingParent`
+is an addition: the parent is gone or not a group) are repaired by `parent = null` **without**
+baking — the render rule already draws them top-level with their stored frame, so the picture
+doesn't change; `codeWithoutState` applies to code elements on slides that are not
+placeholders (code placeholders hold no state until code is inserted) and inserts the state
+`SlidesIds.themePartId(elementId, "repair:codeState")`; `orphanBuild` (06 A-06-8) deletes
+builds whose element or slide is gone; `noTheme` copies the built-in default with the
+deterministic ids of §2.1 (its theme elements' `matchKey`s are the base-62 form of their ids,
+`ThemeCopy`) and makes it the default theme; dangling and duplicate instances are materialized
+(effective frame, box text style, fill/stroke/effects written) — dangling ones re-pointed at
+the current layout's free placeholder of the same type, duplicates with `placeholderOf = null`.
+Scheduling (after merges, before headless writes) belongs to SL-9/SL-8 (`TODO.md`).
+
 ---
 
 ## 11. In-memory model (`wonky_slides_core`, pure Dart)
@@ -918,6 +988,33 @@ version views share an in-memory **`DeckModel`** (`wonky_slides_core/lib/src/mod
 The Flutter app adds the DB-backed loader, `DeckSession` (12 §5.3) and painters
 (`wonky_slides/lib/features/model/`).
 
+**As built (SL-3):** the API surface is `package:wonky_slides_core/model.dart`
+(`lib/src/model/api/`): records named `…Rec` (`DeckRec`, `SlideRec`, `SlideElementRec`, …;
+map-backed, full rows), `DeckReader`, `DeckModel` with `applyChanges(changes, origin:)` and
+parent indexes plus the flattened slide order (orphans last), and the events above plus
+`OtherRowsChanged`, batched in `DeckChangeBatch` with `DeckChangeOrigin {local, remote, load}`.
+The indexes and resolvers named above are SL-7's. Details: 12 §5.3 "As built".
+
+**As built (SL-7):** `DeckIndexes.of(model)` / `model.indexes` holds `SlideOrder` (entries with
+index, effective group, effective skip, number; group ranges; top-level items),
+`ElementTree` per owner (render rules of §10), `ThemeIndex` (effective layout, usage counts),
+`PlaceholderIndex` (decoded placeholder columns cached per record; resolver per slide with the
+master fallback), `TableIndex` (merges with the overlap rule), builds by element and
+`revision(slideId)`; each is rebuilt lazily after a batch that touches it (a silent ingestion
+invalidates all). `SlideResolver(model).resolve(slideId, appearance:)` → `ResolvedSlide`
+(theme via `DeckThemeResolver`, background slide ▸ layout ▸ master ▸ theme, master decorations
+unless hidden, slide-number/footer field placeholders per 05 §5.5, layout decorations, the
+element tree with group child space mapped into slide space, effective style, `textStyles` and
+prompts), memoized per revision and appearance. Auto-fit and connector routes are derived by
+the scene/geometry layer (SL-10), not stored on `ResolvedElement`: the `SlideSceneBuilder`
+puts the auto-fit scale on each text layout (`TextLayoutResult.fitScale`), derived frames
+(`resize` auto-fit, auto-width text, grown tables) in `SlideScene.frames` and connector routes
+in `SlideScene.routes` (03 §6.10). `TextStyleResolver`
+implements §4.2 (`resolve` → `ResolvedTextStyles`, memoized; `run` → `EffectiveRunStyle`). The
+text schema of §4.1/§4.3 is `SlidesText` (`lib/src/model/text/`, on `RichTextNormalizer`); SL-8
+adds the validator/normalizer names of §4.1 on top of it. The seeded property test checks that
+a model patched incrementally (cached indexes and resolver) equals a reload after every step.
+
 ---
 
 ## 12. Writes and undo (`slides.rows` undo domain)
@@ -952,6 +1049,35 @@ together (P4); deletes of parents list child rows explicitly when the inverse mu
 (the engine cascades, but undo needs the full rows); limits (§13) throw
 `PlanException(code: limit, …)` before anything is applied.
 
+**As built (SL-3):** the family is `package:wonky_slides_core/ops.dart` with one addition,
+`CreateDeck(deckId, title, themeKey, size, appearance, firstLayoutKey)` — the local creation of
+§9.3 (deck row, theme copy with deterministic ids, first slide with its placeholder instances),
+like Sheets' `CreateSpreadsheet`; master/layout CRUD is `AddMaster`, `AddLayout`,
+`UpdateMasterOrLayout`, `DeleteMastersOrLayouts`. Nullable columns are set with `Patch<T>`.
+`SlidesChangeSummary.of(changes, current:)` derives §3.10.1 summaries for writers of bare
+changes (undo/redo, remote patches). See 12 §5.3 "As built".
+
+**As built (SL-7):** the planner is `SlidesPlanner` (`package:wonky_slides_core/planner.dart`).
+Every plan is collected by a `PlanBuilder` over the model: later steps read the plan's own
+writes, each row appears at most once (insert + updates = one insert, insert + delete =
+nothing, updates name only changed columns), and coupled columns are forced into an update
+together (slide `groupId+sortKey`, group `parentId+sortKey`, element `x+y` on move and all four
+on resize or when an inherited frame is first written, `parentId+zKey` (+ the baked frame on
+ungroup), cell `rowSpan+colSpan`, deck page size, chart snapshot). Keys come from `OrderKeys`
+(robust against duplicate and malformed keys). Text bodies are normalized with `SlidesText`
+before every write and limited per §13; JSON columns must be objects (`"v": 1` added). Plans
+carry `detail` (`{v, texts: [{table, id, column, before, after}]}`, ≤ 20 bodies of ≤ 2,000
+chars) and `result` ids (`slideIds`, `elementIds`, `groupId`, `themeId`, …). Behavior notes:
+locked elements refuse frame changes and deletion (`PlanException(locked)`); deleting every
+child of an element group deletes the group; ungrouping deletes builds of the group with a plan
+warning; *Scale content* regenerates built-in theme geometry for the new size (part keys) and
+replaces unmodified built-in text styles, scaling everything else by `s`; `DeleteTheme` moves
+`Deck.themeId` to another theme; layouts/masters/themes in use are refused with "Used by N
+slides — …"; `PasteSlides`/`PasteElements` take the 03 §12.2 payload (`format`, `v`, `kind`,
+`groups` with `slides`, `themes` with `masters`/`layouts`/`elements`, rows by table) and rewrite
+every id (placeholder instance, cell and chart-link ids recomputed; connector and build refs
+remapped in JSON); file re-homing is SL-8/SL-18's. Undo labels are English, as Sheets'.
+
 ### 12.2 Writer and undo
 
 `SlidesWriter` (client; the shared sync kit's writer with the Slides table codec) and
@@ -974,6 +1100,16 @@ restored by re-inserting the same ids (the engine revives tombstones), so refere
 anchors, `matchKey`s and deterministic ids stay valid. Coupled-column groups (P4) are skipped as a
 unit: if any column of `{groupId, sortKey}` (or a frame set) was changed by someone else, the
 whole set is skipped, so undo never tears them.
+
+**As built (SL-2):** the table hooks are `SlidesUndoHooks` (`wonky_slides_core/schema.dart`):
+`coupled` (`TableCoupledColumns`) — `slide {groupId, sortKey}`, `slide_group {parentId,
+sortKey}`, `slide_element {parentId, zKey, x, y, width, height, rotation, flipH, flipV}` (the
+frame lives in the parent's child space and `zKey` in the parent's key space, so (un)grouping is
+undone whole or not at all), `slide_table_cell {rowSpan, colSpan}`, `slide_master {themeId,
+sortKey}`, `slide_layout {masterId, sortKey}`, `chart_link` snapshot columns (A-08-2), `deck
+{width, height, sizePreset}`; a group only spans the columns a step wrote. `columnwise`
+(`TableColumnwiseInserts`) — `slide_table_cell` inserts undo column by column like Sheets'
+cells, because deterministic cell ids let two users create the same row.
 
 Server-executed changes (version restore, headless MCP/AI runs surfaced in the UI) use the shared
 undo domain **`slides.serverChange`** (`{changeId}` → `SlidesEndpoint.revertChange` /
@@ -1035,3 +1171,24 @@ an "Additions to 02-data-model" section; this table indexes them.
 Known LWW granularity limits (documented, accepted): text bodies (`text`, `notes`, `code`) merge as
 whole values (§4.4); `fillJson`, `strokeJson`, `effectsJson`, `textStyleJson`, `dataJson`,
 `transitionJson`, `optionsJson` and theme JSON columns merge as whole values.
+
+### 14.1 Synced schema releases
+
+Every synced schema change is a release that bumps `syncTablesHash` for **all** apps (suite 01
+§7). The current release is `SyncSchemaRelease` (`package:wonky_sync_models/tables.dart`);
+guard tests compare it with the hash the server computes (`wonky_server/test/unit/sync/
+sync_schema_release_test.dart`) and the hash the generated client computes (`wonky_sheets/test/
+sync/sync_schema_release_test.dart`), so a model change fails both until the release is bumped
+and recorded here.
+
+| Release | Content | Migration | `syncTablesHash` |
+|---------|---------|-----------|------------------|
+| (before S-1) | Sheets tables of the first iteration | — | `1a5f0730-2976-5ef7-b870-dbdc1b965fa5:8faad583-3b96-5cb4-a39e-5b141d5f9b15` |
+| **S-1** (M9, SL-2) | + the 13 Slides tables of §3 (as built) and their 7 enums; additions A-03-1, A-08-2 (`sheetId`), A-10-1, A-10-2 | server + client `20261014234831373-slides-s1` (only `CREATE TABLE`/index/FK; no data change) | `b54df85b-b26f-5da7-aa12-d8761b0c27cc:588b3c43-b2f7-5c93-a691-bb5704e6ffe8` |
+
+The Slides table codec is `SlidesSyncedTables` (`wonky_sync_models/tables.dart`, next to Sheets'
+`SyncedTables`; the two sets are disjoint) and the shared kit's set is `SlidesTableSet.tables`
+(`wonky_slides_core/schema.dart`: root `deck`, non-model `deck_change_log`); table and column
+names are `SlidesTables`/`…Cols` (`SlidesTables.columns` per table, checked against the
+generated tables). Every Sheets replica now also holds the (empty) Slides tables; the Sheets
+table set and OS-8's space filter keep them out of Sheets' model and sync.

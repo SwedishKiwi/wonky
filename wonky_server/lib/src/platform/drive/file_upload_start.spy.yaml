@@ -1,0 +1,11 @@
+### (v2) Result of `drive.createFileUpload` (Drive 02 §3.3).
+class: FileUploadStart
+fields:
+  item: DriveItemView
+  ### `uploadDescription` is null when the bytes are already complete
+  ### (idempotent retry) or for chunked uploads.
+  ticket: FileUploadTicket
+  ### Chunked uploads only (P1).
+  chunkSizeBytes: int?
+  ### The caller's usage after the reservation (Drive 03 §3).
+  storage: StorageUsage

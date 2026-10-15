@@ -1,13 +1,11 @@
+import 'package:wonky_charts/wonky_charts.dart';
+
 import '../../addressing/grid_geometry.dart';
 import '../../formula/model/workbook_view.dart';
 import '../../formula/values/fvalue.dart';
 import '../../model/grid_range.dart';
 import '../../model/workbook_model.dart';
-import '../data/data_algorithms.dart';
-import '../data/value_formatter.dart';
-import '../spec/chart_data_spec.dart';
-import '../spec/chart_spec.dart';
-import '../spec/chart_type.dart';
+import '../data/header_detection.dart';
 
 /// Profile of one column of a chart selection (08 §5.1), after header detection.
 final class ColumnProfile {
@@ -241,7 +239,7 @@ abstract final class ChartRecommender {
         type: type,
         stacking: stacking,
         data: ChartDataSpec(
-          ranges: profile.ranges,
+          ranges: [for (final r in profile.ranges) r.toRef()],
           headerCount: profile.headerCount,
           useFirstColumnAsLabels: domain,
           treatLabelsAsText: treatAsText,

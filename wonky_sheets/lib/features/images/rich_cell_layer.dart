@@ -6,8 +6,8 @@ import 'package:flutter/widgets.dart';
 import 'package:wonky_sheets_core/formula.dart'
     show FRich, ImageValue, SparklineValue;
 import 'package:wonky_sheets_core/model.dart';
+import 'package:wonky_charts_flutter/wonky_charts_flutter.dart';
 
-import '../charts/render/chart_painter.dart';
 import '../grid/paint/grid_layer.dart';
 import '../grid/viewport/grid_geometry.dart';
 import 'image_service.dart';

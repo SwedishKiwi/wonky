@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:collection/collection.dart';
+import 'package:wonky_charts/wonky_charts.dart' show DataRangeRef;
 import 'package:wonky_sync_models/ids.dart';
 
 import '../addressing/grid_geometry.dart';
@@ -91,6 +92,14 @@ final class GridRange {
       c2k: key('c2k'),
     );
   }
+
+  /// The range of a chart's opaque [DataRangeRef] (`ChartDataSpec.ranges`, scorecard refs;
+  /// 08 §24). Every reference parses (both require a string `s`).
+  static GridRange fromRef(DataRangeRef ref) =>
+      tryParse(ref.toJson()) ?? GridRange.sheet(ref.sourceId);
+
+  /// This range as a chart's opaque [DataRangeRef] (its [toJson]).
+  DataRangeRef toRef() => DataRangeRef(toJson());
 
   /// Parses a JSON list of ranges (`rangesJson`); invalid entries are skipped.
   static List<GridRange> parseList(String? json) {

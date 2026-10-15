@@ -7,7 +7,7 @@ import 'package:collection/collection.dart';
 import 'package:crypto/crypto.dart';
 
 import '../../delta/hash.dart' show canonicalJsonEncode;
-import '../../fonts/font_registry.dart';
+import 'package:wonky_fonts/wonky_fonts.dart';
 import 'color_ref.dart';
 import 'json_util.dart';
 import 'properties.dart';

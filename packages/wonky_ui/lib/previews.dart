@@ -282,3 +282,50 @@ Widget emptyStatePreview() => const WonkyEmptyState(
   size: Size(700, 400),
 )
 Widget loadingPreview() => LoadingShimmer.driveList(rows: 6);
+
+@Preview(
+  group: 'Stacked bar',
+  name: 'light',
+  wrapper: wonkyLight,
+  size: Size(560, 120),
+)
+@Preview(
+  group: 'Stacked bar',
+  name: 'dark',
+  wrapper: wonkyDark,
+  size: Size(560, 120),
+)
+Widget stackedBarPreview() => const Padding(
+  padding: EdgeInsets.all(16),
+  child: WonkyStackedBar(
+    total: 50,
+    segments: [
+      WonkyStackedBarSegment(
+        label: 'Documents',
+        value: 4.2,
+        valueLabel: '4.2 MB',
+        color: Color(0xff2563eb),
+      ),
+      WonkyStackedBarSegment(
+        label: 'Spreadsheets',
+        value: 9.8,
+        valueLabel: '9.8 MB',
+        color: Color(0xff16a34a),
+      ),
+      WonkyStackedBarSegment(
+        label: 'Files',
+        value: 18,
+        valueLabel: '18 MB',
+        color: Color(0xff7c3aed),
+      ),
+      WonkyStackedBarSegment(
+        label: 'Free',
+        value: 18,
+        valueLabel: '18 MB',
+        color: Color(0x00000000),
+        hollow: true,
+        inBar: false,
+      ),
+    ],
+  ),
+);

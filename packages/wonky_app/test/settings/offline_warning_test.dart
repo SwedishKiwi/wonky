@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:wonky_client/wonky_client.dart' show DriveItemView;
 import 'package:wonky_app/testing.dart';
 import 'package:wonky_app/wonky_app.dart';
-import 'package:wonky_app/src/settings/settings_screen.dart';
 
 import '../support/screen_pump.dart';
 

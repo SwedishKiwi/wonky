@@ -219,12 +219,21 @@ XLSX per spreadsheet (core exporters) and `rows.json` (the raw rows, lossless). 
 replica is emptied instead (no file to read). *Clear local data* deletes the file (desktop) or empties every table
 (web) and re-syncs.
 
-Implementation (`wonky_sheets/lib/features/sync/`): `SheetsReplica` (the database, spaces,
-reservations, dirty marks, space loading), `SheetsChangeJournal` (U11 below), `SheetsWriter`
-(`RowChange`s → chunked `transactionForUser`, `columnValues`, `ChangeLog`), `RemotePatch`
-(replica rows → model changes), `SyncedWorkbookSession` (the editor's `WorkbookSession`),
-`SheetsSyncController` (loop, reservations, sessions) and `SheetsData` (install at sign-in,
-`openWorkbookSession`, `createSpreadsheet`). The generic table codec (table name + column map ⇄
+Implementation: the table-agnostic pieces are the shared sync kit (v2, Drive 05 D-6) —
+`wonky_sync_kit` (pure: `RowChange`, `MutationPlan`, `UndoInverter` with table hooks,
+`RowPatch`, `SyncTableSet`, the `*.rows` undo entry/handler) and `wonky_sync_kit_flutter`
+(`SyncReplica` — the database, spaces, reservations, dirty marks, space loading; `ChangeJournal`
+— U11 below; `SyncWriter` — `RowChange`s → chunked `transactionForUser`, `columnValues`,
+`bulkWrite` runs, the app's change-log row; `AppSyncController` — loop, reservations,
+maintenance, sessions; `SpaceWriteQueue`, `JournalIngestion`, `SpaceOpening` — building blocks
+of a synced file session; `ReplicaInstallation`/`ReplicaOfflineProvider` — per-user lifecycle
+and Settings › Offline & storage; `ReplicaRecoveryReader`, `ReplicaFiles`,
+`offlineStorageLimited`). Sheets binds them in `wonky_sheets/lib/features/sync/`:
+`SheetsReplica` (Sheets tables + viewport cell reads), `SheetsWriter` (`ChangeLog`, cell keys),
+`RemotePatch` (Sheets table order), `SyncedWorkbookSession` (the editor's `WorkbookSession`,
+viewport-first loading), `SheetsSyncController` (cell cap, `createLocalSpreadsheet`,
+`openSession`) and `SheetsData` (install at sign-in, `openWorkbookSession`,
+`createSpreadsheet`, XLSX recovery ZIP). The generic table codec (table name + column map ⇄
 generated ORM class, typed ORM calls) is `package:wonky_sync_models/tables.dart`.
 
 ### 2.6 Slides (v2)
@@ -242,12 +251,40 @@ are extracted from `wonky_sheets` into the shared packages `wonky_sync_kit` (pur
 **Every space kind in every replica.** Because a client syncs every space it is a member of
 (§2.1), the Sheets replica would also download decks and the Slides replica spreadsheets once
 decks are spaces. The server tables `SpaceSubscription` and `SpaceReservation` gain
-`kind: SpaceKind { spreadsheet, deck }` (active set limits per kind), and — **decided (v2 review,
+`kind: SpaceKind { spreadsheet, deck }` (active set limits per kind; as built, D-1: default
+`spreadsheet`, and `SpaceSubscription.spreadsheetItemId` keeps its column name and holds the
+deck's item for `deck` rows), and — **decided (v2 review,
 Q19)** — the vendored patch **OS-8** adds a per-endpoint space filter
 (`offlineSync.sync(…, spaceFilter: …)`, `sheetsSync` passes spreadsheet spaces + the personal
 space, `slidesSync` deck spaces + the personal space). It is a first step towards U1 and lands
 in M8 wave 1, before any deck space exists (fallback if the patch slips: [Slides 02
 §9.2](wonky_slides/02-data-model.md)). Drive opens no replica.
+
+**As built (D-4):**
+- *Engine (OS-8):* `OfflineSyncEngine.sync` / `OfflineSyncDatabase.sync` take
+  `spaceFilter: OfflineSyncSpaceFilter` — a **batch** callback
+  `(List<UuidValue> sharedSpaces) → FutureOr<Iterable<UuidValue>>` instead of a per-space
+  predicate, so new memberships are classified in one query. Authoritative peers only; the
+  personal space is always kept and never passed in; called whenever the session re-resolves
+  membership (start and every cycle). Filtered spaces are not announced, so the follower never
+  materializes or downloads them and loses the membership if the filter drops a space later;
+  inbound changes for them are ignored.
+- *Server:* `platform/spaces/` — `SpaceSync.sync(session, actor, kind:, …)` runs the vendored
+  engine (configured like `initializeOfflineSync`; the hosted `session.offlineSync.sync` facade
+  has no filter parameter) with a per-stream `SpaceKindFilter`; `sheetsSync` uses
+  `kind: spreadsheet`, `slidesSync` (SL-5) `kind: deck`. A space's kind is recorded from birth
+  and never changes: the drive item holding it (spreadsheet / presentation) wins, else its
+  `SpaceReservation.kind`; the filter caches recorded kinds per stream. **Unrecorded spaces
+  count as spreadsheets** (v1 spaces and server-created spreadsheets before their drive item —
+  Sheets behaves exactly as in v1), so every deck space must be recorded at creation:
+  `SpaceService.reserveSpaces(kind: deck)` for offline creation and
+  `SpaceService.createSpace(kind: deck)` (a used reservation row) for server-side creation.
+  `SpaceService.useReservation(kind:)` refuses a reservation of another kind.
+- *Limits per kind:* unused reservations (25) are counted per kind; the active set is evicted
+  per kind (`sheets.maxActiveSpacesPerUser`, `slides.maxActiveSpacesPerUser`, both 30);
+  subscriptions take their kind from the item.
+- *Client:* nothing changes — the follower adopts the announced set; the weekly purge already
+  removes rows of spaces without membership.
 
 ## 3. Shell (drive)
 Drive listing cache + `PendingDriveOp` queue (rename, move, star, trash, registerSpreadsheet,

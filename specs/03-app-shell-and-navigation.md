@@ -202,6 +202,31 @@ ignoring trashed items — at least one item of the app's kind (maintained as
 `DriveItem.kindMask`, suite 05 §3.2); empty folders and folders with only other kinds are
 hidden, so an app home never shows dead ends (folders are managed in Wonky Drive).
 
+**As built (D-10):** `HomeSidebar` (`packages/wonky_app/lib/src/drive/home_sidebar.dart`:
+`AppLinksSection`, `HomeNewButton`/`homeNewMenuEntries`, `HomeSidebarFooter`,
+`StorageMeterSlot` — the placeholder D-11's `StorageMeter` replaces) is the left menu of every
+home, also of the v1 homes: while `homeScope` is null (Write and Sheets until D-16) the
+navigation is `HomeNavSpec.legacy` (Home, My Drive + tree, Shared, Recent, Starred, Offline,
+Trash) and the listing keeps the v1 type filter and every folder. Flipping an app is the one
+getter `homeScope => const HomeScope.kind(<kind>)`; `homeNav`, the New menu, the folder rule
+(`foldersContaining`), the type chip, drag moves, the search scope, *Open in Wonky Drive* and the
+"Recent" title of `/` follow from it. `/my-files` and `/my-drive` both exist and redirect to
+`homeNav.myFilesRoute`. Cross-kind *New* (`shell.file.new {kind}` for another app's kind,
+templates of another kind) navigates to that app's `/new?folder=&template=` instead of creating
+on the server. Below 768 px the left menu is a `ShadSheet` drawer; the template strip is
+skipped when the content area is shorter than 560 px.
+
+**As built (D-16):** Write and Sheets are flipped (`HomeScope.kind(document)` /
+`HomeScope.kind(spreadsheet)`); their homes' *+ New* lists the kind, *From template…* and
+*Import file…* (`shell.drive.upload` with the app's convertible types); the empty home reads
+"Welcome to <App>" / "Create a <kind> or open one shared with you." (Drive: "…document,
+spreadsheet or presentation, or upload files."). File › New in every editor has *Presentation*
+(`shell.file.new {kind: presentation}` → Slides' `/new`). The `/new` and `/import` route page
+replaces itself with the editor; on cancel it goes back in the app, else in the browser
+history (`CrossAppNavigator.historyBack`, back to Drive after *Open with*), and after an error
+it stays in the app (home) so the toast is seen. Server-built folder links (MCP results,
+notification emails) are `/drive/f/<uuid>`.
+
 ### 3.4 Report a bug (v2)
 
 - Command **`shell.help.reportBug`** (`requiredRole: viewer`, not undoable, available signed
@@ -218,6 +243,11 @@ hidden, so an app home never shows dead ends (folders are managed in Wonky Drive
   *version*, *platform*, *browser/OS*, *what happened*, *steps*), prefilled with **no user
   content, ids, emails or URLs of documents** — only the app, build version, platform and
   browser family. It falls back to the issue list when the URL would exceed 2,000 characters.
+- **As built (D-10):** `BugReportLink.build` + `browserFromUserAgent`
+  (`lib/src/shell/bug_report.dart`); the issue list comes from `config.json`
+  `help.bugReportUrl` (`AppUrls.bugReportUrl`, https only; default above). The confirm is the
+  shared `confirmExternalLink` (`dialog.externalLink`: *Cancel* / *Copy link* / *Open*), also
+  usable for other external links. The auth screens show *Report a bug* below their card.
 
 ## 4. Global overlays and states
 
@@ -239,6 +269,9 @@ hidden, so an app home never shows dead ends (folders are managed in Wonky Drive
 - **(v2) Storage banner and dialog**: at ≥ 90 % of the quota and when over quota, a banner under
   the top bar/editor header; refused byte-adding actions show the *Out of storage* dialog
   ([Drive 03 §6.2–6.3](wonky_drive/03-storage-quota.md)).
+  **As built (D-11):** `StorageBanner` is part of `DriveHomeScreen` (below the top bar) and
+  `EditorScaffold` (below the toolbar); the `QuotaErrorPresenter` shows the dialog for every
+  human-invoked command refused with `quotaExceeded` ([Drive 03 §12](wonky_drive/03-storage-quota.md#12-as-built-d-11)).
 
 ## 5. State management and DI
 

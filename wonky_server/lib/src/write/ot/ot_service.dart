@@ -15,6 +15,7 @@ import '../collab/overlay_lifecycle.dart';
 import 'document_bus.dart';
 import 'document_cache.dart';
 import 'document_store.dart';
+import '../../platform/storage/content_sizes.dart';
 
 /// Thrown by [OtService.submit] when an op is rejected (sent to the client
 /// as `DocOpRejected`).
@@ -325,9 +326,7 @@ abstract final class OtService {
           item,
           actor.userId,
           searchText: updateSearch ? DocumentStore.searchText(after) : null,
-          sizeBytes: updateSearch
-              ? utf8.encode(DeltaUtils.text(after)).length
-              : null,
+          sizeBytes: updateSearch ? DocumentSize.of(after) : null,
         );
       }
       await OverlayLifecycle.handle(

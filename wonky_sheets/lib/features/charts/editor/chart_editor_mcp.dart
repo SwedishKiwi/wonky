@@ -297,7 +297,7 @@ abstract final class ChartEditorMcp {
       case 'stacking':
         return spec.stacking.name;
       case 'dataRanges':
-        return ChartInsert.a1Of(ed, spec.data.ranges).join(', ');
+        return ChartInsert.a1Of(ed, spec.data.gridRanges).join(', ');
       case 'data.headerCount':
         return spec.data.headerCount;
       case 'threeD.enabled':

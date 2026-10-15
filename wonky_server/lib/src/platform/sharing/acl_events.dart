@@ -1,6 +1,6 @@
 import 'package:serverpod/serverpod.dart';
 
-import '../../sheets/spaces/space_service.dart';
+import '../spaces/space_service.dart';
 import '../../write/ot/document_bus.dart';
 import '../common/models.dart';
 import '../drive/drive_events.dart';
@@ -30,13 +30,15 @@ abstract final class AclEvents {
         alsoNotify: affectedUsers,
       );
       switch (node.kind) {
-        case DriveItemKind.spreadsheet:
+        case DriveItemKind.spreadsheet || DriveItemKind.presentation:
+          // Space membership follows the ACL (decks: SL-5).
           await SpaceService.mirrorMembership(session, node);
         case DriveItemKind.document:
           if (node.contentRef != null) {
             await DocumentBus.rolesChanged(session, node.contentRef!);
           }
         case DriveItemKind.folder:
+        case DriveItemKind.file:
           break;
       }
     }

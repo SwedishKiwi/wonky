@@ -138,11 +138,7 @@ void main() {
             expect(x, equals(y), reason: '$pattern / $v / $locale');
             if (ast != null && !NumberFormatPresets.isAutomatic(pattern)) {
               expect(
-                NumberFormatRenderer.render(
-                  ast,
-                  v,
-                  LocaleFormatData.forId(locale),
-                ),
+                NumberFormatter.render(ast, v, LocaleFormatData.forId(locale)),
                 equals(x),
                 reason: 'cached vs uncached: $pattern / $v',
               );

@@ -804,7 +804,9 @@ clients.
   - Aliases normalise input: `js`/`jsx`/`mjs`/`cjs`→`javascript`, `ts`/`tsx`→`typescript`,
     `py`/`py3`/`python3`→`python`, `sh`/`shell`/`zsh`→`bash`, `yml`→`yaml`, `md`→`markdown`,
     `c++`→`cpp`, `c#`→`csharp`, `kt`/`kts`→`kotlin`, `rb`→`ruby`, `rs`→`rust`, `golang`→`go`,
-    `htm`→`html`, `jsonc`→`json`, `spy`/`serverpod_protocol`→`serverpod`.
+    `htm`→`html`, `jsonc`→`json`, `spy`/`serverpod_protocol`→`serverpod`; (v2, shared table of
+    Slides 07 §2.4) `h`→`c`, `cc`/`hpp`→`cpp`, `docker`→`dockerfile`, `gql`→`graphql`,
+    `patch`→`diff`, `svg`/`plist`→`xml`.
   - Other languages (`bash`, `c`, …, or anything typed) are kept verbatim (lowercased), labelled
     with their display name when known, and rendered without highlighting.
 - `write.code.setLanguage {language, nodeId?}`. One undo step, "Set code language". Changes
@@ -836,23 +838,25 @@ can invoke them.
   lazy trailing paragraph (§6.5).
 
 ### 15.4 Syntax highlighting (P1)
-- Library: **`syntax_highlight` 0.5.0** (TextMate grammars, Flutter), vendored in
-  `third_party/syntax_highlight` with patches SH-1…SH-5 (its `PATCHES.md`). Languages and their
-  grammar: CSS, Dart, Go, HTML, Java, JavaScript, JSON, Kotlin, Python, Rust, Serverpod models
-  (`serverpod` → `serverpod_protocol`), SQL, Swift, TypeScript, YAML. Each grammar is loaded from
-  the package assets on first use (`CodeHighlighter.load`); until it arrives the block renders
-  plain and the phase is marked dirty when it does. Exports (07) still tokenize with
-  `wonky_write_core`'s pure-Dart `highlight` wrapper (`syntax_highlight` needs Flutter).
+- Library: the shared **`wonky_code`** package (§15.5): `TextMateTokenizer`, the TextMate engine
+  of `syntax_highlight` 0.5.0 copied into pure Dart with patches SH-1…SH-5
+  (`packages/wonky_code/THIRD_PARTY.md`). Languages and their grammar: CSS, Dart, Go, HTML,
+  Java, JavaScript, JSON, Kotlin, Python, Rust, Serverpod models (`serverpod` →
+  `serverpod_protocol`), SQL, Swift, TypeScript, YAML. Grammars are embedded Dart strings parsed
+  on first use, so a block is highlighted on its first frame (before v2 they loaded from Flutter
+  assets and the block showed plain until then). Exports (07) still tokenize with highlight.js
+  (`HighlightJsTokenizer`, re-exported by `wonky_write_core` as `SyntaxHighlighter`) until M10.
 - `CodeHighlightStylePhase extends SingleColumnLayoutStylePhase`:
   - For each code component view model, it overlays **presentation-only**
     `CodeTokenAttribution(tokenClass)` spans on a *copy* of the view-model text. The document
     is never mutated, so no Delta is produced (§2.5).
-  - `CodeHighlighter.tokenForScopes` maps TextMate scopes to token classes: the innermost scope
+  - `ScopeClassifier.tokenFor` (`wonky_code`) maps TextMate scopes to token classes: the innermost scope
     with a rule decides (e.g. `comment.*`→`comment`, `string.*`→`string`,
     `keyword.operator`→`operator`, `keyword`/`storage`→`keyword`, `constant.numeric`→`number`,
     `constant`→`literal`, `entity.name.function`→`function`, `entity.name.type`/`support.class`
     →`type`, `entity.name.tag`→`tag`, `entity.other.attribute-name`→`attribute`,
-    `support.function`→`built_in`, `variable`→`variable`, annotations/preprocessor→`meta`);
+    `support.function`→`built_in`, `variable`→`variable`, annotations/preprocessor→`meta`,
+    Rust lifetimes→`literal`);
     punctuation is weak (a surrounding string, comment or tag wins); embedded code
     (`meta.embedded`, template/f-string expressions) does not inherit its string's color.
   - The `inlineTextStyler` maps token classes (`keyword`, `string`, `comment`, `number`,
@@ -892,6 +896,15 @@ D-2) the code moves, **without behavior change**, into two shared leaf packages 
 `wonky_write_core` then depends on `wonky_code` instead of `highlight`, and `wonky_write` on
 `wonky_code` + `wonky_code_flutter`. Line-level diffs for Slides' type-in use
 `wonky_core/lib/diff.dart` (`SequenceDiff`).
+
+**Status (D-2, done):** `packages/wonky_code` + `packages/wonky_code_flutter` exist; Write's
+`CodeLanguages` (`model/code_languages.dart`) and `wonky_write_core`'s `SyntaxToken`,
+`SyntaxHighlighter`/`SyntaxSpan` are re-exports/aliases of `wonky_code`; the editor's
+`CodeHighlightStylePhase` uses `TextMateTokenizer` (not yet `DefaultCodeTokenizer`: languages
+without a TextMate grammar stay plain in the editor until the exports switch in M10, so M8 has
+no visible change) and keeps its class-keyed `EditorTheme.syntax` styling (not `CodeTextStyler`).
+The only color difference: Rust lifetimes now use the theme's `literal` color (before: a
+`symbol` class that themes could not set; identical in the default themes).
 
 **Decided (v2 review, Q17/Q25):** until the export switch lands, Write's exports (PDF, HTML,
 DOCX, …) keep tokenizing with highlight.js while the editor uses TextMate, so colors can differ
@@ -1166,8 +1179,9 @@ entirely.
   - search by CLDR short name and keywords;
   - category tabs, recent (per user, max 24), skin-tone selector (stored preference);
   - grid keyboard navigation with arrows and Enter.
-- Data: `assets/emoji/emoji.json` (1,898 emoji, Unicode emoji ≤ 15.1, CLDR names, keywords and
-  shortcodes from emojibase-data, MIT), generated by `tool/unicode/gen_emoji.py`; loaded on first
+- Data: `assets/emoji/emoji.json` of `packages/wonky_app` (v2: the picker, catalog and prefs moved
+  to `package:wonky_app/emoji.dart`, Drive 05 D-7) (1,898 emoji, Unicode emoji ≤ 15.1, CLDR names, keywords and
+  shortcodes from emojibase-data, MIT), generated by `wonky_write/tool/unicode/gen_emoji.py`; loaded on first
   use, no runtime network.
 - Entry points: Insert › Emoji (`write.insert.emoji {emoji?}`; without args the picker opens at
   the caret), slash `/emoji`, the `:` trigger, and the OS emoji panel (works through IME).
@@ -1564,9 +1578,11 @@ takes < 100 ms on a 100-page document.
     word), 120 ms after the last change, caret block first.
 - **Dictionaries**: en-US, en-GB (SCOWL, MIT AND BSD), fr-FR (MPL-2.0), es-ES (LGPL/MPL),
   nl-NL (BSD-3), sv-SE (LGPL-3.0), da-DK (LGPL/MPL) — open-licensed Hunspell dictionaries via the
-  `dictionary-*` npm packages; sources and licenses in `wonky_write/assets/dictionaries/LICENSES.md`.
+  `dictionary-*` npm packages; sources and licenses in `packages/wonky_spellcheck/dictionaries/LICENSES.md`.
   GPL-only dictionaries (de, it, nb) are not bundled; pt-BR and pl-PL are deferred for size.
-  - Bundled as app assets (`assets/dictionaries/<tag>.aff|.dic`, `index.json`) and fetched only
+  - Bundled as package assets of `wonky_spellcheck` (`dictionaries/<tag>.aff|.dic`, `index.json`;
+    v2, Drive 05 D-7 — the engine is `package:wonky_spellcheck`, the `SpellEngine`, dictionary
+    loading and spelling dialogs are `package:wonky_app/spellcheck.dart`) and fetched only
     when a document needs one (the web build downloads assets on demand). Language → dictionary:
     exact tag, en-AU/NZ/IE/ZA/IN → en-GB, other `en` → en-US, then the same primary language.
 - **Scope**:

@@ -150,9 +150,17 @@ class KeymapService extends ChangeNotifier {
     onOverridesChanged?.call(overridesJson);
   }
 
-  void resetAll() {
-    if (_overrides.isEmpty) return;
-    _overrides = {};
+  /// Removes every override, or only those whose command id matches
+  /// [where] (Settings › Keyboard shortcuts resets the current app's and
+  /// the shared commands and keeps the other apps' overrides, suite 04 §4.2).
+  void resetAll({bool Function(String commandId)? where}) {
+    final before = _overrides.length;
+    if (where == null) {
+      _overrides = {};
+    } else {
+      _overrides.removeWhere((id, _) => where(id));
+    }
+    if (_overrides.length == before) return;
     _rebuild();
     onOverridesChanged?.call(overridesJson);
   }

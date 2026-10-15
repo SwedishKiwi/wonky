@@ -1,7 +1,7 @@
 import 'package:test/test.dart';
 import 'package:wonky_sheets_core/src/content/cell_content.dart';
 import 'package:wonky_sheets_core/src/fill/fill.dart';
-import 'package:wonky_sheets_core/src/format/number_format/serial_calendar.dart';
+import 'package:wonky_numfmt/wonky_numfmt.dart';
 
 FillSource _n(double v, [String? fmt]) =>
     FillSource(NumberContent(v), numberFormat: fmt);

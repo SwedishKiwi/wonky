@@ -12,6 +12,7 @@ import '../common/roles.dart';
 import '../common/time.dart';
 import '../drive/drive_service.dart';
 import '../notifications/notification_service.dart';
+import '../storage/storage_service.dart';
 import '../users/user_service.dart';
 import 'access_service.dart';
 import 'acl_events.dart';
@@ -458,6 +459,14 @@ abstract final class SharingService {
     }
     final target = await UserProfile.db.findById(session, newOwnerUserId);
     if (target == null) throw Errors.notFound('User');
+    // (v2) The new owner must have room (Drive 03 §7.3).
+    await StorageService.instance.checkRoom(
+      session,
+      userId: newOwnerUserId,
+      bytes: item.sizeBytes + item.attachmentBytes,
+      reason: QuotaReason.transfer,
+      callerUserId: actor.userId,
+    );
     await OwnershipTransfer.db.updateWhere(
       session,
       columnValues: (t) => [t.handledAt(nowUtc()), t.accepted(false)],
@@ -513,10 +522,25 @@ abstract final class SharingService {
         transaction: tx,
       );
       if (!accept) return;
+      // (v2) Checked again inside the transfer (Drive 03 §7.3).
+      await StorageService.instance.checkRoom(
+        session,
+        userId: actor.userId,
+        bytes: item.sizeBytes + item.attachmentBytes,
+        reason: QuotaReason.transfer,
+        transaction: tx,
+      );
       await DriveItem.db.updateWhere(
         session,
         columnValues: (t) => [t.ownerId(actor.userId)],
         where: (t) => t.id.equals(item.id!),
+        transaction: tx,
+      );
+      await StorageService.instance.onOwnerChange(
+        session,
+        item,
+        fromUserId: transfer.fromUserId,
+        toUserId: actor.userId,
         transaction: tx,
       );
       await DriveItemPermission.db.deleteWhere(

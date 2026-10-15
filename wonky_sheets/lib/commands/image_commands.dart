@@ -43,14 +43,28 @@ typedef _Obtained = ({
 });
 
 /// Prepares [img] (SVG rasterizing, downscaling, 08 §10.1) as an
-/// [_Obtained].
+/// [_Obtained], after the quota pre-check (Drive 03 §7.2: the image counts
+/// against the spreadsheet's owner; the *Out of storage* dialog explains a
+/// refusal).
 Future<_Obtained> _prepared(
-  SheetsLocalizations l,
+  SheetEditorController ed,
   PickedImage img, {
   String? url,
+  bool interactive = true,
 }) async {
+  final l = ed.l10n;
   try {
     final p = await SheetsImagePrep.prepare(img);
+    final s = ed.services;
+    // Agents (MCP, AI) get the server's `quota_exceeded` instead of a dialog.
+    if (interactive &&
+        !await s.storageChecks.ensureRoom(
+          p.image.bytes.length,
+          reason: QuotaReasons.image,
+          item: s.currentItem.value,
+        )) {
+      return (image: null, url: null, result: const CommandResult.cancelled());
+    }
     return (image: p, url: url, result: null);
   } on ImageRejected catch (e) {
     return (
@@ -129,9 +143,10 @@ Future<_Obtained> _obtain(
       );
       final name = uri.pathSegments.lastOrNull ?? 'image';
       return await _prepared(
-        l,
+        ed,
         PickedImage(name: name, bytes: bytes, mimeType: mime),
         url: u,
+        interactive: !ctx.source.isAgent,
       );
     } on ImageRejected catch (e) {
       return (
@@ -157,13 +172,13 @@ Future<_Obtained> _obtain(
           result: CommandResult.failed(l.imageClipboardEmpty),
         );
       }
-      return await _prepared(l, img);
+      return await _prepared(ed, img, interactive: !ctx.source.isAgent);
     }
     final img = await SheetsFileIo.pickImage(l);
     if (img == null) {
       return (image: null, url: null, result: const CommandResult.cancelled());
     }
-    return await _prepared(l, img);
+    return await _prepared(ed, img, interactive: !ctx.source.isAgent);
   } on ImageRejected catch (e) {
     return (
       image: null,
@@ -256,7 +271,7 @@ Future<CommandResult?> pasteClipboardImage(
   } on ImageRejected catch (e) {
     return CommandResult.failed(_reject(l, e));
   }
-  final got = await _prepared(l, picked);
+  final got = await _prepared(ed, picked);
   if (got.result != null) return got.result;
   final sel = ed.selection.resolved;
   final id = insertImageOverCells(

@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:wonky_sheets_core/model.dart';
+import 'package:wonky_charts_flutter/wonky_charts_flutter.dart';
 
-import '../charts/render/chart_painter.dart';
 import '../images/image_service.dart';
 import '../sheet_editor/sheet_editor_controller.dart';
 import 'objects_controller.dart';

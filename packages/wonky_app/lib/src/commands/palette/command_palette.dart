@@ -10,6 +10,7 @@ import '../../l10n/wonky_app_localizations.dart';
 import '../../shell/shell_services.dart';
 import '../command.dart';
 import 'palette_list.dart';
+import '../../storage/quota_error_presenter.dart';
 
 /// The command palette (suite 08 §1.3, `Mod+Shift+P`): fuzzy search over
 /// titles, descriptions, aliases and menu paths; sections Recent / All
@@ -134,7 +135,9 @@ class _CommandPaletteBodyState extends State<_CommandPaletteBody> {
                   context: s.navigatorContext,
                 )
                 .catchError((Object e) {
-                  s.toasts.error(l.commandFailed(id), description: '$e');
+                  if (!QuotaErrorPresenter.isQuotaExceeded(e)) {
+                    s.toasts.error(l.commandFailed(id), description: '$e');
+                  }
                   return const CommandResult.failed('error');
                 }),
           );

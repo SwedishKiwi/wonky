@@ -3,11 +3,11 @@ library;
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wonky_sheets/features/charts/render/chart_painter.dart';
 import 'package:wonky_sheets/features/grid/grid_area.dart';
 import 'package:wonky_sheets/features/objects/objects_controller.dart';
 import 'package:wonky_sheets/features/objects/objects_layer.dart';
 import 'package:wonky_ui/wonky_ui.dart';
+import 'package:wonky_charts_flutter/wonky_charts_flutter.dart';
 
 import '../../support/grid_pump.dart';
 import '../../support/sheets_harness.dart';

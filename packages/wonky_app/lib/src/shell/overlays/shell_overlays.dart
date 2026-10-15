@@ -128,7 +128,7 @@ class _ShellOverlaysState extends State<ShellOverlays> {
 /// The app version compared with `ProtocolInfo.minClientVersion`.
 const clientVersion = String.fromEnvironment(
   'WONKY_VERSION',
-  defaultValue: '1.0.0',
+  defaultValue: '2.0.0',
 );
 
 /// Compares dotted versions (`1.2.10` > `1.2.9`).

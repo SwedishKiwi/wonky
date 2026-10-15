@@ -19,6 +19,13 @@ abstract final class ShellMenuIds {
   static const tools = 'tools';
   static const help = 'help';
 
+  /// Tools › *App settings* (`shell.settings.openApp`; the v1 id of
+  /// Tools › Preferences, so apps keep inserting relative to it) and
+  /// *Wonky Work settings* (`shell.settings.open {section: account}`),
+  /// suite 04 §4.2.
+  static const toolsAppSettings = 'tools.preferences';
+  static const toolsWorkSettings = 'tools.workSettings';
+
   /// Separator ids apps can insert relative to.
   static const fileEndOfOpen = 'file.sep.open';
   static const fileEndOfManage = 'file.sep.manage';
@@ -49,6 +56,13 @@ class ShellMenus {
         label: l10n.menuNewSpreadsheet,
         args: {'kind': 'spreadsheet'},
         id: 'file.new.spreadsheet',
+      ),
+      // (v2) Opens Wonky Slides' `/new` in this tab (suite 03 §3.3).
+      MenuSpec.command(
+        'shell.file.new',
+        label: l10n.menuNewPresentation,
+        args: {'kind': 'presentation'},
+        id: 'file.new.presentation',
       ),
       MenuSpec.command('shell.file.newFromTemplate'),
     ]),
@@ -146,10 +160,13 @@ class ShellMenus {
         ),
         MenuSpec.separator(),
         MenuSpec.command(
+          'shell.settings.openApp',
+          id: ShellMenuIds.toolsAppSettings,
+        ),
+        MenuSpec.command(
           'shell.settings.open',
-          label: l10n.menuPreferences,
-          args: {'section': 'appearance'},
-          id: 'tools.preferences',
+          args: {'section': 'account'},
+          id: ShellMenuIds.toolsWorkSettings,
         ),
         MenuSpec.command('shell.help.shortcuts', id: 'tools.shortcuts'),
         MenuSpec.command(
@@ -163,7 +180,9 @@ class ShellMenus {
   MenuSubmenu get help => MenuSpec.submenu(ShellMenuIds.help, l10n.menuHelp, [
     MenuSpec.command('shell.help.shortcuts'),
     MenuSpec.separator(),
-    MenuSpec.command('shell.help.feedback'),
+    // (v2, Q6) *Report a bug* replaces *Report a problem*;
+    // `shell.help.feedback` stays registered (palette, MCP).
+    MenuSpec.command('shell.help.reportBug'),
     MenuSpec.command('shell.help.whatsNew'),
     MenuSpec.command('shell.help.about'),
   ]);

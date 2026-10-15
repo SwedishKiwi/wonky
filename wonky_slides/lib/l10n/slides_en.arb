@@ -1,0 +1,2451 @@
+{
+  "@@locale": "en",
+  "untitledPresentation": "Untitled presentation",
+  "@untitledPresentation": {
+    "description": "Default name of a new presentation."
+  },
+  "editorComingSoonTitle": "Coming soon",
+  "@editorComingSoonTitle": {
+    "description": "Title of the placeholder deck editor while Wonky Slides is being built (Slides 12 SL-1)."
+  },
+  "editorComingSoonBody": "Wonky Slides is being built. The presentation editor is on its way — your presentations stay safe in Wonky Drive meanwhile.",
+  "@editorComingSoonBody": {
+    "description": "Description of the placeholder deck editor."
+  },
+  "backToSlides": "Back to Slides",
+  "@backToSlides": {
+    "description": "Button on placeholder pages that returns to the Slides home."
+  },
+  "deckDownloading": "Downloading presentation…",
+  "@deckDownloading": {
+    "description": "Load state while a presentation downloads to this device (with a percentage)."
+  },
+  "deckOpening": "Opening presentation… ({rows} rows)",
+  "@deckOpening": {
+    "description": "Load state while a presentation is read from the device.",
+    "placeholders": {
+      "rows": {
+        "type": "int"
+      }
+    }
+  },
+  "deckNotAvailableOffline": "This presentation isn’t available offline.",
+  "@deckNotAvailableOffline": {
+    "description": "Shown when a presentation that isn't on this device is opened offline."
+  },
+  "deckNoAccess": "You don’t have access to this presentation.",
+  "@deckNoAccess": {
+    "description": "Shown when the server refuses to open a presentation."
+  },
+  "deckDownloadFailed": "This presentation could not be downloaded.",
+  "@deckDownloadFailed": {
+    "description": "Shown when a presentation didn't arrive on this device."
+  },
+  "deckOpenFailed": "This presentation could not be opened.",
+  "@deckOpenFailed": {
+    "description": "Shown when opening a presentation failed."
+  },
+  "deckNotOnDevice": "This presentation isn’t on this device.",
+  "@deckNotOnDevice": {
+    "description": "Shown when the presentation's data is missing on this device."
+  },
+  "deckAccessRemoved": "You no longer have access to this presentation.",
+  "@deckAccessRemoved": {
+    "description": "Shown in an open presentation after it was unshared or trashed."
+  },
+  "deckStillOpening": "The presentation is still opening.",
+  "@deckStillOpening": {
+    "description": "Refusal of an edit made before the presentation finished opening."
+  },
+  "screenStorageUnavailable": "The presentation storage on this device didn't start. Try again, or reload the page.",
+  "@screenStorageUnavailable": {
+    "description": "Shown when the local presentation database could not be started."
+  },
+  "createNeedsConnectionTitle": "Connect to the internet to create a presentation",
+  "@createNeedsConnectionTitle": {
+    "description": "Toast when a presentation is created offline before this device prepared space for offline creation."
+  },
+  "createNeedsConnectionBody": "This device can create presentations offline once it has been online for a moment.",
+  "@createNeedsConnectionBody": {
+    "description": "Toast description when a presentation can't be created offline yet."
+  },
+  "storageLimitedTitle": "Offline storage is limited in this browser",
+  "@storageLimitedTitle": {
+    "description": "Title of the warning that offline storage is limited (no OPFS)."
+  },
+  "storageLimitedDescription": "This browser keeps offline presentations in memory. Only about {elements} objects stay available offline; the presentations you opened least recently are removed from this device first.",
+  "@storageLimitedDescription": {
+    "description": "Description of the limited offline storage warning.",
+    "placeholders": {
+      "elements": {
+        "type": "String"
+      }
+    }
+  },
+  "recoveryTitle": "Your offline presentation data couldn't be opened",
+  "@recoveryTitle": {
+    "description": "Toast when the local presentation database couldn't be opened."
+  },
+  "recoveryDescription": "{count, plural, =1{1 presentation had changes that weren't synced yet. Download them before they're lost.} other{{count} presentations had changes that weren't synced yet. Download them before they're lost.}}",
+  "@recoveryDescription": {
+    "description": "Toast description with the number of presentations with unsynced changes.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recoveryDownload": "Download unsynced changes",
+  "@recoveryDownload": {
+    "description": "Toast action that downloads the unsynced presentations."
+  },
+  "recoveryFailed": "The unsynced changes could not be exported",
+  "@recoveryFailed": {
+    "description": "Error toast when the recovery download failed."
+  },
+  "cmdFileImportSlides": "Import slides…",
+  "@cmdFileImportSlides": {
+    "description": "Title of the command `slides.file.importSlides` (menus, palette, tooltips, undo)."
+  },
+  "cmdFileDownload": "Download",
+  "@cmdFileDownload": {
+    "description": "Title of the command `slides.file.download` (menus, palette, tooltips, undo)."
+  },
+  "cmdHistoryNameCurrentVersion": "Name current version",
+  "@cmdHistoryNameCurrentVersion": {
+    "description": "Title of the command `slides.history.nameCurrentVersion` (menus, palette, tooltips, undo)."
+  },
+  "cmdHistoryOpen": "See version history",
+  "@cmdHistoryOpen": {
+    "description": "Title of the command `slides.history.open` (menus, palette, tooltips, undo)."
+  },
+  "cmdFileSetLanguage": "Language",
+  "@cmdFileSetLanguage": {
+    "description": "Title of the command `slides.file.setLanguage` (menus, palette, tooltips, undo)."
+  },
+  "cmdFilePageSetup": "Page setup…",
+  "@cmdFilePageSetup": {
+    "description": "Title of the command `slides.file.pageSetup` (menus, palette, tooltips, undo)."
+  },
+  "cmdPrintOpen": "Print",
+  "@cmdPrintOpen": {
+    "description": "Title of the command `slides.print.open` (menus, palette, tooltips, undo)."
+  },
+  "cmdEditPasteSpecial": "Paste special",
+  "@cmdEditPasteSpecial": {
+    "description": "Title of the command `slides.edit.pasteSpecial` (menus, palette, tooltips, undo)."
+  },
+  "cmdEditDuplicate": "Duplicate",
+  "@cmdEditDuplicate": {
+    "description": "Title of the command `slides.edit.duplicate` (menus, palette, tooltips, undo)."
+  },
+  "cmdEditDelete": "Delete",
+  "@cmdEditDelete": {
+    "description": "Title of the command `slides.edit.delete` (menus, palette, tooltips, undo)."
+  },
+  "cmdSelectEscape": "Select none",
+  "@cmdSelectEscape": {
+    "description": "Title of the command `slides.select.escape` (menus, palette, tooltips, undo)."
+  },
+  "cmdSelectEnterGroup": "Enter group",
+  "@cmdSelectEnterGroup": {
+    "description": "Title of the command `slides.select.enterGroup` (menus, palette, tooltips, undo)."
+  },
+  "cmdElementActivate": "Edit text",
+  "@cmdElementActivate": {
+    "description": "Title of the command `slides.element.activate` (menus, palette, tooltips, undo)."
+  },
+  "cmdFindOpen": "Find",
+  "@cmdFindOpen": {
+    "description": "Title of the command `slides.find.open` (menus, palette, tooltips, undo)."
+  },
+  "cmdFindOpenReplace": "Find and replace",
+  "@cmdFindOpenReplace": {
+    "description": "Title of the command `slides.find.openReplace` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatCopyStyle": "Copy style",
+  "@cmdFormatCopyStyle": {
+    "description": "Title of the command `slides.format.copyStyle` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatPasteStyle": "Paste style",
+  "@cmdFormatPasteStyle": {
+    "description": "Title of the command `slides.format.pasteStyle` (menus, palette, tooltips, undo)."
+  },
+  "cmdPresentFromCurrent": "Present from current slide",
+  "@cmdPresentFromCurrent": {
+    "description": "Title of the command `slides.present.fromCurrent` (menus, palette, tooltips, undo)."
+  },
+  "cmdPresentFromStart": "Present from beginning",
+  "@cmdPresentFromStart": {
+    "description": "Title of the command `slides.present.fromStart` (menus, palette, tooltips, undo)."
+  },
+  "cmdPresentPresenterView": "Presenter view",
+  "@cmdPresentPresenterView": {
+    "description": "Title of the command `slides.present.presenterView` (menus, palette, tooltips, undo)."
+  },
+  "cmdPresentRehearse": "Rehearse",
+  "@cmdPresentRehearse": {
+    "description": "Title of the command `slides.present.rehearse` (menus, palette, tooltips, undo)."
+  },
+  "cmdPresentOpenOnAnotherDevice": "Open on another device…",
+  "@cmdPresentOpenOnAnotherDevice": {
+    "description": "Title of the command `slides.present.openOnAnotherDevice` (menus, palette, tooltips, undo)."
+  },
+  "cmdPresentRemote": "Use phone as remote",
+  "@cmdPresentRemote": {
+    "description": "Title of the command `slides.present.remote` (menus, palette, tooltips, undo)."
+  },
+  "cmdPresentFromSlide": "Present from this slide",
+  "@cmdPresentFromSlide": {
+    "description": "Title of the command `slides.present.fromSlide` (menus, palette, tooltips, undo)."
+  },
+  "cmdViewSetMode": "View mode",
+  "@cmdViewSetMode": {
+    "description": "Title of the command `slides.view.setMode` (menus, palette, tooltips, undo)."
+  },
+  "cmdViewToggleNavigator": "Navigator",
+  "@cmdViewToggleNavigator": {
+    "description": "Title of the command `slides.view.toggleNavigator` (menus, palette, tooltips, undo)."
+  },
+  "cmdViewToggleInspector": "Inspector",
+  "@cmdViewToggleInspector": {
+    "description": "Title of the command `slides.view.toggleInspector` (menus, palette, tooltips, undo)."
+  },
+  "cmdViewToggleNotes": "Speaker notes",
+  "@cmdViewToggleNotes": {
+    "description": "Title of the command `slides.view.toggleNotes` (menus, palette, tooltips, undo)."
+  },
+  "cmdViewToggleRulers": "Rulers",
+  "@cmdViewToggleRulers": {
+    "description": "Title of the command `slides.view.toggleRulers` (menus, palette, tooltips, undo)."
+  },
+  "cmdViewToggleGuides": "Guides",
+  "@cmdViewToggleGuides": {
+    "description": "Title of the command `slides.view.toggleGuides` (menus, palette, tooltips, undo)."
+  },
+  "cmdViewToggleCommentPins": "Comments on canvas",
+  "@cmdViewToggleCommentPins": {
+    "description": "Title of the command `slides.view.toggleCommentPins` (menus, palette, tooltips, undo)."
+  },
+  "cmdViewToggleRemoteCursors": "Collaborator cursors",
+  "@cmdViewToggleRemoteCursors": {
+    "description": "Title of the command `slides.view.toggleRemoteCursors` (menus, palette, tooltips, undo)."
+  },
+  "cmdViewToggleSmartGuides": "Smart guides",
+  "@cmdViewToggleSmartGuides": {
+    "description": "Title of the command `slides.view.toggleSmartGuides` (menus, palette, tooltips, undo)."
+  },
+  "cmdViewToggleSnapObjects": "Snap to objects",
+  "@cmdViewToggleSnapObjects": {
+    "description": "Title of the command `slides.view.toggleSnapObjects` (menus, palette, tooltips, undo)."
+  },
+  "cmdViewToggleSnapGuides": "Snap to guides",
+  "@cmdViewToggleSnapGuides": {
+    "description": "Title of the command `slides.view.toggleSnapGuides` (menus, palette, tooltips, undo)."
+  },
+  "cmdViewToggleSnapGrid": "Snap to grid",
+  "@cmdViewToggleSnapGrid": {
+    "description": "Title of the command `slides.view.toggleSnapGrid` (menus, palette, tooltips, undo)."
+  },
+  "cmdAnimateToggleOrderOverlay": "Build order",
+  "@cmdAnimateToggleOrderOverlay": {
+    "description": "Title of the command `slides.animate.toggleOrderOverlay` (menus, palette, tooltips, undo)."
+  },
+  "cmdMagicMoveToggleMatches": "Magic Move matches",
+  "@cmdMagicMoveToggleMatches": {
+    "description": "Title of the command `slides.magicMove.toggleMatches` (menus, palette, tooltips, undo)."
+  },
+  "cmdGuidesAdd": "Add guide",
+  "@cmdGuidesAdd": {
+    "description": "Title of the command `slides.guides.add` (menus, palette, tooltips, undo)."
+  },
+  "cmdGuidesClear": "Clear guides",
+  "@cmdGuidesClear": {
+    "description": "Title of the command `slides.guides.clear` (menus, palette, tooltips, undo)."
+  },
+  "cmdViewZoomFit": "Fit",
+  "@cmdViewZoomFit": {
+    "description": "Title of the command `slides.view.zoomFit` (menus, palette, tooltips, undo)."
+  },
+  "cmdViewZoom": "Zoom",
+  "@cmdViewZoom": {
+    "description": "Title of the command `slides.view.zoom` (menus, palette, tooltips, undo)."
+  },
+  "cmdViewZoomIn": "Zoom in",
+  "@cmdViewZoomIn": {
+    "description": "Title of the command `slides.view.zoomIn` (menus, palette, tooltips, undo)."
+  },
+  "cmdViewZoomOut": "Zoom out",
+  "@cmdViewZoomOut": {
+    "description": "Title of the command `slides.view.zoomOut` (menus, palette, tooltips, undo)."
+  },
+  "cmdViewZoomToSelection": "Zoom to selection",
+  "@cmdViewZoomToSelection": {
+    "description": "Title of the command `slides.view.zoomToSelection` (menus, palette, tooltips, undo)."
+  },
+  "cmdPanelAnimate": "Animate",
+  "@cmdPanelAnimate": {
+    "description": "Title of the command `slides.panel.animate` (menus, palette, tooltips, undo)."
+  },
+  "cmdPanelThemes": "Themes",
+  "@cmdPanelThemes": {
+    "description": "Title of the command `slides.panel.themes` (menus, palette, tooltips, undo)."
+  },
+  "cmdPanelLayers": "Layers",
+  "@cmdPanelLayers": {
+    "description": "Title of the command `slides.panel.layers` (menus, palette, tooltips, undo)."
+  },
+  "cmdPanelAccessibility": "Accessibility",
+  "@cmdPanelAccessibility": {
+    "description": "Title of the command `slides.panel.accessibility` (menus, palette, tooltips, undo)."
+  },
+  "cmdPanelLinkedObjects": "Linked charts",
+  "@cmdPanelLinkedObjects": {
+    "description": "Title of the command `slides.panel.linkedObjects` (menus, palette, tooltips, undo)."
+  },
+  "cmdModeEditing": "Editing",
+  "@cmdModeEditing": {
+    "description": "Title of the command `slides.mode.editing` (menus, palette, tooltips, undo)."
+  },
+  "cmdModeViewing": "Viewing",
+  "@cmdModeViewing": {
+    "description": "Title of the command `slides.mode.viewing` (menus, palette, tooltips, undo)."
+  },
+  "cmdInspectorOpen": "Format options…",
+  "@cmdInspectorOpen": {
+    "description": "Title of the command `slides.inspector.open` (menus, palette, tooltips, undo)."
+  },
+  "cmdSlideNew": "New slide",
+  "@cmdSlideNew": {
+    "description": "Title of the command `slides.slide.new` (menus, palette, tooltips, undo)."
+  },
+  "cmdSlideDuplicateForMagicMove": "Magic Move slide",
+  "@cmdSlideDuplicateForMagicMove": {
+    "description": "Title of the command `slides.slide.duplicateForMagicMove` (menus, palette, tooltips, undo)."
+  },
+  "cmdInsertTextBox": "Text box",
+  "@cmdInsertTextBox": {
+    "description": "Title of the command `slides.insert.textBox` (menus, palette, tooltips, undo)."
+  },
+  "cmdInsertImage": "Image",
+  "@cmdInsertImage": {
+    "description": "Title of the command `slides.insert.image` (menus, palette, tooltips, undo)."
+  },
+  "cmdInsertShape": "Shape",
+  "@cmdInsertShape": {
+    "description": "Title of the command `slides.insert.shape` (menus, palette, tooltips, undo)."
+  },
+  "cmdInsertLine": "Line",
+  "@cmdInsertLine": {
+    "description": "Title of the command `slides.insert.line` (menus, palette, tooltips, undo)."
+  },
+  "cmdInsertTable": "Table",
+  "@cmdInsertTable": {
+    "description": "Title of the command `slides.insert.table` (menus, palette, tooltips, undo)."
+  },
+  "cmdInsertCode": "Code block",
+  "@cmdInsertCode": {
+    "description": "Title of the command `slides.insert.code` (menus, palette, tooltips, undo)."
+  },
+  "cmdInsertChartFromSheets": "Chart from Wonky Sheets…",
+  "@cmdInsertChartFromSheets": {
+    "description": "Title of the command `slides.insert.chartFromSheets` (menus, palette, tooltips, undo)."
+  },
+  "cmdInsertChart": "Chart",
+  "@cmdInsertChart": {
+    "description": "Title of the command `slides.insert.chart` (menus, palette, tooltips, undo)."
+  },
+  "cmdInsertIcon": "Icon…",
+  "@cmdInsertIcon": {
+    "description": "Title of the command `slides.insert.icon` (menus, palette, tooltips, undo)."
+  },
+  "cmdInsertEmoji": "Emoji…",
+  "@cmdInsertEmoji": {
+    "description": "Title of the command `slides.insert.emoji` (menus, palette, tooltips, undo)."
+  },
+  "cmdInsertSpecialCharacter": "Special characters…",
+  "@cmdInsertSpecialCharacter": {
+    "description": "Title of the command `slides.insert.specialCharacter` (menus, palette, tooltips, undo)."
+  },
+  "cmdInsertLink": "Link",
+  "@cmdInsertLink": {
+    "description": "Title of the command `slides.insert.link` (menus, palette, tooltips, undo)."
+  },
+  "cmdDeckOpenNumbering": "Slide numbers…",
+  "@cmdDeckOpenNumbering": {
+    "description": "Title of the command `slides.deck.openNumbering` (menus, palette, tooltips, undo)."
+  },
+  "cmdLayoutInsertPlaceholder": "Placeholder",
+  "@cmdLayoutInsertPlaceholder": {
+    "description": "Title of the command `slides.layout.insertPlaceholder` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatBold": "Bold",
+  "@cmdFormatBold": {
+    "description": "Title of the command `slides.format.bold` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatItalic": "Italic",
+  "@cmdFormatItalic": {
+    "description": "Title of the command `slides.format.italic` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatUnderline": "Underline",
+  "@cmdFormatUnderline": {
+    "description": "Title of the command `slides.format.underline` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatStrikethrough": "Strikethrough",
+  "@cmdFormatStrikethrough": {
+    "description": "Title of the command `slides.format.strikethrough` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatScript": "Superscript / subscript",
+  "@cmdFormatScript": {
+    "description": "Title of the command `slides.format.script` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatIncreaseFontSize": "Increase font size",
+  "@cmdFormatIncreaseFontSize": {
+    "description": "Title of the command `slides.format.increaseFontSize` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatDecreaseFontSize": "Decrease font size",
+  "@cmdFormatDecreaseFontSize": {
+    "description": "Title of the command `slides.format.decreaseFontSize` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatCaps": "Capitalization",
+  "@cmdFormatCaps": {
+    "description": "Title of the command `slides.format.caps` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatTextStyle": "Text style",
+  "@cmdFormatTextStyle": {
+    "description": "Title of the command `slides.format.textStyle` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatFont": "Font",
+  "@cmdFormatFont": {
+    "description": "Title of the command `slides.format.font` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatFontSize": "Font size",
+  "@cmdFormatFontSize": {
+    "description": "Title of the command `slides.format.fontSize` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatTextColor": "Text color",
+  "@cmdFormatTextColor": {
+    "description": "Title of the command `slides.format.textColor` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatHighlight": "Highlight color",
+  "@cmdFormatHighlight": {
+    "description": "Title of the command `slides.format.highlight` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatAlign": "Text alignment",
+  "@cmdFormatAlign": {
+    "description": "Title of the command `slides.format.align` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatAnchor": "Vertical alignment",
+  "@cmdFormatAnchor": {
+    "description": "Title of the command `slides.format.anchor` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatIndent": "Increase indent",
+  "@cmdFormatIndent": {
+    "description": "Title of the command `slides.format.indent` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatOutdent": "Decrease indent",
+  "@cmdFormatOutdent": {
+    "description": "Title of the command `slides.format.outdent` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatLineHeight": "Line spacing",
+  "@cmdFormatLineHeight": {
+    "description": "Title of the command `slides.format.lineHeight` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatParagraphSpacing": "Paragraph spacing…",
+  "@cmdFormatParagraphSpacing": {
+    "description": "Title of the command `slides.format.paragraphSpacing` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatList": "Lists",
+  "@cmdFormatList": {
+    "description": "Title of the command `slides.format.list` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatListStyle": "List style",
+  "@cmdFormatListStyle": {
+    "description": "Title of the command `slides.format.listStyle` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatListStart": "Restart numbering",
+  "@cmdFormatListStart": {
+    "description": "Title of the command `slides.format.listStart` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatAutofit": "Text fitting",
+  "@cmdFormatAutofit": {
+    "description": "Title of the command `slides.format.autofit` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatFill": "Fill",
+  "@cmdFormatFill": {
+    "description": "Title of the command `slides.format.fill` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatStroke": "Border",
+  "@cmdFormatStroke": {
+    "description": "Title of the command `slides.format.stroke` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatEffects": "Effects",
+  "@cmdFormatEffects": {
+    "description": "Title of the command `slides.format.effects` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatOpacity": "Opacity…",
+  "@cmdFormatOpacity": {
+    "description": "Title of the command `slides.format.opacity` (menus, palette, tooltips, undo)."
+  },
+  "cmdImageCrop": "Crop",
+  "@cmdImageCrop": {
+    "description": "Title of the command `slides.image.crop` (menus, palette, tooltips, undo)."
+  },
+  "cmdImageMask": "Mask with shape",
+  "@cmdImageMask": {
+    "description": "Title of the command `slides.image.mask` (menus, palette, tooltips, undo)."
+  },
+  "cmdImageReplace": "Replace image",
+  "@cmdImageReplace": {
+    "description": "Title of the command `slides.image.replace` (menus, palette, tooltips, undo)."
+  },
+  "cmdImageAdjust": "Adjustments…",
+  "@cmdImageAdjust": {
+    "description": "Title of the command `slides.image.adjust` (menus, palette, tooltips, undo)."
+  },
+  "cmdImageReset": "Reset image",
+  "@cmdImageReset": {
+    "description": "Title of the command `slides.image.reset` (menus, palette, tooltips, undo)."
+  },
+  "cmdImageDownloadOriginal": "Download original",
+  "@cmdImageDownloadOriginal": {
+    "description": "Title of the command `slides.image.downloadOriginal` (menus, palette, tooltips, undo)."
+  },
+  "cmdTableInsertRow": "Insert row",
+  "@cmdTableInsertRow": {
+    "description": "Title of the command `slides.table.insertRow` (menus, palette, tooltips, undo)."
+  },
+  "cmdTableInsertColumn": "Insert column",
+  "@cmdTableInsertColumn": {
+    "description": "Title of the command `slides.table.insertColumn` (menus, palette, tooltips, undo)."
+  },
+  "cmdTableDeleteRows": "Delete row",
+  "@cmdTableDeleteRows": {
+    "description": "Title of the command `slides.table.deleteRows` (menus, palette, tooltips, undo)."
+  },
+  "cmdTableDeleteColumns": "Delete column",
+  "@cmdTableDeleteColumns": {
+    "description": "Title of the command `slides.table.deleteColumns` (menus, palette, tooltips, undo)."
+  },
+  "cmdTableDelete": "Delete table",
+  "@cmdTableDelete": {
+    "description": "Title of the command `slides.table.delete` (menus, palette, tooltips, undo)."
+  },
+  "cmdTableMergeCells": "Merge cells",
+  "@cmdTableMergeCells": {
+    "description": "Title of the command `slides.table.mergeCells` (menus, palette, tooltips, undo)."
+  },
+  "cmdTableUnmergeCells": "Unmerge cells",
+  "@cmdTableUnmergeCells": {
+    "description": "Title of the command `slides.table.unmergeCells` (menus, palette, tooltips, undo)."
+  },
+  "cmdTableDistributeRows": "Distribute rows",
+  "@cmdTableDistributeRows": {
+    "description": "Title of the command `slides.table.distributeRows` (menus, palette, tooltips, undo)."
+  },
+  "cmdTableDistributeColumns": "Distribute columns",
+  "@cmdTableDistributeColumns": {
+    "description": "Title of the command `slides.table.distributeColumns` (menus, palette, tooltips, undo)."
+  },
+  "cmdTableSetOptions": "Table options…",
+  "@cmdTableSetOptions": {
+    "description": "Title of the command `slides.table.setOptions` (menus, palette, tooltips, undo)."
+  },
+  "cmdTableSetCellFill": "Cell fill",
+  "@cmdTableSetCellFill": {
+    "description": "Title of the command `slides.table.setCellFill` (menus, palette, tooltips, undo)."
+  },
+  "cmdTableSetBorders": "Borders",
+  "@cmdTableSetBorders": {
+    "description": "Title of the command `slides.table.setBorders` (menus, palette, tooltips, undo)."
+  },
+  "cmdTableSetCellAlign": "Vertical align",
+  "@cmdTableSetCellAlign": {
+    "description": "Title of the command `slides.table.setCellAlign` (menus, palette, tooltips, undo)."
+  },
+  "cmdShapeChange": "Change shape",
+  "@cmdShapeChange": {
+    "description": "Title of the command `slides.shape.change` (menus, palette, tooltips, undo)."
+  },
+  "cmdShapeApplyQuickStyle": "Quick styles",
+  "@cmdShapeApplyQuickStyle": {
+    "description": "Title of the command `slides.shape.applyQuickStyle` (menus, palette, tooltips, undo)."
+  },
+  "cmdLineSetArrow": "Arrows",
+  "@cmdLineSetArrow": {
+    "description": "Title of the command `slides.line.setArrow` (menus, palette, tooltips, undo)."
+  },
+  "cmdLineSetRouting": "Routing",
+  "@cmdLineSetRouting": {
+    "description": "Title of the command `slides.line.setRouting` (menus, palette, tooltips, undo)."
+  },
+  "cmdCodeEdit": "Edit code",
+  "@cmdCodeEdit": {
+    "description": "Title of the command `slides.code.edit` (menus, palette, tooltips, undo)."
+  },
+  "cmdCodeSetLanguage": "Code language",
+  "@cmdCodeSetLanguage": {
+    "description": "Title of the command `slides.code.setLanguage` (menus, palette, tooltips, undo)."
+  },
+  "cmdCodeUpdateOptions": "Line numbers",
+  "@cmdCodeUpdateOptions": {
+    "description": "Title of the command `slides.code.updateOptions` (menus, palette, tooltips, undo)."
+  },
+  "cmdCodeSetHighlightSteps": "Highlight steps…",
+  "@cmdCodeSetHighlightSteps": {
+    "description": "Title of the command `slides.code.setHighlightSteps` (menus, palette, tooltips, undo)."
+  },
+  "cmdCodeAddState": "Add state",
+  "@cmdCodeAddState": {
+    "description": "Title of the command `slides.code.addState` (menus, palette, tooltips, undo)."
+  },
+  "cmdChartUpdate": "Update chart",
+  "@cmdChartUpdate": {
+    "description": "Title of the command `slides.chart.update` (menus, palette, tooltips, undo)."
+  },
+  "cmdChartSetAutoUpdate": "Update automatically",
+  "@cmdChartSetAutoUpdate": {
+    "description": "Title of the command `slides.chart.setAutoUpdate` (menus, palette, tooltips, undo)."
+  },
+  "cmdChartOpenSource": "Open source spreadsheet",
+  "@cmdChartOpenSource": {
+    "description": "Title of the command `slides.chart.openSource` (menus, palette, tooltips, undo)."
+  },
+  "cmdChartUnlink": "Unlink chart",
+  "@cmdChartUnlink": {
+    "description": "Title of the command `slides.chart.unlink` (menus, palette, tooltips, undo)."
+  },
+  "cmdChartCopyAsImage": "Copy chart as image",
+  "@cmdChartCopyAsImage": {
+    "description": "Title of the command `slides.chart.copyAsImage` (menus, palette, tooltips, undo)."
+  },
+  "cmdElementEditAltText": "Alt text…",
+  "@cmdElementEditAltText": {
+    "description": "Title of the command `slides.element.editAltText` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatPaintFormat": "Paint format",
+  "@cmdFormatPaintFormat": {
+    "description": "Title of the command `slides.format.paintFormat` (menus, palette, tooltips, undo)."
+  },
+  "cmdFormatClear": "Clear formatting",
+  "@cmdFormatClear": {
+    "description": "Title of the command `slides.format.clear` (menus, palette, tooltips, undo)."
+  },
+  "cmdSlideDuplicate": "Duplicate slide",
+  "@cmdSlideDuplicate": {
+    "description": "Title of the command `slides.slide.duplicate` (menus, palette, tooltips, undo)."
+  },
+  "cmdSlideDelete": "Delete slide",
+  "@cmdSlideDelete": {
+    "description": "Title of the command `slides.slide.delete` (menus, palette, tooltips, undo)."
+  },
+  "cmdSlideToggleSkip": "Skip slide",
+  "@cmdSlideToggleSkip": {
+    "description": "Title of the command `slides.slide.toggleSkip` (menus, palette, tooltips, undo)."
+  },
+  "cmdSlideMove": "Move slide",
+  "@cmdSlideMove": {
+    "description": "Title of the command `slides.slide.move` (menus, palette, tooltips, undo)."
+  },
+  "cmdSlideApplyLayout": "Apply layout",
+  "@cmdSlideApplyLayout": {
+    "description": "Title of the command `slides.slide.applyLayout` (menus, palette, tooltips, undo)."
+  },
+  "cmdSlideResetToLayout": "Reset slide to layout",
+  "@cmdSlideResetToLayout": {
+    "description": "Title of the command `slides.slide.resetToLayout` (menus, palette, tooltips, undo)."
+  },
+  "cmdSlideSetBackground": "Change background…",
+  "@cmdSlideSetBackground": {
+    "description": "Title of the command `slides.slide.setBackground` (menus, palette, tooltips, undo)."
+  },
+  "cmdSlideApplyBackgroundToAll": "Apply background to all slides",
+  "@cmdSlideApplyBackgroundToAll": {
+    "description": "Title of the command `slides.slide.applyBackgroundToAll` (menus, palette, tooltips, undo)."
+  },
+  "cmdSlideSetHideMasterElements": "Hide master objects",
+  "@cmdSlideSetHideMasterElements": {
+    "description": "Title of the command `slides.slide.setHideMasterElements` (menus, palette, tooltips, undo)."
+  },
+  "cmdDeckSetAppearance": "Presentation appearance",
+  "@cmdDeckSetAppearance": {
+    "description": "Title of the command `slides.deck.setAppearance` (menus, palette, tooltips, undo)."
+  },
+  "cmdGroupCreate": "Group slides",
+  "@cmdGroupCreate": {
+    "description": "Title of the command `slides.group.create` (menus, palette, tooltips, undo)."
+  },
+  "cmdGroupUngroup": "Ungroup slides",
+  "@cmdGroupUngroup": {
+    "description": "Title of the command `slides.group.ungroup` (menus, palette, tooltips, undo)."
+  },
+  "cmdGroupAddSlides": "Add to group",
+  "@cmdGroupAddSlides": {
+    "description": "Title of the command `slides.group.addSlides` (menus, palette, tooltips, undo)."
+  },
+  "cmdGroupRemoveSlides": "Remove from group",
+  "@cmdGroupRemoveSlides": {
+    "description": "Title of the command `slides.group.removeSlides` (menus, palette, tooltips, undo)."
+  },
+  "cmdGroupStartRename": "Rename group",
+  "@cmdGroupStartRename": {
+    "description": "Title of the command `slides.group.startRename` (menus, palette, tooltips, undo)."
+  },
+  "cmdGroupSetColor": "Group color",
+  "@cmdGroupSetColor": {
+    "description": "Title of the command `slides.group.setColor` (menus, palette, tooltips, undo)."
+  },
+  "cmdGroupToggleSkip": "Skip group",
+  "@cmdGroupToggleSkip": {
+    "description": "Title of the command `slides.group.toggleSkip` (menus, palette, tooltips, undo)."
+  },
+  "cmdGroupCollapse": "Collapse group",
+  "@cmdGroupCollapse": {
+    "description": "Title of the command `slides.group.collapse` (menus, palette, tooltips, undo)."
+  },
+  "cmdGroupExpand": "Expand group",
+  "@cmdGroupExpand": {
+    "description": "Title of the command `slides.group.expand` (menus, palette, tooltips, undo)."
+  },
+  "cmdGroupCollapseAll": "Collapse all groups",
+  "@cmdGroupCollapseAll": {
+    "description": "Title of the command `slides.group.collapseAll` (menus, palette, tooltips, undo)."
+  },
+  "cmdGroupExpandAll": "Expand all groups",
+  "@cmdGroupExpandAll": {
+    "description": "Title of the command `slides.group.expandAll` (menus, palette, tooltips, undo)."
+  },
+  "cmdGroupDuplicate": "Duplicate group",
+  "@cmdGroupDuplicate": {
+    "description": "Title of the command `slides.group.duplicate` (menus, palette, tooltips, undo)."
+  },
+  "cmdGroupDelete": "Delete group…",
+  "@cmdGroupDelete": {
+    "description": "Title of the command `slides.group.delete` (menus, palette, tooltips, undo)."
+  },
+  "cmdGroupSelectSlides": "Select slides in group",
+  "@cmdGroupSelectSlides": {
+    "description": "Title of the command `slides.group.selectSlides` (menus, palette, tooltips, undo)."
+  },
+  "cmdAnimatePreview": "Preview animations",
+  "@cmdAnimatePreview": {
+    "description": "Title of the command `slides.animate.preview` (menus, palette, tooltips, undo)."
+  },
+  "cmdAnimateRemoveAll": "Remove all animations",
+  "@cmdAnimateRemoveAll": {
+    "description": "Title of the command `slides.animate.removeAll` (menus, palette, tooltips, undo)."
+  },
+  "cmdAnimateAddBuild": "Add animation",
+  "@cmdAnimateAddBuild": {
+    "description": "Title of the command `slides.animate.addBuild` (menus, palette, tooltips, undo)."
+  },
+  "cmdAnimateCopyBuilds": "Copy animation",
+  "@cmdAnimateCopyBuilds": {
+    "description": "Title of the command `slides.animate.copyBuilds` (menus, palette, tooltips, undo)."
+  },
+  "cmdAnimatePasteBuilds": "Paste animation",
+  "@cmdAnimatePasteBuilds": {
+    "description": "Title of the command `slides.animate.pasteBuilds` (menus, palette, tooltips, undo)."
+  },
+  "cmdAnimateDeleteBuilds": "Remove animations",
+  "@cmdAnimateDeleteBuilds": {
+    "description": "Title of the command `slides.animate.deleteBuilds` (menus, palette, tooltips, undo)."
+  },
+  "cmdThemeEdit": "Edit theme…",
+  "@cmdThemeEdit": {
+    "description": "Title of the command `slides.theme.edit` (menus, palette, tooltips, undo)."
+  },
+  "cmdNavGoToSlide": "Go to slide…",
+  "@cmdNavGoToSlide": {
+    "description": "Title of the command `slides.nav.goToSlide` (menus, palette, tooltips, undo)."
+  },
+  "cmdNavGoToGroup": "Go to group",
+  "@cmdNavGoToGroup": {
+    "description": "Title of the command `slides.nav.goToGroup` (menus, palette, tooltips, undo)."
+  },
+  "cmdNavPreviousSlide": "Previous slide",
+  "@cmdNavPreviousSlide": {
+    "description": "Title of the command `slides.nav.previousSlide` (menus, palette, tooltips, undo)."
+  },
+  "cmdNavNextSlide": "Next slide",
+  "@cmdNavNextSlide": {
+    "description": "Title of the command `slides.nav.nextSlide` (menus, palette, tooltips, undo)."
+  },
+  "cmdArrangeOrder": "Order",
+  "@cmdArrangeOrder": {
+    "description": "Title of the command `slides.arrange.order` (menus, palette, tooltips, undo)."
+  },
+  "cmdArrangeAlign": "Align objects",
+  "@cmdArrangeAlign": {
+    "description": "Title of the command `slides.arrange.align` (menus, palette, tooltips, undo)."
+  },
+  "cmdArrangeDistribute": "Distribute objects",
+  "@cmdArrangeDistribute": {
+    "description": "Title of the command `slides.arrange.distribute` (menus, palette, tooltips, undo)."
+  },
+  "cmdArrangeCenterOnSlide": "Center on slide",
+  "@cmdArrangeCenterOnSlide": {
+    "description": "Title of the command `slides.arrange.centerOnSlide` (menus, palette, tooltips, undo)."
+  },
+  "cmdArrangeMatchSize": "Match size",
+  "@cmdArrangeMatchSize": {
+    "description": "Title of the command `slides.arrange.matchSize` (menus, palette, tooltips, undo)."
+  },
+  "cmdArrangeRotate": "Rotate",
+  "@cmdArrangeRotate": {
+    "description": "Title of the command `slides.arrange.rotate` (menus, palette, tooltips, undo)."
+  },
+  "cmdArrangeFlip": "Flip",
+  "@cmdArrangeFlip": {
+    "description": "Title of the command `slides.arrange.flip` (menus, palette, tooltips, undo)."
+  },
+  "cmdArrangeGroup": "Group",
+  "@cmdArrangeGroup": {
+    "description": "Title of the command `slides.arrange.group` (menus, palette, tooltips, undo)."
+  },
+  "cmdArrangeUngroup": "Ungroup",
+  "@cmdArrangeUngroup": {
+    "description": "Title of the command `slides.arrange.ungroup` (menus, palette, tooltips, undo)."
+  },
+  "cmdElementToggleLock": "Lock",
+  "@cmdElementToggleLock": {
+    "description": "Title of the command `slides.element.toggleLock` (menus, palette, tooltips, undo)."
+  },
+  "cmdElementUnlockAll": "Unlock all on slide",
+  "@cmdElementUnlockAll": {
+    "description": "Title of the command `slides.element.unlockAll` (menus, palette, tooltips, undo)."
+  },
+  "cmdElementHide": "Hide",
+  "@cmdElementHide": {
+    "description": "Title of the command `slides.element.hide` (menus, palette, tooltips, undo)."
+  },
+  "cmdElementShow": "Show",
+  "@cmdElementShow": {
+    "description": "Title of the command `slides.element.show` (menus, palette, tooltips, undo)."
+  },
+  "cmdElementSetLink": "Link…",
+  "@cmdElementSetLink": {
+    "description": "Title of the command `slides.element.setLink` (menus, palette, tooltips, undo)."
+  },
+  "cmdElementRemoveLink": "Remove link",
+  "@cmdElementRemoveLink": {
+    "description": "Title of the command `slides.element.removeLink` (menus, palette, tooltips, undo)."
+  },
+  "cmdElementResetPlaceholder": "Reset to layout",
+  "@cmdElementResetPlaceholder": {
+    "description": "Title of the command `slides.element.resetPlaceholder` (menus, palette, tooltips, undo)."
+  },
+  "cmdSpellingCheck": "Check spelling",
+  "@cmdSpellingCheck": {
+    "description": "Title of the command `slides.spelling.check` (menus, palette, tooltips, undo)."
+  },
+  "cmdSpellingToggleUnderline": "Underline errors",
+  "@cmdSpellingToggleUnderline": {
+    "description": "Title of the command `slides.spelling.toggleUnderline` (menus, palette, tooltips, undo)."
+  },
+  "cmdToolsAccessibilityCheck": "Accessibility check",
+  "@cmdToolsAccessibilityCheck": {
+    "description": "Title of the command `slides.tools.accessibilityCheck` (menus, palette, tooltips, undo)."
+  },
+  "cmdNotificationsOpenSettings": "Notification settings",
+  "@cmdNotificationsOpenSettings": {
+    "description": "Title of the command `slides.notifications.openSettings` (menus, palette, tooltips, undo)."
+  },
+  "cmdAiGenerateDeck": "Generate presentation…",
+  "@cmdAiGenerateDeck": {
+    "description": "Title of the command `slides.ai.generateDeck` (menus, palette, tooltips, undo)."
+  },
+  "cmdAiRewrite": "Rewrite text",
+  "@cmdAiRewrite": {
+    "description": "Title of the command `slides.ai.rewrite` (menus, palette, tooltips, undo)."
+  },
+  "cmdAiSuggestLayouts": "Suggest layouts for this slide",
+  "@cmdAiSuggestLayouts": {
+    "description": "Title of the command `slides.ai.suggestLayouts` (menus, palette, tooltips, undo)."
+  },
+  "cmdAiSpeakerNotes": "Write speaker notes",
+  "@cmdAiSpeakerNotes": {
+    "description": "Title of the command `slides.ai.speakerNotes` (menus, palette, tooltips, undo)."
+  },
+  "cmdAiAltText": "Generate alt text",
+  "@cmdAiAltText": {
+    "description": "Title of the command `slides.ai.altText` (menus, palette, tooltips, undo)."
+  },
+  "cmdAiCodeWalkthrough": "Make a code walkthrough…",
+  "@cmdAiCodeWalkthrough": {
+    "description": "Title of the command `slides.ai.codeWalkthrough` (menus, palette, tooltips, undo)."
+  },
+  "cmdToolSelect": "Select",
+  "@cmdToolSelect": {
+    "description": "Title of the command `slides.tool.select` (menus, palette, tooltips, undo)."
+  },
+  "cmdPrefsSet": "Change a Slides setting",
+  "@cmdPrefsSet": {
+    "description": "Title of the command `slides.prefs.set` (menus, palette, tooltips, undo)."
+  },
+  "cmdPresenterSet": "Change a presenting setting",
+  "@cmdPresenterSet": {
+    "description": "Title of the command `slides.presenter.set` (menus, palette, tooltips, undo)."
+  },
+  "categoryFile": "File",
+  "@categoryFile": {
+    "description": "Keyboard-shortcuts help category of Slides commands."
+  },
+  "categoryEdit": "Common",
+  "@categoryEdit": {
+    "description": "Keyboard-shortcuts help category of Slides commands."
+  },
+  "categoryView": "View",
+  "@categoryView": {
+    "description": "Keyboard-shortcuts help category of Slides commands."
+  },
+  "categoryInsert": "Insert",
+  "@categoryInsert": {
+    "description": "Keyboard-shortcuts help category of Slides commands."
+  },
+  "categoryFormat": "Canvas & objects",
+  "@categoryFormat": {
+    "description": "Keyboard-shortcuts help category of Slides commands."
+  },
+  "categoryText": "Text",
+  "@categoryText": {
+    "description": "Keyboard-shortcuts help category of Slides commands."
+  },
+  "categoryTables": "Tables",
+  "@categoryTables": {
+    "description": "Keyboard-shortcuts help category of Slides commands."
+  },
+  "categorySlides": "Slides & groups",
+  "@categorySlides": {
+    "description": "Keyboard-shortcuts help category of Slides commands."
+  },
+  "categoryArrange": "Arrange",
+  "@categoryArrange": {
+    "description": "Keyboard-shortcuts help category of Slides commands."
+  },
+  "categoryCanvas": "Canvas & objects",
+  "@categoryCanvas": {
+    "description": "Keyboard-shortcuts help category of Slides commands."
+  },
+  "categoryPresent": "Present",
+  "@categoryPresent": {
+    "description": "Keyboard-shortcuts help category of Slides commands."
+  },
+  "categoryAnimations": "Animations",
+  "@categoryAnimations": {
+    "description": "Keyboard-shortcuts help category of Slides commands."
+  },
+  "categoryTools": "Tools",
+  "@categoryTools": {
+    "description": "Keyboard-shortcuts help category of Slides commands."
+  },
+  "categoryAi": "AI",
+  "@categoryAi": {
+    "description": "Keyboard-shortcuts help category of Slides commands."
+  },
+  "alignLeft": "Left",
+  "@alignLeft": {
+    "description": "Alignment option (Format › Align & indent, Arrange › Align)."
+  },
+  "alignCenter": "Center",
+  "@alignCenter": {
+    "description": "Alignment option (Format › Align & indent, Arrange › Align)."
+  },
+  "alignRight": "Right",
+  "@alignRight": {
+    "description": "Alignment option (Format › Align & indent, Arrange › Align)."
+  },
+  "alignJustify": "Justify",
+  "@alignJustify": {
+    "description": "Alignment option (Format › Align & indent, Arrange › Align)."
+  },
+  "anchorTop": "Top",
+  "@anchorTop": {
+    "description": "Alignment option (Format › Align & indent, Arrange › Align)."
+  },
+  "anchorMiddle": "Middle",
+  "@anchorMiddle": {
+    "description": "Alignment option (Format › Align & indent, Arrange › Align)."
+  },
+  "anchorBottom": "Bottom",
+  "@anchorBottom": {
+    "description": "Alignment option (Format › Align & indent, Arrange › Align)."
+  },
+  "animateAddBuildIn": "Add build in",
+  "@animateAddBuildIn": {
+    "description": "Element context menu › Animate."
+  },
+  "animateAddAction": "Add action",
+  "@animateAddAction": {
+    "description": "Element context menu › Animate."
+  },
+  "animateAddBuildOut": "Add build out",
+  "@animateAddBuildOut": {
+    "description": "Element context menu › Animate."
+  },
+  "animateTabTransition": "Transition",
+  "@animateTabTransition": {
+    "description": "Inspector › Animate sub-tab."
+  },
+  "animateTabBuild": "Build",
+  "@animateTabBuild": {
+    "description": "Inspector › Animate sub-tab."
+  },
+  "animateTabOrder": "Order",
+  "@animateTabOrder": {
+    "description": "Inspector › Animate sub-tab."
+  },
+  "animateTransitionEmpty": "Slide transitions arrive here soon: effects, duration and how the slide advances.",
+  "@animateTransitionEmpty": {
+    "description": "Inspector › Animate › Transition placeholder text."
+  },
+  "animateBuildEmpty": "Builds arrive here soon: select an object to animate it in, out or in place.",
+  "@animateBuildEmpty": {
+    "description": "Inspector › Animate › Build placeholder text."
+  },
+  "animateOrderEmpty": "The build order of this slide will be listed here.",
+  "@animateOrderEmpty": {
+    "description": "Inspector › Animate › Order placeholder text."
+  },
+  "appearanceLight": "Light",
+  "@appearanceLight": {
+    "description": "Deck appearance option."
+  },
+  "appearanceDark": "Dark",
+  "@appearanceDark": {
+    "description": "Deck appearance option."
+  },
+  "autofitNone": "Do not autofit",
+  "@autofitNone": {
+    "description": "Format › Text fitting option."
+  },
+  "autofitShrink": "Shrink text on overflow",
+  "@autofitShrink": {
+    "description": "Format › Text fitting option."
+  },
+  "autofitResize": "Resize shape to fit text",
+  "@autofitResize": {
+    "description": "Format › Text fitting option."
+  },
+  "axisHorizontally": "Horizontally",
+  "@axisHorizontally": {
+    "description": "Arrange option."
+  },
+  "axisVertically": "Vertically",
+  "@axisVertically": {
+    "description": "Arrange option."
+  },
+  "axisBoth": "Both",
+  "@axisBoth": {
+    "description": "Arrange option."
+  },
+  "backToNormalView": "Back to Normal view",
+  "@backToNormalView": {
+    "description": "Button that leaves a view mode."
+  },
+  "backToPresentation": "Back to the presentation",
+  "@backToPresentation": {
+    "description": "Button on placeholder pages under a presentation."
+  },
+  "badgeViewOnly": "View only",
+  "@badgeViewOnly": {
+    "description": "Toolbar badge for viewers."
+  },
+  "badgeCommentOnly": "Comment only",
+  "@badgeCommentOnly": {
+    "description": "Toolbar badge for commenters."
+  },
+  "badgeViewing": "Viewing",
+  "@badgeViewing": {
+    "description": "Toolbar badge for editors in Viewing mode."
+  },
+  "buildAppear": "Appear",
+  "@buildAppear": {
+    "description": "Build effect."
+  },
+  "buildFlyIn": "Fly in",
+  "@buildFlyIn": {
+    "description": "Build effect."
+  },
+  "buildZoom": "Zoom",
+  "@buildZoom": {
+    "description": "Build effect."
+  },
+  "canvasChooseLayout": "Choose a layout",
+  "@canvasChooseLayout": {
+    "description": "Empty deck action."
+  },
+  "canvasEmptyTitle": "This presentation has no slides",
+  "@canvasEmptyTitle": {
+    "description": "Empty deck title."
+  },
+  "canvasEmptyBody": "Add a slide to start, or choose a layout for it.",
+  "@canvasEmptyBody": {
+    "description": "Empty deck description."
+  },
+  "canvasSlideSemantics": "Slide {number}: {title}",
+  "@canvasSlideSemantics": {
+    "description": "Screen reader label of the slide on the canvas.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "capsUpper": "UPPERCASE",
+  "@capsUpper": {
+    "description": "Format › Text › Capitalization option."
+  },
+  "capsSmallCaps": "Small caps",
+  "@capsSmallCaps": {
+    "description": "Format › Text › Capitalization option."
+  },
+  "capsTitle": "Title Case",
+  "@capsTitle": {
+    "description": "Format › Text › Capitalization option."
+  },
+  "capsNone": "None",
+  "@capsNone": {
+    "description": "Format › Text › Capitalization option."
+  },
+  "chartColumn": "Column",
+  "@chartColumn": {
+    "description": "Chart type."
+  },
+  "chartBar": "Bar",
+  "@chartBar": {
+    "description": "Chart type."
+  },
+  "chartLine": "Line",
+  "@chartLine": {
+    "description": "Chart type."
+  },
+  "chartPie": "Pie",
+  "@chartPie": {
+    "description": "Chart type."
+  },
+  "chartArea": "Area",
+  "@chartArea": {
+    "description": "Chart type."
+  },
+  "chartScatter": "Scatter",
+  "@chartScatter": {
+    "description": "Chart type."
+  },
+  "chartFromSheets": "From Wonky Sheets…",
+  "@chartFromSheets": {
+    "description": "Insert › Chart item."
+  },
+  "codeAllLanguages": "All languages…",
+  "@codeAllLanguages": {
+    "description": "Insert › Code block item."
+  },
+  "codeLineNumbers": "Line numbers",
+  "@codeLineNumbers": {
+    "description": "Format › Code item."
+  },
+  "codePlainText": "Plain text",
+  "@codePlainText": {
+    "description": "Code language without highlighting."
+  },
+  "codeStates": "States…",
+  "@codeStates": {
+    "description": "Format › Code item."
+  },
+  "colorGray": "Gray",
+  "@colorGray": {
+    "description": "Color name (group colors, laser pointer)."
+  },
+  "colorRed": "Red",
+  "@colorRed": {
+    "description": "Color name (group colors, laser pointer)."
+  },
+  "colorOrange": "Orange",
+  "@colorOrange": {
+    "description": "Color name (group colors, laser pointer)."
+  },
+  "colorAmber": "Amber",
+  "@colorAmber": {
+    "description": "Color name (group colors, laser pointer)."
+  },
+  "colorGreen": "Green",
+  "@colorGreen": {
+    "description": "Color name (group colors, laser pointer)."
+  },
+  "colorTeal": "Teal",
+  "@colorTeal": {
+    "description": "Color name (group colors, laser pointer)."
+  },
+  "colorBlue": "Blue",
+  "@colorBlue": {
+    "description": "Color name (group colors, laser pointer)."
+  },
+  "colorViolet": "Violet",
+  "@colorViolet": {
+    "description": "Color name (group colors, laser pointer)."
+  },
+  "colorPink": "Pink",
+  "@colorPink": {
+    "description": "Color name (group colors, laser pointer)."
+  },
+  "colorNone": "None",
+  "@colorNone": {
+    "description": "Color name (group colors, laser pointer)."
+  },
+  "deckLoading": "Opening presentation…",
+  "@deckLoading": {
+    "description": "Loading state without progress."
+  },
+  "deckLoadingProgress": "{message} {percent} %",
+  "@deckLoadingProgress": {
+    "description": "Loading state with a percentage, e.g. \"Downloading presentation… 42 %\".",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "deckUnavailable": "This presentation isn’t available",
+  "@deckUnavailable": {
+    "description": "Title when a presentation can’t be shown."
+  },
+  "deckOfflineHint": "It opens by itself when you’re back online.",
+  "@deckOfflineHint": {
+    "description": "Description of the offline unavailable state."
+  },
+  "downloadPdf": "PDF document (.pdf)",
+  "@downloadPdf": {
+    "description": "File › Download format."
+  },
+  "downloadPng": "PNG image (current slide)",
+  "@downloadPng": {
+    "description": "File › Download format."
+  },
+  "downloadPngZip": "PNG images (all slides, .zip)",
+  "@downloadPngZip": {
+    "description": "File › Download format."
+  },
+  "downloadMarkdown": "Outline as Markdown (.md)",
+  "@downloadMarkdown": {
+    "description": "File › Download format."
+  },
+  "durationMinutes": "{minutes} min",
+  "@durationMinutes": {
+    "description": "A duration in minutes.",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "durationSeconds": "{seconds} s",
+  "@durationSeconds": {
+    "description": "A duration in seconds.",
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "flipHorizontally": "Flip horizontally",
+  "@flipHorizontally": {
+    "description": "Arrange › Rotate item."
+  },
+  "flipVertically": "Flip vertically",
+  "@flipVertically": {
+    "description": "Arrange › Rotate item."
+  },
+  "goToSlideTitle": "Go to slide",
+  "@goToSlideTitle": {
+    "description": "Go to slide dialog title."
+  },
+  "goToSlideLabel": "Slide",
+  "@goToSlideLabel": {
+    "description": "Go to slide dialog field."
+  },
+  "goToSlideButton": "Go",
+  "@goToSlideButton": {
+    "description": "Go to slide dialog button."
+  },
+  "groupUntitled": "Untitled group",
+  "@groupUntitled": {
+    "description": "Name of a slide group without a title."
+  },
+  "guidesAddVertical": "Add vertical guide",
+  "@guidesAddVertical": {
+    "description": "View › Guides item."
+  },
+  "guidesAddHorizontal": "Add horizontal guide",
+  "@guidesAddHorizontal": {
+    "description": "View › Guides item."
+  },
+  "imageUpload": "Upload from computer",
+  "@imageUpload": {
+    "description": "Insert › Image source."
+  },
+  "imageFromDrive": "From Wonky Drive",
+  "@imageFromDrive": {
+    "description": "Insert › Image source."
+  },
+  "imageByUrl": "By URL",
+  "@imageByUrl": {
+    "description": "Insert › Image source."
+  },
+  "imageFromClipboard": "From clipboard",
+  "@imageFromClipboard": {
+    "description": "Insert › Image source."
+  },
+  "inspectorLabel": "Inspector",
+  "@inspectorLabel": {
+    "description": "Screen reader label of the inspector."
+  },
+  "inspectorFormat": "Format",
+  "@inspectorFormat": {
+    "description": "Inspector tab."
+  },
+  "inspectorAnimate": "Animate",
+  "@inspectorAnimate": {
+    "description": "Inspector tab."
+  },
+  "inspectorSlide": "Slide",
+  "@inspectorSlide": {
+    "description": "Inspector tab."
+  },
+  "inspectorClose": "Close inspector",
+  "@inspectorClose": {
+    "description": "Inspector close button."
+  },
+  "inspectorFormatEmpty": "Select an object to format it",
+  "@inspectorFormatEmpty": {
+    "description": "Inspector › Format with nothing selected."
+  },
+  "inspectorSectionSoon": "These options are on their way.",
+  "@inspectorSectionSoon": {
+    "description": "Body of an inspector section that is not built yet."
+  },
+  "inspectorCurrentLayout": "Layout",
+  "@inspectorCurrentLayout": {
+    "description": "Inspector › Slide row label."
+  },
+  "inspectorAppearance": "Appearance",
+  "@inspectorAppearance": {
+    "description": "Inspector › Slide row label."
+  },
+  "inspectorNotInGroup": "Not in a group",
+  "@inspectorNotInGroup": {
+    "description": "Inspector › Slide › Group."
+  },
+  "inspectorGroupName": "Group",
+  "@inspectorGroupName": {
+    "description": "Inspector › Slide row label."
+  },
+  "inspectorSlideNumber": "Position",
+  "@inspectorSlideNumber": {
+    "description": "Inspector › Slide › Info row label."
+  },
+  "inspectorSkipped": "Skipped",
+  "@inspectorSkipped": {
+    "description": "Inspector › Slide › Info row label."
+  },
+  "yes": "Yes",
+  "@yes": {
+    "description": "Generic yes."
+  },
+  "lineLine": "Line",
+  "@lineLine": {
+    "description": "Line item."
+  },
+  "lineArrow": "Arrow",
+  "@lineArrow": {
+    "description": "Line item."
+  },
+  "lineDoubleArrow": "Double arrow",
+  "@lineDoubleArrow": {
+    "description": "Line item."
+  },
+  "lineElbowConnector": "Elbow connector",
+  "@lineElbowConnector": {
+    "description": "Line item."
+  },
+  "lineCurvedConnector": "Curved connector",
+  "@lineCurvedConnector": {
+    "description": "Line item."
+  },
+  "lineStartArrow": "Start arrow",
+  "@lineStartArrow": {
+    "description": "Line item."
+  },
+  "lineEndArrow": "End arrow",
+  "@lineEndArrow": {
+    "description": "Line item."
+  },
+  "listBulleted": "Bulleted list",
+  "@listBulleted": {
+    "description": "Format › Bullets & numbering item."
+  },
+  "listNumbered": "Numbered list",
+  "@listNumbered": {
+    "description": "Format › Bullets & numbering item."
+  },
+  "listChecklist": "Checklist",
+  "@listChecklist": {
+    "description": "Format › Bullets & numbering item."
+  },
+  "listOptions": "List options…",
+  "@listOptions": {
+    "description": "Format › Bullets & numbering item."
+  },
+  "mastersSoonTitle": "Editing masters and layouts is coming soon",
+  "@mastersSoonTitle": {
+    "description": "Masters mode placeholder title."
+  },
+  "mastersSoonBody": "You’ll edit the theme’s masters and layouts here. Your slides are unchanged.",
+  "@mastersSoonBody": {
+    "description": "Masters mode placeholder description."
+  },
+  "menuAddToGroup": "Add to group",
+  "@menuAddToGroup": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuAi": "AI",
+  "@menuAi": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuAlign": "Align",
+  "@menuAlign": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuAlignIndent": "Align & indent",
+  "@menuAlignIndent": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuAnimate": "Animate",
+  "@menuAnimate": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuAnimateEllipsis": "Animate…",
+  "@menuAnimateEllipsis": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuAnimation": "Animation…",
+  "@menuAnimation": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuApplyLayout": "Apply layout",
+  "@menuApplyLayout": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuArrange": "Arrange",
+  "@menuArrange": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuBorderEllipsis": "Border…",
+  "@menuBorderEllipsis": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuCapitalization": "Capitalization",
+  "@menuCapitalization": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuCenterOnSlide": "Center on slide",
+  "@menuCenterOnSlide": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuChangeBackground": "Change background…",
+  "@menuChangeBackground": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuChangeTheme": "Change theme…",
+  "@menuChangeTheme": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuChart": "Chart",
+  "@menuChart": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuChooseGroup": "Choose a group…",
+  "@menuChooseGroup": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuCode": "Code",
+  "@menuCode": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuCodeBlock": "Code block",
+  "@menuCodeBlock": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuCommentOnSlide": "Comment on slide",
+  "@menuCommentOnSlide": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuDistribute": "Distribute",
+  "@menuDistribute": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuDownload": "Download",
+  "@menuDownload": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuEditLayout": "Edit layout",
+  "@menuEditLayout": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuEditMasters": "Edit masters and layouts",
+  "@menuEditMasters": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuEffectsEllipsis": "Effects…",
+  "@menuEffectsEllipsis": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuExtensions": "Extensions",
+  "@menuExtensions": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuFillEllipsis": "Fill…",
+  "@menuFillEllipsis": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuFormat": "Format",
+  "@menuFormat": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuFormatOptions": "Format options…",
+  "@menuFormatOptions": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuGroup": "Group",
+  "@menuGroup": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuGroupColor": "Color",
+  "@menuGroupColor": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuGuides": "Guides",
+  "@menuGuides": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuImage": "Image",
+  "@menuImage": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuInsert": "Insert",
+  "@menuInsert": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuLanguage": "Language",
+  "@menuLanguage": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuLine": "Line",
+  "@menuLine": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuLists": "Bullets & numbering",
+  "@menuLists": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuMagicMoveId": "Magic Move ID…",
+  "@menuMagicMoveId": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuMatchSize": "Match size",
+  "@menuMatchSize": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuMcp": "MCP",
+  "@menuMcp": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuMoveSlide": "Move slide",
+  "@menuMoveSlide": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuNewGroup": "New group",
+  "@menuNewGroup": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuNewSlideInGroup": "New slide in group",
+  "@menuNewSlideInGroup": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuNewSlideWithLayout": "New slide with layout",
+  "@menuNewSlideWithLayout": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuOrder": "Order",
+  "@menuOrder": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuPanels": "Panels",
+  "@menuPanels": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuPasteSpecial": "Paste special",
+  "@menuPasteSpecial": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuPersonalDictionary": "Personal dictionary",
+  "@menuPersonalDictionary": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuPlaceholder": "Placeholder",
+  "@menuPlaceholder": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuPresent": "Present",
+  "@menuPresent": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuPresentFromGroup": "Present from this group",
+  "@menuPresentFromGroup": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuPresentingSettings": "Presenting settings…",
+  "@menuPresentingSettings": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuRehearsePresentation": "Rehearse presentation",
+  "@menuRehearsePresentation": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuRewriteText": "Rewrite text",
+  "@menuRewriteText": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuRotate": "Rotate",
+  "@menuRotate": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuShape": "Shape",
+  "@menuShape": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuShapeGallery": "All shapes…",
+  "@menuShapeGallery": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuShow": "Show",
+  "@menuShow": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuSize": "Size",
+  "@menuSize": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuSizePosition": "Size and position…",
+  "@menuSizePosition": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuSlide": "Slide",
+  "@menuSlide": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuSnap": "Snap",
+  "@menuSnap": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuSpacing": "Line & paragraph spacing",
+  "@menuSpacing": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuSpelling": "Spelling",
+  "@menuSpelling": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuTable": "Table",
+  "@menuTable": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuText": "Text",
+  "@menuText": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuTextFitting": "Text fitting",
+  "@menuTextFitting": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuTextStyle": "Text style",
+  "@menuTextStyle": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuTransition": "Transition…",
+  "@menuTransition": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuVersionHistory": "Version history",
+  "@menuVersionHistory": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "menuZoom": "Zoom",
+  "@menuZoom": {
+    "description": "Menu or submenu label (Slides 04 §4)."
+  },
+  "moveToBeginning": "To beginning",
+  "@moveToBeginning": {
+    "description": "Slide › Move slide item."
+  },
+  "moveUp": "Up",
+  "@moveUp": {
+    "description": "Slide › Move slide item."
+  },
+  "moveDown": "Down",
+  "@moveDown": {
+    "description": "Slide › Move slide item."
+  },
+  "moveToEnd": "To end",
+  "@moveToEnd": {
+    "description": "Slide › Move slide item."
+  },
+  "navigatorLabel": "Slides",
+  "@navigatorLabel": {
+    "description": "Screen reader label of the slide navigator."
+  },
+  "navigatorEmpty": "No slides",
+  "@navigatorEmpty": {
+    "description": "Navigator with no slides."
+  },
+  "navigatorOpen": "Show slides",
+  "@navigatorOpen": {
+    "description": "Button that opens the navigator drawer on narrow screens."
+  },
+  "navigatorGroupSemantics": "Group {title}, {count, plural, =1{1 slide} other{{count} slides}}",
+  "@navigatorGroupSemantics": {
+    "description": "Screen reader label of a group header.",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "navigatorSlideSemantics": "Slide {number} of {total}: {title}",
+  "@navigatorSlideSemantics": {
+    "description": "Screen reader label of a navigator slide row.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "notesLabel": "Speaker notes",
+  "@notesLabel": {
+    "description": "Speaker notes pane handle."
+  },
+  "notesPlaceholder": "Click to add speaker notes",
+  "@notesPlaceholder": {
+    "description": "Empty speaker notes."
+  },
+  "orderBringToFront": "Bring to front",
+  "@orderBringToFront": {
+    "description": "Arrange › Order item."
+  },
+  "orderBringForward": "Bring forward",
+  "@orderBringForward": {
+    "description": "Arrange › Order item."
+  },
+  "orderSendBackward": "Send backward",
+  "@orderSendBackward": {
+    "description": "Arrange › Order item."
+  },
+  "orderSendToBack": "Send to back",
+  "@orderSendToBack": {
+    "description": "Arrange › Order item."
+  },
+  "outlineNoTitle": "(no title)",
+  "@outlineNoTitle": {
+    "description": "Outline view: slide without a title."
+  },
+  "outlineReadOnlyNote": "Outline view shows each slide’s title and main text. Editing here comes soon.",
+  "@outlineReadOnlyNote": {
+    "description": "Outline view note."
+  },
+  "pasteKeepSource": "Keep source formatting",
+  "@pasteKeepSource": {
+    "description": "Paste special option."
+  },
+  "pasteUseDestination": "Use destination theme",
+  "@pasteUseDestination": {
+    "description": "Paste special option."
+  },
+  "pasteChartUnlinked": "Paste chart unlinked",
+  "@pasteChartUnlinked": {
+    "description": "Paste special option."
+  },
+  "placeholderPicture": "Picture",
+  "@placeholderPicture": {
+    "description": "Placeholder type."
+  },
+  "placeholderObject": "Object",
+  "@placeholderObject": {
+    "description": "Placeholder type."
+  },
+  "placeholderFooter": "Footer",
+  "@placeholderFooter": {
+    "description": "Placeholder type."
+  },
+  "placeholderSlideNumber": "Slide number",
+  "@placeholderSlideNumber": {
+    "description": "Placeholder type."
+  },
+  "placeholderDate": "Date",
+  "@placeholderDate": {
+    "description": "Placeholder type."
+  },
+  "presentButton": "Present",
+  "@presentButton": {
+    "description": "The Present button in the title row."
+  },
+  "presentOptions": "Presenting options",
+  "@presentOptions": {
+    "description": "Chevron of the Present split button."
+  },
+  "presenterLayoutStandard": "Current, next and notes",
+  "@presenterLayoutStandard": {
+    "description": "Presenter view layout preset."
+  },
+  "presenterLayoutNotes": "Large notes",
+  "@presenterLayoutNotes": {
+    "description": "Presenter view layout preset."
+  },
+  "presenterLayoutNext": "Large next slide",
+  "@presenterLayoutNext": {
+    "description": "Presenter view layout preset."
+  },
+  "reasonNotAvailableYet": "Not available yet",
+  "@reasonNotAvailableYet": {
+    "description": "Reason shown on a disabled command."
+  },
+  "reasonDeckLoading": "The presentation is still opening",
+  "@reasonDeckLoading": {
+    "description": "Reason shown on a disabled command."
+  },
+  "reasonViewAccess": "You have view access",
+  "@reasonViewAccess": {
+    "description": "Reason shown on a disabled command."
+  },
+  "reasonViewingMode": "You’re in Viewing mode",
+  "@reasonViewingMode": {
+    "description": "Reason shown on a disabled command."
+  },
+  "reasonFirstSlide": "This is the first slide",
+  "@reasonFirstSlide": {
+    "description": "Reason shown on a disabled command."
+  },
+  "reasonLastSlide": "This is the last slide",
+  "@reasonLastSlide": {
+    "description": "Reason shown on a disabled command."
+  },
+  "reasonNoSlides": "The presentation has no slides",
+  "@reasonNoSlides": {
+    "description": "Reason shown on a disabled command."
+  },
+  "rewriteShorter": "Shorter",
+  "@rewriteShorter": {
+    "description": "AI › Rewrite text option."
+  },
+  "rewriteLonger": "Longer",
+  "@rewriteLonger": {
+    "description": "AI › Rewrite text option."
+  },
+  "rewriteClearer": "Clearer",
+  "@rewriteClearer": {
+    "description": "AI › Rewrite text option."
+  },
+  "rewriteFormal": "More formal",
+  "@rewriteFormal": {
+    "description": "AI › Rewrite text option."
+  },
+  "rewriteGrammar": "Fix grammar",
+  "@rewriteGrammar": {
+    "description": "AI › Rewrite text option."
+  },
+  "rewriteCustom": "Custom…",
+  "@rewriteCustom": {
+    "description": "AI › Rewrite text option."
+  },
+  "rotateClockwise": "Rotate 90° clockwise",
+  "@rotateClockwise": {
+    "description": "Arrange › Rotate item."
+  },
+  "rotateCounterClockwise": "Rotate 90° counter-clockwise",
+  "@rotateCounterClockwise": {
+    "description": "Arrange › Rotate item."
+  },
+  "routePresentTitle": "Presenting",
+  "@routePresentTitle": {
+    "description": "Title of the present route placeholder."
+  },
+  "routePrintTitle": "Print and PDF",
+  "@routePrintTitle": {
+    "description": "Title of the print route placeholder."
+  },
+  "routeHistoryTitle": "Version history",
+  "@routeHistoryTitle": {
+    "description": "Title of the history route placeholder."
+  },
+  "sectionText": "Text",
+  "@sectionText": {
+    "description": "Inspector section title (Slides 04 §7)."
+  },
+  "sectionLine": "Line",
+  "@sectionLine": {
+    "description": "Inspector section title (Slides 04 §7)."
+  },
+  "sectionImage": "Image",
+  "@sectionImage": {
+    "description": "Inspector section title (Slides 04 §7)."
+  },
+  "sectionTable": "Table",
+  "@sectionTable": {
+    "description": "Inspector section title (Slides 04 §7)."
+  },
+  "sectionCell": "Cell",
+  "@sectionCell": {
+    "description": "Inspector section title (Slides 04 §7)."
+  },
+  "sectionIcon": "Icon",
+  "@sectionIcon": {
+    "description": "Inspector section title (Slides 04 §7)."
+  },
+  "sectionCode": "Code",
+  "@sectionCode": {
+    "description": "Inspector section title (Slides 04 §7)."
+  },
+  "sectionChart": "Chart",
+  "@sectionChart": {
+    "description": "Inspector section title (Slides 04 §7)."
+  },
+  "sectionFill": "Fill",
+  "@sectionFill": {
+    "description": "Inspector section title (Slides 04 §7)."
+  },
+  "sectionBorder": "Border",
+  "@sectionBorder": {
+    "description": "Inspector section title (Slides 04 §7)."
+  },
+  "sectionEffects": "Effects",
+  "@sectionEffects": {
+    "description": "Inspector section title (Slides 04 §7)."
+  },
+  "sectionArrange": "Arrange",
+  "@sectionArrange": {
+    "description": "Inspector section title (Slides 04 §7)."
+  },
+  "sectionLink": "Link",
+  "@sectionLink": {
+    "description": "Inspector section title (Slides 04 §7)."
+  },
+  "sectionAccessibility": "Accessibility",
+  "@sectionAccessibility": {
+    "description": "Inspector section title (Slides 04 §7)."
+  },
+  "sectionLayout": "Layout",
+  "@sectionLayout": {
+    "description": "Inspector section title (Slides 04 §7)."
+  },
+  "sectionBackground": "Background",
+  "@sectionBackground": {
+    "description": "Inspector section title (Slides 04 §7)."
+  },
+  "sectionTheme": "Theme",
+  "@sectionTheme": {
+    "description": "Inspector section title (Slides 04 §7)."
+  },
+  "sectionVisibility": "Visibility",
+  "@sectionVisibility": {
+    "description": "Inspector section title (Slides 04 §7)."
+  },
+  "sectionGroup": "Group",
+  "@sectionGroup": {
+    "description": "Inspector section title (Slides 04 §7)."
+  },
+  "sectionInfo": "Info",
+  "@sectionInfo": {
+    "description": "Inspector section title (Slides 04 §7)."
+  },
+  "settingsSectionPresentations": "New presentations",
+  "@settingsSectionPresentations": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsSectionEditing": "Editing",
+  "@settingsSectionEditing": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsSectionAnimations": "Animations & code",
+  "@settingsSectionAnimations": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsSectionPresenting": "Presenting",
+  "@settingsSectionPresenting": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsNewPresentations": "New presentations",
+  "@settingsNewPresentations": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsNewPresentationsHint": "Used when you create a presentation. Existing presentations keep their own settings.",
+  "@settingsNewPresentationsHint": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsDefaultTheme": "Theme",
+  "@settingsDefaultTheme": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsDefaultAppearance": "Appearance",
+  "@settingsDefaultAppearance": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsDefaultSize": "Slide size",
+  "@settingsDefaultSize": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsDefaultLanguage": "Language",
+  "@settingsDefaultLanguage": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsCharts": "Charts",
+  "@settingsCharts": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsChartsAutoUpdate": "Update linked charts automatically",
+  "@settingsChartsAutoUpdate": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsChartsAutoUpdateHint": "New charts from Wonky Sheets follow their spreadsheet.",
+  "@settingsChartsAutoUpdateHint": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsEditing": "Editing",
+  "@settingsEditing": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsUnits": "Units",
+  "@settingsUnits": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsScrollChangesSlides": "Scroll to change slides",
+  "@settingsScrollChangesSlides": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsSmartQuotes": "Smart quotes",
+  "@settingsSmartQuotes": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsAutoformatLists": "Automatically format lists",
+  "@settingsAutoformatLists": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsShowRemoteCursors": "Show collaborator cursors",
+  "@settingsShowRemoteCursors": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsSpelling": "Spelling",
+  "@settingsSpelling": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsUnderlineSpelling": "Underline spelling errors",
+  "@settingsUnderlineSpelling": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsAnimations": "Animations",
+  "@settingsAnimations": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsDefaultTransition": "Default transition",
+  "@settingsDefaultTransition": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsTransitionDuration": "Transition duration",
+  "@settingsTransitionDuration": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsDefaultBuild": "Default build",
+  "@settingsDefaultBuild": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsPreviewOnHover": "Preview animations on hover",
+  "@settingsPreviewOnHover": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsReduceEditorMotion": "Reduce motion in the editor",
+  "@settingsReduceEditorMotion": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsReduceEditorMotionHint": "Previews show the end state instead of playing.",
+  "@settingsReduceEditorMotionHint": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsCode": "Code",
+  "@settingsCode": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsCodeFontSize": "Code font size",
+  "@settingsCodeFontSize": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsCodeLanguage": "Default code language",
+  "@settingsCodeLanguage": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsTypingSpeed": "Type-in speed",
+  "@settingsTypingSpeed": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsTypeInSound": "Type-in click sound",
+  "@settingsTypeInSound": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsPresenting": "Presenting",
+  "@settingsPresenting": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsPresentingHint": "How you present. The audience view follows the presentation.",
+  "@settingsPresentingHint": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsPresenterLayout": "Presenter view layout",
+  "@settingsPresenterLayout": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsNotesSize": "Notes text size",
+  "@settingsNotesSize": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsTimerMode": "Timer",
+  "@settingsTimerMode": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsTimerTarget": "Countdown length",
+  "@settingsTimerTarget": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsLaserColor": "Laser pointer color",
+  "@settingsLaserColor": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsStartFullscreen": "Start presenting in full screen",
+  "@settingsStartFullscreen": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsStartWithPresenterView": "Start with presenter view",
+  "@settingsStartWithPresenterView": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "settingsShowSkippedInPresenter": "Show skipped slides in presenter view",
+  "@settingsShowSkippedInPresenter": {
+    "description": "Slides settings (Slides 04 §13.16)."
+  },
+  "sizeWidescreen16x9": "Widescreen 16:9",
+  "@sizeWidescreen16x9": {
+    "description": "Slide size preset or dimension."
+  },
+  "sizeStandard4x3": "Standard 4:3",
+  "@sizeStandard4x3": {
+    "description": "Slide size preset or dimension."
+  },
+  "sizeWide16x10": "Widescreen 16:10",
+  "@sizeWide16x10": {
+    "description": "Slide size preset or dimension."
+  },
+  "sizeSquare": "Square 1:1",
+  "@sizeSquare": {
+    "description": "Slide size preset or dimension."
+  },
+  "sizePortrait9x16": "Portrait 9:16",
+  "@sizePortrait9x16": {
+    "description": "Slide size preset or dimension."
+  },
+  "sizeA4": "A4 landscape",
+  "@sizeA4": {
+    "description": "Slide size preset or dimension."
+  },
+  "sizeLetter": "Letter landscape",
+  "@sizeLetter": {
+    "description": "Slide size preset or dimension."
+  },
+  "sizeWidth": "Width",
+  "@sizeWidth": {
+    "description": "Slide size preset or dimension."
+  },
+  "sizeHeight": "Height",
+  "@sizeHeight": {
+    "description": "Slide size preset or dimension."
+  },
+  "slideUntitled": "Untitled slide",
+  "@slideUntitled": {
+    "description": "A slide without a title."
+  },
+  "spacingSingle": "Single",
+  "@spacingSingle": {
+    "description": "Format › Line & paragraph spacing item."
+  },
+  "spacingDouble": "Double",
+  "@spacingDouble": {
+    "description": "Format › Line & paragraph spacing item."
+  },
+  "spacingCustom": "Custom…",
+  "@spacingCustom": {
+    "description": "Format › Line & paragraph spacing item."
+  },
+  "spacingAddBefore": "Add space before paragraph",
+  "@spacingAddBefore": {
+    "description": "Format › Line & paragraph spacing item."
+  },
+  "spacingAddAfter": "Add space after paragraph",
+  "@spacingAddAfter": {
+    "description": "Format › Line & paragraph spacing item."
+  },
+  "speedSlow": "Slow",
+  "@speedSlow": {
+    "description": "Type-in speed."
+  },
+  "speedNormal": "Normal",
+  "@speedNormal": {
+    "description": "Type-in speed."
+  },
+  "speedFast": "Fast",
+  "@speedFast": {
+    "description": "Type-in speed."
+  },
+  "statusNoSlides": "No slides",
+  "@statusNoSlides": {
+    "description": "Status bar with an empty deck."
+  },
+  "statusSlideOf": "Slide {number} of {total}",
+  "@statusSlideOf": {
+    "description": "Status bar position.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "statusSkipped": "{count} skipped",
+  "@statusSkipped": {
+    "description": "Status bar: number of skipped slides.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "styleTitle": "Title",
+  "@styleTitle": {
+    "description": "Theme text style (05 §2.5)."
+  },
+  "styleSubtitle": "Subtitle",
+  "@styleSubtitle": {
+    "description": "Theme text style (05 §2.5)."
+  },
+  "styleHeading": "Heading",
+  "@styleHeading": {
+    "description": "Theme text style (05 §2.5)."
+  },
+  "styleBody": "Body",
+  "@styleBody": {
+    "description": "Theme text style (05 §2.5)."
+  },
+  "styleBody2": "Body 2",
+  "@styleBody2": {
+    "description": "Theme text style (05 §2.5)."
+  },
+  "styleCaption": "Caption",
+  "@styleCaption": {
+    "description": "Theme text style (05 §2.5)."
+  },
+  "styleQuote": "Quote",
+  "@styleQuote": {
+    "description": "Theme text style (05 §2.5)."
+  },
+  "styleAttribution": "Attribution",
+  "@styleAttribution": {
+    "description": "Theme text style (05 §2.5)."
+  },
+  "styleBigNumber": "Big number",
+  "@styleBigNumber": {
+    "description": "Theme text style (05 §2.5)."
+  },
+  "styleLabel": "Label",
+  "@styleLabel": {
+    "description": "Theme text style (05 §2.5)."
+  },
+  "tableInsertRowAbove": "Insert row above",
+  "@tableInsertRowAbove": {
+    "description": "Table item."
+  },
+  "tableInsertRowBelow": "Insert row below",
+  "@tableInsertRowBelow": {
+    "description": "Table item."
+  },
+  "tableInsertColumnLeft": "Insert column left",
+  "@tableInsertColumnLeft": {
+    "description": "Table item."
+  },
+  "tableInsertColumnRight": "Insert column right",
+  "@tableInsertColumnRight": {
+    "description": "Table item."
+  },
+  "textSuperscript": "Superscript",
+  "@textSuperscript": {
+    "description": "Format › Text item."
+  },
+  "textSubscript": "Subscript",
+  "@textSubscript": {
+    "description": "Format › Text item."
+  },
+  "timerElapsed": "Elapsed time",
+  "@timerElapsed": {
+    "description": "Presenter timer mode."
+  },
+  "timerCountdown": "Countdown",
+  "@timerCountdown": {
+    "description": "Presenter timer mode."
+  },
+  "toolbarLabel": "Slides toolbar",
+  "@toolbarLabel": {
+    "description": "Screen reader label of the toolbar."
+  },
+  "toolbarUndo": "Undo",
+  "@toolbarUndo": {
+    "description": "Toolbar undo without a label."
+  },
+  "toolbarRedo": "Redo",
+  "@toolbarRedo": {
+    "description": "Toolbar redo without a label."
+  },
+  "toolbarUndoLabel": "Undo {label}",
+  "@toolbarUndoLabel": {
+    "description": "Toolbar undo tooltip.",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "toolbarRedoLabel": "Redo {label}",
+  "@toolbarRedoLabel": {
+    "description": "Toolbar redo tooltip.",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "toolbarZoom": "Zoom",
+  "@toolbarZoom": {
+    "description": "Toolbar zoom tooltip."
+  },
+  "toolbarAddComment": "Add comment",
+  "@toolbarAddComment": {
+    "description": "Toolbar comment button."
+  },
+  "toolbarAlign": "Align",
+  "@toolbarAlign": {
+    "description": "Toolbar align dropdown."
+  },
+  "toolbarAnimate": "Animate",
+  "@toolbarAnimate": {
+    "description": "Toolbar Animate button."
+  },
+  "toolbarBackground": "Background",
+  "@toolbarBackground": {
+    "description": "Toolbar background button (nothing selected)."
+  },
+  "toolbarLayout": "Layout",
+  "@toolbarLayout": {
+    "description": "Toolbar layout dropdown (nothing selected)."
+  },
+  "toolbarTheme": "Theme",
+  "@toolbarTheme": {
+    "description": "Toolbar theme button (nothing selected)."
+  },
+  "toolbarTransition": "Transition",
+  "@toolbarTransition": {
+    "description": "Toolbar transition button (nothing selected)."
+  },
+  "transitionNone": "None",
+  "@transitionNone": {
+    "description": "Transition effect."
+  },
+  "transitionFade": "Fade",
+  "@transitionFade": {
+    "description": "Transition effect."
+  },
+  "transitionPush": "Push",
+  "@transitionPush": {
+    "description": "Transition effect."
+  },
+  "transitionWipe": "Wipe",
+  "@transitionWipe": {
+    "description": "Transition effect."
+  },
+  "transitionDissolve": "Dissolve",
+  "@transitionDissolve": {
+    "description": "Transition effect."
+  },
+  "unitsSu": "Slide units",
+  "@unitsSu": {
+    "description": "Units option."
+  },
+  "unitsPx": "Pixels",
+  "@unitsPx": {
+    "description": "Units option."
+  },
+  "unitsIn": "Inches",
+  "@unitsIn": {
+    "description": "Units option."
+  },
+  "unitsCm": "Centimeters",
+  "@unitsCm": {
+    "description": "Units option."
+  },
+  "viewNormal": "Normal",
+  "@viewNormal": {
+    "description": "View mode."
+  },
+  "viewGrid": "Grid",
+  "@viewGrid": {
+    "description": "View mode."
+  },
+  "viewOutline": "Outline",
+  "@viewOutline": {
+    "description": "View mode."
+  },
+  "zoomFit": "Fit",
+  "@zoomFit": {
+    "description": "Zoom to fit."
+  },
+  "zoomPercent": "{percent} %",
+  "@zoomPercent": {
+    "description": "A zoom level.",
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "toastUndoPartial": "Some changes weren’t undone because a collaborator changed them since",
+  "@toastUndoPartial": {
+    "description": "Toast when an undo skipped a collaborator’s newer changes."
+  }
+}

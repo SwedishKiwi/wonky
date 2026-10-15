@@ -382,15 +382,24 @@ class _ItemShellState extends State<_ItemShell> {
   @override
   Widget build(BuildContext context) {
     final item = widget.item;
+    // Files dragged from the OS onto a folder upload into it (Drive 04
+    // §3.5): the home hit-tests the drag and publishes the hovered folder.
+    final osDrop =
+        (widget.services.config.homeScope?.uploadsFiles ?? false) &&
+        item.isFolder &&
+        item.canEdit &&
+        !widget.trash;
+    final osHover = osDrop && DriveOsDropScope.hoveredOf(context) == item.uuid;
     Widget child = MouseRegion(
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: _onTap,
-        child: widget.builder(context, _hover, _drop),
+        child: widget.builder(context, _hover, _drop || osHover),
       ),
     );
+    if (osDrop) child = osDropFolderTarget(item, child);
     // The context menu region exposes its own tap/long-press semantics node
     // around the row's; label it too (labeledTapTargetGuideline).
     child = Semantics(
@@ -405,7 +414,10 @@ class _ItemShellState extends State<_ItemShell> {
         child: child,
       ),
     );
-    if (item.isFolder && !widget.trash) {
+    // Item drags onto folders move items: Drive and the v1 homes only (app
+    // homes manage no folders, suite 03 §3.3).
+    final dragMoves = widget.services.config.homeScope?.managesFolders ?? true;
+    if (dragMoves && item.isFolder && !widget.trash) {
       final inner = child;
       child = DragTarget<DriveDragData>(
         onWillAcceptWithDetails: (d) {
@@ -421,7 +433,7 @@ class _ItemShellState extends State<_ItemShell> {
         builder: (context, _, _) => inner,
       );
     }
-    if (!widget.trash && item.canManage) {
+    if (dragMoves && !widget.trash && item.canManage) {
       final inner = child;
       final data = widget.dragData;
       child = Draggable<DriveDragData>(
@@ -549,7 +561,7 @@ class _ItemRow extends StatelessWidget {
                       const SizedBox(width: 10),
                       Flexible(
                         child: Text(
-                          item.name,
+                          services.config.listItemName(services, item),
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.small.copyWith(
                             fontWeight: FontWeight.w500,
@@ -602,7 +614,9 @@ class _ItemRow extends StatelessWidget {
                 Expanded(
                   flex: 3,
                   child: Text(
-                    relativeDate(l, item.modifiedAt),
+                    item.uploadState == FileUploadState.uploading
+                        ? l.driveItemUploading
+                        : relativeDate(l, item.modifiedAt),
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.muted.copyWith(fontSize: 13),
                   ),
@@ -725,7 +739,7 @@ class _ItemCard extends StatelessWidget {
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          item.name,
+                          services.config.listItemName(services, item),
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.small,
                         ),

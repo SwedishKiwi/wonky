@@ -1,0 +1,6 @@
+### (v2) Result of `drive.fileUploadStatus` (resume, Drive 02 §4.3).
+class: FileUploadProgress
+fields:
+  uploadState: FileUploadState
+  ### Chunked: bytes the server has; otherwise 0 or the file size.
+  receivedBytes: int, default=0

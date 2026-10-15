@@ -85,9 +85,12 @@ wonky/
 │   ├── wonky_code/                      # (v2) pure Dart: languages, token classes, palettes, TextMate engine (copied from
 │   │                                    #   syntax_highlight) + highlight.js fallback tokenizer, code layout/type-in
 │   ├── wonky_numfmt/                    # (v2) pure Dart: number-format patterns and date serials (from Sheets core; Slides 08 §2.5)
-│   ├── wonky_rich_text/                 # (v2) pure Dart: Delta inline schema, Markdown codec pieces shared by Write and Slides
-│   ├── wonky_fonts/                     # (v2) font registry (pure-Dart manifest) + bundled TTFs (Slides 05 §3.1)
-│   ├── wonky_spellcheck/                # (v2) pure Dart: Hunspell engine moved from wonky_write_core (Slides 03 §20)
+│   ├── wonky_rich_text/                 # (v2) pure Dart: Delta inline schema, Delta helpers, link/character rules,
+│   │                                    #   RichTextNormalizer, inline Markdown codec (shared by Write and Slides)
+│   ├── wonky_fonts/                     # (v2) pure Dart: font registry, FontProvider, BundledFonts manifest + TTFs
+│   │                                    #   as package assets in fonts/ (Slides 05 §3.1)
+│   ├── wonky_spellcheck/                # (v2) pure Dart: Hunspell engine moved from wonky_write_core + dictionaries as
+│   │                                    #   package assets in dictionaries/ (Slides 03 §14)
 │   ├── wonky_code_flutter/              # (v2) Flutter: `CodeView`, `CodeTextStyler`, `CodeEditorField` (re_editor)
 │   ├── wonky_sync_kit/                  # (v2) pure Dart, extracted from Sheets: RowChange, MutationPlan, UndoInverter,
 │   │                                    #   SyncTxAdapter (Slides 12 §5.1)
@@ -148,13 +151,13 @@ wonky_rich_text       → (v2) wonky_core, dart_quill_delta, markdown           
 wonky_fonts           → (v2) (pure-Dart manifest; TTFs as package assets)               — leaf (Slides 05 §3.1)
 wonky_spellcheck      → (v2) wonky_core (Hunspell engine; dictionaries as package assets) — leaf
 wonky_charts          → (v2) wonky_core, wonky_numfmt, pdf, image, vector_math           — leaf
-wonky_charts_flutter  → (v2) wonky_charts, wonky_ui, flutter_scene, vector_math          — leaf
-wonky_write_core      → wonky_core, wonky_code (v2; was highlight), wonky_rich_text (v2), wonky_fonts (v2), wonky_spellcheck (v2),
+wonky_charts_flutter  → (v2) wonky_charts, wonky_ui, shad, flutter_scene, vector_math    — leaf
+wonky_write_core      → wonky_core, wonky_code (v2; was highlight), wonky_rich_text (v2), wonky_fonts (v2),
                         dart_quill_delta (9.x by default; see §2.2), markdown,
                         html, pdf, archive, xml, image, crypto
 wonky_sheets_core     → wonky_core, wonky_charts (v2), wonky_numfmt (v2), wonky_sync_kit (v2), wonky_sync_models (model types only), petitparser, intl, timezone,
                         archive, xml, csv, pdf, image (in-house OOXML/ODS reader and writer on archive + xml — Sheets 11 §5.1)
-wonky_sync_kit        → (v2) wonky_core, wonky_sync_models, serverpod_database (Flutter-free)
+wonky_sync_kit        → (v2) wonky_core, wonky_sync_models, serverpod_database, serverpod_serialization (Flutter-free)
 wonky_sync_kit_flutter→ (v2) wonky_sync_kit, wonky_app, wonky_ui, wonky_client, wonky_sync_models, serverpod_offline_sync_client,
                         serverpod_database (replica, sync controller, writer, change journal)
 wonky_slides_core     → (v2) wonky_core, wonky_sync_models (model types + ids only), wonky_sync_kit, wonky_charts,
@@ -163,7 +166,7 @@ wonky_sheets_script   → wonky_core, wonky_sheets_core, dart_eval, eval_annotat
 wonky_sync_models     → serverpod_database, serverpod_offline_sync, serverpod_serialization, uuid
 wonky_server          → serverpod, serverpod_auth_idp_server, serverpod_offline_sync(_server), serverpod_cloud_storage,
                         wonky_core, wonky_write_core, wonky_sheets_core, wonky_sheets_script, wonky_slides_core (v2),
-                        wonky_charts (v2), wonky_code (v2), wonky_sync_models, mcp_dart, http, mime (v2, upload sniffing,
+                        wonky_charts (v2), wonky_code (v2), wonky_sync_kit (v2, `RowChange` for the Slides server writer), wonky_sync_models, mcp_dart, http, mime (v2, upload sniffing,
                         Drive 02 §5), dartantic_ai (AI providers: OpenAI, Anthropic, Gemini — 10 §1; pure Dart, no Flutter)
 wonky_client          → generated: serverpod_client + module clients (serverpod_auth_idp_client,
                         serverpod_auth_core_client), serverpod_offline_sync_client, serverpod_database,
@@ -171,7 +174,8 @@ wonky_client          → generated: serverpod_client + module clients (serverpo
 wonky_mcp_stdio       → args, http
 wonky_ui              → flutter, shad
 wonky_app             → wonky_ui, wonky_core, wonky_client, serverpod_flutter, serverpod_auth_idp_flutter, go_router, provider, mcp_dart,
-                        wonky_spellcheck (v2; spelling glue and dictionaries moved from Write)
+                        wonky_spellcheck (v2; spelling glue and dictionaries moved from Write),
+                        wonky_fonts (v2; `AssetFontRegistry` / `BundledAssetFontProvider`, Slides 05 §3.1)
 wonky_drive           → (v2) wonky_app, wonky_ui, wonky_core, wonky_client, wonky_code_flutter (text previews), printing (PDF
                         raster, spike Drive 05 S-D1), file_picker, file_saver, http
 wonky_write           → wonky_app, wonky_ui, wonky_write_core, wonky_code + wonky_code_flutter (v2), super_editor (vendored), super_clipboard,
@@ -215,6 +219,19 @@ them.
 (pure Hunspell engine; the Flutter glue — `SpellEngine` loader, spelling dialogs — and Write's
 emoji picker move into `wonky_app`) and `wonky_numfmt` (Q27).
 
+*Implemented (Drive 05 D-7):* `wonky_write_core` re-exports the moved `wonky_rich_text` names
+(`WonkyAttr`, `Attributes`, `DeltaUtils`, `LinkPolicy`, `TextRules`, `InlineRun`,
+`InlineMarkdown`, `ImportWarning`, …) and all of `wonky_fonts`, so Write and the server are
+unchanged. It does **not** depend on `wonky_spellcheck` (nothing outside the apps spell-checks;
+this keeps the 12 MB of dictionaries out of the server upload); its former
+`package:wonky_write_core/spellcheck.dart` is `package:wonky_spellcheck/wonky_spellcheck.dart`.
+TTFs and dictionaries are Flutter assets declared by the pure-Dart packages (`flutter: assets:`
+in their pubspec; Flutter bundles assets of every dependency, keys
+`packages/wonky_fonts/fonts/…`, `packages/wonky_spellcheck/dictionaries/…`). The shell exposes the
+glue as separate libraries, `package:wonky_app/spellcheck.dart` and `package:wonky_app/emoji.dart`
+(emoji data in `packages/wonky_app/assets/emoji/`), plus `showAnchoredPopoverAt` in the main
+library.
+
 **What the script checks** (only `dependencies:`, not `dev_dependencies:`; imports in `lib/` and
 `bin/`; `third_party/*` are external packages and are not checked):
 
@@ -256,10 +273,12 @@ emoji picker move into `wonky_app`) and `wonky_numfmt` (Q27).
 | `wonky_sheets_script` | `wonky_sync_models` | Id generators and table names of the script tables |
 | `wonky_sheets_script` | `crypto` | Build source hashes; `Utilities.computeDigest`/`computeHmac` |
 | `wonky_sheets_script` | `analyzer` | Subset lint and exports of the server-only `compiler.dart` (the app must not import it; enforced) |
-| `wonky_sheets_core` | `vector_math` | `Matrix4` for `PdfGraphics.setTransform` in the PDF renderer (already a dependency of `pdf`) |
+| `wonky_sheets_core` | `vector_math` | `Matrix4` for `PdfGraphics.setTransform` in the print PDF renderer (already a dependency of `pdf`); stays with the print renderer after the chart extraction (the chart renderers don't need it) |
 | `wonky_server` | `crypto` | Token and content hashes |
 | `wonky_server` | `dart_quill_delta` | Server-authoritative OT over Deltas (A4) |
 | `wonky_server` | `yaml` | Reads the `wonky`/`mcp`/`ai` sections of the config files |
+| `wonky_server` | `image` | Drive upload previews and thumbnails (Drive 02 §6) |
+| `wonky_server` | `mime` | MIME sniffing of uploaded files (Drive 02 §5, suite 13 §6) |
 | `wonky_ui` | `flutter_svg` | Empty-state illustrations (already a dependency of `shad`) |
 | `wonky_ui` | `flutter_test` | `pumpWonky` in `lib/testing.dart` (15 §7) |
 | `wonky_app` | `shad` | The shell UI is built with shad (02) |
@@ -274,13 +293,13 @@ emoji picker move into `wonky_app`) and `wonky_numfmt` (Q27).
 | `wonky_sheets` | `desktop_drop` | Dropping files onto the grid on desktop (Sheets 11 §2; deferred in v2, A13) |
 | `wonky_sheets` | `http` | Fetching XLSX images and URL imports (Sheets 11 §2) |
 | `wonky_sheets` | `pdf` | Client PDF export and print preview (Sheets 11 §7) |
-| `wonky_sheets` | `sqlite3`, `archive` | Recovery export of a replica that can't be opened: read-only SQLite read of its unsynced spreadsheets, zipped as XLSX + JSON (suite 12 §2.5) |
-| `wonky_sheets` | `flutter_scene`, `vector_math` | GPU backend of 3D charts (Sheets 08 §23.7) — (v2) moves to `wonky_charts_flutter` with the extraction; listed there |
+| `wonky_sheets` | `archive` | Recovery export of a replica that can't be opened: its unsynced spreadsheets (read by `wonky_sync_kit_flutter`) zipped as XLSX + JSON (suite 12 §2.5) |
+| `wonky_charts_flutter` | `flutter_scene`, `vector_math` | (v2) GPU backend of 3D charts (Sheets 08 §23.7); moved out of `wonky_sheets` by the extraction (Drive 05 D-3) |
 | `wonky_sync_kit_flutter` | `wonky_app`, `wonky_ui`, `wonky_client` | (v2) Connectivity/`LocalStore`, `SyncStatus` and the generated sync client: a Flutter leaf below the app families, extracted from `wonky_sheets/lib/features/sync` |
+| `wonky_sync_kit_flutter` | `wonky_core`, `path_provider`, `sqlite3` | (v2) Roles and id generators; the desktop location of replica files; the read-only recovery read of a replica that can't be opened (suite 12 §2.5) — moved out of `wonky_sheets` with the replica (Drive 05 D-6) |
 | `wonky_sheets` | `flutter_svg` | Rasterizing SVG images on insert (Sheets 08 §10.1) |
 | `wonky_write`, `wonky_sheets` (v2: and `wonky_drive`, `wonky_slides`) | `wonky_core`, `wonky_client`, `shad`, `go_router` | Ids/commands/undo, repositories calling endpoints (never widgets, 11 §6), shad UI (02), routes (A9) |
 | `wonky_write` | `dart_quill_delta` | Client side of the Delta OT (A4) |
-| `wonky_write` | `syntax_highlight` | Code block syntax highlighting in the editor (TextMate grammars; vendored, see §2.2; exports keep `wonky_write_core`'s `highlight`) — (v2) the TextMate engine is copied into `wonky_code` (pure Dart) and `third_party/syntax_highlight` is deleted once Write uses it (Slides 07 §2.1); `wonky_write_core`'s `highlight` moves to `wonky_code` |
 | `wonky_server` | `mime` | (v2) Magic-number sniffing of uploaded files (Drive 02 §5) |
 | `wonky_drive` | `printing` | (v2) PDF page rasterization for previews (Drive 02 §6.3; spike S-D1 may swap it for `pdfrx`) |
 | `wonky_slides` | `flutter_scene`, `vector_math` | (v2) 3D transitions and the chart camera (Slides 06, 08) |
@@ -301,9 +320,12 @@ emoji picker move into `wonky_app`) and `wonky_numfmt` (Q27).
   for Serverpod 4.1 compatibility (`watch()`, web transaction deadlock fix) and our helpers
   (U11). Fixes are contributed upstream; overrides are removed when upstream catches up.
 - `dart_eval`: vendored in `third_party/dart_eval` (patches DE-1…DE-3, Sheets 09).
-- `syntax_highlight`: vendored in `third_party/syntax_highlight` (0.5.0, patches SH-1…SH-5:
-  no `CodeEditor`/`super_clipboard`, `(?i)` regexes, rewritten and fixed grammars, scope-level
-  API). Flutter-only, wired through the root `pubspec_overrides.yaml` ([Write 04](wonky_write/04-editor.md) §15.4).
+- `syntax_highlight`: (v2, D-2 done) no longer a dependency. Its TextMate engine and the 15
+  patched grammars (patches SH-1…SH-5) were **copied** into `packages/wonky_code` (pure Dart,
+  grammars embedded as Dart strings; provenance and patch history in
+  `packages/wonky_code/THIRD_PARTY.md`, Slides 07 §2.1, v2 review Q26); the vendored
+  `third_party/syntax_highlight` and its `pubspec_overrides.yaml` entry are gone. `highlight`
+  0.7.x (highlight.js port) is a dependency of `wonky_code` only (`HighlightJsTokenizer`).
 - `sqlite3_web` pinned to a version compatible with `sqlite_async` (toptap pins 0.9.4).
 - `shad` `^0.99.4`.
 
@@ -458,6 +480,8 @@ src/
     drive/                     # DriveItem, DriveItemUserState, DriveEndpoint, search, templates, trash purge,
                                #   (v2) file uploads, conversions, kind masks (Drive 02)
     storage/                   # (v2) UserStorage, StorageReservation, StorageService, reconcile + backfill (Drive 03)
+    spaces/                    # (v2) SpaceService (reservations, active set and membership mirroring per SpaceKind),
+                               #   SpaceKinds/SpaceKindFilter, SpaceSync (engine sync per kind, patch OS-8; suite 12 §2.6)
     sharing/                   # DriveItemPermission, ShareLink, SharingEndpoint, AccessService (role resolution + space membership mirroring)
     comments/                  # CommentThread, Comment, CommentEndpoint
     notifications/             # Notification, NotificationEndpoint, email digests
@@ -476,7 +500,7 @@ src/
     versions/                  # WriteVersionProvider
     mcp/                       # write.* tools
   sheets/
-    spaces/                    # SpaceReservation, subscription management (active set), membership mirroring
+    spaces/                    # SheetsSpaces (sheets.* space endpoints + SpaceStats on platform/spaces), spreadsheet factory, copier
     endpoints/                 # SheetsEndpoint (online-only ops), SheetsSyncEndpoint (custom sync wrapper w/ onMergeSuccess)
     scripts/                   # compile service, server runtime pool, triggers, scheduled jobs, quotas
     changelog/                 # ChangeLog processing (activity, triggers, cell history, pruning)
@@ -539,7 +563,7 @@ scriptTimeoutMs, scriptDailyQuotaMs}`, `write: {snapshotEveryNOps, maxDocumentCh
 sheets: {dir: web/sheets, path: /sheets/}, slides: {dir: web/slides, path: /slides/}}` (§2.4;
 drive and slides v2); (v2) `drive: {quotaBytesPerUser, warnAtPercent, maxPendingUploadsPerUser}`,
 `files: {maxFileUploadBytes, maxImageUploadBytes, maxImportUploadBytes}` (Drive 03 §3),
-`slides: {…}` (Slides 01 limits), `help: {bugReportUrl}` (default
+`slides: {maxActiveSpacesPerUser, …}` (Slides 01 limits; the deck active set, suite 12 §2.6), `help: {bugReportUrl}` (default
 `https://github.com/serverpod/wonky/issues`, 03 §3.4); the template's commented-out
 `authCookie` + `allowedOrigins` are enabled (§2.5).
 Secrets in `passwords.yaml`: `openaiApiKey` / `anthropicApiKey` / `geminiApiKey` (any or none,
@@ -560,8 +584,12 @@ without Redis (local scope).
 - (v2) New values of byName enums that clients deserialize (`DriveItemKind.presentation/file`,
   `DriveChangeKind.storageChanged`, `NotificationKind.storage`, `WonkyErrorCode.quotaExceeded`)
   make older clients throw; such releases bump `minClientVersion` so cached web apps reload.
+  M8 sets `minClientVersion` (and `serverVersion`) to 2.0.0; the apps' `WONKY_VERSION`
+  default is 2.0.0.
 - Offline-sync schema changes are lock-step (the engine rejects clients with a different
   `syncTablesHash`). (v2) The Slides synced tables are one such release (M9); Sheets and Slides
-  clients share the hash because all synced models are in one client package. Rule: synced schema changes are batched into releases; clients that fail the
+  clients share the hash because all synced models are in one client package (release S-1,
+  recorded with its hash as `SyncSchemaRelease` in `wonky_sync_models` and in Slides 02 §14.1;
+  server and client guard tests fail until a model change bumps it). Rule: synced schema changes are batched into releases; clients that fail the
   hash check show a blocking "Update required" screen **after** exporting any pending local
   changes to a recovery file (see offline spec).

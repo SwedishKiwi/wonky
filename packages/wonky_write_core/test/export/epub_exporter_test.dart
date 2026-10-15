@@ -62,7 +62,7 @@ FontFace _face(
   family: family,
   weight: weight,
   italic: italic,
-  bytes: File('../../wonky_write/assets/fonts/$file').readAsBytesSync(),
+  bytes: File('../wonky_fonts/fonts/$file').readAsBytesSync(),
 );
 
 ExportInput _with(

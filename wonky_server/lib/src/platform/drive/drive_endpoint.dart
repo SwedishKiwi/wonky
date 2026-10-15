@@ -1,8 +1,14 @@
 import 'package:serverpod/serverpod.dart';
+import 'package:wonky_core/wonky_core.dart' show Role;
 
 import '../common/models.dart';
+import '../sharing/access_service.dart';
+import '../storage/storage_listing.dart';
+import '../storage/storage_service.dart';
 import '../users/user_service.dart';
 import 'drive_events.dart';
+import 'drive_file_service.dart';
+import 'drive_presentations.dart';
 import 'drive_service.dart';
 import 'import_service.dart';
 
@@ -277,6 +283,174 @@ class DriveEndpoint extends Endpoint {
     uploadId,
     kind,
     options,
+  );
+
+  // ---------------------------------------------------------------- v2 (M8)
+  // Drive 02 §3.3 (files, D-8), Slides 02 §9.3 (presentations, D-8) and
+  // 03 §7.2 (quota, D-9).
+
+  /// Registers a deck created locally in a reserved `deck` space
+  /// (idempotent; Slides 02 §9.3). The item uuid is the space uuid. Never
+  /// refused for quota (content arrives through sync).
+  Future<DriveItemView> registerPresentation(
+    Session session,
+    UuidValue spaceUuid,
+    UuidValue? parentUuid,
+    String name,
+  ) async => DrivePresentations.register(
+    session,
+    await UserService.actorOf(session),
+    spaceUuid: spaceUuid,
+    parentUuid: parentUuid,
+    name: name,
+  );
+
+  /// Creates a presentation server-side (online; Slides 02 §9.3): a blank
+  /// deck with the default theme and a title slide, or with [templateUuid]
+  /// a copy of that presentation (SL-8; built-in presentation templates:
+  /// SL-22).
+  Future<DriveItemView> createPresentation(
+    Session session,
+    UuidValue? parentUuid,
+    String name,
+    UuidValue? templateUuid,
+  ) async => DrivePresentations.create(
+    session,
+    await UserService.actorOf(session),
+    parentUuid: parentUuid,
+    name: name,
+    templateUuid: templateUuid,
+  );
+
+  /// Starts the upload of a `file` item (Drive 02 §3.3): checks the role on
+  /// the parent (Editor+), name, size ≤ `maxFileUploadBytes` and reserves
+  /// quota; inserts the item (`uploading`) and its `driveFile` StoredFile.
+  /// Idempotent on (itemUuid, fileUuid). Errors: forbidden, notFound,
+  /// invalidArgument, tooLarge, quotaExceeded, limitExceeded, conflict.
+  Future<FileUploadStart> createFileUpload(
+    Session session,
+    FileUploadRequest request,
+  ) async => DriveFileService.createUpload(
+    session,
+    await UserService.actorOf(session),
+    request,
+  );
+
+  /// Verifies the stored bytes (size, sniffing), marks the item `ready` and
+  /// turns the reservation into usage (Drive 02 §3.3).
+  Future<DriveItemView> completeFileUpload(
+    Session session,
+    UuidValue itemUuid,
+  ) async => DriveFileService.completeUpload(
+    session,
+    await UserService.actorOf(session),
+    itemUuid,
+  );
+
+  /// Cancels an upload: deletes the item and partial bytes, releases the
+  /// reservation.
+  Future<void> cancelFileUpload(Session session, UuidValue itemUuid) async =>
+      DriveFileService.cancelUpload(
+        session,
+        await UserService.actorOf(session),
+        itemUuid,
+      );
+
+  /// Upload state for resuming (Drive 02 §4.3).
+  Future<FileUploadProgress> fileUploadStatus(
+    Session session,
+    UuidValue itemUuid,
+  ) async => DriveFileService.status(
+    session,
+    await UserService.actorOf(session),
+    itemUuid,
+  );
+
+  /// *Open with* on the server (Drive 02 §7.2): imports a `file` item's
+  /// bytes as a [target] item (document or spreadsheet). Viewer+ on the
+  /// file, Editor+ on the target folder (else My Drive); quota checked
+  /// before and after (Drive 03 §7.2).
+  Future<ImportReportView> convertFile(
+    Session session,
+    UuidValue fileItemUuid,
+    DriveItemKind target,
+    DriveImportOptions options,
+  ) async => DriveFileService.convert(
+    session,
+    await UserService.actorOf(session),
+    fileItemUuid,
+    target,
+    options,
+  );
+
+  /// A signed URL (15 min) of a file item's bytes for previews, or with
+  /// [download] the `GET /files/d/…` download route (Drive 02 §6.1, §8).
+  Future<FileUrlView> fileContentUrl(
+    Session session,
+    UuidValue itemUuid, {
+    bool download = false,
+  }) async => DriveFileService.contentUrl(
+    session,
+    await UserService.actorOf(session),
+    itemUuid,
+    download: download,
+  );
+
+  /// Client-measured metadata of a file item (e.g. PDF `{pages}`), Editor+
+  /// (Drive 02 §6.3).
+  Future<DriveItemView> updateFileMeta(
+    Session session,
+    UuidValue itemUuid,
+    String fileMetaJson,
+  ) async => DriveFileService.updateMeta(
+    session,
+    await UserService.actorOf(session),
+    itemUuid,
+    fileMetaJson,
+  );
+
+  /// Quota pre-check without reserving (Drive 03 §7.2): throws
+  /// `quotaExceeded` when [bytes] don't fit. With [itemUuid], the item's
+  /// owner is charged (images added to someone else's item); else the
+  /// caller.
+  Future<void> checkRoom(
+    Session session,
+    int bytes,
+    UuidValue? itemUuid,
+  ) async {
+    final actor = await UserService.actorOf(session);
+    var userId = actor.userId;
+    if (itemUuid != null) {
+      final (item, _) = await AccessService.require(
+        session,
+        actor,
+        itemUuid,
+        Role.viewer,
+      );
+      userId = item.ownerId;
+    }
+    await StorageService.instance.checkRoom(
+      session,
+      userId: userId,
+      bytes: bytes,
+      reason: itemUuid == null ? QuotaReason.import : QuotaReason.image,
+      callerUserId: actor.userId,
+    );
+  }
+
+  /// The caller's owned items (incl. trashed) by counted size, descending
+  /// (Storage page, Drive 03 §6.4). Pass `nextCursor` for the next page.
+  Future<DriveListPage> listByStorage(
+    Session session,
+    StorageListFilter filter,
+    String? cursor,
+    int limit,
+  ) async => StorageListing.list(
+    session,
+    await UserService.actorOf(session),
+    filter,
+    cursor: cursor,
+    limit: limit,
   );
 
   Future<StorageUsage> storageUsage(Session session) async =>

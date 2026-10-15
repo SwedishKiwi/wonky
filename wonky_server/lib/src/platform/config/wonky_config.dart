@@ -15,6 +15,7 @@ class WonkyConfig {
     this.experimentalCharts = false,
     this.maxCellsPerSpreadsheet = 1000000,
     this.maxActiveSpacesPerUser = 30,
+    this.maxActiveDecksPerUser = 30,
     this.maxSheetsPerSpreadsheet = 200,
     this.scriptTimeoutMs = 30000,
     this.scriptDailyQuotaMs = 5400000,
@@ -27,8 +28,14 @@ class WonkyConfig {
     this.maxDocumentChars = 2000000,
     this.maxImageUploadBytes = 20 * 1024 * 1024,
     this.maxImportUploadBytes = 100 * 1024 * 1024,
-    this.minClientVersion = '1.0.0',
-    this.serverVersion = '1.0.0',
+    this.maxFileUploadBytes = defaultQuotaBytes,
+    this.quotaBytesPerUser = defaultQuotaBytes,
+    this.warnAtPercent = 90,
+    this.maxPendingUploadsPerUser = 100,
+    this.uploadsPerHour = 200,
+    this.uploadBytesPerDay = 500 * 1024 * 1024,
+    this.minClientVersion = '2.0.0',
+    this.serverVersion = '2.0.0',
     this.publicWebUrl,
     this.busFlushMs = 1000,
   });
@@ -45,6 +52,11 @@ class WonkyConfig {
   final bool experimentalCharts;
   final int maxCellsPerSpreadsheet;
   final int maxActiveSpacesPerUser;
+
+  /// (v2) The Slides active set limit (`slides.maxActiveSpacesPerUser`):
+  /// deck spaces are limited separately from spreadsheet spaces (suite 12
+  /// §2.6).
+  final int maxActiveDecksPerUser;
   final int maxSheetsPerSpreadsheet;
 
   /// Time limit of client script runs (menus, macros, editor; Sheets 09 §10).
@@ -73,6 +85,31 @@ class WonkyConfig {
   final int maxDocumentChars;
   final int maxImageUploadBytes;
   final int maxImportUploadBytes;
+
+  /// (v2) 50 MB: the default quota and the cap for one uploaded file
+  /// (Drive 03 §1).
+  static const defaultQuotaBytes = 50 * 1024 * 1024;
+
+  /// (v2) Cap for one uploaded Drive file (`files.maxFileUploadBytes`,
+  /// ≤ the quota; Drive 03 §3).
+  final int maxFileUploadBytes;
+
+  /// (v2) Storage quota per user (`drive.quotaBytesPerUser`, env
+  /// `WONKY_DRIVE_QUOTA_BYTES_PER_USER`; Drive 03 §3). `UserStorage.
+  /// quotaBytesOverride` overrides it per user.
+  final int quotaBytesPerUser;
+
+  /// (v2) Banner threshold in percent of the quota (`drive.warnAtPercent`).
+  final int warnAtPercent;
+
+  /// (v2) Open upload reservations per user (`drive.maxPendingUploadsPerUser`,
+  /// Drive 03 §5).
+  final int maxPendingUploadsPerUser;
+
+  /// (v2) Upload rate limits (`files.uploadsPerHour`,
+  /// `files.uploadBytesPerDay`; suite 13 §6).
+  final int uploadsPerHour;
+  final int uploadBytesPerDay;
   final String minClientVersion;
   final String serverVersion;
 
@@ -183,6 +220,7 @@ class WonkyConfig {
       experimentalCharts: b('features', 'experimentalCharts', false),
       maxCellsPerSpreadsheet: i('sheets', 'maxCellsPerSpreadsheet', 1000000),
       maxActiveSpacesPerUser: i('sheets', 'maxActiveSpacesPerUser', 30),
+      maxActiveDecksPerUser: i('slides', 'maxActiveSpacesPerUser', 30),
       maxSheetsPerSpreadsheet: i('sheets', 'maxSheetsPerSpreadsheet', 200),
       scriptTimeoutMs: i('sheets', 'scriptTimeoutMs', 30000),
       scriptDailyQuotaMs: i('sheets', 'scriptDailyQuotaMs', 5400000),
@@ -199,8 +237,14 @@ class WonkyConfig {
         'maxImportUploadBytes',
         100 * 1024 * 1024,
       ),
-      minClientVersion: s('minClientVersion', '1.0.0'),
-      serverVersion: s('serverVersion', '1.0.0'),
+      maxFileUploadBytes: i('files', 'maxFileUploadBytes', defaultQuotaBytes),
+      quotaBytesPerUser: i('drive', 'quotaBytesPerUser', defaultQuotaBytes),
+      warnAtPercent: i('drive', 'warnAtPercent', 90),
+      maxPendingUploadsPerUser: i('drive', 'maxPendingUploadsPerUser', 100),
+      uploadsPerHour: i('files', 'uploadsPerHour', 200),
+      uploadBytesPerDay: i('files', 'uploadBytesPerDay', 500 * 1024 * 1024),
+      minClientVersion: s('minClientVersion', '2.0.0'),
+      serverVersion: s('serverVersion', '2.0.0'),
       busFlushMs: i('cluster', 'busFlushMs', 1000),
       publicWebUrl:
           environment['WONKY_PUBLIC_WEB_URL'] ??

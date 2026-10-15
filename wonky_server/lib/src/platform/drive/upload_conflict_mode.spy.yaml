@@ -1,0 +1,11 @@
+### (v2) What `drive.createFileUpload` does when a ready item with the same
+### name exists in the target folder (Drive 02 §3.2).
+enum: UploadConflictMode
+serialized: byName
+values:
+  ### The new file gets " (1)" before the extension (default).
+  - keepBoth
+  ### Uploads a new version of the existing file (P2, Drive 02 §9).
+  - replace
+  ### Refuses with `conflict`.
+  - fail

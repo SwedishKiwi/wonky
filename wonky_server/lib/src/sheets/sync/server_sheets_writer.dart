@@ -10,7 +10,7 @@ import '../../platform/common/models.dart';
 import '../../platform/common/time.dart';
 import '../../platform/files/file_service.dart';
 import '../mcp/sheets_bulk_writer.dart';
-import '../spaces/space_service.dart';
+import '../../platform/spaces/space_service.dart';
 
 /// Outcome of applying row changes server-side.
 class AppliedChanges {

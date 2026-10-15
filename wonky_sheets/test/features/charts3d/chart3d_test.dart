@@ -5,8 +5,6 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wonky_sheets/features/charts/chart_insert.dart';
 import 'package:wonky_sheets/features/charts/editor/chart_type_picker.dart';
-import 'package:wonky_sheets/features/charts/render/chart_painter.dart';
-import 'package:wonky_sheets/features/charts3d/chart3d_gpu.dart';
 import 'package:wonky_sheets/features/charts3d/editor/chart3d_section.dart';
 import 'package:wonky_sheets/features/grid/grid_area.dart';
 import 'package:wonky_sheets/features/objects/objects_controller.dart';
@@ -14,6 +12,7 @@ import 'package:wonky_sheets/features/objects/objects_layer.dart';
 import 'package:wonky_sheets/l10n/sheets_l10n.dart';
 import 'package:wonky_sheets_core/model.dart';
 import 'package:wonky_ui/wonky_ui.dart';
+import 'package:wonky_charts_flutter/wonky_charts_flutter.dart';
 
 import '../../support/grid_pump.dart';
 import '../../support/sheets_harness.dart';
@@ -163,7 +162,7 @@ void main() {
             type: type,
           ).copyWith(threeD: const ChartThreeD(enabled: true));
           final tokens = dark ? ChartUiTokens.dark : ChartUiTokens.light;
-          final scene = ChartPipeline.build(
+          final scene = SheetsChartPipeline.build(
             spec: spec,
             model: s.model,
             values: s.editor.engine,
@@ -187,7 +186,7 @@ void main() {
           s.editor,
           ranges,
         ).copyWith(threeD: const ChartThreeD(enabled: true));
-        final scene = ChartPipeline.build(
+        final scene = SheetsChartPipeline.build(
           spec: spec,
           model: s.model,
           values: s.editor.engine,

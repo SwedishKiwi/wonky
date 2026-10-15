@@ -9,6 +9,7 @@ import 'package:wonky_write_core/wonky_write_core.dart';
 import '../../platform/comments/comment_service.dart';
 import '../../platform/common/models.dart';
 import '../../platform/files/file_service.dart';
+import '../../platform/mcp/drive_tool_handlers.dart';
 import '../../platform/mcp/tool_executor.dart';
 import '../../platform/mcp/tool_support.dart';
 import '../../platform/users/user_service.dart';
@@ -18,6 +19,8 @@ import '../ot/document_service.dart';
 import '../ot/document_store.dart';
 import '../themes/theme_service.dart';
 import 'headless_editor.dart';
+import '../../platform/storage/storage_hooks.dart';
+import '../../platform/storage/storage_service.dart';
 
 /// Implementations of the headless `write.*` tools (Write 09 §2). Reads go
 /// to the head without locking; every mutation is one op through
@@ -555,6 +558,14 @@ abstract final class WriteToolHandlers {
         );
       }
       final ext = sniffed.split('/').last.replaceAll('svg+xml', 'svg');
+      // (v2) Images count for the document's owner (Drive 03 §7.2).
+      await StorageHooks.checkOwnerOf(
+        ctx.session,
+        ctx.actor,
+        target.item,
+        bytes.length,
+        QuotaReason.image,
+      );
       final file = await FileService.storeServerFile(
         ctx.session,
         ownerId: ctx.actor.userId,
@@ -564,6 +575,7 @@ abstract final class WriteToolHandlers {
         mimeType: sniffed,
         bytes: bytes,
       );
+      await StorageHooks.chargeImage(ctx.session, target.item, file);
       fileUuid = file.fileUuid.uuid;
       src = 'wonky-file://$fileUuid';
     }
@@ -583,7 +595,12 @@ abstract final class WriteToolHandlers {
         title: a.string('title'),
       ),
     );
-    return _mutation({...r, 'file_uuid': ?fileUuid});
+    return _mutation({
+      ...r,
+      'file_uuid': ?fileUuid,
+      // (v2) Stored images count for the document's owner (suite 09 §4).
+      if (fileUuid != null) 'storage': await DriveToolHandlers.storageJson(ctx),
+    });
   }
 
   static Future<ToolResult> insertTable(ToolContext ctx, ToolArgs a) async {

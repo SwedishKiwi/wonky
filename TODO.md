@@ -184,3 +184,237 @@ Everything below is deferred; the app works without it. Areas are in rough prior
     on moves (06 §15.3) and charts without an Excel equivalent as XLSX pictures are done. Left:
     a cut with hidden rows (several blocks) moves a CF rule's formula with the first block's
     offset only.
+
+## Wonky Drive — open items
+
+- **Server files (D-8 follow-ups, Drive 02):** *Replace* / upload new version (P2, §9:
+  `UploadConflictMode.replace` answers `unavailable`); chunked resumable uploads (P1, §4.3:
+  `chunked` is ignored, the `PUT /files/upload` route answers 501 for `Content-Range` and takes
+  only the URL token, not the session); multi-file ZIP downloads (P1, §8); per-instance
+  download volume limit (2 GB/day, suite 13 §6) is not counted yet; HEIC/TIFF server previews
+  (not rendered today); `drive.copy` of presentations waits for Slides (`DeckCopier`).
+- **File previews (D-14 follow-ups, Drive 02 §6, Drive 04 §6):** pdf.js is **not in the repo
+  yet** — run `wonky_drive/tool/fetch_pdfjs.sh` (downloads `pdfjs-dist@6.2.108` from npm into
+  `wonky_drive/web/pdfjs/`) and commit the result; until then PDFs show "PDF previews aren't
+  available here" with *Download*. Then measure the browser budgets of suite 11 §2 in the release
+  build (first PDF page < 1 s for 100 pages, image ≤ 4 MB < 500 ms; only the text budget is
+  measured, on the VM). Prev/next uses the file's folder, not the list the preview was opened
+  from (search, starred, recent — the home should hand its visible list to the preview). P1:
+  PDF thumbnail strip and first-page thumbnails (`drive.setThumbnail`), find in file (`Mod+F`),
+  P2: audio player card (shown as the file
+  card today). Desktop downloads (`PlatformFileDownloader` returns false off the web, A13). The
+  TextMate engine is superlinear on big inputs (≈ 0.7 s / 100 K chars, ≈ 19 s / 500 K on the VM);
+  the preview uses highlight.js beyond 50 K chars and highlights the first 250 K only — fix the
+  engine (line-wise parsing) with `tokenizeLine` in M10.
+- **Uploads (D-13 follow-ups, Drive 02 §3–4, Drive 04 §4):** the live check of the
+  server-dependent parts is still open: the running dev server (`serverpod start` since 23:30)
+  kept serving D-1's `createFileUpload` stub even after `hot_restart` (the watcher's incremental
+  compiler never picked up the D-8/D-9 files — its analysis reported `drive_presentations.dart`
+  as missing) — restart `serverpod start`, then check in the release build: XHR upload progress,
+  preview after upload, *Download* (hidden anchor), the forced-upload refusal (J-D3) and an
+  offline drop that uploads on reconnect (J-D8; an OS drop can't be simulated by automation —
+  `webkitGetAsEntry()` is null for synthetic `DataTransfer`s). The upload panel is mounted by
+  `WonkyAppConfig.wrap`, above the navigator, so it stays clickable over modal dialogs — move it
+  into the navigator overlay (a shell hook) or make it inert while a dialog is open. P1: folder
+  picker (`drive.upload.folder`, `webkitdirectory`), paste of files, OS drops on tree nodes and
+  breadcrumbs, empty dropped folders, a progress ring in uploading list rows (they say
+  "Uploading…"). `desktop_drop` (web) drops a whole drop when one item has no
+  file entry (e.g. a dragged link). D-11's *Not enough storage for all files* dialog lays its three
+  buttons out in one row above 640 px; with the test font they overflow the 464 px dialog
+  (the D-13 widget test runs it at 360 px) — check with real fonts and long translations.
+- **Storage page, Drive settings, commands (D-17 follow-ups, Drive 03 §6.4, Drive 04 §7–9,
+  §13):** not checked in a browser (no web-build token; D-18): the Storage page in the release
+  build, live `storageChanged` updates from the real server, *Empty trash* / *Delete forever*
+  against the server, `drive.listByStorage` paging past 50 rows. The table sorts by counted size
+  only (`drive.listByStorage` has no other order; the mockup's *Sort ▾* is not built). The
+  *Free up space* counts read at most 200 rows per card ("More than 200 files"). *Duplicate
+  files* (P1) and *Old file versions* (P2) cards are not built. The home's layout button and
+  sort menu (shell) call `DriveController` directly; the `drive.view.*` commands wrap the same
+  methods. `ui.drive.select_items` selects and focuses but does not scroll the home list to the
+  row (the Storage table neither). *Convert uploads* converts after the upload completes
+  (`drive.convertFile`, then the uploaded file is trashed and deleted forever) instead of a
+  server-side import of an `importSource` upload (02 §7.3): it needs room for both copies for a
+  moment, and after a reload the batch's undo trashes the deleted original instead of the
+  converted item. *Confirm before moving items into shared folders* (P1) is not a setting yet
+  (the confirm itself is P1). The list's *File size* column (shell `item_list.dart`) still shows
+  `sizeBytes`, not `countedBytes` (03 §2).
+- **Drive app scaffold (D-5 follow-ups):** the Drive web icons (`wonky_drive/web/icons/Icon-512.png`)
+  are upscaled from the 256 px product icon (`icons/drive.webp`); replace them with renders of a
+  512/1024 px master. The `slides`
+  `flutter_apps` alias (8104) is added by SL-1 when `wonky_slides/` exists.
+- **Shell v2 (D-10 follow-ups, suite 03 §3.3–3.4):** the server's `AppConfigRoute` doesn't
+  serve `help.bugReportUrl` yet (`wonky.help.bugReportUrl`; the apps fall back to
+  `https://github.com/serverpod/wonky/issues`). The drawer (below `md`) keeps the theme it opened with when the app
+  theme changes while it is open (shad sheets capture the theme), and Esc doesn't close it after
+  a menu inside it was closed with Esc (focus leaves the sheet). Drive's template gallery shows
+  all templates by category (one *Blank* per kind), not the kind tabs of Drive 04 §1. The
+  *Report a bug* footer link on the auth screens has no widget test.
+- **Settings split (D-12 follow-ups, suite 04 §4):** *Sign-in & security* lacks the Google
+  account link status / *Link Google account* (needs a server call listing the user's identity
+  providers) and *Sign out of all devices* (P2). *Offline & device data* shows only the current
+  app's device data, not the summary row per other app on this device. Write's *Page & export* defaults are stored but not yet
+  applied: new documents ignore the default layout / saved page setup and the export dialog
+  doesn't preselect the default format (as in v1). Not verified in a browser (no web-build
+  token): the cross-app *Settings of other apps* links and the `/settings/sheets` handoff in
+  Write are covered by widget tests with the fake cross-app navigator only.
+- **Shared chart packages (D-3 follow-ups, SL-27 in M10, Slides 08 §2.7, §2.10):** `ChartData`
+  JSON, `ChartSnapshot`, `ChartRevealState`, `ChartSceneMorph`, `Chart3DView.lerp`, `ChartTable`
+  + the generic recommender split, `TtfTextMeasurer`, a pluggable range-ref validator for
+  `ChartSpecSchema` (Slides: no ranges), deck-theme `background`/`text` in `ChartThemeSource`;
+  move `ChartView` (generic part), the data table dialog, `ChartTypeIcon` and the Customize-tab
+  `ChartStyleEditor` from `wonky_sheets` into `wonky_charts_flutter`. The workbook-based layout,
+  3D and describer tests stay in `wonky_sheets_core`; port some to `ChartData` fixtures in
+  `wonky_charts/test`. Sheets chart golden PNGs (`wonky_sheets/test/goldens/charts`) have no
+  committed masters, so those six golden tests fail locally until masters are generated.
+- **Shared code packages (D-2 follow-ups, M10 with Slides code elements, Slides 07):**
+  `CodeTokenizer.tokenizeLine` (incremental line state for type-in/editing), `CodeLayout` +
+  `MonoFontMetrics`, the grid-exact `CodeView` mode driven by `CodeViewState` (title tab,
+  callouts, dimming, caret), `CodeEditorField` (re_editor) and `CodePaletteResolver`;
+  `CodeLanguages.detect` (P1). Write switches its exports **and** its editor to
+  `DefaultCodeTokenizer` in M10 (Q25; the editor then also highlights the highlight.js
+  languages, and its language picker can offer `CodeLanguages.pickerLanguages`).
+- **TextMate tokenizer speed:** the copied engine needs ~140 ms (VM, JIT) for 1,000 lines of Dart;
+  Slides 07 §14 budgets 15 ms desktop / 30 ms web. Same engine and speed as Write's editor before
+  the extraction (Write tokenizes blocks over 20k chars after a debounce); optimize (regex
+  caching, line-state incremental parsing) with `tokenizeLine` in M10.
+- **Shared sync kit (D-6 follow-ups, Slides 12 §5.1–5.2):** the server writers
+  (`ServerSheetsWriter`, `SheetsBulkWriter`; Slides' `ServerSlidesWriter`) don't implement
+  `SyncTxAdapter` yet (server code untouched by the extraction). The local bookkeeping tables
+  keep their Sheets names (`sheets_row_journal`, `sheets_journal_space`, `sheets_dirty_space`,
+  trigger prefix `sheets_journal`) and are shared by every app's replica file; rename them to
+  `sync_*` with a client migration when convenient (renaming the triggers needs dropping the old
+  ones). `ReplicaInstallation`/`ReplicaOfflineProvider` (shell glue) have no widget test of
+  their own (covered through Sheets' `open_workbook_session_test`); *Clear local data* on the
+  web now empties the tables in one transaction with deferred foreign keys.
+- **Shared rich text, fonts, spelling, emoji (D-7 follow-ups):** Sheets still bundles its own
+  copy of the 40 TTFs (`wonky_sheets/assets/fonts/`, `CellFonts`, `print_fonts.dart`) and the
+  server its mirror (`wonky_server/web/fonts/`, `FileSystemFontProvider`); switch both to the
+  `wonky_fonts` package (`BundledFonts`) and drop the copies (Sheets needs the dependency in
+  suite 01 §2.1). The shared Flutter `AssetFontRegistry` + `BundledAssetFontProvider`
+  (`package:wonky_app/fonts.dart`, SL-6) exist; Write (`WriteFonts`/`AssetFontProvider`) and
+  Sheets still use their own loaders — switch them when convenient. The moved spelling dialogs and emoji
+  picker still have hard-coded English strings and `write.`-prefixed widget keys (unchanged from
+  Write); move the strings to the `wonky_app` ARB files and give Slides its own key prefix when
+  SL-44 uses them. `EmojiPrefs` keeps its `write.emoji.*` store keys (recents shared by the apps).
+- **Storage quota (D-9 follow-ups, Drive 03 §11):** a Sheets cell row costs ~125 bytes in the
+  `SheetsSizeEstimator` (S-D3), so 50 MB holds ~400k cells while `maxCellsPerSpreadsheet` is 1M:
+  decide whether to discount the estimate (e.g. count only non-null columns) or accept that
+  big spreadsheets put users over quota. The weekly orphan-image cleanup that subtracts
+  unreferenced images (03 §2) doesn't exist; images stored by a failed MCP `write.insert_image`
+  mutation or a cancelled import stay charged until then. Spreadsheet imports check only the
+  source size before work (the real size is the estimate after creation). No admin tool for
+  `quotaBytesOverride` (P2).
+- **Shell storage UI (D-11 follow-ups, Drive 03 §6.3–6.5):** not built yet: the *From
+  template* tooltip "Not enough storage" with disabled templates (`TemplateView.sizeBytes`), the
+  copy dialog's disabled *OK* "Not enough storage (needs 6.1 MB)" (the copy command pre-checks
+  and shows the dialog instead), the details panel's "Counts against Anna Berg's storage", and the
+  upload panel's "Not uploaded — you're out of storage" rows (D-13). Ownership-transfer
+  dialogs use the presenter's generic mapping (`reason: transfer`); the share dialog's own
+  error display was not switched to it. Golden masters of the meter/banner/dialogs are made on
+  CI (specs/15 §7). Not verified in a browser (no web-build token).
+- **Write & Sheets adaptations (D-16 follow-ups):** not verified in a browser (no web-build
+  token): *Open with* → `/write/import`, `/sheets/import` and Cancel going back to Drive
+  (`history.back`), the flipped homes and File › New ▸ *Presentation* (Slides `/new`). Write's
+  `/import` has no options dialog (Write imports have none; the server pipeline's defaults
+  apply). Sheets' `/import` loads the whole file into the browser for the dialog's preview
+  (large files are slow to analyze there; the conversion itself runs on the server). Images
+  refused on quota: background (queue) refusals show only the placeholder, not the *Out of
+  storage* dialog; Sheets in-cell `IMAGE()` images show no "Not uploaded" state; the refusal is
+  not persisted, so after a reload the queue tries once more (and is refused again). Write's
+  *Page & export* defaults (D-12 follow-up) are still not applied to new documents (needs the
+  page setup written at creation, also for offline-created documents).
+- **MCP & AI for Drive (D-15 follow-ups, suite 09 §4–§6, suite 10 §3.1):**
+  `drive.create_presentation` is not registered — it needs the headless deck
+  (`HeadlessDeck`/`ServerSlidesWriter`, Slides SL-8/SL-40); the `slides:read`/`slides:edit`
+  token scopes are accepted and offered (off by default) but no tool uses them yet.
+  `drive.export` of presentations answers `unsupported` until SL-40. The `ui.drive.*`
+  window handlers (D-17, `wonky_drive/lib/mcp/`) are tested in the window only; a relay test
+  through `/mcp` with a live Drive window is part of D-18's browser checks. The
+  Drive assistant (P1: drive-scoped threads, the restricted tool list of suite 10 §3.1 — the
+  current `AssistantToolset` binds `uuid` to the open file, so it needs a drive variant — the
+  folder/selection context builder and `drive.ai.askAboutItem`) is planned with M11. Resource
+  subscriptions for `wonky://file/<uuid>` / `wonky://drive/storage` follow the suite-wide
+  subscription work. `wonky://file` lists the 50 most recently modified files only.
+
+## Wonky Slides — open items
+
+Status per work package: [specs/wonky_slides/STATUS.md](specs/wonky_slides/STATUS.md).
+
+- **Display fonts (SL-6, Slides 05 §3.2, §6):** only the 10 families of `wonky_fonts` are
+  bundled, so the built-in themes ship with substitutes (Open Sans, EB Garamond, Lato, Roboto,
+  Nunito, Montserrat, Merriweather, Source Sans 3, JetBrains Mono, Roboto Mono). Bundle static
+  TTF instances (OFL) of Inter, Work Sans, IBM Plex Sans/Mono, Source Serif 4 and the display
+  families (Instrument Serif, Space Grotesk, Sora, Manrope, Bricolage Grotesque, Fraunces;
+  P1: Bebas Neue, DM Serif Display) into `packages/wonky_fonts/fonts/` (+ manifest, licenses,
+  mirror in `wonky_server/web/fonts/`, `SlidesFonts` categories), then move the built-ins to the
+  designed fonts with a version bump (`builtin:<key>@2`).
+- **Date placeholder (P2, 05 §4):** the built-in masters have no `date` placeholder yet.
+- **Built-in prompts are English** (`Click to add title`, …) and stored in the copied layout
+  rows; localize them when the copier (SL-8) copies a built-in, or render prompts of built-in
+  part keys from the app's ARB strings (SL-13).
+- **Skeleton leftovers (SL-1 → SL-11):** `/p/:uuid` is `DeckPlaceholderScreen` until SL-11's
+  `DeckEditorScreen` (it should open the deck with `openDeckSession` and show its
+  `DeckLoadState`; creating presentations works since SL-9); `flutter_apps: slides` has
+  `auto_launch: false` until Slides is usable (flip it in `wonky_server/pubspec.yaml`). The shell's empty home copy ("Welcome to your
+  drive" / "Create a document or open one shared with you.") and illustration are the same for
+  every app home — make them kind-aware (presentations) in `wonky_app` `home_screen.dart`.
+- **Contract stubs of SL-3 to replace:** `HarnessDeckDocument` (`wonky_slides/test/harness/`)
+  gives way to SL-11's `DeckDocumentController`. `CodeScene` and the timeline stub
+  (`motion.dart`) are minimal on purpose — SL-26 and SL-24 extend them. The in-memory
+  `LwwSyncRelay` is a skeleton; SL-9 added the replica-level harness
+  (`wonky_slides/test/sync/support/`: replicas, in-process sync peer, devices).
+  (`SlidesPlanner` is now the default of `DeckHarness` and `MemoryDeckSession.blank`;
+  `FakeSlidesPlanner` stays for session contract tests.)
+- **Core model and planner leftovers (SL-7):** the Slides text schema is `SlidesText`
+  (`wonky_slides_core/model.dart`, `lib/src/model/text/`) — SL-8 adds the
+  `SlidesDeltaValidator`/`SlidesDeltaNormalizer` names (02 §4.1) on top of it in `core/text/`
+  or moves it there. Paste (`PasteSlides`/`PasteElements`, 03 §12.2 payload) keeps
+  `wonky-file://` sources as they are: re-homing files into the target deck
+  (`FileEndpoint.copyToItem`, quota) is SL-8/SL-18's. Auto-fit scales and connector routes are
+  derived by SL-10's scene layer (on `SlideScene`, not on `ResolvedElement`). The order index treats
+  every slide group as top-level (nested groups are P2, 02 §3.4). Maintenance must be
+  *scheduled*: `SyncedDeckSession` runs `DeckMaintenance.repairOp(model)` after merges
+  (debounced 1 s, SL-9); still to do before headless writes in `ServerSlidesWriter` (SL-8),
+  executed with label "Repair presentation" and don't push it on the undo stack. Build, code-state
+  and chart-link operations are planned at row level with basic validation; effect catalogs,
+  `optionsJson`/annotation schemas and chart behavior are validated by SL-24/SL-26/SL-27. Undo
+  labels of plans are English (as Sheets'); localize with the shell's undo labels if needed.
+  The server's `DeckFactory` (SL-5) can now plan `CreateDeck` with `SlidesPlanner` instead of
+  the testing `DeckBuilder`.
+- **Client sync leftovers (SL-9):** `SyncedDeckSession.images` is the in-memory
+  `MemorySlideImageResolver` until SL-15 resolves uploads and signed URLs; the recovery export
+  of a broken replica is desktop only (on the web the kit can't read the replica behind the
+  SQLite worker — as Sheets) and is one JSON file of rows; the property
+  and convergence runs use an in-process sync peer (no OS-8 filter, no change-log consumer) —
+  the full multi-client harness with `serverpod_test` and isolates (12 §7.3) remains for the
+  scripted scenarios of 09 §6.4.
+- **Server deck sync leftovers (SL-5):** `DeckChangeLog` rows are never pruned (Sheets prunes
+  `ChangeLog` after 30 days in a daily job; add `DeckChangeLogProcessor.pruneOld` + receipts
+  cleanup to the maintenance jobs with SL-39, which reads the log for versions);
+  `slides.revertChange`/`reapplyChange` throw `unavailable` until `ServerSlidesWriter` records
+  `ServerChangeRecord`s (SL-8/SL-40); `drive.createPresentation` refuses `templateUuid` and
+  `drive.copy` of presentations is not deck-aware until the `DeckCopier` (SL-8/SL-22);
+  `DeckFactory` takes its rows from the core's `DeckBuilder` (testing library) until SL-7's
+  planner plans `CreateDeck`; consumer plugins still to add: comment orphaning (SL-38),
+  version snapshots index (SL-39), agent cursors (SL-40), headless cache (SL-8/SL-40);
+  `slidesSync` merges reuse the `SheetsMergedSignal` model on the `slides:merged:<space>`
+  channel (no listener yet).
+- **Scene and stage leftovers (SL-10):** the core `SlideTextLayout` measures with
+  `ApproxTextMeasurer` until SL-20 adds a `SlideTextMeasurer` on the `pdf` package's TTF
+  metrics (server PDFs, headless previews); the core engine lays out `justify` as `left`,
+  right-aligns RTL paragraphs without bidi reordering and renders small caps as all caps; the
+  Flutter engine scales super/subscripts but doesn't shift their baseline (`dart:ui` has no
+  baseline offset — use a placeholder span or font features). `SlideIconSource` needs the
+  Lucide name → glyph map of the icon font (SL-14's icon picker); charts draw a placeholder
+  until SL-27/SL-32 provide a `ChartSceneSource`; code uses `BasicCodeLayout` until SL-26's
+  `CodeElementModel` (highlight steps, window chrome, `palette: auto` by background). The
+  stage has no motion yet: part runs, typewriter clips, `drawProgress`, shader masks/dissolve
+  and per-element compositing while animating are SL-29's (06 §12.1); off-slide content at
+  40 % is available (`SlideStage.offSlideOpacity`) for SL-12's canvas. Shadow spread is
+  approximated by scaling the silhouette. Golden masters (every geometry and text style,
+  15 §7) still have to be generated on CI Linux; SL-10 tests paint patterns per kind in light
+  and dark instead. `SlideRenderer` isn't wired into an editor yet (SL-11/SL-12 create it per
+  open deck with the session's `SlideImageResolver`).
+- **Synced additions after S-1 (SL-24, SL-37):** queue new synced fields/tables in Slides 02 §14
+  and ship them in S-2/S-3; each bumps `SyncSchemaRelease` (`wonky_sync_models`) and the record
+  in 02 §14.1 — the server and Sheets guard tests fail until both are updated.

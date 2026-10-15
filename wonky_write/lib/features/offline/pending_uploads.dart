@@ -36,9 +36,41 @@ class PendingUploads {
   /// Files whose upload finished (image services clear their placeholder).
   Stream<UuidValue> get completed => _completed.stream;
 
+  final _refused = StreamController<UuidValue>.broadcast();
+
+  /// Files the server refused because the storage quota is full (Drive 03
+  /// §6.3): they stay on this device, are not retried automatically and
+  /// show "Not uploaded — out of storage" until [retry] or [cancel].
+  Stream<UuidValue> get refused => _refused.stream;
+
+  final Set<String> _outOfStorage = {};
+
+  /// Whether the server refused [fileUuid] on quota (see [refused]).
+  bool isOutOfStorage(UuidValue fileUuid) =>
+      _outOfStorage.contains(fileUuid.uuid);
+
+  /// Tries a refused upload again (*Retry* on the placeholder).
+  void retry(UuidValue fileUuid) {
+    final id = fileUuid.uuid;
+    _outOfStorage.remove(id);
+    _attempts[id] = 0;
+    _notBefore.remove(id);
+    _kick();
+  }
+
+  /// Marks [fileUuid] as refused on quota (also used by the image services
+  /// for their own uploads).
+  void markOutOfStorage(UuidValue fileUuid) {
+    if (!_known.contains(fileUuid.uuid)) return;
+    _outOfStorage.add(fileUuid.uuid);
+    if (!_refused.isClosed) _refused.add(fileUuid);
+    onChanged?.call();
+  }
+
   final Map<String, Uint8List> _bytes = {};
   final Set<String> _known = {};
   final Set<String> _claimed = {};
+  final Set<String> _storing = {};
   final Map<String, int> _attempts = {};
   final Map<String, DateTime> _notBefore = {};
   Timer? _timer;
@@ -89,16 +121,23 @@ class PendingUploads {
   }) async {
     _bytes[fileUuid.uuid] = bytes;
     _known.add(fileUuid.uuid);
-    await store.addUpload(
-      PendingUpload(
-        fileUuid: fileUuid,
-        itemUuid: itemUuid,
-        bytes: bytes,
-        mimeType: mimeType,
-        fileName: fileName,
-        createdAt: clock.now(),
-      ),
-    );
+    // Not uploaded by the queue before its row is stored (a run reading the
+    // row too early would forget it).
+    _storing.add(fileUuid.uuid);
+    try {
+      await store.addUpload(
+        PendingUpload(
+          fileUuid: fileUuid,
+          itemUuid: itemUuid,
+          bytes: bytes,
+          mimeType: mimeType,
+          fileName: fileName,
+          createdAt: clock.now(),
+        ),
+      );
+    } finally {
+      _storing.remove(fileUuid.uuid);
+    }
     onChanged?.call();
     _kick();
   }
@@ -128,6 +167,7 @@ class PendingUploads {
     _known.remove(fileUuid.uuid);
     _bytes.remove(fileUuid.uuid);
     _attempts.remove(fileUuid.uuid);
+    _outOfStorage.remove(fileUuid.uuid);
     try {
       await store.deleteUpload(fileUuid);
     } on Object catch (e) {
@@ -145,6 +185,7 @@ class PendingUploads {
     _bytes.clear();
     _attempts.clear();
     _notBefore.clear();
+    _outOfStorage.clear();
   }
 
   void _kick() {
@@ -160,7 +201,8 @@ class PendingUploads {
       while (!_disposed && connectivity.online) {
         final now = clock.now();
         final next = _known.where((id) {
-          if (_claimed.contains(id)) return false;
+          if (_claimed.contains(id) || _storing.contains(id)) return false;
+          if (_outOfStorage.contains(id)) return false;
           if ((_attempts[id] ?? 0) >= maxAttempts) return false;
           final nb = _notBefore[id];
           return nb == null || !nb.isAfter(now);
@@ -180,6 +222,7 @@ class PendingUploads {
       for (final e in _notBefore.entries)
         if (_known.contains(e.key) &&
             !_claimed.contains(e.key) &&
+            !_outOfStorage.contains(e.key) &&
             (_attempts[e.key] ?? 0) < maxAttempts)
           e.value,
     ];
@@ -208,6 +251,14 @@ class PendingUploads {
       );
       await complete(fileUuid);
     } catch (e) {
+      if (QuotaErrorPresenter.isQuotaExceeded(e)) {
+        // Out of storage: kept on this device until Retry / Remove.
+        try {
+          await store.recordUploadFailure(fileUuid, '$e');
+        } catch (_) {}
+        markOutOfStorage(fileUuid);
+        return;
+      }
       final n = (_attempts[id] ?? 0) + 1;
       _attempts[id] = n;
       final seconds = min(600, 2 * pow(2, n - 1).toInt());
@@ -222,6 +273,7 @@ class PendingUploads {
   void dispose() {
     _disposed = true;
     unawaited(_completed.close());
+    unawaited(_refused.close());
     _timer?.cancel();
     connectivity.removeListener(_onConnectivity);
   }

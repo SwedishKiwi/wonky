@@ -3,8 +3,8 @@ import 'dart:math' as math;
 
 import 'package:collection/collection.dart';
 import 'package:wonky_sync_models/ids.dart';
+import 'package:wonky_charts/wonky_charts.dart';
 
-import '../charts/scene/geometry.dart';
 import '../model/axis_index.dart';
 import 'object_geometry.dart';
 

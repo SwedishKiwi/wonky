@@ -23,7 +23,7 @@ import '../../platform/sharing/access_service.dart';
 import '../headless/headless_workbook_provider.dart';
 import '../mcp/sheets_bulk_writer.dart';
 import '../sheets_service.dart';
-import '../spaces/space_service.dart';
+import '../../platform/spaces/space_service.dart';
 import '../sync/server_sheets_writer.dart';
 import '../sync/sync_db.dart';
 import '../sync/synced_tables.dart' show deleteSyncedRow, updateSyncedRow;

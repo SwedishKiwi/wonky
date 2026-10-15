@@ -12,22 +12,26 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _ida;
 import 'package:serverpod/serverpod.dart' as _is;
+import '../../sheets/models/space_kind.dart' as _in1d3ohj;
 
-/// An empty space reserved for offline spreadsheet creation (suite 12 §2.2).
+/// An empty space reserved for offline creation of a spreadsheet or (v2) a
+/// deck (suite 12 §2.2, §2.6).
 abstract class SpaceReservation
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
   SpaceReservation._({
     this.id,
     required this.userId,
     required this.spaceUuid,
+    _in1d3ohj.SpaceKind? kind,
     required this.createdAt,
     this.usedAt,
-  });
+  }) : kind = kind ?? _in1d3ohj.SpaceKind.spreadsheet;
 
   factory SpaceReservation({
     int? id,
     required int userId,
     required _is.UuidValue spaceUuid,
+    _in1d3ohj.SpaceKind? kind,
     required DateTime createdAt,
     DateTime? usedAt,
   }) = _SpaceReservationImpl;
@@ -39,6 +43,9 @@ abstract class SpaceReservation
       spaceUuid: _is.UuidValueJsonExtension.fromJson(
         jsonSerialization['spaceUuid'],
       ),
+      kind: jsonSerialization['kind'] == null
+          ? null
+          : _in1d3ohj.SpaceKind.fromJson((jsonSerialization['kind'] as String)),
       createdAt: _is.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
@@ -59,6 +66,9 @@ abstract class SpaceReservation
 
   _is.UuidValue spaceUuid;
 
+  /// (v2) The kind of item the space is reserved for.
+  _in1d3ohj.SpaceKind kind;
+
   DateTime createdAt;
 
   /// Set when a spreadsheet is registered in the space.
@@ -74,6 +84,7 @@ abstract class SpaceReservation
     int? id,
     int? userId,
     _is.UuidValue? spaceUuid,
+    _in1d3ohj.SpaceKind? kind,
     DateTime? createdAt,
     DateTime? usedAt = const _is.$UndefinedDateTime(),
   });
@@ -84,6 +95,7 @@ abstract class SpaceReservation
       if (id != null) 'id': id,
       'userId': userId,
       'spaceUuid': spaceUuid.toJson(),
+      'kind': kind.toJson(),
       'createdAt': createdAt.toJson(),
       if (usedAt != null) 'usedAt': usedAt?.toJson(),
     };
@@ -129,12 +141,14 @@ class _SpaceReservationImpl extends SpaceReservation {
     int? id,
     required int userId,
     required _is.UuidValue spaceUuid,
+    _in1d3ohj.SpaceKind? kind,
     required DateTime createdAt,
     DateTime? usedAt,
   }) : super._(
          id: id,
          userId: userId,
          spaceUuid: spaceUuid,
+         kind: kind,
          createdAt: createdAt,
          usedAt: usedAt,
        );
@@ -147,6 +161,7 @@ class _SpaceReservationImpl extends SpaceReservation {
     Object? id = _Undefined,
     int? userId,
     _is.UuidValue? spaceUuid,
+    _in1d3ohj.SpaceKind? kind,
     DateTime? createdAt,
     DateTime? usedAt = const _is.$UndefinedDateTime(),
   }) {
@@ -154,6 +169,7 @@ class _SpaceReservationImpl extends SpaceReservation {
       id: id is int? ? id : this.id,
       userId: userId ?? this.userId,
       spaceUuid: spaceUuid ?? this.spaceUuid,
+      kind: kind ?? this.kind,
       createdAt: createdAt ?? this.createdAt,
       usedAt: usedAt is _is.UndefinedSentinel ? this.usedAt : usedAt,
     );
@@ -173,6 +189,13 @@ class SpaceReservationUpdateTable
     _is.UuidValue value,
   ) => _is.ColumnValue(
     table.spaceUuid,
+    value,
+  );
+
+  _is.ColumnValue<_in1d3ohj.SpaceKind, _in1d3ohj.SpaceKind> kind(
+    _in1d3ohj.SpaceKind value,
+  ) => _is.ColumnValue(
+    table.kind,
     value,
   );
 
@@ -201,6 +224,12 @@ class SpaceReservationTable extends _is.Table<int?> {
       'spaceUuid',
       this,
     );
+    kind = _is.ColumnEnum(
+      'kind',
+      this,
+      _is.EnumSerialization.byName,
+      hasDefault: true,
+    );
     createdAt = _is.ColumnDateTime(
       'createdAt',
       this,
@@ -217,6 +246,9 @@ class SpaceReservationTable extends _is.Table<int?> {
 
   late final _is.ColumnUuid spaceUuid;
 
+  /// (v2) The kind of item the space is reserved for.
+  late final _is.ColumnEnum<_in1d3ohj.SpaceKind> kind;
+
   late final _is.ColumnDateTime createdAt;
 
   /// Set when a spreadsheet is registered in the space.
@@ -227,6 +259,7 @@ class SpaceReservationTable extends _is.Table<int?> {
     id,
     userId,
     spaceUuid,
+    kind,
     createdAt,
     usedAt,
   ];

@@ -8,3 +8,9 @@ fields:
   maxImageUploadBytes: int
   maxImportUploadBytes: int
   scriptTimeoutMs: int
+  ### (v2) Cap for one uploaded Drive file (`wonky.files.maxFileUploadBytes`,
+  ### Drive 02 §3.2).
+  maxFileUploadBytes: int, default=52428800
+  ### (v2) Default storage quota per user (`wonky.drive.quotaBytesPerUser`,
+  ### Drive 03 §1).
+  quotaBytesPerUser: int, default=52428800

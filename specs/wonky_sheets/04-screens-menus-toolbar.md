@@ -51,8 +51,8 @@ final sheetsMenuSpec = MenuSpec.root([
 
 | Route (suite 03 §2) | Screen | Class | Notes |
 |---------------------|--------|-------|-------|
-| `/` and drive routes | Home (v2: **only** spreadsheets and folders that contain them) | shell `DriveHomeScreen` with `HomeScope.kind(spreadsheet)` + `SheetsHomeConfig` | §12 |
-| `/new?folder=&template=`, `/import?file=<fileItemUuid>` (v2) | Create a spreadsheet (reserved space, offline-first) / import a Drive file with §11.15 | `SheetsNewRoute`, `SheetsImportRoute` | §12, Drive 02 §7.2 |
+| `/` and drive routes | Home (v2: **only** spreadsheets and folders that contain them) | shell `DriveHomeScreen` with `SheetsAppConfig.homeScope = HomeScope.kind(spreadsheet)` | §12 |
+| `/new?folder=&template=`, `/import?file=<fileItemUuid>` (v2) | Create a spreadsheet (reserved space, offline-first) / import a Drive file with §11.15 | shell `NewItemRoutePage` (default `newItemRoute` → `SheetsAppConfig.createItem`), `ImportRoutePage` + `importDriveFileAsSpreadsheet` (`features/import/drive_file_import.dart`) | §12, Drive 02 §7.2 |
 | `/templates` | Template gallery (Sheets categories) | shell | §12 |
 | `/s/:uuid` (`?sheet=&range=&comment=`) | **Spreadsheet editor** | `SheetEditorScreen` | §2 |
 | `/s/:uuid` while downloading | "Downloading spreadsheet… 42 %" progress (suite 12 §2.3) | `SpreadsheetLoadingView` | Skeleton grid + `ShadProgress` |
@@ -126,6 +126,7 @@ lib/
 |------|-----------|-------|-----------|---------|------|
 | New ▸ Spreadsheet | `shell.drive.newSpreadsheet` | ⌥⌘N (desktop ⌘N) | Ctrl+Alt+N | view | shell 05 |
 | New ▸ Document | `shell.drive.newDocument` | — | — | view | shell 05 |
+| New ▸ Presentation (v2) | `shell.file.new {kind: presentation}` (opens Wonky Slides' `/new` in this tab) | — | — | view | suite 03 §3.3 |
 | New ▸ From template… | `shell.drive.newFromTemplate` | — | — | view | shell 05 |
 | Open… | `shell.nav.quickSwitcher` | ⌘O | Ctrl+O | view | shell 03 |
 | Import… | `sheets.file.import` | — | — | view (some locations need edit) | [11](11-import-export-print.md), §11.15 |
@@ -866,6 +867,13 @@ The locale, time zone and default font/size also apply to spreadsheets the **ser
 `sheetsDefaults`; explicit `locale`/`timeZone` arguments win. Copies of user templates keep the
 template's settings.
 
+As built (D-12): `wonky_sheets/lib/features/settings/` (`sheetsSettingsSections`,
+`SheetsSettingsSection` moved from `formatting/`); groups *New spreadsheets*, *Editing* (incl.
+*Autocomplete values from the column* and *Distinguish chart series by pattern*), *Custom fill
+lists*. Every control goes through **`sheets.prefs.set {key, value}`** (not in the palette;
+validates the key against `sheetsSettingKeys` and the value's type; works without an open
+spreadsheet), so MCP can change every setting.
+
 ### 11.25 Copy sheet to existing spreadsheet
 
 Drive picker dialog (shell `DrivePickerDialog`, filtered to spreadsheets where user is Editor) →
@@ -881,8 +889,16 @@ Drive picker dialog (shell `DrivePickerDialog`, filtered to spreadsheets where u
   settings*, *Report a bug* and the storage meter; folder management and other kinds are in
   Wonky Drive (*Open in Wonky Drive*). Search is filtered to spreadsheets ("Search all of Wonky
   Drive" row).
-- `SheetsHomeConfig`: `homeScope = HomeScope.kind(spreadsheet)`; `+ New` = *Spreadsheet* (works
-  offline via reserved spaces, suite 12 §2.2) and *From template…*.
+- `SheetsAppConfig.homeScope = HomeScope.kind(spreadsheet)` (D-16); `+ New` = *Spreadsheet*
+  (works offline via reserved spaces, suite 12 §2.2), *From template…* and *Import file…*
+  (`.xlsx .ods .csv .tsv .txt`). The empty home reads "Welcome to Wonky Sheets".
+- (v2, as built D-16) `/import?file=` loads the file's bytes (`drive.fileContentUrl`), shows
+  the import dialog (§11.15) with only *Create new spreadsheet* enabled, and runs
+  `drive.convertFile` with the chosen options (`optionsJson`) — the stored file is converted on
+  the server, not uploaded again. Cancel goes back to Drive (`history.back`); errors stay in
+  Sheets with a toast. Images over cells whose upload was refused on quota show "Not uploaded —
+  out of storage" with *Retry* / *Remove* (`ImageOutOfStorageOverlay`); in-cell `IMAGE()`
+  images show no overlay (TODO.md).
 - **Template strip**: Blank, To-do list, Annual budget, Monthly budget, Schedule, Invoice, Project
   timeline (Gantt via CF), Expense report, Attendance, Team roster. Templates are spreadsheets
   with `DriveItem.templateOf` (suite 05); category "Finance" etc. on `/templates`.
