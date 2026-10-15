@@ -68,6 +68,7 @@ charts).
 | 13 | [Security & operations](13-security-and-operations.md) | Threat model, privacy, deployment, scheduled jobs, arbitrary uploads |
 | 14 | [Roadmap](14-roadmap.md) | Milestones M0–M11 (v2: M8 Drive + suite changes, M9–M11 Slides), how parallel agents execute the work packages, shared workstreams, risks |
 | 15 | [Writing tests](15-writing-tests.md) | How to write tests: layout, naming, helpers, server/widget/golden/property/E2E patterns, determinism, running |
+| 16 | [Bugs & Improvements](16-bugs-and-improvements.md) | Public board for bug reports and improvement ideas: report dialog with annotated screenshots, votes, comments, AI triage and moderation, admins, tasks with contributor prompts, claims, GitHub PR rules (M12, specified) |
 
 ## Conventions used in all specs
 

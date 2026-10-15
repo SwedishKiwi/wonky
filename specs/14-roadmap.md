@@ -172,6 +172,12 @@ M8 must land the shell changes (scope-aware homes, settings split, `WonkyAppKind
 apps) before Slides UI work starts in M9, and every shared-package extraction plus OS-8 before
 the first Slides package that needs it (SL-2 needs D-6; SL-5 needs D-4; SL-26/SL-27 need D-2/D-3).
 
+### 2.1a Bugs & Improvements (M12, specified)
+
+| Milestone | Goal | Exit criteria |
+|-----------|------|---------------|
+| **M12 · Bugs & Improvements** ([16](16-bugs-and-improvements.md), BI-1…BI-9; P1 BI-10; GitHub step 2 BI-11, BI-12) | Replace *Report a bug* and *Report a problem* with a public in-app board: report dialog with similar posts and an annotated screenshot, votes, Markdown comments (shared with document comments), triage and moderation by Jev and writing by Gemini (internal keys, separate from the in-app AI), admins by email domain, tasks (single posts or bundles) with AI-written, admin-reviewed contributor prompts, 48-hour claims with claim codes, `CONTRIBUTING.md`, `SECURITY.md` and PR template; step 2: a GitHub App gate (only PRs with a claimed task), an advisory AI review against the task, merged → done, deployed → shipped | J-B1 green; board access matrix tested; document comment suites green; light/dark goldens; signed-out board loads in the release build; `CONTRIBUTING.md` verified by a fresh-clone dry run |
+
 ### 2.2 Executing the plan with parallel agents (v2)
 
 The app plans list **work packages** (Drive 05 §4: D-1…D-18; Slides 12 §4: SL-1…SL-45). Each
