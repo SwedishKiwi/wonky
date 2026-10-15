@@ -1,2 +1,6 @@
 tags:
   integration: {}
+  # Calls the real board AI providers (Jev, Gemini; specs/16 §15). Never in
+  # CI. Run: dart test -t live-ai --run-skipped test/platform/board/ai/eval
+  live-ai:
+    skip: 'Calls the real AI providers; run with -t live-ai --run-skipped.'

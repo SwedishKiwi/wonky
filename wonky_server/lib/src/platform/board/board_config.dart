@@ -129,8 +129,8 @@ class BoardConfig {
       ),
       ai: BoardAiConfig(
         jevModel: ai.s('jevModel', 'jev-1.13.0'),
-        geminiModel: ai.s('geminiModel', 'gemini-2.5-pro'),
-        geminiFastModel: ai.s('geminiFastModel', 'gemini-2.5-flash'),
+        geminiModel: ai.s('geminiModel', 'gemini-3.1-pro-preview'),
+        geminiFastModel: ai.s('geminiFastModel', 'gemini-3.8-flash'),
         jevDailyTokenBudget: ai.i('jevDailyTokenBudget', 20000000),
         geminiDailyTokenBudget: ai.i('geminiDailyTokenBudget', 5000000),
         thresholds: BoardAiThresholds.fromMap(
@@ -175,8 +175,8 @@ class BoardLimits {
 class BoardAiConfig {
   BoardAiConfig({
     this.jevModel = 'jev-1.13.0',
-    this.geminiModel = 'gemini-2.5-pro',
-    this.geminiFastModel = 'gemini-2.5-flash',
+    this.geminiModel = 'gemini-3.1-pro-preview',
+    this.geminiFastModel = 'gemini-3.8-flash',
     this.jevDailyTokenBudget = 20000000,
     this.geminiDailyTokenBudget = 5000000,
     BoardAiThresholds? thresholds,
@@ -199,8 +199,8 @@ class BoardAiThresholds {
     this.securityHold = 0.5,
     this.securityReview = 0.2,
     this.harmHold = 0.7,
-    this.harmReview = 0.4,
-    this.junkHold = 0.85,
+    this.harmReview = 0.5,
+    this.junkHold = 0.8,
     this.junkReview = 0.5,
     this.kindCorrection = 0.8,
     this.labelConfidence = 0.5,

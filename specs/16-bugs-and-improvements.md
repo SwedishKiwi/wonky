@@ -393,12 +393,17 @@ The board routes are added to every app by `buildShellRouter`, next to `settings
 | Crop (P1) | `R` | Crop rectangle |
 
 - **Shared ink code**: `InkStroke`, `OneEuroFilter` and the stroke painter move from
-  `wonky_slides/lib/features/present/present_ink.dart` into `wonky_ui` (`ink/`). Slides then
-  imports them from there, with no behavior change.
+  `wonky_slides/lib/features/present/present_ink.dart` into `wonky_ui` (`ink/`: `InkStroke` with
+  `InkTool.pen` / `highlighter`, `OneEuroFilter`, `InkStrokePainter` and its static
+  `paintStrokes` for flattening). Slides then imports them from there, with no behavior change
+  (`PresentTool`, `InkColors` and `InkModel` stay in Slides).
 - **Done** flattens the image and the annotations into a new image at the source resolution and
   encodes it as PNG. If the PNG is over 2 MB it becomes JPEG at quality 85, and if that is still
-  over 5 MB it is downscaled. **Only the flattened image leaves the device.** The original and the
-  annotation layers are never uploaded, so covered pixels are gone for good.
+  over 5 MB it is downscaled (`encodeScreenshot` in `wonky_app`). `wonky_app` has no JPEG
+  encoder of its own (no `package:image`): `encodeScreenshot` takes an optional `jpegEncoder`;
+  without one a PNG over 2 MB is kept up to 5 MB and downscaled beyond. **Only the flattened
+  image leaves the device.** The original and the annotation layers are never uploaded, so
+  covered pixels are gone for good.
 - The annotation layers stay in memory while the dialog is open, so *Edit* can change them before
   posting. After posting, the screenshot can only be removed (by the author or an admin), not
   edited.
@@ -432,7 +437,7 @@ used for what it does best:
 | Model | Provider | Used for | Why |
 |-------|----------|----------|-----|
 | **Jev** (`jev-1.13.0`, pinned) | [TypeSafe](https://typesafe.ai/), `POST https://api.typesafe.ai/v1/systemone` | Every **decision**: moderation, kind, area, size, duplicate checks, comment checks, reranking similar posts | A "System One" model: it returns typed answers (Choice, Score, Noul) with calibrated probabilities in about 0.1 s, at $0.042 per million input tokens. It cannot generate text |
-| **Gemini** (`gemini-2.5-pro` and `gemini-2.5-flash` by default) | Google, through `dartantic_ai` | Everything that **writes**: suggested titles and summaries, bundle suggestions, task prompts, PR reviews (§13.5) | Generation and long context (whole diffs) |
+| **Gemini** (`gemini-3.1-pro-preview` and `gemini-3.8-flash` by default; the 2.5 models return 404 for new keys) | Google, through `dartantic_ai` | Everything that **writes**: suggested titles and summaries, bundle suggestions, task prompts, PR reviews (§13.5) | Generation and long context (whole diffs) |
 
 ### 6.1 Board AI components (`platform/board/ai/`)
 
@@ -475,7 +480,8 @@ used for what it does best:
 ### 6.2 What Jev decides
 
 One Jev request per post, built in `BoardTriageQuestions`. All questions go in one request: Jev
-evaluates them in parallel against the same state.
+evaluates them in parallel against the same state. Measured on the evaluation set: p50 265 ms, p95
+443 ms, about 1.8k input tokens per post.
 
 **State** (JSON, only what the questions need; Jev loses accuracy with irrelevant detail):
 
@@ -508,8 +514,8 @@ confidence-gated routing: three bands per decision.
 | Decision | Hold (held, admin first) | Review (visible, in the admin *Check* list) | Otherwise |
 |----------|-------------------------|---------------------------------------------|-----------|
 | `security` | ≥ 0.5 | ≥ 0.2 | visible |
-| `offensive`, `personal_data` | ≥ 0.7 | ≥ 0.4 | visible |
-| `spam`, `not_actionable`, `off_topic` | ≥ 0.85 | ≥ 0.5 | visible |
+| `offensive`, `personal_data` | ≥ 0.7 | ≥ 0.5 | visible |
+| `spam`, `not_actionable`, `off_topic` | ≥ 0.8 | ≥ 0.5 | visible |
 | `kind` correction | — | — | applied when the other option wins with confidence ≥ 0.8 |
 | `area`, `size` | — | — | set when confidence ≥ 0.5, else left empty (*Needs labels* for admins) |
 | `duplicate_<n>` | — | ≥ 0.8: *Possible duplicate of #388* hint for admins (never auto-merged) | — |
@@ -617,7 +623,11 @@ of `packages/wonky_app/lib/src/comments/`:
   reading `services.activeDocument` directly.
 - Document comments implement it with the existing commands (no behavior change; the existing
   comments tests stay green). The board implements it with `shell.board.comment.*`.
-- The board maps `BoardCommentView` to the same `CommentView`-shaped data the widget renders.
+- The board maps `BoardCommentView` to the same `CommentView`-shaped data the widget renders:
+  `ThreadComment` (document comments use `ThreadComment.fromCommentView`), rendered with
+  `CommentThreadBody.custom(services, actions, comments)`. Optional features of the interface
+  (resolve, reactions, copy link, @mentions) are off unless the implementation enables them; a
+  thread without mentions replies and edits in a `MarkdownComposer`.
 
 **Markdown.** Today comments are stored as Markdown but shown as raw text, and post bodies need a
 renderer.
@@ -835,8 +845,9 @@ empty sections. The input:
   `/improvements/p/412/screenshot`), and up to 20 admin and top-voted comments (all as delimited
   untrusted data);
 - the **spec index**: `specs/README.md` tables plus the headings of the area's spec files. The
-  server reads them from a generated snapshot (`wonky_server/lib/src/platform/board/spec_index.g.dart`,
-  regenerated by `tool/` at build time) so it doesn't need a checkout.
+  server reads them from a generated snapshot (`wonky_server/lib/src/platform/board/ai/spec_index.g.dart`,
+  written by `dart run tool/spec_index.dart`; a test fails when it is stale) so it doesn't need a
+  checkout.
 
 The output is the **prompt body**: goal, acceptance criteria (a checklist), the specs and sections
 to read, likely packages and folders, what is out of scope, and the tests to add. The server then
@@ -1182,8 +1193,8 @@ wonky:
              flagsPerDay: 30, similarPerMinute: 60}
     ai:                                  # §6; keys: internalJevApiKey, internalGeminiApiKey
       jevModel: jev-1.13.0               # pinned; thresholds are tuned per version
-      geminiModel: gemini-2.5-pro        # prompts, bundles, PR reviews
-      geminiFastModel: gemini-2.5-flash  # titles and summaries
+      geminiModel: gemini-3.1-pro-preview  # prompts, bundles, PR reviews
+      geminiFastModel: gemini-3.8-flash    # titles and summaries
       jevDailyTokenBudget: 20000000      # ≈ $0.84/day at $0.042 per Mtok
       geminiDailyTokenBudget: 5000000
       thresholds: {…}                    # §6.2 table
