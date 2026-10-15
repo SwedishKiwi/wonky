@@ -4,6 +4,10 @@ import 'package:wonky_app/testing.dart';
 import 'package:wonky_slides/config/slides_app_config.dart';
 import 'package:wonky_slides/features/settings/slides_settings.dart';
 import 'package:wonky_slides/features/settings/slides_user_defaults.dart';
+import 'package:wonky_slides/features/sync/slides_data.dart'
+    show newPresentationDefaults;
+import 'package:wonky_slides_core/themes.dart'
+    show SlideAppearance, SlideSizeKind;
 import 'package:wonky_slides/l10n/slides_l10n.dart';
 import 'package:wonky_ui/testing.dart';
 
@@ -19,17 +23,15 @@ void main() {
   setUp(() => h = slidesHarness());
   tearDown(() => h.dispose());
 
-  test(
-    'Given the Slides app config when its settings are listed then the '
-    'four sections are presentations, editing, animations and presenting',
-    () {
-      final sections = const SlidesAppConfig().appSettingsSections(h.services);
-      expect(
-        [for (final s in sections) s.id],
-        ['presentations', 'editing', 'animations', 'presenting'],
-      );
-    },
-  );
+  test('Given the Slides app config when its settings are listed then the '
+      'sections are presentations, editing and presenting (Animations & code '
+      'is hidden until SL-30/SL-31)', () {
+    final sections = const SlidesAppConfig().appSettingsSections(h.services);
+    expect(
+      [for (final s in sections) s.id],
+      ['presentations', 'editing', 'presenting'],
+    );
+  });
 
   for (final page in SlidesSettingsPage.values) {
     for (final (size, brightness) in [
@@ -72,16 +74,25 @@ void main() {
       ),
     );
     final d = SlidesUserDefaults.of(h.services);
-    expect(d.flag(SlidesUserDefaults.keySmartQuotes), isTrue);
+    expect(d.flag(SlidesUserDefaults.keySmartGuides), isTrue);
 
     await tester.tap(
-      find.byKey(const ValueKey<String>('settings.slides.smartQuotes')),
+      find.byKey(const ValueKey<String>('settings.slides.smartGuides')),
     );
     await tester.pumpAndSettle();
 
-    expect(d.flag(SlidesUserDefaults.keySmartQuotes), isFalse);
-    expect(h.services.prefs.slidesDefaults['smartQuotes'], false);
-    expect(find.text(l.settingsSmartQuotes), findsOneWidget);
+    expect(d.flag(SlidesUserDefaults.keySmartGuides), isFalse);
+    expect(h.services.prefs.slidesDefaults['smartGuides'], false);
+    // Settings of features that are not built are hidden (SL-23).
+    for (final hidden in [
+      l.settingsSmartQuotes,
+      l.settingsAutoformatLists,
+      l.settingsUnits,
+      l.settingsScrollChangesSlides,
+      l.settingsSpelling,
+    ]) {
+      expect(find.text(hidden), findsNothing, reason: hidden);
+    }
     await settleTooltips(tester);
   });
 
@@ -107,5 +118,38 @@ void main() {
 
     expect(h.services.prefs.slidesPresenter['startWithPresenterView'], true);
     await settleTooltips(tester);
+  });
+
+  test('Given the settings command when MCP reads its schema then only '
+      'settings of built features are advertised (SL-23)', () {
+    final schema =
+        '${h.services.registry.byId('slides.prefs.set')!.argsSchema.toJson()}';
+    expect(schema, contains(SlidesUserDefaults.keySmartGuides));
+    expect(schema, contains(SlidesUserDefaults.keyDefaultThemeKey));
+    for (final hidden in [
+      SlidesUserDefaults.keySmartQuotes,
+      SlidesUserDefaults.keyCodeFontSize,
+      SlidesUserDefaults.keyDefaultTransition,
+      SlidesUserDefaults.keyChartsAutoUpdate,
+      SlidesUserDefaults.keyUnderlineSpelling,
+    ]) {
+      expect(schema, isNot(contains(hidden)), reason: hidden);
+      expect(offersDefaultsKey(hidden), isFalse, reason: hidden);
+    }
+  });
+
+  test('Given New presentations settings when a blank deck is created then '
+      'it takes the default theme and size, and the appearance only when '
+      'chosen', () async {
+    var d = newPresentationDefaults(h.services);
+    expect(d.appearance, isNull);
+    final defaults = SlidesUserDefaults.of(h.services);
+    await defaults.set(SlidesUserDefaults.keyDefaultThemeKey, 'swiss');
+    await defaults.set(SlidesUserDefaults.keyDefaultSize, 'standard4x3');
+    await defaults.set(SlidesUserDefaults.keyDefaultAppearance, 'dark');
+    d = newPresentationDefaults(h.services);
+    expect(d.themeKey, 'swiss');
+    expect(d.size?.kind, SlideSizeKind.standard4x3);
+    expect(d.appearance, SlideAppearance.dark);
   });
 }

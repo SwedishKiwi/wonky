@@ -350,6 +350,109 @@ Everything below is deferred; the app works without it. Areas are in rough prior
   subscriptions for `wonky://file/<uuid>` / `wonky://drive/storage` follow the suite-wide
   subscription work. `wonky://file` lists the 50 most recently modified files only.
 
+## Wonky Slides — later (M10/M11)
+
+M9 (Slides MVP) closed with SL-23 on 2026-10-15: Slides **only shows what works**. Everything
+below is planned in [specs/wonky_slides/12-implementation-plan.md](specs/wonky_slides/12-implementation-plan.md)
+§4.8–§4.12 and not built (or built only in the core). Per-package leftovers of the built work
+packages are in "Wonky Slides — open items" below (cross-referenced here, not repeated).
+
+**How hidden features come back.** `wonky_slides/lib/config/slides_features.dart` has one
+`SlidesFeature` value per hidden area (with its work package) and `SlidesFeatures.enabled`
+(empty for M9). While a feature is off its commands — real ones and the disabled
+`placeholder_commands.dart` entries — are not registered (so menus, toolbar, context menus,
+palette, shortcuts and MCP `ui.*` don't offer them; menus and context menus are pruned with
+`SlidesFeatures.prune`), the shell's comments/versions/assistant commands are left out
+(`WonkyAppConfig.hidesShellCommand`), the inspector drops Format sections without a builder
+and the Animate tab, the status bar/View menu drop the outline and masters modes, settings of
+hidden features are neither shown nor advertised (`offersDefaultsKey`), and Sheets chart pastes
+are refused with a toast. A work package turns its feature on by adding it to
+`SlidesFeatures.enabled`, registering real commands (its placeholders then drop out), giving its
+inspector sections a builder, and updating `test/config/menu_registry_test.dart` (golden ids)
+and the tests that assert the hidden state (`chrome_commands_test`, `deck_editor_screen_test`,
+`slides_settings_test`, `clipboard_commands_test`). Remove a `SlidesFeature` value once its
+feature ships.
+
+**Already in place:** the timeline core (SL-24; present mode compiles every slide with
+`SlideMotionInput.fromDeck` + `CompileOptions(reducedMotion:)` but builds/transitions aren't
+animated yet, frames are settled), the code core (SL-26; code elements from templates or MCP
+render statically through `CodeElementLayout`), chart elements render a static placeholder,
+`OutlineViewShell` (read-only) and `MastersModeShell` (`features/editor_screen/
+view_mode_shells.dart`), the `slidesDefaults` keys for animations/code/charts/spelling, the
+history child-route placeholder (`DeckRoutePlaceholder`, not routed while hidden), schema S-1/S-2
+with every Slides table.
+
+- **SL-25 · Transitions and Magic Move core** (06 §7–§8; deps SL-10, SL-24 ✓) —
+  `TransitionCompiler`/`TransitionPlan` beyond `cut` (`motion/stub/transition_stub.dart`),
+  `MagicMoveMatcher` (shapes, text glyphs, code tokens, chart camera), plan budget ≤ 15 ms.
+- **SL-27 · Chart link core and server** (08 §2.7, §3, §5, §13; deps D-3, SL-7) — `wonky_charts`
+  reveal/morph/snapshot APIs, chart link data in the core, `SlidesChartEndpoint`, the Sheets
+  clipboard payload addition. Feature `charts` (with SL-32).
+- **SL-28 · Masters, layout editing, theme editor** (05 §8; dep SL-17) — master mode, layout
+  editing, *Edit theme…*, *Insert placeholder*. Feature `masters` (`slides.theme.edit`,
+  `slides.layout.insertPlaceholder`, View › Edit masters, Inspector *Edit layout*).
+- **SL-29 · Motion player and rendering** (06 §6, §12–§14; 10 §4, §9; deps SL-24 ✓, SL-25,
+  SL-19 ✓) — `SlidePlayer`, transition rendering incl. 3D, reduced motion in the player,
+  presenting with running builds, loop/kiosk timers. Laser, pen and ephemeral ink are already
+  built (SL-19). Feature `animations` (with SL-30).
+- **SL-30 · Animate tab, animation pane, transitions UI** (06 §5, §7 UI; deps SL-24 ✓, SL-25,
+  SL-11 ✓) — Inspector › Animate (Transition/Build/Order), `slides.animate.*`,
+  `slides.magicMove.*`, *Duplicate for Magic Move*, toolbar *Animate*/*Transition*, the
+  Animations settings group. Feature `animations`.
+- **SL-31 · Code element UI** (07 §3, §7–§8; deps SL-26 ✓, SL-24 ✓) — insert code block, code
+  editing, highlight steps, states, type-in while presenting, the Code settings group; the
+  renderers must draw the SL-26 `CodeScene` fields (see "Code core leftovers"). Feature
+  `codeBlocks`.
+- **SL-32 · Chart element UI** (08 §4–§10; deps SL-27, SL-24 ✓) — insert linked/native charts,
+  *Update*, client-side auto-update, unlink, Linked objects panel, Sheets chart paste (now
+  refused), chart builds, 3D camera, the Charts settings group. Feature `charts`.
+- **SL-33 · PDF builds as pages, print frame, PNG export** (10 §11, §13; deps SL-20 ✓,
+  SL-24 ✓) — *Print each build stage* (hidden), PNG / PNG ZIP (Markdown P2) downloads.
+  Features `printBuilds`, `imageExports`.
+- **SL-34 · Outline view, Layers panel, accessibility checker** (04 §10, 03 §8, §17; deps
+  SL-14 ✓, SL-16 ✓) — editable outline (the read-only shell exists), Layers panel,
+  accessibility checker. Features `outlineView`, `layers`, `accessibilityChecker`.
+- **SL-35 · Write exports on the shared tokenizer** (07 §2.2, Q25; dep SL-26 ✓) — Write's
+  export code highlighting through `wonky_code`.
+- **SL-36 · Templates 10 of 10, M10 integration and exit** (04 §15; all M10) — Quarterly review,
+  Tech talk, Product launch, Portfolio, …; the M10 exit gate (J-S5…J-S7).
+- **SL-37 · Live collaboration + schema S-3** (09 §1–§2; dep SL-21 ✓) — live pointers, follow
+  mode, follow presenter, transform hints (see "Collaboration leftovers").
+- **SL-38 · Comments on slides and elements** (09 §3; deps SL-12 ✓, SL-16 ✓) — comment pins,
+  panel, anchors. Feature `comments` (shell comment commands, title-row comments button and
+  panel, *Comment* toolbar button, View › Show › Comment pins).
+- **SL-39 · Version history, overwritten-text review, activity** (09 §4–§6; deps SL-8 ✓,
+  SL-9 ✓) — File › Version history, the `history` route and panel. Feature `versionHistory`.
+- **SL-40 · MCP headless tools `slides.*`** (11 §2–§4; deps SL-8 ✓, SL-20 ✓, SL-24…SL-27) —
+  also `drive.create_presentation` and `drive.export` of decks (see Drive MCP note above).
+- **SL-41 · Phone remote, rehearse, same-browser fast path** (10 §5.2, §6.4, §10; deps
+  SL-19 ✓, SL-29). Feature `remoteAndRehearse` (*Rehearse*, *Use phone as remote*).
+- **SL-42 · UI bridge `ui.slides.*`** (11 §5; deps SL-11 ✓, SL-40) — `mcpUiTools` is empty;
+  context-menu trees for `ui.get_menu_tree`.
+- **SL-43 · AI in Slides (+ Drive assistant, P1)** (11 §6–§8; dep SL-40). Feature `assistant`
+  (Extensions › AI, the shell assistant panel).
+- **SL-44 · Remaining P1: spelling, emoji, image adjustments, curved connectors** (03 §14;
+  deps D-7, SL-13…SL-15 ✓) — spelling, presentation language, special characters. (Emoji
+  insert, image adjustments and curved connectors already exist; see their leftovers.)
+  Feature `spelling`.
+- **SL-45 · M11 integration and exit** (all M11) — J-S8…J-S10, the MCP suite, a11y checklist.
+- **Other hidden items without a work package:** *Import slides…* (04 §13.9, P1, feature
+  `importSlides`), snap to grid (03 §5.3, P2, `snapGrid`), Slides notification settings
+  (suite 07, `notificationSettings`), editor preferences that do nothing yet — units, scroll
+  changes slides, smart quotes, autoformat lists (04 §13.16, SL-13 leftovers,
+  `editorPreferences`).
+- **Browser findings of SL-23 to look at:** with Flutter semantics enabled (the
+  `flt-semantics-placeholder` click), double-clicking a text element on the canvas doesn't
+  open the text editor (no IME textarea; works without semantics) — check canvas text editing
+  with a screen reader on (03 §17); the editor still loads comment threads
+  (`comment/listThreads`) although comments are hidden — skip it while
+  `SlidesFeature.comments` is off.
+- **M9 exit items not verified by SL-23** (see the M9 checklist in `specs/14-roadmap.md` §2.1):
+  the automated journeys (`wonky_slides/integration_test/` — no chromedriver), the scripted
+  multi-client scenarios of 09 §6.4 with `serverpod_test` isolates (12 §7.3), the offline merge
+  fuzzer for decks, the perf budgets of 03 §18 on the web, the PDF fidelity corpus with
+  `pdftoppm`, and the browser walkthrough (see SL-23 in the Slides STATUS).
+
 ## Wonky Slides — open items
 
 Status per work package: [specs/wonky_slides/STATUS.md](specs/wonky_slides/STATUS.md).
@@ -372,17 +475,17 @@ Status per work package: [specs/wonky_slides/STATUS.md](specs/wonky_slides/STATU
 - **Built-in prompts are English** (`Click to add title`, …) and stored in the copied layout
   rows; localize them when a built-in is copied into a deck (planner `ThemeCopy`), or render prompts of built-in
   part keys from the app's ARB strings (not done in SL-13).
-- **Skeleton leftovers (SL-1):** `flutter_apps: slides` has `auto_launch: false` until Slides
-  is usable (flip it in `wonky_server/pubspec.yaml`). (The editor at `/p/:uuid` is SL-11's
+- **Skeleton leftovers (SL-1):** `flutter_apps: slides` still has `auto_launch: false` (the
+  user's RAM; Slides is usable since M9 — flip it in `wonky_server/pubspec.yaml` when wanted). (The editor at `/p/:uuid` is SL-11's
   `DeckEditorScreen`; the app homes' empty copy is kind-aware.)
 - **Chrome leftovers (SL-11, Slides 04 §19):**
   - The canvas, navigator, notes pane, grid and outline views are shells on the static
     `SlidePreview` (`features/editor_screen/slide_preview.dart`): SL-12 swaps the canvas body
     in `canvas_region.dart` for SL-10's `SlideStage` + selection, SL-34 the outline shell;
     delete `SlidePreview` once nothing uses it. (Navigator, notes and grid: done, SL-16.)
-  - 170 menu-bound commands are disabled placeholders (`commands/placeholder_commands.dart`,
-    each names its WP); inspector sections without a `builder`
-    (`features/inspector/inspector_sections.dart`) show "These options are on their way".
+  - (Placeholders: since SL-23 the remaining placeholder commands
+    (`commands/placeholder_commands.dart`, each names its WP) and the inspector sections without
+    a `builder` are hidden, not shown disabled — "Wonky Slides — later (M10/M11)" above.)
   - Home thumbnails (04 §15: first non-skipped slide rendered after an editing session,
     `drive.setThumbnail`) need SL-10's renderer and the files upload — not built.
   - 04 §16 at 1,200–1,440 px: collapsing the docked inspector to a 44 px tab strip while a side
@@ -605,10 +708,9 @@ Status per work package: [specs/wonky_slides/STATUS.md](specs/wonky_slides/STATU
   S-3; each bumps `SyncSchemaRelease` (`wonky_sync_models`) and the record in 02 §14.1 — the
   server and Sheets guard tests (tables) and `wonky_sync_models` `test/tables/
   sync_schema_release_test.dart` (enum values) fail until both are updated.
-- **Timeline leftovers (SL-24, Slides 06 §9.8):** present mode (SL-19's `PresentController._compile`)
-  still compiles with `SlideMotionInput(slide:, builds:)` — switch to
-  `SlideMotionInput.fromDeck(model, slideId, resolved:, scene:)` (and `CompileOptions(
-  reducedMotion:)`) so transforms are about element centers; SL-29's player and the stage must
+- **Timeline leftovers (SL-24, Slides 06 §9.8):** (present mode compiles with
+  `SlideMotionInput.fromDeck` and `CompileOptions(reducedMotion:)` since SL-23 — no `scene`
+  is passed, so text part boxes come from the resolved slide only); SL-29's player and the stage must
   render the new frame fields (clips, dissolve, part runs, chart reveal, code view, color
   overrides, highlights). Code durations are estimates until SL-26's `TypingScript`
   (`MotionCodeState` should then carry the derived type-in length); chart shapes come from the
@@ -648,8 +750,8 @@ Status per work package: [specs/wonky_slides/STATUS.md](specs/wonky_slides/STATU
   - Simplifications: scroll-follow while typing is a stateless function of the caret (no
     spring; the renderer may smooth it); `focus: zoom` scales so the range fills 60 % of the
     viewport without the 24 su edge fade; the `auto` palette uses the slide's solid
-    background color (gradients/images count as `bg1`); `string_scanner` is still a declared
-    dependency of `wonky_code` although the engine no longer uses it.
+    background color (gradients/images count as `bg1`). (`string_scanner` was removed from
+    `wonky_code`'s dependencies in SL-23.)
 - **Presenting leftovers (SL-19, Slides 10 §1–§9):**
   - Browser checks not done (no web build in SL-19; D-18 held the token): full screen +
     refusal hint, F5/Shift+F5 capture and a Logitech-style clicker, Esc/F11 leaving full

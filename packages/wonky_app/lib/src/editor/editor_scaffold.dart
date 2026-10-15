@@ -60,6 +60,7 @@ class EditorScaffold extends StatefulWidget {
     this.commentsInPanel = true,
     this.belowToolbar,
     this.commentsButton = true,
+    this.historyPanel = true,
   });
 
   final ShellServices services;
@@ -109,6 +110,10 @@ class EditorScaffold extends StatefulWidget {
   /// Whether comments get the comments side panel. Apps that show comments
   /// elsewhere (Write's margin) set a `CommentsHost` and pass false.
   final bool commentsInPanel;
+
+  /// (v2) Whether the version history side panel is offered (Slides has no
+  /// version history before M11).
+  final bool historyPanel;
 
   @override
   State<EditorScaffold> createState() => _EditorScaffoldState();
@@ -358,7 +363,7 @@ class _EditorScaffoldState extends State<EditorScaffold> {
               // the rail (suite 03 §3.1), so the title row has no buttons
               // for them.
               ...widget.panels,
-              if (item?.myRole.canViewHistory ?? false)
+              if (widget.historyPanel && (item?.myRole.canViewHistory ?? false))
                 SidePanelSpec(
                   id: ShellPanels.history,
                   title: l.panelHistory,

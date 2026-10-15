@@ -3,6 +3,7 @@ import 'package:shad/shad.dart' show LucideIcons;
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
 
+import '../config/slides_features.dart';
 import '../features/dialogs/go_to_slide_dialog.dart';
 import '../features/editor_screen/deck_editor_controller.dart';
 import '../features/settings/slides_user_defaults.dart';
@@ -23,13 +24,19 @@ List<Command<CommandArgs>> chromeCommands(ShellServices s) => [
     argsSchema: JsonSchema.object(
       properties: {
         'mode': JsonSchema.string(
-          enumValues: [for (final m in DeckViewMode.values) m.name],
+          enumValues: [
+            for (final m in DeckViewMode.values)
+              if (DeckEditorController.offersMode(m)) m.name,
+          ],
         ),
       },
       required: const ['mode'],
     ),
-    // Masters mode edits layouts (05 §8): editors only.
-    enabled: (ed, a) => a.string('mode') != 'masters' || ed.canEdit,
+    // Masters mode edits layouts (05 §8): editors only. Hidden modes
+    // (outline SL-34, masters SL-28) are refused.
+    enabled: (ed, a) =>
+        SlidesFeatures.offers('slides.view.setMode', a.values) &&
+        (a.string('mode') != 'masters' || ed.canEdit),
     reason: (l, ed) =>
         ed.roleCanEdit ? l.reasonViewingMode : l.reasonViewAccess,
     checked: (ed, a) => ed.mode.name == a.string('mode'),
@@ -184,7 +191,12 @@ List<Command<CommandArgs>> chromeCommands(ShellServices s) => [
     argsSchema: JsonSchema.object(
       properties: {
         'tab': JsonSchema.string(
-          enumValues: [for (final t in InspectorTab.values) t.name],
+          enumValues: [
+            for (final t in InspectorTab.values)
+              if (t != InspectorTab.animate ||
+                  SlidesFeatures.isOn(SlidesFeature.animations))
+                t.name,
+          ],
         ),
         'section': const JsonSchema.string(
           description: 'Section to reveal (arrange, text, fill, …).',

@@ -254,6 +254,12 @@ abstract class WonkyAppConfig {
   /// App-specific MCP UI-bridge tools (`ui.write.*`, suite 09 §6.2), by
   /// tool name; the shared `ui.*` tools are built in.
   Map<String, UiToolHandler> mcpUiTools(ShellServices services) => const {};
+
+  /// (v2) Whether the shell command [id] is left out of this app's
+  /// registry (not offered anywhere: menus, palette, shortcuts, MCP), for
+  /// shell features the app doesn't support yet (Slides: comments,
+  /// version history and the assistant until M11).
+  bool hidesShellCommand(String id) => false;
 }
 
 /// A section of the app's settings ([WonkyAppConfig.appSettingsSections]):

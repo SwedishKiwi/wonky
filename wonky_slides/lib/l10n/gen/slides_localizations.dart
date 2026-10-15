@@ -7236,6 +7236,12 @@ abstract class SlidesLocalizations {
   /// **'There is nothing to paste'**
   String get toastClipboardEmpty;
 
+  /// Pasting a chart copied in Wonky Sheets while charts in Slides are not available (M9).
+  ///
+  /// In en, this message translates to:
+  /// **'Charts from Wonky Sheets can\'t be pasted into presentations'**
+  String get toastPasteChartsUnavailable;
+
   /// Paste into table cells larger than the table.
   ///
   /// In en, this message translates to:

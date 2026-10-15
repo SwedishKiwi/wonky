@@ -3,6 +3,7 @@ import 'package:shad/shad.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart' show InvocationSource;
 
+import '../../config/slides_features.dart';
 import '../../l10n/slides_l10n.dart';
 import '../editor_screen/deck_editor_controller.dart';
 import '../toolbar/command_ui.dart';
@@ -69,11 +70,13 @@ Widget layoutSection(
         runSpacing: 6,
         children: [
           button('slides.slide.resetToLayout', l.cmdSlideResetToLayout),
-          button(
-            'slides.view.setMode',
-            l.menuEditLayout,
-            args: const {'mode': 'masters'},
-          ),
+          // Layout editing is SL-28's (hidden until built, SL-23).
+          if (SlidesFeatures.isOn(SlidesFeature.masters))
+            button(
+              'slides.view.setMode',
+              l.menuEditLayout,
+              args: const {'mode': 'masters'},
+            ),
         ],
       ),
     ],

@@ -4108,6 +4108,10 @@ class SlidesLocalizationsEn extends SlidesLocalizations {
   String get toastClipboardEmpty => 'There is nothing to paste';
 
   @override
+  String get toastPasteChartsUnavailable =>
+      'Charts from Wonky Sheets can\'t be pasted into presentations';
+
+  @override
   String get toastPasteClipped =>
       'Only the cells that fit in the table were pasted';
 
@@ -8406,6 +8410,10 @@ class SlidesLocalizationsEnXa extends SlidesLocalizationsEn {
 
   @override
   String get toastClipboardEmpty => '[Ţĥéŕé îš ñöţĥîñĝ ţö þåšţé one two]';
+
+  @override
+  String get toastPasteChartsUnavailable =>
+      '[Çĥåŕţš ƒŕöɱ Ŵöñķý Šĥééţš çåñ\'ţ ƀé þåšţéð îñţö þŕéšéñţåţîöñš one two three four]';
 
   @override
   String get toastPasteClipped =>

@@ -6,13 +6,17 @@ import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_slides_core/themes.dart' show BuiltInThemes;
 
+import '../../config/slides_features.dart';
 import '../../l10n/slides_l10n.dart';
 import 'slides_user_defaults.dart';
 
 /// Slides settings (Slides 04 §13.16, suite 04 §4.2, D4): the app settings
 /// of Wonky Slides at `/settings/app/<section>`. Four sections group the
 /// spec's seven: *New presentations* (+ Charts), *Editing* (+ Spelling),
-/// *Animations & code*, *Presenting*. Values live in
+/// *Animations & code*, *Presenting*. Settings of features that are off
+/// ([SlidesFeatures]: charts, spelling, animations, code, editor
+/// preferences) are hidden, and with them the whole *Animations & code*
+/// section for M9. Values live in
 /// `UserPreferences.slidesDefaults` / `slidesPresenter` and change through
 /// `slides.prefs.set` / `slides.presenter.set`.
 List<SettingsSectionSpec> slidesSettingsSections(ShellServices services) => [
@@ -34,15 +38,18 @@ List<SettingsSectionSpec> slidesSettingsSections(ShellServices services) => [
       section: SlidesSettingsPage.editing,
     ),
   ),
-  SettingsSectionSpec(
-    id: 'animations',
-    title: (c) => slidesL10n(c).settingsSectionAnimations,
-    icon: LucideIcons.sparkles,
-    builder: (_) => SlidesSettingsSection(
-      services: services,
-      section: SlidesSettingsPage.animations,
+  // Animations (SL-30) and code (SL-31) are hidden until built (SL-23).
+  if (SlidesFeatures.isOn(SlidesFeature.animations) ||
+      SlidesFeatures.isOn(SlidesFeature.codeBlocks))
+    SettingsSectionSpec(
+      id: 'animations',
+      title: (c) => slidesL10n(c).settingsSectionAnimations,
+      icon: LucideIcons.sparkles,
+      builder: (_) => SlidesSettingsSection(
+        services: services,
+        section: SlidesSettingsPage.animations,
+      ),
     ),
-  ),
   SettingsSectionSpec(
     id: 'presenting',
     title: (c) => slidesL10n(c).settingsSectionPresenting,
@@ -67,7 +74,10 @@ List<Command<CommandArgs>> slidesSettingsCommands(ShellServices s) => [
     argsSchema: JsonSchema.object(
       properties: {
         'key': JsonSchema.string(
-          enumValues: SlidesUserDefaults.defaultsKeys.keys.toList(),
+          enumValues: [
+            for (final k in SlidesUserDefaults.defaultsKeys.keys)
+              if (offersDefaultsKey(k)) k,
+          ],
         ),
         'value': const JsonSchema.any(),
       },
@@ -102,6 +112,31 @@ List<Command<CommandArgs>> slidesSettingsCommands(ShellServices s) => [
     },
   ),
 ];
+
+/// Whether the `slidesDefaults` [key] belongs to a feature that is on
+/// (hidden settings are neither shown nor advertised to MCP, SL-23).
+bool offersDefaultsKey(String key) {
+  final feature = switch (key) {
+    SlidesUserDefaults.keyDefaultLanguage ||
+    SlidesUserDefaults.keyUnderlineSpelling => SlidesFeature.spelling,
+    SlidesUserDefaults.keyChartsAutoUpdate => SlidesFeature.charts,
+    SlidesUserDefaults.keyUnits ||
+    SlidesUserDefaults.keyScrollChangesSlides ||
+    SlidesUserDefaults.keySmartQuotes ||
+    SlidesUserDefaults.keyAutoformatLists => SlidesFeature.editorPreferences,
+    SlidesUserDefaults.keyDefaultTransition ||
+    SlidesUserDefaults.keyDefaultTransitionMs ||
+    SlidesUserDefaults.keyDefaultBuild ||
+    SlidesUserDefaults.keyPreviewOnHover ||
+    SlidesUserDefaults.keyReduceEditorMotion => SlidesFeature.animations,
+    SlidesUserDefaults.keyCodeFontSize ||
+    SlidesUserDefaults.keyCodeLanguage ||
+    SlidesUserDefaults.keyTypeInSound ||
+    SlidesUserDefaults.keyTypingSpeed => SlidesFeature.codeBlocks,
+    _ => null,
+  };
+  return feature == null || SlidesFeatures.isOn(feature);
+}
 
 /// The pages of Slides settings.
 enum SlidesSettingsPage { presentations, editing, animations, presenting }
@@ -214,135 +249,154 @@ class SlidesSettingsSection extends StatelessWidget {
           l.settingsDefaultSize,
           {for (final s in SlidesUserDefaults.sizes) s: slideSizeLabel(l, s)},
         ),
-        _select<String>(
-          SlidesUserDefaults.keyDefaultLanguage,
-          l.settingsDefaultLanguage,
-          {for (final (code, name) in slidesLanguages) code: name},
-        ),
+        // The presentation language drives spelling (SL-44).
+        if (SlidesFeatures.isOn(SlidesFeature.spelling))
+          _select<String>(
+            SlidesUserDefaults.keyDefaultLanguage,
+            l.settingsDefaultLanguage,
+            {for (final (code, name) in slidesLanguages) code: name},
+          ),
       ],
     ),
-    SettingsGroup(
-      title: l.settingsCharts,
-      children: [
-        _switch(
-          SlidesUserDefaults.keyChartsAutoUpdate,
-          l.settingsChartsAutoUpdate,
-          description: l.settingsChartsAutoUpdateHint,
-        ),
-      ],
-    ),
+    if (SlidesFeatures.isOn(SlidesFeature.charts))
+      SettingsGroup(
+        title: l.settingsCharts,
+        children: [
+          _switch(
+            SlidesUserDefaults.keyChartsAutoUpdate,
+            l.settingsChartsAutoUpdate,
+            description: l.settingsChartsAutoUpdateHint,
+          ),
+        ],
+      ),
   ];
 
-  List<Widget> _editing(SlidesLocalizations l) => [
+  List<Widget> _editing(SlidesLocalizations l) {
+    final prefs = SlidesFeatures.isOn(SlidesFeature.editorPreferences);
+    return _editingGroups(l, prefs);
+  }
+
+  List<Widget> _editingGroups(SlidesLocalizations l, bool prefs) => [
     SettingsGroup(
       title: l.settingsEditing,
       children: [
-        _select<String>(SlidesUserDefaults.keyUnits, l.settingsUnits, {
-          'su': l.unitsSu,
-          'px': l.unitsPx,
-          'in': l.unitsIn,
-          'cm': l.unitsCm,
-        }),
+        // Units, scroll-to-change-slides, smart quotes and autoformat are
+        // not built yet (SL-23: hidden, [SlidesFeature.editorPreferences]).
+        if (prefs)
+          _select<String>(SlidesUserDefaults.keyUnits, l.settingsUnits, {
+            'su': l.unitsSu,
+            'px': l.unitsPx,
+            'in': l.unitsIn,
+            'cm': l.unitsCm,
+          }),
         _switch(SlidesUserDefaults.keySmartGuides, l.cmdViewToggleSmartGuides),
         _switch(SlidesUserDefaults.keySnapObjects, l.cmdViewToggleSnapObjects),
         _switch(SlidesUserDefaults.keySnapGuides, l.cmdViewToggleSnapGuides),
-        _switch(
-          SlidesUserDefaults.keyScrollChangesSlides,
-          l.settingsScrollChangesSlides,
-        ),
-        _switch(SlidesUserDefaults.keySmartQuotes, l.settingsSmartQuotes),
-        _switch(
-          SlidesUserDefaults.keyAutoformatLists,
-          l.settingsAutoformatLists,
-        ),
+        if (prefs) ...[
+          _switch(
+            SlidesUserDefaults.keyScrollChangesSlides,
+            l.settingsScrollChangesSlides,
+          ),
+          _switch(SlidesUserDefaults.keySmartQuotes, l.settingsSmartQuotes),
+          _switch(
+            SlidesUserDefaults.keyAutoformatLists,
+            l.settingsAutoformatLists,
+          ),
+        ],
         _switch(
           SlidesUserDefaults.keyShowRemoteCursors,
           l.settingsShowRemoteCursors,
         ),
       ],
     ),
-    SettingsGroup(
-      title: l.settingsSpelling,
-      children: [
-        _switch(
-          SlidesUserDefaults.keyUnderlineSpelling,
-          l.settingsUnderlineSpelling,
-        ),
-      ],
-    ),
+    if (SlidesFeatures.isOn(SlidesFeature.spelling))
+      SettingsGroup(
+        title: l.settingsSpelling,
+        children: [
+          _switch(
+            SlidesUserDefaults.keyUnderlineSpelling,
+            l.settingsUnderlineSpelling,
+          ),
+        ],
+      ),
   ];
 
   List<Widget> _animations(SlidesLocalizations l) => [
-    SettingsGroup(
-      title: l.settingsAnimations,
-      children: [
-        _select<String>(
-          SlidesUserDefaults.keyDefaultTransition,
-          l.settingsDefaultTransition,
-          {
-            'none': l.transitionNone,
-            'fade': l.transitionFade,
-            'push': l.transitionPush,
-            'wipe': l.transitionWipe,
-            'dissolve': l.transitionDissolve,
-          },
-        ),
-        _select<int>(
-          SlidesUserDefaults.keyDefaultTransitionMs,
-          l.settingsTransitionDuration,
-          {
-            for (final ms in const [250, 500, 750, 1000, 1500, 2000])
-              ms: l.durationSeconds(
-                (ms / 1000).toStringAsFixed(ms % 1000 == 0 ? 0 : 2),
-              ),
-          },
-          width: 140,
-        ),
-        _select<String>(
-          SlidesUserDefaults.keyDefaultBuild,
-          l.settingsDefaultBuild,
-          {
-            'appear': l.buildAppear,
-            'fade': l.transitionFade,
-            'flyIn': l.buildFlyIn,
-            'zoom': l.buildZoom,
-          },
-        ),
-        _switch(SlidesUserDefaults.keyPreviewOnHover, l.settingsPreviewOnHover),
-        _switch(
-          SlidesUserDefaults.keyReduceEditorMotion,
-          l.settingsReduceEditorMotion,
-          description: l.settingsReduceEditorMotionHint,
-        ),
-      ],
-    ),
-    SettingsGroup(
-      title: l.settingsCode,
-      children: [
-        _select<int>(
-          SlidesUserDefaults.keyCodeFontSize,
-          l.settingsCodeFontSize,
-          {
-            for (final s in const [14, 16, 18, 20, 24, 28, 32, 40]) s: '$s',
-          },
-          width: 100,
-        ),
-        _select<String>(
-          SlidesUserDefaults.keyCodeLanguage,
-          l.settingsCodeLanguage,
-          {
-            for (final (id, name) in slidesCodeLanguages)
-              id: id == 'plaintext' ? l.codePlainText : name,
-          },
-        ),
-        _select<String>(
-          SlidesUserDefaults.keyTypingSpeed,
-          l.settingsTypingSpeed,
-          {'slow': l.speedSlow, 'normal': l.speedNormal, 'fast': l.speedFast},
-        ),
-        _switch(SlidesUserDefaults.keyTypeInSound, l.settingsTypeInSound),
-      ],
-    ),
+    if (SlidesFeatures.isOn(SlidesFeature.animations))
+      SettingsGroup(
+        title: l.settingsAnimations,
+        children: [
+          _select<String>(
+            SlidesUserDefaults.keyDefaultTransition,
+            l.settingsDefaultTransition,
+            {
+              'none': l.transitionNone,
+              'fade': l.transitionFade,
+              'push': l.transitionPush,
+              'wipe': l.transitionWipe,
+              'dissolve': l.transitionDissolve,
+            },
+          ),
+          _select<int>(
+            SlidesUserDefaults.keyDefaultTransitionMs,
+            l.settingsTransitionDuration,
+            {
+              for (final ms in const [250, 500, 750, 1000, 1500, 2000])
+                ms: l.durationSeconds(
+                  (ms / 1000).toStringAsFixed(ms % 1000 == 0 ? 0 : 2),
+                ),
+            },
+            width: 140,
+          ),
+          _select<String>(
+            SlidesUserDefaults.keyDefaultBuild,
+            l.settingsDefaultBuild,
+            {
+              'appear': l.buildAppear,
+              'fade': l.transitionFade,
+              'flyIn': l.buildFlyIn,
+              'zoom': l.buildZoom,
+            },
+          ),
+          _switch(
+            SlidesUserDefaults.keyPreviewOnHover,
+            l.settingsPreviewOnHover,
+          ),
+          _switch(
+            SlidesUserDefaults.keyReduceEditorMotion,
+            l.settingsReduceEditorMotion,
+            description: l.settingsReduceEditorMotionHint,
+          ),
+        ],
+      ),
+    if (SlidesFeatures.isOn(SlidesFeature.codeBlocks))
+      SettingsGroup(
+        title: l.settingsCode,
+        children: [
+          _select<int>(
+            SlidesUserDefaults.keyCodeFontSize,
+            l.settingsCodeFontSize,
+            {
+              for (final s in const [14, 16, 18, 20, 24, 28, 32, 40]) s: '$s',
+            },
+            width: 100,
+          ),
+          _select<String>(
+            SlidesUserDefaults.keyCodeLanguage,
+            l.settingsCodeLanguage,
+            {
+              for (final (id, name) in slidesCodeLanguages)
+                id: id == 'plaintext' ? l.codePlainText : name,
+            },
+          ),
+          _select<String>(
+            SlidesUserDefaults.keyTypingSpeed,
+            l.settingsTypingSpeed,
+            {'slow': l.speedSlow, 'normal': l.speedNormal, 'fast': l.speedFast},
+          ),
+          _switch(SlidesUserDefaults.keyTypeInSound, l.settingsTypeInSound),
+        ],
+      ),
   ];
 
   List<Widget> _presenting(SlidesLocalizations l) => [

@@ -9,6 +9,8 @@ import 'package:wonky_core/wonky_core.dart' show Role;
 import 'package:wonky_slides_core/ops.dart' show SlidesMutationPlanner;
 import 'package:wonky_slides_core/planner.dart' show SlidesPlanner;
 import 'package:wonky_slides_core/templates.dart' show SlidesTemplates;
+import 'package:wonky_slides_core/themes.dart'
+    show SlideAppearance, SlideSize, SlideSizeKind;
 import 'package:wonky_sync_kit_flutter/wonky_sync_kit_flutter.dart'
     show
         ReplicaInstallation,
@@ -20,6 +22,7 @@ import '../../l10n/slides_l10n.dart';
 import '../model/deck_session.dart';
 import '../model/memory_deck_session.dart';
 import '../model/synced_deck_session.dart';
+import '../settings/slides_user_defaults.dart';
 import 'replica_recovery.dart';
 import 'slides_remote.dart';
 import 'slides_replica.dart';
@@ -207,9 +210,13 @@ abstract final class SlidesData {
     if (controller == null) return onServer();
     final UuidValue space;
     try {
+      final d = newPresentationDefaults(services);
       space = await controller.createLocalPresentation(
         title: title,
         template: builtin,
+        themeKey: d.themeKey,
+        size: d.size,
+        appearance: d.appearance,
       );
     } on NoReservedSpaceException {
       if (services.connectivity.online) return onServer();
@@ -230,6 +237,29 @@ abstract final class SlidesData {
     services.refreshDrive();
     return space;
   }
+}
+
+/// The user's *New presentations* settings (Slides 04 §13.16) for a blank
+/// deck: the default theme, slide size and — only when the user chose one —
+/// appearance (otherwise the theme's own).
+({String themeKey, SlideSize? size, SlideAppearance? appearance})
+newPresentationDefaults(ShellServices services) {
+  final d = SlidesUserDefaults.of(services);
+  final size = d.string(SlidesUserDefaults.keyDefaultSize);
+  final chosen = services.prefs.slidesDefaults.containsKey(
+    SlidesUserDefaults.keyDefaultAppearance,
+  );
+  final appearance = d.string(SlidesUserDefaults.keyDefaultAppearance);
+  return (
+    themeKey: d.string(SlidesUserDefaults.keyDefaultThemeKey),
+    size: [
+      for (final k in SlideSizeKind.values)
+        if (k.name == size && k != SlideSizeKind.custom) SlideSize.preset(k),
+    ].firstOrNull,
+    appearance: chosen
+        ? SlideAppearance.values.where((a) => a.name == appearance).firstOrNull
+        : null,
+  );
 }
 
 /// When each deck was last opened on this device (`slides.opened.<deckId>`

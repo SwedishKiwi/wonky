@@ -72,6 +72,29 @@ presenting (03 §1); the site root `/` lands on **Wonky Write's home** (01 §2.4
 - ☑ The Slides home lists presentations (SL-1 widget tests; `/slides/` release build opens on
   the presentations-only home with the app-home left menu, D-18).
 
+**M9 exit checklist** (checked by SL-23 on 2026-10-15 with a changed goal from the user: M9
+ends clean and working, everything not built is hidden and handed to `TODO.md` "Wonky Slides —
+later (M10/M11)"; evidence in [Slides STATUS](wonky_slides/STATUS.md)):
+
+- ◐ J-S1 (create from template and blank, edit) and J-S2 (present, presenter view, audience on
+  another browser following, end) walked through in the web release build — partly: text
+  editing, undo, slides, tables, menus/toolbar/inspector, presenting, presenter view, audience
+  follow and the presenting banner, PDF export verified (light desktop, dark ~480 px); shapes,
+  images, navigator groups, grid, notes, themes/page setup, cross-app paste, find & replace,
+  offline resync and soft locks between tabs only through widget/integration tests. J-S3/J-S4
+  not walked. ◐ Not automated: `integration_test` journeys (no chromedriver).
+- ☑ Command harness green (`wonky_slides` suite, every registered command has a localized
+  title; hidden features are not registered).
+- ◐ Multi-client scenarios 09 §6.4: covered by the replica-level sync harness and the collab
+  tests (SL-9, SL-21); the scripted `serverpod_test` isolate harness (12 §7.3) is not built.
+- ☐ Offline merge fuzzer for decks — not built (property/convergence runs of SL-9 only).
+- ☐ Perf budgets of Slides 03 §18 on the web — not measured.
+- ◐ PDF: exports validated structurally (pages, fonts, bookmarks; client/server line-break
+  parity, SL-20); the `pdftoppm` raster corpus diff needs poppler in CI.
+- ☑ Slides home (presentations only, template gallery) and *Report a bug* in the editor title
+  row seen in the release build; Slides settings tested in widget tests (settings of hidden
+  features are hidden).
+
 M8 must land the shell changes (scope-aware homes, settings split, `WonkyAppKind` with four
 apps) before Slides UI work starts in M9, and every shared-package extraction plus OS-8 before
 the first Slides package that needs it (SL-2 needs D-6; SL-5 needs D-4; SL-26/SL-27 need D-2/D-3).

@@ -6,13 +6,14 @@ import 'package:wonky_slides_core/themes.dart' show SlideAppearance;
 import 'package:wonky_ui/wonky_ui.dart';
 
 import '../../config/menus/slides_menu_spec.dart' show groupColorLabel;
+import '../../config/slides_features.dart';
 import '../../l10n/slides_l10n.dart';
 import '../editor_screen/deck_editor_controller.dart';
 import '../toolbar/command_ui.dart';
 import 'inspector_sections.dart';
 
 /// The docked inspector (Slides 04 §7): tabs **Format** · **Animate** ·
-/// **Slide** over a scrollable list of collapsible sections from the
+/// **Slide** (Animate only while `SlidesFeature.animations` is on) over a scrollable list of collapsible sections from the
 /// section registry ([inspectorSections]). The Format tab follows the
 /// selection (04 §7.2; an empty state with quick insert buttons when
 /// nothing is selected), the Animate tab hosts 06 §5's UI (sub-tabs
@@ -140,7 +141,9 @@ class _DeckInspectorState extends State<DeckInspector> {
       child: Row(
         children: [
           tab(InspectorTab.format, l.inspectorFormat),
-          tab(InspectorTab.animate, l.inspectorAnimate),
+          // The Animate tab is SL-30's (hidden until built, SL-23).
+          if (SlidesFeatures.isOn(SlidesFeature.animations))
+            tab(InspectorTab.animate, l.inspectorAnimate),
           tab(InspectorTab.slide, l.inspectorSlide),
           ShadTooltip(
             builder: (_) => Text(l.inspectorClose),
@@ -425,12 +428,13 @@ class _DeckInspectorState extends State<DeckInspector> {
             runSpacing: 6,
             children: [
               _commandButton(ui, 'slides.slide.resetToLayout'),
-              _commandButton(
-                ui,
-                'slides.view.setMode',
-                args: const {'mode': 'masters'},
-                label: l.menuEditLayout,
-              ),
+              if (SlidesFeatures.isOn(SlidesFeature.masters))
+                _commandButton(
+                  ui,
+                  'slides.view.setMode',
+                  args: const {'mode': 'masters'},
+                  label: l.menuEditLayout,
+                ),
             ],
           ),
         ],

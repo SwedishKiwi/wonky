@@ -14,6 +14,7 @@ import '../elements/shape/shape_gallery.dart';
 import '../elements/shape/shape_tool.dart';
 import '../../config/menus/context_menu_specs.dart';
 import '../../config/menus/slides_menu_spec.dart';
+import '../../config/slides_features.dart';
 import '../../config/panels/slides_panels.dart';
 import '../../l10n/slides_l10n.dart';
 import '../canvas/slide_canvas_controller.dart';
@@ -264,6 +265,10 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
       syncStatus: _session?.syncStatus,
       customMenuItems: _menuItems(editor),
       titleActions: (context) => [PresentButton(services: s)],
+      // Comments (SL-38) and version history (SL-39) come with M11.
+      commentsButton: SlidesFeatures.isOn(SlidesFeature.comments),
+      commentsInPanel: SlidesFeatures.isOn(SlidesFeature.comments),
+      historyPanel: SlidesFeatures.isOn(SlidesFeature.versionHistory),
       panels: editor == null ? const [] : slidesPanelSpecs(context, s, editor),
       toolbar: (context) => editor == null
           ? SizedBox(height: WonkyThemeScope.of(context).toolbarButtonSize + 8)

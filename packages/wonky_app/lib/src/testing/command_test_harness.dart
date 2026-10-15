@@ -136,7 +136,11 @@ class CommandTestHarness {
     );
     services.currentUser.value = this.users.profile;
     if (registerShellCommands) {
-      services.registry.registerAll(allShellCommands(services));
+      services.registry.registerAll(
+        allShellCommands(
+          services,
+        ).where((c) => !config.hidesShellCommand(c.id.value)),
+      );
     }
     services.registry.registerAll(config.commands(services));
   }

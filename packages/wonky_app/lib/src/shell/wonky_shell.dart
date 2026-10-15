@@ -174,7 +174,11 @@ class _WonkyShellState extends State<WonkyShell> {
         WonkyShell.createServices(widget.config, widget.client!);
     s.router = buildShellRouter(s);
     s.router.routerDelegate.addListener(_onRoute);
-    s.registry.registerAll(allShellCommands(s));
+    s.registry.registerAll(
+      allShellCommands(
+        s,
+      ).where((c) => !widget.config.hidesShellCommand(c.id.value)),
+    );
     s.registry.registerAll(widget.config.commands(s));
     s.keymap.onOverridesChanged = s.prefs.setKeymapOverrides;
     HardwareKeyboard.instance.addHandler(_onUnfocusedKey);

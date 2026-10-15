@@ -6,6 +6,7 @@ import '../../features/elements/style/style_toolbar.dart'
     show arrowItems, quickStyleItems, routingItems;
 import '../../features/settings/slides_settings.dart' show slidesLanguages;
 import '../../l10n/slides_l10n.dart';
+import '../slides_features.dart';
 
 /// Ids of the Slides menus and of the dynamic menu slots the editor screen
 /// fills (`MenuCustomItems`); stable for MCP `ui.get_menu_tree`.
@@ -59,9 +60,14 @@ MenuCommand _c(
 /// The Slides menubar (Slides 04 §4 — the canonical registry of menu-bound
 /// command ids): the shell's shared menus (File, Edit, View, Tools, Help)
 /// extended with the Slides items, plus Insert, Format, Slide, Arrange and
-/// Extensions. Items of features that are not built yet are listed; their
-/// commands are registered disabled (`placeholder_commands.dart`).
-MenuRoot slidesMenus(ShellMenus shell, {required SlidesLocalizations l}) {
+/// Extensions. Items of features that are off ([SlidesFeatures]) are
+/// pruned from the tree (SL-23), so menus, the palette's menu paths and MCP
+/// `ui.get_menu_tree` only list what works; empty menus disappear (the
+/// Extensions menu keeps MCP).
+MenuRoot slidesMenus(ShellMenus shell, {required SlidesLocalizations l}) =>
+    SlidesFeatures.pruneRoot(_slidesMenus(shell, l: l));
+
+MenuRoot _slidesMenus(ShellMenus shell, {required SlidesLocalizations l}) {
   var root = shell.root;
 
   // ---- File (§4.1)

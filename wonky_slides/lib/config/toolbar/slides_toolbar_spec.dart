@@ -10,13 +10,12 @@ import '../../features/layouts/layout_gallery.dart';
 import '../../features/elements/text/text_toolbar.dart';
 import '../../features/toolbar/command_ui.dart';
 import '../menus/slides_menu_spec.dart';
+import '../slides_features.dart';
 
 /// The contextual section of the toolbar (Slides 04 §6.2): the controls
 /// that follow the selection, Google Slides style. Every control is bound
-/// to a command; features that are not built yet show their (disabled)
-/// placeholder commands, so the toolbar is complete from the start and the
-/// work package that builds a feature only fills in the handler (or swaps a
-/// button for a richer control here, e.g. the font picker of SL-13).
+/// to a command; controls of features that are off ([SlidesFeatures]) are
+/// left out until their work package builds them.
 List<ToolbarGroup> contextualToolbarGroups(
   SlidesCommandUi ui,
   DeckEditorController ed,
@@ -72,14 +71,15 @@ List<ToolbarGroup> contextualToolbarGroups(
         keyName: 'theme',
         priority: 4,
       ),
-      ui.button(
-        'slides.panel.animate',
-        args: const {'tab': 'transition'},
-        icon: LucideIcons.squareStack,
-        label: l.toolbarTransition,
-        keyName: 'transition',
-        priority: 4,
-      ),
+      if (SlidesFeatures.isOn(SlidesFeature.animations))
+        ui.button(
+          'slides.panel.animate',
+          args: const {'tab': 'transition'},
+          icon: LucideIcons.squareStack,
+          label: l.toolbarTransition,
+          keyName: 'transition',
+          priority: 4,
+        ),
     ],
     DeckSelectionKind.text => textControls(),
     DeckSelectionKind.shape => [...style.shape(), ...textControls()],
@@ -110,6 +110,12 @@ List<ToolbarGroup> contextualToolbarGroups(
       ),
       ...textControls(),
     ],
+    // Code (SL-31) and chart (SL-32) controls stay hidden until built.
+    DeckSelectionKind.code
+        when !SlidesFeatures.isOn(SlidesFeature.codeBlocks) =>
+      const <ToolbarItem>[],
+    DeckSelectionKind.chart when !SlidesFeatures.isOn(SlidesFeature.charts) =>
+      const <ToolbarItem>[],
     DeckSelectionKind.code => [
       ui.button(
         'slides.code.setLanguage',

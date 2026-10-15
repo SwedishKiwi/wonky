@@ -120,6 +120,7 @@ class PresentController extends ChangeNotifier {
     this.notesSize = 18,
     this.burstMs = 120,
     String? inkPrefix,
+    this._reducedMotion = false,
   }) : _now = nowMs ?? (() => DateTime.now().millisecondsSinceEpoch),
        _inkPrefix = inkPrefix ?? _randomPrefix() {
     timer = PresentTimer(_now);
@@ -205,15 +206,34 @@ class PresentController extends ChangeNotifier {
 
   final Map<String, (String, SlideTimeline)> _timelines = {};
 
+  bool _reducedMotion;
+
+  /// Whether the system or app asks for reduced motion (06 §13); the
+  /// deck's own *Reduce motion* setting ([PresentSettings.reduceMotion])
+  /// applies as well. The present screen keeps it current.
+  bool get reducedMotion => _reducedMotion;
+  set reducedMotion(bool value) {
+    if (value == _reducedMotion) return;
+    _reducedMotion = value;
+    _timelines.clear();
+  }
+
+  /// Compiles [slideId] from the deck (Slides 12 §5.5, SL-24): builds,
+  /// the effective transition and every element resolved, so transforms
+  /// are about the elements' centers and references are validated.
   SlideTimeline _compile(String slideId) {
-    final rev = model.indexes.revision(slideId);
+    final reduced = _reducedMotion || settings.reduceMotion;
+    final rev = '${model.indexes.revision(slideId)}|$reduced';
     final hit = _timelines[slideId];
     if (hit != null && hit.$1 == rev) return hit.$2;
-    final slide = model.slide(slideId);
-    final t = slide == null
+    final t = model.slide(slideId) == null
         ? SlideTimeline(slideId: slideId)
         : SlideTimelineCompiler.compile(
-            SlideMotionInput(slide: slide, builds: model.buildsOf(slideId)),
+            SlideMotionInput.fromDeck(
+              model,
+              slideId,
+              options: CompileOptions(reducedMotion: reduced),
+            ),
           );
     _timelines[slideId] = (rev, t);
     return t;

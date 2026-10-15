@@ -311,7 +311,6 @@ void main() {
         const ImageCrop(l: .1, r: .2),
       );
       expect(d.model.element(photo)!.width, 210);
-
     });
 
     test(

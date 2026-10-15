@@ -5,7 +5,6 @@ import 'package:wonky_slides_core/model.dart';
 import 'package:wonky_slides_core/motion.dart';
 import 'package:wonky_slides_core/scene.dart';
 import 'package:wonky_slides_core/snapping.dart';
-import 'package:wonky_slides_core/themes.dart' show SuRect;
 
 import '../editor_screen/deck_editor_controller.dart';
 import '../selection/selection_controller.dart';

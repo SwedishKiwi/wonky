@@ -1,6 +1,7 @@
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
 
+import '../config/slides_features.dart';
 import '../features/settings/slides_settings.dart' show slidesSettingsCommands;
 import 'canvas_commands.dart';
 import 'chrome_commands.dart';
@@ -26,9 +27,13 @@ import 'theme_commands.dart';
 /// Order matters for contextual key bindings (suite 08 §1.2): within a
 /// scope the first enabled command bound to a chord runs. Real commands
 /// come first; [placeholderCommands] fills in every menu-bound id that has
-/// no real registration yet (disabled, "Not available yet"), so a work
-/// package implements a command by registering it here — its placeholder
-/// drops out automatically.
+/// no real registration yet, so a work package implements a command by
+/// registering it here — its placeholder drops out automatically.
+///
+/// Commands of features that are off ([SlidesFeatures], SL-23) are not
+/// registered at all — real or placeholder — so nothing offers unbuilt
+/// work; placeholders of features that are on stay disabled ("Not
+/// available yet") until their handler exists.
 List<Command<CommandArgs>> slidesCommands(ShellServices s) {
   final real = <Command<CommandArgs>>[
     ...chromeCommands(s),
@@ -49,8 +54,9 @@ List<Command<CommandArgs>> slidesCommands(ShellServices s) {
   ];
   final ids = {for (final c in real) c.id.value};
   return [
-    ...real,
+    for (final c in real)
+      if (SlidesFeatures.registers(c.id.value)) c,
     for (final c in placeholderCommands(s))
-      if (!ids.contains(c.id.value)) c,
+      if (!ids.contains(c.id.value) && SlidesFeatures.registers(c.id.value)) c,
   ];
 }

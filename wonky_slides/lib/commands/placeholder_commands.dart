@@ -5,15 +5,17 @@ import 'package:wonky_core/wonky_core.dart';
 import 'slides_command.dart';
 
 /// Every menu-, toolbar- and context-menu-bound `slides.*` command that is
-/// not built yet (Slides 04 §4, §6, §11 — the canonical id registry). They
-/// are registered **disabled** ("Not available yet") so menus, the palette,
-/// the shortcuts help and MCP `ui.get_menu_tree` show the complete product;
+/// not built yet (Slides 04 §4, §6, §11 — the canonical id registry);
 /// [owner] names the work package (Slides 12 §4) that builds the handler.
 ///
-/// A work package implements a command by adding a real `SlidesCommand`
-/// with the same id to its `commands/<area>_commands.dart` (listed in
-/// `commands.dart`): `slidesCommands` drops the placeholder of every id
-/// that has a real registration, so this list only shrinks by deletion.
+/// Since SL-23 (M9 exit) every one of them belongs to a feature that is off
+/// (`SlidesFeatures`), so none is registered and nothing in the UI or MCP
+/// offers them. When a work package turns its feature on, its placeholders
+/// are registered **disabled** ("Not available yet") until it adds a real
+/// `SlidesCommand` with the same id to its `commands/<area>_commands.dart`
+/// (listed in `commands.dart`): `slidesCommands` drops the placeholder of
+/// every id that has a real registration, so this list only shrinks by
+/// deletion.
 List<Command<CommandArgs>> placeholderCommands(ShellServices s) => [
   SlidesCommand.placeholder(
     'slides.file.importSlides',

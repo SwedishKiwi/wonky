@@ -2,7 +2,9 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wonky_slides_core/model.dart' show DeckModelIndexes;
+import 'package:wonky_slides_core/model.dart'
+    show DeckModelIndexes, ElementKind;
+import 'package:wonky_slides_core/testing.dart' show DeckBuilder;
 import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_slides/features/editor_screen/deck_editor_controller.dart';
 import 'package:wonky_slides/features/model/deck_session.dart';
@@ -109,16 +111,13 @@ void main() {
   });
 
   testWidgets('Given the editor when the inspector tabs are used then the '
-      'Format empty state, the Animate alias and the Slide sections show', (
-    tester,
-  ) async {
+      'Format empty state and the Slide sections show, and there is no '
+      'Animate tab before SL-30', (tester) async {
     final r = await pumpDeckScreen(tester);
     expect(key('slides.inspector.formatEmpty'), findsOneWidget);
-
-    await r.run('slides.panel.animate', {'tab': 'build'});
-    await tester.pump();
-    expect(r.editor.inspectorTab, InspectorTab.animate);
-    expect(find.text(l.animateBuildEmpty), findsOneWidget);
+    expect(key('slides.inspector.tab.format'), findsOneWidget);
+    expect(key('slides.inspector.tab.animate'), findsNothing);
+    expect(find.text(l.inspectorSectionSoon), findsNothing);
 
     await tester.tap(key('slides.inspector.tab.slide'));
     await tester.pump();
@@ -142,9 +141,13 @@ void main() {
     await r.close(tester);
   });
 
-  testWidgets('Given the editor when Grid, Outline and Masters are chosen '
-      'then they replace navigator, canvas and notes', (tester) async {
+  testWidgets('Given the editor when Grid is chosen then it replaces '
+      'navigator and canvas, and Outline and Masters are not offered '
+      '(SL-34, SL-28)', (tester) async {
     final r = await pumpDeckScreen(tester);
+    expect(key('slides.status.mode.normal'), findsOneWidget);
+    expect(key('slides.status.mode.grid'), findsOneWidget);
+    expect(key('slides.status.mode.outline'), findsNothing);
 
     await r.run('slides.view.setMode', {'mode': 'grid'});
     await tester.pump();
@@ -152,17 +155,13 @@ void main() {
     expect(key('slides.navigator'), findsNothing);
     expect(key('slides.canvas'), findsNothing);
 
-    await r.run('slides.view.setMode', {'mode': 'outline'});
+    await r.run('slides.view.setMode', {'mode': 'normal'});
     await tester.pump();
-    expect(key('slides.view.outline'), findsOneWidget);
-    expect(find.textContaining('Make collaboration effortless'), findsOne);
-
-    await r.run('slides.view.setMode', {'mode': 'masters'});
-    await tester.pump();
-    expect(key('slides.view.masters'), findsOneWidget);
-    await tester.tap(key('slides.view.masters.back'));
-    await tester.pump();
-    expect(r.editor.mode, DeckViewMode.normal);
+    for (final mode in [DeckViewMode.outline, DeckViewMode.masters]) {
+      r.editor.setMode(mode);
+      await tester.pump();
+      expect(r.editor.mode, DeckViewMode.normal);
+    }
     expect(key('slides.canvas'), findsOneWidget);
     await settleTooltips(tester);
     await r.close(tester);
@@ -181,7 +180,8 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
     expect(key('menu.context.slide.new'), findsOneWidget);
-    expect(key('menu.context.slide.transition'), findsOneWidget);
+    // Transitions (SL-30) are hidden until built.
+    expect(key('menu.context.slide.transition'), findsNothing);
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pump(const Duration(milliseconds: 200));
     await settleTooltips(tester);
@@ -344,6 +344,41 @@ void main() {
     final r = await pumpDeckScreen(tester, initialSlideId: third);
     expect(r.editor.currentSlideId, third);
     expect(r.doc.describeState()['currentSlideIndex'], 2);
+    await settleTooltips(tester);
+    await r.close(tester);
+  });
+
+  testWidgets('Given a deck with code and chart elements (from a template or '
+      'MCP) when they are selected then they render, and no control of an '
+      'unbuilt feature is offered (SL-23)', (tester) async {
+    final b = DeckBuilder(title: 'Hidden features');
+    final slide = b.slide(layoutKey: 'blank');
+    final code = b.element(slide, ElementKind.code);
+    final chart = b.element(slide, ElementKind.chart, x: 600);
+    final r = await pumpDeckScreen(tester, fixture: b, initialSlideId: slide);
+
+    // Toolbar and title row: no insert code/chart, Animate, Transition or
+    // comments; no Animate inspector tab.
+    for (final k in [
+      'slides.toolbar.insert.code',
+      'slides.toolbar.chart',
+      'slides.toolbar.animate',
+      'slides.toolbar.transition',
+      'slides.toolbar.comment',
+      'editor.comments',
+      'slides.inspector.tab.animate',
+    ]) {
+      expect(key(k), findsNothing, reason: k);
+    }
+    for (final id in [code, chart]) {
+      r.editor.selectElements([id]);
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+      expect(find.text(l.inspectorSectionSoon), findsNothing);
+      expect(key('slides.inspector.section.code'), findsNothing);
+      expect(key('slides.inspector.section.chart'), findsNothing);
+      expect(key('slides.inspector.section.arrange'), findsOneWidget);
+    }
     await settleTooltips(tester);
     await r.close(tester);
   });

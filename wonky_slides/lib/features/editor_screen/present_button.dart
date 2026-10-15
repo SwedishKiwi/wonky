@@ -4,13 +4,15 @@ import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
+import '../../config/slides_features.dart';
 import '../../l10n/slides_l10n.dart';
 
 /// The **Present** split button of the title row (Slides 04 §3), before
 /// *Share*: the main part presents from the current slide
 /// (`slides.present.fromCurrent`, ⌘Enter); the chevron opens *Present from
-/// beginning*, *Presenter view*, *Open on another device…*, *Rehearse*,
-/// *Use phone as remote* and *Presenting settings…*. Below 640 px only the
+/// beginning*, *Presenter view*, *Open on another device…*, *Rehearse*
+/// and *Use phone as remote* (SL-41, hidden until built) and *Presenting
+/// settings…*. Below 640 px only the
 /// play icon shows, below 400 px without the chevron (Present and Share
 /// stay visible at 360 px, 04 §16).
 class PresentButton extends StatelessWidget {
@@ -84,7 +86,9 @@ class PresentButton extends StatelessWidget {
           offset: Offset(0, 6),
         ),
         entries: () => [
-          ...MenuResolver(services).entries(context, _menu),
+          ...MenuResolver(
+            services,
+          ).entries(context, SlidesFeatures.prune(_menu)),
           WonkyMenuItem(
             key: const ValueKey<String>('menu.present.settings'),
             label: l.menuPresentingSettings,

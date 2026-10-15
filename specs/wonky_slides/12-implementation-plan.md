@@ -722,6 +722,26 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
 - Owns: `wonky_slides/integration_test/`, `wonky_slides/test/harness/scenarios/`,
   `benchmark/slides/`.
 - Acceptance: the M9 exit gate of §1.
+- As built (changed goal from the user: a clean, working M9 that **only shows what works**,
+  remaining work handed to `TODO.md`): `app/config/slides_features.dart` — `SlidesFeature`
+  (one value per unbuilt area with its WP) and `SlidesFeatures` (`enabled`, empty for M9;
+  `featureOfCommand`/`featureOf(id, args)`/`offers`/`registers`/`prune`/`pruneRoot`/
+  `hidesShellCommand`). Commands of hidden features — real and placeholder — aren't
+  registered (`slidesCommands`); the menubar, context menus and the Present split menu are
+  pruned; the toolbar, inspector (Animate tab, Format sections without a builder), status bar
+  (outline mode), layout section (*Edit layout*), print panel (*Print each build stage*),
+  settings (`offersDefaultsKey`, the *Animations & code* page) and the command schemas
+  (`setMode`, `inspector.open`, `file.download`, `edit.pasteSpecial`, `prefs.set`) only offer
+  what works; `DeckEditorController.setMode`/`inspectorTab` refuse hidden modes/tabs; the
+  `history` child route isn't registered. Shared additive API: `WonkyAppConfig
+  .hidesShellCommand` (shell comments/versions/assistant commands left out of Slides) and
+  `EditorScaffold.historyPanel`. Sheets chart pastes are refused with a toast while charts are
+  hidden. Wiring: `PresentController` compiles with `SlideMotionInput.fromDeck` and
+  `CompileOptions(reducedMotion:)`; blank decks take the *New presentations* defaults
+  (`newPresentationDefaults`). Not built from the original scope: the `integration_test/`
+  journeys, the scripted multi-client scenarios, perf benchmarks and the PDF corpus diff (see
+  the M9 checklist in [suite 14 §2.1](../14-roadmap.md) and `TODO.md`). `auto_launch` for
+  `slides` stays `false` (the user's RAM). Details: [STATUS.md](STATUS.md).
 
 ### 4.8 M10 wave 1 — motion, code and chart cores
 

@@ -208,13 +208,15 @@ class _PrintSettingsPanelState extends State<PrintSettingsPanel> {
           onChanged: (v) => c.setOptions(o.copyWith(margins: v)),
         ),
         const SizedBox(height: 6),
-        check(
-          'builds',
-          l.printBuilds,
-          o.includeBuilds,
-          (v) => o.copyWith(includeBuilds: v),
-          enabled: widget.canPrintBuilds && o.layout == SlidesPdfLayout.slides,
-        ),
+        // Builds as pages come with SL-33; until then the option is hidden.
+        if (widget.canPrintBuilds)
+          check(
+            'builds',
+            l.printBuilds,
+            o.includeBuilds,
+            (v) => o.copyWith(includeBuilds: v),
+            enabled: o.layout == SlidesPdfLayout.slides,
+          ),
         check(
           'skipped',
           l.printSkipped,

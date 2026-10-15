@@ -23,9 +23,9 @@ typedef InspectorSectionBuilder =
 
 /// One section of the docked inspector (Slides 04 §7): an accordion item
 /// on the Format or Slide tab. [kinds] lists the selection kinds whose
-/// Format tab shows it (04 §7.2; empty for Slide-tab sections). Sections
-/// without a [builder] are listed with a short "not available yet" note
-/// until their work package supplies the body.
+/// Format tab shows it (04 §7.2; empty for Slide-tab sections). Format
+/// sections without a [builder] are hidden until their work package
+/// supplies the body; Slide-tab sections get theirs from the inspector.
 class InspectorSectionSpec {
   const InspectorSectionSpec({
     required this.id,
@@ -225,10 +225,16 @@ final List<InspectorSectionSpec> inspectorSections = [
   ),
 ];
 
-/// The Format-tab sections for the current selection, in order.
+/// The Format-tab sections for the current selection, in order. Sections
+/// without a [InspectorSectionSpec.builder] belong to work that is not
+/// built yet (code SL-31, chart SL-32, link editing) and are left out
+/// (SL-23: the inspector only shows what works).
 List<InspectorSectionSpec> formatSectionsFor(DeckSelectionKind kind) => [
   for (final s in inspectorSections)
-    if (s.tab == InspectorTab.format && s.kinds.contains(kind)) s,
+    if (s.tab == InspectorTab.format &&
+        s.kinds.contains(kind) &&
+        s.builder != null)
+      s,
 ];
 
 /// The Slide-tab sections.

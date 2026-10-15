@@ -5,6 +5,9 @@ import 'package:wonky_app/testing.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_rich_text/wonky_rich_text.dart' show Delta;
+import 'package:wonky_slides/l10n/slides_l10n.dart';
+import 'package:wonky_slides/commands/clipboard_commands.dart';
+import 'package:wonky_slides/config/slides_features.dart';
 import 'package:wonky_slides/features/clipboard/paste_options.dart';
 import 'package:wonky_slides/features/clipboard/rehome_queue.dart';
 import 'package:wonky_slides/features/clipboard/system_clipboard.dart';
@@ -353,8 +356,39 @@ void main() {
       },
     );
 
+    test('when a Sheets chart was copied while charts are hidden (M9) then '
+        'the paste is refused with a reason and nothing arrives', () async {
+      await d.services.userStore.write('clipboard.sheetsObjects', {
+        'id': 'c1',
+        'items': [
+          {
+            'kind': 'chart',
+            'spec': {'type': 'column'},
+            'spreadsheetItemUuid': _sheet,
+            'objectId': _chart,
+          },
+        ],
+      });
+      sys.data = const SlidesClipboardData(
+        plainText: 'wonky-sheets-objects:c1',
+      );
+      final r = await d.run('slides.edit.paste');
+      expect(r.status, CommandStatus.failed);
+      expect(r.message, slidesL10nEnglish.toastPasteChartsUnavailable);
+      expect(d.model.elementsOf(slide), isEmpty);
+    });
+
     test('when a Sheets chart was copied then a linked chart arrives, and '
         'the chip pastes it unlinked in place of the same step', () async {
+      // Charts are SL-32's: switch them on for this test.
+      SlidesFeatures.enabled = {SlidesFeature.charts};
+      addTearDown(SlidesFeatures.reset);
+      d.services.registry.register(
+        clipboardCommands(
+          d.services,
+        ).firstWhere((c) => c.id.value == 'slides.edit.pasteSpecial'),
+        replace: true,
+      );
       await d.services.userStore.write('clipboard.sheetsObjects', {
         'id': 'c1',
         'items': [

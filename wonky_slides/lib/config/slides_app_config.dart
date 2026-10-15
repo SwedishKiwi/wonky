@@ -18,6 +18,7 @@ import '../features/sync/slides_data.dart'
     show NoReservedSpaceException, SlidesData;
 import '../l10n/slides_l10n.dart';
 import 'menus/slides_menu_spec.dart';
+import 'slides_features.dart';
 
 /// Brand color of Wonky Slides (the amber of its product icon and of the
 /// presentation kind, `kindColor`).
@@ -72,37 +73,42 @@ class SlidesAppConfig extends WonkyAppConfig {
   /// `/p/:uuid/present`, `/p/:uuid/print` and `/p/:uuid/history` (04 §1)
   /// under the editor route, so the deck session stays open underneath.
   /// SL-19 built present, SL-20 print; SL-39 replaces the history
-  /// placeholder.
+  /// placeholder (left out while version history is off).
   @override
   List<RouteBase> editorRoutes(ShellServices services) => [
     for (final route in DeckChildRoute.values)
-      GoRoute(
-        path: route.name,
-        pageBuilder: (c, st) => NoTransitionPage<void>(
-          key: st.pageKey,
-          child: route == DeckChildRoute.present
-              ? _presentScreen(services, st)
-              : route == DeckChildRoute.print
-              ? PrintPreviewScreen(
-                  key: ValueKey<String>(
-                    'slides.print.${st.pathParameters['uuid']}',
+      // No history route before version history exists (SL-39, SL-23).
+      if (route != DeckChildRoute.history ||
+          SlidesFeatures.isOn(SlidesFeature.versionHistory))
+        GoRoute(
+          path: route.name,
+          pageBuilder: (c, st) => NoTransitionPage<void>(
+            key: st.pageKey,
+            child: route == DeckChildRoute.present
+                ? _presentScreen(services, st)
+                : route == DeckChildRoute.print
+                ? PrintPreviewScreen(
+                    key: ValueKey<String>(
+                      'slides.print.${st.pathParameters['uuid']}',
+                    ),
+                    services: services,
+                    itemUuid: st.pathParameters['uuid']!,
+                    initialLayout: SlidesPdfLayout.values
+                        .where(
+                          (v) => v.name == st.uri.queryParameters['layout'],
+                        )
+                        .firstOrNull,
+                  )
+                : DeckRoutePlaceholder(
+                    key: ValueKey<String>(
+                      'slides.${route.name}.${st.pathParameters['uuid']}',
+                    ),
+                    services: services,
+                    itemUuid: st.pathParameters['uuid']!,
+                    route: route,
                   ),
-                  services: services,
-                  itemUuid: st.pathParameters['uuid']!,
-                  initialLayout: SlidesPdfLayout.values
-                      .where((v) => v.name == st.uri.queryParameters['layout'])
-                      .firstOrNull,
-                )
-              : DeckRoutePlaceholder(
-                  key: ValueKey<String>(
-                    'slides.${route.name}.${st.pathParameters['uuid']}',
-                  ),
-                  services: services,
-                  itemUuid: st.pathParameters['uuid']!,
-                  route: route,
-                ),
+          ),
         ),
-      ),
   ];
 
   /// The present route (Slides 10 §1.1; SL-19): `?view=presenter|audience`,
@@ -129,6 +135,12 @@ class SlidesAppConfig extends WonkyAppConfig {
   @override
   List<Command<CommandArgs>> commands(ShellServices services) =>
       slidesCommands(services);
+
+  /// Comments, version history and the assistant are M11's (SL-38, SL-39,
+  /// SL-43): their shell commands stay out of Slides until then
+  /// ([SlidesFeatures], SL-23).
+  @override
+  bool hidesShellCommand(String id) => SlidesFeatures.hidesShellCommand(id);
 
   /// The Slides menubar (04 §4).
   @override

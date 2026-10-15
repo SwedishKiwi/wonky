@@ -15,6 +15,7 @@ import 'package:wonky_slides_core/text.dart';
 import 'package:wonky_slides_core/themes.dart' show SuRect;
 import 'package:wonky_sync_models/ids.dart';
 
+import '../../config/slides_features.dart';
 import '../../l10n/slides_l10n.dart';
 import '../canvas/slide_canvas_controller.dart' show selectionOf;
 import '../editor_screen/deck_editor_controller.dart';
@@ -447,7 +448,22 @@ abstract final class DeckClipboard {
         origin: 'text',
       );
     }
-    final objects = await _sheetsObjects(ed, content.plainText);
+    var objects = await _sheetsObjects(ed, content.plainText);
+    if (objects != null &&
+        objects.isNotEmpty &&
+        !SlidesFeatures.isOn(SlidesFeature.charts)) {
+      // Charts in Slides are SL-32's (hidden, SL-23): Sheets images still
+      // paste; charts alone are refused instead of becoming placeholders.
+      objects = [
+        for (final o in objects)
+          if (o['kind'] != 'chart') o,
+      ];
+      if (objects.isEmpty) {
+        return CommandResult.failed(
+          slidesL10nOf(ed.services).toastPasteChartsUnavailable,
+        );
+      }
+    }
     if (objects != null && objects.isNotEmpty) {
       return pasteSheetsObjects(
         ctx,

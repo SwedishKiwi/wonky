@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wonky_app/wonky_app.dart' show CommandState;
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_slides/commands/slides_command.dart';
+import 'package:wonky_slides/config/slides_features.dart';
 import 'package:wonky_slides/features/editor_screen/deck_editor_controller.dart';
 import 'package:wonky_slides/features/settings/slides_user_defaults.dart';
 import 'package:wonky_slides/l10n/slides_l10n.dart';
@@ -50,14 +51,13 @@ void main() {
       expect(stored, contains('"inspectorVisible":false'));
     });
 
-    test('when View › Show toggles run then rulers, guides and comment pins '
-        'flip', () async {
+    test('when View › Show toggles run then rulers and guides flip, and '
+        'comment pins are not offered before comments (SL-38)', () async {
       await d.run('slides.view.toggleRulers');
       await d.run('slides.view.toggleGuides');
-      await d.run('slides.view.toggleCommentPins');
       expect(ed().rulers, isTrue);
       expect(ed().guides, isFalse);
-      expect(ed().commentPins, isFalse);
+      expect(d.services.registry.byId('slides.view.toggleCommentPins'), isNull);
     });
 
     test('when the snapping toggles run then the synced Slides settings '
@@ -102,9 +102,30 @@ void main() {
       expect(ed().inspectorTab, InspectorTab.format);
       expect(ed().inspectorSection, 'arrange');
 
-      await d.run('slides.panel.animate', {'tab': 'order'});
-      expect(ed().inspectorTab, InspectorTab.animate);
-      expect(ed().animateTab, 'order');
+      // The Animate tab (SL-30) is hidden: no alias command, and a stored
+      // Animate tab reads as Format.
+      expect(d.services.registry.byId('slides.panel.animate'), isNull);
+      await expectLater(
+        d.run('slides.inspector.open', {'tab': 'animate'}),
+        throwsA(isA<Object>()),
+      );
+      ed().openInspector(InspectorTab.animate);
+      expect(ed().inspectorTab, InspectorTab.format);
+    });
+
+    test('when hidden view modes are asked for then they are refused and '
+        'the mode stays (outline SL-34, masters SL-28)', () async {
+      for (final mode in ['outline', 'masters']) {
+        final st = state('slides.view.setMode', {'mode': mode});
+        expect(st.enabled, isFalse, reason: mode);
+        ed().setMode(DeckViewMode.fromName(mode)!);
+        expect(ed().mode, DeckViewMode.normal, reason: mode);
+      }
+      final schema = d.services.registry
+          .byId('slides.view.setMode')!
+          .argsSchema
+          .toJson();
+      expect('$schema', isNot(contains('outline')));
     });
 
     test('when navigating then previous/next/go-to move the current slide '
@@ -168,15 +189,17 @@ void main() {
       expect(d.undoLabels, hasLength(1));
     });
 
-    test('when a placeholder command is checked then it is disabled with '
-        '"Not available yet" and refuses to run', () async {
+    test('when a placeholder command is invoked then it is unknown: '
+        'unbuilt features are hidden, not disabled (SL-23)', () async {
       // Import slides (04 §13.9) stays a P1 placeholder.
-      final st = state('slides.file.importSlides');
-      expect(st.enabled, isFalse);
-      expect(st.disabledReason, l.reasonNotAvailableYet);
+      expect(d.services.registry.byId('slides.file.importSlides'), isNull);
+      expect(
+        SlidesFeatures.featureOfCommand('slides.file.importSlides'),
+        SlidesFeature.importSlides,
+      );
       await expectLater(
         d.run('slides.file.importSlides'),
-        throwsA(isA<CommandException>()),
+        throwsA(isA<Object>()),
       );
     });
 

@@ -8,6 +8,7 @@ import 'package:wonky_slides_core/model.dart';
 import 'package:wonky_slides_core/ops.dart';
 import 'package:wonky_slides_core/session.dart' show SlidesRowsUndoEntry;
 
+import '../../config/slides_features.dart';
 import '../model/deck_session.dart';
 import '../settings/slides_user_defaults.dart';
 import 'chrome_prefs.dart';
@@ -290,8 +291,16 @@ class DeckEditorController extends ChangeNotifier {
 
   DeckViewMode get mode => _mode;
 
+  /// Whether [mode] is offered (outline view and masters are hidden until
+  /// SL-34/SL-28, [SlidesFeatures]).
+  static bool offersMode(DeckViewMode mode) => switch (mode) {
+    DeckViewMode.outline => SlidesFeatures.isOn(SlidesFeature.outlineView),
+    DeckViewMode.masters => SlidesFeatures.isOn(SlidesFeature.masters),
+    _ => true,
+  };
+
   void setMode(DeckViewMode mode) {
-    if (mode == _mode) return;
+    if (mode == _mode || !offersMode(mode)) return;
     _mode = mode;
     notifyListeners();
   }
@@ -340,8 +349,15 @@ class DeckEditorController extends ChangeNotifier {
   /// Whether the speaker notes body shows.
   bool get notesVisible => _notesTransient ? _notesOpen : _prefs.notesVisible;
 
-  InspectorTab get inspectorTab =>
-      InspectorTab.fromName(_prefs.inspectorTab) ?? InspectorTab.format;
+  /// The inspector tab (a stored Animate tab reads as Format while
+  /// animations are hidden, SL-23).
+  InspectorTab get inspectorTab {
+    final t = InspectorTab.fromName(_prefs.inspectorTab) ?? InspectorTab.format;
+    return t == InspectorTab.animate &&
+            !SlidesFeatures.isOn(SlidesFeature.animations)
+        ? InspectorTab.format
+        : t;
+  }
 
   double get navigatorWidth => _prefs.navigatorWidth;
   double get inspectorWidth => _prefs.inspectorWidth;

@@ -6,6 +6,7 @@ import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_slides_core/interfaces.dart';
 import 'package:wonky_slides_core/pdf.dart';
 
+import '../config/slides_features.dart';
 import '../features/editor_screen/deck_editor_controller.dart';
 import '../features/print/print_preview_screen.dart';
 import '../features/print/slides_client_export.dart';
@@ -45,8 +46,12 @@ List<Command<CommandArgs>> printCommands(ShellServices s) => [
     categoryOf: SlidesCategory.file,
     argsSchema: JsonSchema.object(
       properties: {
-        'format': const JsonSchema.string(
-          enumValues: ['pdf', 'png', 'pngZip', 'markdown'],
+        'format': JsonSchema.string(
+          enumValues: [
+            for (final f in const ['pdf', 'png', 'pngZip', 'markdown'])
+              if (SlidesFeatures.offers('slides.file.download', {'format': f}))
+                f,
+          ],
         ),
         'options': const JsonSchema.object(
           additionalProperties: true,

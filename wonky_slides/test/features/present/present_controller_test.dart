@@ -356,6 +356,38 @@ void main() {
     });
   });
 
+  group('PresentController timelines', () {
+    test(
+      'Given a rise build on a shape when presenting then the timeline '
+      'compiles from the deck, and reduced motion replaces it with a fade',
+      () {
+        final b = DeckBuilder();
+        final slide = b.slide(layoutKey: 'blank');
+        final shape = b.shape(slide);
+        b.build_(slide, shape, effect: 'rise');
+        final model = b.build();
+        final c = PresentController(
+          model: model,
+          view: PresentView.present,
+          nowMs: () => 0,
+          inkPrefix: 't',
+        );
+        addTearDown(c.dispose);
+
+        final t = c.timelineOf(slide);
+        expect(t.stepCount, 1);
+        expect(t.warnings, isEmpty);
+        final effect = t.steps[1].effects.single;
+        expect((effect.elementId, effect.effectId), (shape, 'rise'));
+
+        c.reducedMotion = true;
+        final reduced = c.timelineOf(slide).steps[1].effects.single;
+        expect(reduced.effectId, isNot('rise'));
+        expect(reduced.durationMs, lessThanOrEqualTo(300));
+      },
+    );
+  });
+
   group('PresentSettings', () {
     test('Given no presentJson then defaults apply, and a patch validates', () {
       final s = PresentSettings.parse(null);

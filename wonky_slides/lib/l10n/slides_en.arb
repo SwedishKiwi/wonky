@@ -5336,6 +5336,10 @@
   "@toastClipboardEmpty": {
     "description": "Paste with an empty (or unreadable) clipboard."
   },
+  "toastPasteChartsUnavailable": "Charts from Wonky Sheets can't be pasted into presentations",
+  "@toastPasteChartsUnavailable": {
+    "description": "Pasting a chart copied in Wonky Sheets while charts in Slides are not available (M9)."
+  },
   "toastPasteClipped": "Only the cells that fit in the table were pasted",
   "@toastPasteClipped": {
     "description": "Paste into table cells larger than the table."

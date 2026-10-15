@@ -2,6 +2,7 @@ import 'package:shad/shad.dart' show LucideIcons;
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
 
+import '../config/slides_features.dart';
 import '../features/clipboard/deck_clipboard.dart';
 import '../features/clipboard/paste_options.dart';
 import '../features/clipboard/rehome_queue.dart';
@@ -62,24 +63,27 @@ List<Command<CommandArgs>> clipboardCommands(ShellServices s) {
       icon: LucideIcons.clipboardPaste,
       categoryOf: SlidesCategory.edit,
       mutates: true,
-      argsSchema: const JsonSchema.object(
+      argsSchema: JsonSchema.object(
         properties: {
           'mode': JsonSchema.string(
             enumValues: [
               PasteModes.useDestination,
               PasteModes.keepSource,
-              PasteModes.unlinked,
-              PasteModes.linked,
+              // Sheets charts (SL-32) are hidden until built (SL-23).
+              if (SlidesFeatures.isOn(SlidesFeature.charts)) ...[
+                PasteModes.unlinked,
+                PasteModes.linked,
+              ],
             ],
             description:
                 'keepSource: bring the source theme (slides from another '
-                'deck); useDestination: map to this deck\'s theme; '
-                'unlinked/linked: a Sheets chart as a static or linked '
-                'chart. Re-runs the last paste when it is the newest undo '
+                'deck); useDestination: map to this deck\'s theme'
+                '${SlidesFeatures.isOn(SlidesFeature.charts) ? '; unlinked/linked: a Sheets chart as a static or linked chart' : ''}'
+                '. Re-runs the last paste when it is the newest undo '
                 'step, else pastes the clipboard.',
           ),
         },
-        required: ['mode'],
+        required: const ['mode'],
       ),
       run: (ctx, ed, a) =>
           DeckClipboard.pasteSpecial(ctx, ed, a.requireString('mode')),

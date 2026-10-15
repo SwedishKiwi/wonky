@@ -5,6 +5,7 @@ import 'package:wonky_core/wonky_core.dart';
 import '../../features/editor_screen/deck_editor_controller.dart'
     show DeckSelectionKind;
 import '../../l10n/slides_l10n.dart';
+import '../slides_features.dart';
 import 'slides_menu_spec.dart';
 
 /// Ids of the Slides context menus (04 §11; MCP `ui.get_menu_tree {menu:
@@ -44,18 +45,21 @@ MenuRoot slidesContextMenus(SlidesLocalizations l) => MenuSpec.root([
     MenuSpec.submenu(id, id, contextMenuItems(l, id)),
 ]);
 
-/// The items of context menu [id] (`SlidesContextMenuIds`).
+/// The items of context menu [id] (`SlidesContextMenuIds`), without the
+/// items of features that are off ([SlidesFeatures]).
 List<MenuSpec> contextMenuItems(SlidesLocalizations l, String id) =>
-    switch (id) {
-      SlidesContextMenuIds.slide => _slide(l),
-      SlidesContextMenuIds.element => _element(l),
-      SlidesContextMenuIds.text => _text(l),
-      SlidesContextMenuIds.table => _table(l),
-      SlidesContextMenuIds.navigatorSlide => _navigatorSlide(l),
-      SlidesContextMenuIds.navigatorGroup => _navigatorGroup(l),
-      SlidesContextMenuIds.navigatorEmpty => _navigatorEmpty(l),
-      _ => const [],
-    };
+    SlidesFeatures.prune(_items(l, id));
+
+List<MenuSpec> _items(SlidesLocalizations l, String id) => switch (id) {
+  SlidesContextMenuIds.slide => _slide(l),
+  SlidesContextMenuIds.element => _element(l),
+  SlidesContextMenuIds.text => _text(l),
+  SlidesContextMenuIds.table => _table(l),
+  SlidesContextMenuIds.navigatorSlide => _navigatorSlide(l),
+  SlidesContextMenuIds.navigatorGroup => _navigatorGroup(l),
+  SlidesContextMenuIds.navigatorEmpty => _navigatorEmpty(l),
+  _ => const [],
+};
 
 /// The items of context menu [id] for a selection of [kind]: the element
 /// menu keeps only the kind additions of the selected kind (04 §11.2:

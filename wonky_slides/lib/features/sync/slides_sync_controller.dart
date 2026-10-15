@@ -6,6 +6,7 @@ import 'package:wonky_slides_core/model.dart' show DeckModel;
 import 'package:wonky_slides_core/ops.dart';
 import 'package:wonky_slides_core/schema.dart' show SlidesTables;
 import 'package:wonky_slides_core/templates.dart' show SlidesTemplate;
+import 'package:wonky_slides_core/themes.dart' show SlideAppearance, SlideSize;
 import 'package:wonky_sync_kit_flutter/wonky_sync_kit_flutter.dart'
     show AppSyncController, DeviceRowCap, SyncConnectivity;
 
@@ -74,9 +75,13 @@ class SlidesSyncController
   /// space (= deck id = drive item uuid). Throws
   /// `NoReservedSpaceException` without a usable reservation. Registering
   /// it in the drive is the caller's job (`drive.registerPresentation`).
+  /// A blank deck takes the user's *New presentations* defaults ([size],
+  /// [appearance]; null = the theme's).
   Future<UuidValue> createLocalPresentation({
     required String title,
     String themeKey = 'wonky',
+    SlideSize? size,
+    SlideAppearance? appearance,
     SlidesTemplate? template,
   }) => createInReservedSpace((space) async {
     final now = clock.now().toUtc();
@@ -97,7 +102,13 @@ class SlidesSyncController
       return;
     }
     final plan = planner.plan(
-      CreateDeck(deckId: space.uuid, title: title, themeKey: themeKey),
+      CreateDeck(
+        deckId: space.uuid,
+        title: title,
+        themeKey: themeKey,
+        size: size,
+        appearance: appearance,
+      ),
       DeckModel(deckId: space.uuid),
       SlidesPlanContext(userId: replica.userUuid.uuid, now: now, isOwner: true),
     );

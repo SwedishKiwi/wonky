@@ -149,14 +149,15 @@ class DeckStatusRight extends StatelessWidget {
               (DeckViewMode.grid, LucideIcons.layoutGrid, l.viewGrid),
               (DeckViewMode.outline, LucideIcons.listTree, l.viewOutline),
             ])
-              icon(
-                'mode.${mode.name}',
-                i,
-                label,
-                'slides.view.setMode',
-                args: {'mode': mode.name},
-                selected: editor.mode == mode,
-              ),
+              if (DeckEditorController.offersMode(mode))
+                icon(
+                  'mode.${mode.name}',
+                  i,
+                  label,
+                  'slides.view.setMode',
+                  args: {'mode': mode.name},
+                  selected: editor.mode == mode,
+                ),
           const SizedBox(width: 10),
           icon(
             'zoomOut',

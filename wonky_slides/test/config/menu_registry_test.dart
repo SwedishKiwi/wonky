@@ -5,6 +5,7 @@ import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_slides/commands/slides_command.dart';
 import 'package:wonky_slides/config/menus/context_menu_specs.dart';
+import 'package:wonky_slides/config/slides_features.dart';
 import 'package:wonky_slides/l10n/slides_l10n.dart';
 import 'package:wonky_ui/testing.dart';
 
@@ -179,7 +180,20 @@ void main() {
     };
     expect(unregistered, isEmpty);
     final ids = {for (final c in items) c.commandId};
-    expect(golden.difference(ids), isEmpty);
+    // Ids of features that are off are hidden (SL-23); the rest is there.
+    final offered = {
+      for (final id in golden)
+        if (SlidesFeatures.registers(id) &&
+            !SlidesFeatures.hidesShellCommand(id))
+          id,
+    };
+    expect(offered.difference(ids), isEmpty);
+    expect({
+      for (final c in items)
+        if (!SlidesFeatures.offers(c.commandId, c.args) ||
+            SlidesFeatures.hidesShellCommand(c.commandId))
+          c.effectiveId,
+    }, isEmpty);
     // Item ids are unique (stable keys for MCP and the menubar).
     final itemIds = [for (final c in items) c.effectiveId];
     final dupes = <String>{};
@@ -224,10 +238,12 @@ void main() {
       (n) => n['commandId'] == 'slides.view.toggleNavigator',
     );
     expect(navigator['checked'], isTrue);
-    // A placeholder is disabled with the reason.
-    final st = d.services.dispatcher.stateOf('slides.chart.copyAsImage');
-    expect(st.enabled, isFalse);
-    expect(st.disabledReason, slidesL10nEnglish.reasonNotAvailableYet);
+    // No placeholder is offered: unbuilt features are hidden (SL-23).
+    expect(d.services.registry.byId('slides.chart.copyAsImage'), isNull);
+    expect([
+      for (final c in d.services.registry.all)
+        if (c is SlidesCommand && c.placeholder) c.id.value,
+    ], isEmpty);
   });
 
   testWidgets('Given the context menus when they are built then every item '
@@ -261,7 +277,7 @@ void main() {
       for (final c in d.services.registry.all)
         if (c.id.value.startsWith('slides.')) c,
     ];
-    expect(slides.length, greaterThan(190));
+    expect(slides.length, greaterThan(150));
     for (final c in slides) {
       final title = c.title(context);
       expect(title, isNotEmpty, reason: c.id.value);
@@ -278,5 +294,31 @@ void main() {
         }
       }
     }
+  });
+
+  group('Given a feature switched on (a later work package)', () {
+    late DeckHarness on;
+
+    setUp(() {
+      SlidesFeatures.enabled = {SlidesFeature.charts};
+      on = DeckHarness.open();
+    });
+    tearDown(() {
+      on.dispose();
+      SlidesFeatures.reset();
+    });
+
+    testWidgets('when its placeholders are read then they are registered, '
+        'disabled with the reason, and still name their work package', (
+      tester,
+    ) async {
+      final st = on.services.dispatcher.stateOf('slides.chart.copyAsImage');
+      expect(st.enabled, isFalse);
+      expect(st.disabledReason, slidesL10nEnglish.reasonNotAvailableYet);
+      final c = on.services.registry.byId('slides.chart.copyAsImage');
+      expect((c! as SlidesCommand).owner, contains('SL-32'));
+      // Other hidden features stay out.
+      expect(on.services.registry.byId('slides.code.edit'), isNull);
+    });
   });
 }

@@ -13,7 +13,7 @@ What was copied where:
 
 | From `third_party/syntax_highlight` | To |
 |-------------------------------------|----|
-| `lib/src/span_parser.dart` (the TextMate engine; pure Dart: `collection`, `string_scanner`) | `lib/src/textmate/span_parser.dart` (unchanged apart from the header and lint ignores; `// WONKY PATCH` markers kept) |
+| `lib/src/span_parser.dart` (the TextMate engine; pure Dart: `collection`; upstream also used `string_scanner`) | `lib/src/textmate/span_parser.dart` (unchanged apart from the header and lint ignores; `// WONKY PATCH` markers kept) |
 | `grammars/*.json` (15 grammars) | `grammars/*.json` (sources) → embedded as Dart strings in `lib/src/grammars/` by `tool/embed_grammars.dart` (no Flutter assets, so it works on the server and in isolates) |
 | `tool/gen_grammars.py` (SH-3 grammar generator) | `tool/gen_grammars.py` |
 | `lib/src/highlighter.dart` (`Highlighter.parseScopes`, SH-4) | `TextMateTokenizer` (`lib/src/textmate/textmate_tokenizer.dart`); the Flutter `TextSpan`/theme/bracket parts were dropped (unused) |
@@ -113,5 +113,5 @@ patch (VM JIT and AOT, on a loaded 12-core laptop).
 - **Verification**: spans identical to the unpatched engine for every grammar sample, every
   prefix of it, 200 random mutations of it and a 40× repetition (6,068 texts, compared before
   the change); `test/perf/budgets_test.dart` (`dart test -P slow`) measures the budget.
-- `string_scanner` is no longer imported by the engine (still a declared dependency).
+- `string_scanner` is no longer imported by the engine and was removed from the dependencies (SL-23).
 - **Upstream**: generally useful; to be proposed with the pure-Dart split (Q26).

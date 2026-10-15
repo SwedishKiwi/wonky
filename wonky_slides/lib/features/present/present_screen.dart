@@ -215,6 +215,7 @@ class _PresentScreenState extends State<PresentScreen>
       notesSize: prefs
           .presenterInt(SlidesUserDefaults.keyNotesSize)
           .clamp(12, 48),
+      reducedMotion: WonkyThemeScope.of(context).reduceMotion,
     );
     c.onEnd = _leave;
     c.addListener(_onController);
@@ -505,6 +506,7 @@ class _PresentScreenState extends State<PresentScreen>
   @override
   Widget build(BuildContext context) {
     final reduceMotion = WonkyThemeScope.of(context).reduceMotion;
+    _controller?.reducedMotion = reduceMotion;
     return KeymapScope(
       scope: SlidesKeyScopes.present,
       keymap: s.keymap,

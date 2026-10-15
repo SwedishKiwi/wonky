@@ -5,6 +5,7 @@ import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
 import '../../config/menus/slides_menu_spec.dart';
+import '../../config/slides_features.dart';
 import '../../config/toolbar/slides_toolbar_spec.dart';
 import '../editor_screen/deck_editor_controller.dart';
 import '../editor_screen/slide_labels.dart';
@@ -73,6 +74,9 @@ class SlidesToolbar extends StatelessWidget {
       ),
     ], id: 'zoom');
 
+    // Comments (SL-38), code (SL-31), charts (SL-32) and animations
+    // (SL-30) are hidden until built (SL-23, [SlidesFeatures]).
+    final comments = SlidesFeatures.isOn(SlidesFeature.comments);
     final comment = ui.button(
       'shell.comments.create',
       icon: LucideIcons.messageSquarePlus,
@@ -88,7 +92,8 @@ class SlidesToolbar extends StatelessWidget {
         onEscape: ed.canvasFocus.requestFocus,
         groups: [
           zoom,
-          if (ed.role >= Role.commenter) ToolbarGroup([comment], id: 'comment'),
+          if (ed.role >= Role.commenter && comments)
+            ToolbarGroup([comment], id: 'comment'),
         ],
         trailing: [
           ToolbarCustom(
@@ -228,33 +233,35 @@ class SlidesToolbar extends StatelessWidget {
           ),
         ],
       ),
-      ui.button('slides.insert.code', priority: 3),
-      ui.dropdown(
-        'chart',
-        label: l.menuChart,
-        icon: LucideIcons.chartColumn,
-        priority: 4,
-        enabled: ui.state('slides.insert.chartFromSheets').enabled,
-        items: () => [
-          MenuSpec.command(
-            'slides.insert.chartFromSheets',
-            label: l.chartFromSheets,
-          ),
-          MenuSpec.separator(),
-          for (final (type, label) in [
-            ('column', l.chartColumn),
-            ('bar', l.chartBar),
-            ('line', l.chartLine),
-            ('pie', l.chartPie),
-          ])
+      if (SlidesFeatures.isOn(SlidesFeature.codeBlocks))
+        ui.button('slides.insert.code', priority: 3),
+      if (SlidesFeatures.isOn(SlidesFeature.charts))
+        ui.dropdown(
+          'chart',
+          label: l.menuChart,
+          icon: LucideIcons.chartColumn,
+          priority: 4,
+          enabled: ui.state('slides.insert.chartFromSheets').enabled,
+          items: () => [
             MenuSpec.command(
-              'slides.insert.chart',
-              label: label,
-              args: {'type': type},
-              id: 'toolbar.chart.$type',
+              'slides.insert.chartFromSheets',
+              label: l.chartFromSheets,
             ),
-        ],
-      ),
+            MenuSpec.separator(),
+            for (final (type, label) in [
+              ('column', l.chartColumn),
+              ('bar', l.chartBar),
+              ('line', l.chartLine),
+              ('pie', l.chartPie),
+            ])
+              MenuSpec.command(
+                'slides.insert.chart',
+                label: label,
+                args: {'type': type},
+                id: 'toolbar.chart.$type',
+              ),
+          ],
+        ),
       ui.button('slides.insert.icon', priority: 5),
     ], id: 'insert');
 
@@ -270,14 +277,15 @@ class SlidesToolbar extends StatelessWidget {
         ...contextualToolbarGroups(ui, ed),
       ],
       trailing: [
-        comment,
-        ui.button(
-          'slides.panel.animate',
-          args: const {'tab': 'build'},
-          label: l.toolbarAnimate,
-          keyName: 'animate',
-          priority: 2,
-        ),
+        if (comments) comment,
+        if (SlidesFeatures.isOn(SlidesFeature.animations))
+          ui.button(
+            'slides.panel.animate',
+            args: const {'tab': 'build'},
+            label: l.toolbarAnimate,
+            keyName: 'animate',
+            priority: 2,
+          ),
       ],
     );
   }
