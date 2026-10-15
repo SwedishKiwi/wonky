@@ -7,6 +7,7 @@ import 'package:wonky_slides_core/model.dart';
 import 'package:wonky_slides_core/scene.dart';
 import 'package:wonky_slides_core/themes.dart';
 
+import '../elements/icon/lucide_icon_source.dart';
 import '../thumbnails/slide_thumbnail_cache.dart';
 import 'flutter_text_layout_engine.dart';
 import 'scene_painter.dart';
@@ -27,13 +28,14 @@ class SlideRenderer extends ChangeNotifier {
     SlideImageResolver? images,
     AssetFontRegistry? fonts,
     FlutterTextLayoutEngine? textLayout,
-    this.icons,
+    SlideIconSource? icons,
     this.charts,
     this.code,
     SlideThumbnailCache? thumbnails,
   }) : fonts = fonts ?? AssetFontRegistry.instance,
        images = SlideImageCache(images ?? MemorySlideImageResolver()),
-       thumbnails = thumbnails ?? SlideThumbnailCache() {
+       thumbnails = thumbnails ?? SlideThumbnailCache(),
+       icons = icons ?? LucideIconSource.instance {
     this.textLayout =
         textLayout ??
         FlutterTextLayoutEngine(fontGeneration: this.fonts.generation);
@@ -54,8 +56,8 @@ class SlideRenderer extends ChangeNotifier {
   /// Recorded thumbnails.
   final SlideThumbnailCache thumbnails;
 
-  /// Icon glyphs (SL-14 supplies the Lucide map).
-  final SlideIconSource? icons;
+  /// Icon glyphs (default: the Lucide icon fonts, SL-14).
+  final SlideIconSource icons;
 
   /// Chart scenes (SL-27/SL-32).
   final ChartSceneSource? charts;

@@ -1,9 +1,13 @@
+import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart' show LucideIcons;
+import 'package:wonky_app/wonky_app.dart' show MenuCustomItems;
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
 import '../../features/editor_screen/deck_editor_controller.dart';
-import '../../features/editor_screen/slide_labels.dart';
+import '../../features/elements/style/style_toolbar.dart';
+import '../../features/layouts/layout_gallery.dart';
+import '../../features/elements/text/text_toolbar.dart';
 import '../../features/toolbar/command_ui.dart';
 import '../menus/slides_menu_spec.dart';
 
@@ -20,94 +24,13 @@ List<ToolbarGroup> contextualToolbarGroups(
   final l = ui.l;
   final kind = ed.selectionKind;
 
-  List<ToolbarItem> textControls() => [
-    ui.dropdown(
-      'textStyle',
-      label: l.menuTextStyle,
-      priority: 2,
-      enabled: ui.state('slides.format.textStyle').enabled,
-      items: () => [
-        for (final key in textStyleKeys)
-          MenuSpec.command(
-            'slides.format.textStyle',
-            label: textStyleLabel(l, key),
-            args: {'key': key},
-            id: 'toolbar.textStyle.$key',
-          ),
-      ],
-    ),
-    ui.button('slides.format.font', priority: 3),
-    ui.button('slides.format.decreaseFontSize', priority: 3),
-    ui.button('slides.format.increaseFontSize', priority: 3),
-    ui.toggle('slides.format.bold', priority: 2),
-    ui.toggle('slides.format.italic', priority: 2),
-    ui.toggle('slides.format.underline', priority: 3),
-    ui.button('slides.format.textColor', priority: 3),
-    ui.button('slides.format.highlight', priority: 4),
-    ui.button('slides.insert.link', priority: 4),
-    ui.dropdown(
-      'align',
-      label: l.toolbarAlign,
-      icon: LucideIcons.alignLeft,
-      priority: 4,
-      enabled: ui.state('slides.format.align').enabled,
-      items: () => [
-        for (final (v, label) in [
-          ('left', l.alignLeft),
-          ('center', l.alignCenter),
-          ('right', l.alignRight),
-          ('justify', l.alignJustify),
-        ])
-          MenuSpec.command(
-            'slides.format.align',
-            label: label,
-            args: {'value': v},
-            id: 'toolbar.align.$v',
-          ),
-        MenuSpec.separator(),
-        for (final (v, label) in [
-          ('top', l.anchorTop),
-          ('middle', l.anchorMiddle),
-          ('bottom', l.anchorBottom),
-        ])
-          MenuSpec.command(
-            'slides.format.anchor',
-            label: label,
-            args: {'value': v},
-            id: 'toolbar.anchor.$v',
-          ),
-      ],
-    ),
-    ui.dropdown(
-      'lists',
-      label: l.menuLists,
-      icon: LucideIcons.list,
-      priority: 4,
-      enabled: ui.state('slides.format.list').enabled,
-      items: () => [
-        for (final (v, label) in [
-          ('bullet', l.listBulleted),
-          ('number', l.listNumbered),
-          ('check', l.listChecklist),
-        ])
-          MenuSpec.command(
-            'slides.format.list',
-            label: label,
-            args: {'type': v},
-            id: 'toolbar.lists.$v',
-          ),
-      ],
-    ),
-    ui.button('slides.format.lineHeight', priority: 5),
-    ui.button('slides.format.outdent', priority: 5),
-    ui.button('slides.format.indent', priority: 5),
-    ui.button('slides.format.clear', priority: 5),
-  ];
+  // The text controls are SL-13's (`elements/text/text_toolbar.dart`).
+  List<ToolbarItem> textControls() => textToolbarItems(ui, ed);
 
-  List<ToolbarItem> fillBorder() => [
-    ui.button('slides.format.fill', priority: 3),
-    ui.button('slides.format.stroke', priority: 3),
-  ];
+  // Shape, line, icon and fill/border controls are SL-14's
+  // (`elements/style/style_toolbar.dart`).
+  final style = StyleToolbar(ui, ed);
+  List<ToolbarItem> fillBorder() => style.fillBorder();
 
   final items = switch (kind) {
     DeckSelectionKind.none => [
@@ -125,15 +48,23 @@ List<ToolbarGroup> contextualToolbarGroups(
         icon: LucideIcons.layoutTemplate,
         priority: 3,
         enabled: ui.state('slides.slide.applyLayout').enabled,
-        items: () => [
-          for (final layout in SlideLabels.layouts(ed.model))
-            MenuSpec.command(
-              'slides.slide.applyLayout',
-              label: layout.name,
-              args: {'layoutId': layout.id},
-              id: 'toolbar.layout.${layout.id}',
+        // The layout gallery with thumbnails (SL-17, 05 §4).
+        items: () => [MenuSpec.custom(layoutGallerySlot)],
+        custom: MenuCustomItems(
+          widgets: {
+            layoutGallerySlot: (context, close) => Padding(
+              padding: const EdgeInsets.all(4),
+              child: LayoutGallery(
+                editor: ed,
+                columns: 4,
+                onSelected: (layout) {
+                  close();
+                  ui.run('slides.slide.applyLayout', {'layoutId': layout.id});
+                },
+              ),
             ),
-        ],
+          },
+        ),
       ),
       ui.button(
         'slides.panel.themes',
@@ -151,21 +82,8 @@ List<ToolbarGroup> contextualToolbarGroups(
       ),
     ],
     DeckSelectionKind.text => textControls(),
-    DeckSelectionKind.shape => [
-      ...fillBorder(),
-      ui.button(
-        'slides.shape.applyQuickStyle',
-        icon: LucideIcons.palette,
-        priority: 4,
-      ),
-      ui.button('slides.shape.change', icon: LucideIcons.shapes, priority: 4),
-      ...textControls(),
-    ],
-    DeckSelectionKind.line => [
-      ui.button('slides.format.stroke', priority: 3),
-      ui.button('slides.line.setArrow', priority: 3),
-      ui.button('slides.line.setRouting', priority: 4),
-    ],
+    DeckSelectionKind.shape => [...style.shape(), ...textControls()],
+    DeckSelectionKind.line => style.line(),
     DeckSelectionKind.image => [
       ui.button('slides.image.crop', priority: 2),
       ui.button(
@@ -215,10 +133,7 @@ List<ToolbarGroup> contextualToolbarGroups(
       ui.button('slides.chart.update', priority: 2),
       ui.button('slides.chart.openSource', priority: 3),
     ],
-    DeckSelectionKind.icon => [
-      ui.button('slides.format.fill', priority: 3),
-      ui.button('slides.format.stroke', priority: 4),
-    ],
+    DeckSelectionKind.icon => style.icon(),
     DeckSelectionKind.group || DeckSelectionKind.multiple => [
       ...fillBorder(),
       ui.dropdown(

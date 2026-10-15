@@ -213,7 +213,6 @@ abstract final class UiDriveToolHandlers {
     if (c.phase == PreviewPhase.failed) return 'error';
     return switch (c.viewer) {
       PreviewViewer.image => 'image',
-      PreviewViewer.pdf => 'pdf',
       PreviewViewer.text => 'text',
       PreviewViewer.csv => 'csv',
       PreviewViewer.unsupported => 'unsupported',
@@ -221,7 +220,7 @@ abstract final class UiDriveToolHandlers {
     };
   }
 
-  /// `ui.drive.get_preview_state`: viewer, page, zoom, error of the open
+  /// `ui.drive.get_preview_state`: viewer, zoom, error of the open
   /// file preview.
   static Future<UiToolResult> getPreviewState(
     UiToolContext ctx,
@@ -234,7 +233,6 @@ abstract final class UiDriveToolHandlers {
         'No file preview is open (ui.drive.open_preview).',
       );
     }
-    final pdf = c.viewer == PreviewViewer.pdf ? c.pdf : null;
     final viewer = _viewer(c);
     return UiToolResult({
       'uuid': c.itemUuid.uuid,
@@ -242,8 +240,6 @@ abstract final class UiDriveToolHandlers {
       'phase': c.phase.name,
       'type': viewer,
       'mime_type': c.type?.mimeType,
-      'page': pdf == null ? null : c.pdfPage + 1,
-      'page_count': pdf?.pageCount,
       'zoom': c.canZoom ? (c.effectiveZoom * 100).round() : null,
       'fit': c.canZoom ? c.zoom == null : null,
       'rotation': c.viewer == PreviewViewer.image ? c.quarterTurns * 90 : null,

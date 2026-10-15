@@ -326,8 +326,8 @@ void main() {
       expect(receipt?.completedAt, isNotNull);
     });
 
-    test('when a template is passed, then server creation is refused for '
-        'now', () async {
+    test('when an unknown template is passed, then server creation is '
+        'refused', () async {
       final user = await TestUsers.create(sessionBuilder);
       await expectLater(
         endpoints.drive.createPresentation(

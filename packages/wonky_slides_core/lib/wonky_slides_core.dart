@@ -6,7 +6,9 @@
 library;
 
 export 'clipboard.dart';
+export 'code.dart';
 export 'copy.dart';
+export 'icons.dart';
 export 'interfaces.dart';
 export 'maintenance.dart';
 export 'model.dart';
@@ -16,5 +18,7 @@ export 'planner.dart';
 export 'scene.dart';
 export 'schema.dart';
 export 'session.dart';
+export 'snapping.dart';
+export 'templates.dart';
 export 'text.dart';
 export 'themes.dart';

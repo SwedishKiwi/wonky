@@ -9,16 +9,14 @@ enum PreviewViewer {
   /// JPEG, PNG, GIF, WebP, BMP (§6.2).
   image,
 
-  /// Rasterized pages (§6.3).
-  pdf,
-
   /// Text and code in `CodeView` (§6.4); also HTML, SVG and XML as source.
   text,
 
   /// CSV/TSV with the *Table* / *Text* toggle (§6.4, P1).
   csv,
 
-  /// Icon, metadata and *Download* (§6.7).
+  /// Icon, metadata and *Download* (§6.7); also PDFs (no PDF previews in
+  /// v2, §6.3).
   unsupported,
 }
 
@@ -35,9 +33,6 @@ abstract final class PreviewLimits {
 
   /// Rows of the CSV table (§6.4).
   static const csvRows = 1000;
-
-  /// Pages a PDF preview rasterizes (§6.3).
-  static const pdfPages = 300;
 
   /// Largest file a preview downloads (the upload limit, suite 13 §6).
   static const maxBytes = 50 * 1024 * 1024;
@@ -80,8 +75,6 @@ class PreviewType {
       viewer = FileTypes.isRenderableImage(mime)
           ? PreviewViewer.image
           : PreviewViewer.unsupported;
-    } else if (category == FileCategory.pdf && mime == 'application/pdf') {
-      viewer = PreviewViewer.pdf;
     } else if (category == FileCategory.text && isText) {
       viewer = PreviewViewer.text;
     } else {

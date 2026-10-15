@@ -9,6 +9,7 @@ import 'package:wonky_server/src/platform/drive/templates/builtin_templates.dart
 import 'package:wonky_server/src/platform/files/file_service.dart';
 import 'package:wonky_server/src/platform/storage/content_sizes.dart';
 import 'package:wonky_server/src/platform/storage/storage_events.dart';
+import 'package:wonky_server/src/platform/storage/storage_hooks.dart';
 import 'package:wonky_server/src/platform/storage/storage_service.dart';
 
 import '../../../support/mcp_harness.dart';
@@ -43,6 +44,32 @@ Future<int> _ownedCount(TestUser user) => DriveItem.db.count(
 
 Future<DriveItem> _row(TestUser user, UuidValue uuid) =>
     TestFiles.row(user.session, uuid);
+
+const _spaceIdOf =
+    '(SELECT id FROM offline_sync_spaces WHERE "uuidSpaceId" = @u::uuid)';
+
+/// Rows of [table] stored for the spreadsheet [uuid].
+Future<int> _spaceRows(TestUser user, UuidValue uuid, String table) async {
+  final r = await user.session.db.unsafeQuery(
+    'SELECT count(*) FROM "$table" WHERE "spaceId" = $_spaceIdOf',
+    parameters: QueryParameters.named({'u': uuid.uuid}),
+  );
+  return r.first[0] as int;
+}
+
+/// Sets [assignment] on the first [n] rows (by sort key) of [table] of the
+/// spreadsheet [uuid] (a direct write: the estimator reads the tables).
+Future<void> _updateFirst(
+  TestUser user,
+  UuidValue uuid,
+  String table,
+  String assignment,
+  int n,
+) => user.session.db.unsafeExecute(
+  'UPDATE "$table" SET $assignment WHERE id IN (SELECT id FROM "$table" '
+  'WHERE "spaceId" = $_spaceIdOf ORDER BY "sortKey" LIMIT $n)',
+  parameters: QueryParameters.named({'u': uuid.uuid}),
+);
 
 /// Drive 03 §7.2, row by row.
 void main() {
@@ -747,9 +774,105 @@ void main() {
         });
         final shrunk = (await ContentSizes.estimate(anna.session, item))!;
 
-        expect(grown, greaterThan(empty + 50 * 3 * 50));
+        expect(
+          grown,
+          greaterThan(empty + 150 * SheetsSizeEstimator.propertyRowBytes),
+        );
         expect(again, grown);
         expect(shrunk, lessThan(grown));
+      });
+
+      test('when a spreadsheet is new and empty then it costs the base and '
+          'one sheet, not its 1,000 default rows', () async {
+        final mcp = await McpHarness.forUser(anna);
+        final ss = await mcp.call('drive.create_spreadsheet', {'name': 'S'});
+        final uuid = UuidValue.fromString(
+          (ss['item'] as Map)['uuid'] as String,
+        );
+        final item = await _row(anna, uuid);
+
+        final size = await ContentSizes.estimate(anna.session, item);
+        final rows = await _spaceRows(anna, uuid, 'sheet_row');
+
+        expect(rows, greaterThanOrEqualTo(1000));
+        expect(
+          size,
+          SheetsSizeEstimator.base + SheetsSizeEstimator.sheetBytes,
+        );
+        expect(item.sizeBytes, size);
+        expect(size, lessThan(4 * 1024));
+      });
+
+      test('when rows and columns get a height, are hidden or formatted then '
+          'only those count, by their properties', () async {
+        final mcp = await McpHarness.forUser(anna);
+        final ss = await mcp.call('drive.create_spreadsheet', {'name': 'S'});
+        final uuid = UuidValue.fromString(
+          (ss['item'] as Map)['uuid'] as String,
+        );
+        final item = await _row(anna, uuid);
+        final empty = (await ContentSizes.estimate(anna.session, item))!;
+
+        await _updateFirst(anna, uuid, 'sheet_row', 'height = 40', 2);
+        await _updateFirst(anna, uuid, 'sheet_column', 'hidden = true', 1);
+        await _updateFirst(
+          anna,
+          uuid,
+          'sheet_column',
+          '"formatJson" = \'{"b":1}\'',
+          1,
+        );
+        final formatted = (await ContentSizes.estimate(anna.session, item))!;
+
+        // 2 × (16 + 8 height) + (16 + 1 hidden + 7 format) on one column.
+        const row = SheetsSizeEstimator.propertyRowBytes;
+        expect(formatted - empty, 2 * (row + 8) + (row + 1 + 7));
+      });
+
+      test('when a sheet has many cells then the estimate grows by the '
+          'content, far below the stored row size', () async {
+        final mcp = await McpHarness.forUser(anna);
+        final ss = await mcp.call('drive.create_spreadsheet', {'name': 'S'});
+        final uuid = UuidValue.fromString(
+          (ss['item'] as Map)['uuid'] as String,
+        );
+        final item = await _row(anna, uuid);
+        final empty = (await ContentSizes.estimate(anna.session, item))!;
+
+        await mcp.call('sheets.set_values', {
+          'spreadsheet': uuid.uuid,
+          'range': 'Sheet1!A1',
+          'values': [
+            for (var r = 0; r < 100; r++)
+              [for (var c = 0; c < 20; c++) c.isEven ? 'R${r}C$c' : r * c],
+          ],
+        });
+        final full = (await ContentSizes.estimate(anna.session, item))!;
+        final stored = (await SpaceSizeEstimator(
+          SheetsSizeEstimator().tables,
+        ).estimateSpace(anna.session, uuid))!;
+
+        final perCell = (full - empty) / 2000;
+        expect(perCell, inInclusiveRange(18, 32));
+        expect(full * 4, lessThan(stored));
+      });
+
+      test('when a built-in template is created then its measured size is '
+          'close to the pre-check estimate', () async {
+        final template = BuiltinTemplates.all.firstWhere(
+          (t) => t.inGallery && t.sheets.isNotEmpty,
+        );
+
+        final view = await endpoints.drive.createSpreadsheet(
+          anna.endpointSession,
+          null,
+          'T',
+          template.uuid,
+        );
+        final measured = (await _row(anna, view.uuid)).sizeBytes;
+        final pre = StorageHooks.sheetsEstimate(template.sheets);
+
+        expect(measured, closeTo(pre, pre * 0.25));
       });
 
       test('when the change log is processed twice within 5 minutes then the '

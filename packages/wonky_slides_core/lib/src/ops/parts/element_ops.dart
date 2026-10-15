@@ -246,7 +246,9 @@ final class UngroupElements extends SlidesOperation {
   String get name => 'UngroupElements';
 }
 
-/// Replaces an image's source (keeps frame, crop reset).
+/// Replaces an image's source (keeps frame, mask and adjustments; the
+/// crop is reset unless [crop] is given — 03 §6.5.2 re-fits the new image
+/// to cover the same frame, SL-15).
 final class ReplaceImage extends SlidesOperation {
   const ReplaceImage(
     this.elementId, {
@@ -255,7 +257,12 @@ final class ReplaceImage extends SlidesOperation {
     required this.naturalHeight,
     this.fileName,
     this.mimeType,
+    this.crop,
   });
+
+  /// The new crop (`{l, t, r, b}` fractions of the natural size removed
+  /// from each side), or null for none.
+  final Map<String, double>? crop;
 
   final String elementId;
 

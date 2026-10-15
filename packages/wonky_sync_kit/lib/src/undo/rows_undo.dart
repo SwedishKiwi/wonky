@@ -1,6 +1,7 @@
 import 'package:wonky_core/wonky_core.dart'
     show RemoteChange, UndoConflict, UndoEntry, UndoEntryDecoder, UndoHandler;
 
+import '../rows/compose_row_changes.dart';
 import '../rows/row_change.dart';
 import '../rows/undo_inverter.dart';
 
@@ -31,11 +32,13 @@ class RowsUndoEntry extends UndoEntry {
   @override
   UndoEntry? rebase(RemoteChange change) => this;
 
-  /// Entries of one step on the same stack merge into one list.
+  /// Entries of one step on the same stack merge into one net change per
+  /// row ([composeRowChanges]), so undo restores the state before the first
+  /// entry even when several entries touched the same columns.
   @override
   UndoEntry? coalesce(UndoEntry next) =>
       next is RowsUndoEntry && next.domain == domain
-      ? withChanges([...changes, ...next.changes])
+      ? withChanges(composeRowChanges([...changes, ...next.changes]))
       : null;
 
   @override

@@ -13,7 +13,6 @@ import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_drive/config/drive_app_config.dart';
 import 'package:wonky_drive/features/preview/file_downloader.dart';
 import 'package:wonky_drive/features/preview/file_preview_screen.dart';
-import 'package:wonky_drive/features/preview/pdf_rasterizer.dart';
 import 'package:wonky_drive/features/preview/preview_api.dart';
 import 'package:wonky_drive/features/preview/preview_host.dart';
 import 'package:wonky_ui/wonky_ui.dart';
@@ -33,17 +32,8 @@ abstract final class PreviewFixtures {
   /// Bytes that are no image at all, named `.png`.
   static final notAnImage = Uint8List.fromList(utf8.encode('hello, not a png'));
 
-  /// A (fake-rasterized) PDF of [pages] pages.
-  static Uint8List pdf({int pages = 3}) =>
-      Uint8List.fromList(utf8.encode('%PDF-1.7 fake pages=$pages\n%%EOF'));
-
-  /// A PDF whose body is garbage.
-  static final brokenPdf = Uint8List.fromList(utf8.encode('%PDF-1.4 broken'));
-
-  /// An encrypted PDF (trailer with `/Encrypt`).
-  static final encryptedPdf = Uint8List.fromList(
-    utf8.encode('%PDF-1.7\ntrailer << /Encrypt 5 0 R >>\n%%EOF'),
-  );
+  /// A minimal PDF (never previewed in v2: Drive 02 §6.3).
+  static final pdf = Uint8List.fromList(utf8.encode('%PDF-1.7\n%%EOF'));
 
   static final dart = Uint8List.fromList(
     utf8.encode(
@@ -263,48 +253,6 @@ class FakePreviewApi implements FilePreviewApi {
     _check('uploadStatus');
     return status;
   }
-
-  @override
-  Future<DriveItemView> updateFileMeta(UuidValue itemUuid, String json) async {
-    _check('updateFileMeta:$json');
-    final v = _item(itemUuid).copyWith(fileMetaJson: json);
-    items[itemUuid] = v;
-    return v;
-  }
-}
-
-/// Rasterizes "PDFs" made by [PreviewFixtures.pdf] into 1-px-high pages of
-/// the fixture PNG (612 × 792 pt pages); anything else throws.
-class FakePdfRasterizer implements PdfRasterizer {
-  FakePdfRasterizer({this.isAvailable = true});
-
-  bool isAvailable;
-  final List<(List<int>?, double)> requests = [];
-
-  @override
-  Future<bool> available() async => isAvailable;
-
-  @override
-  Stream<PdfPageImage> raster(
-    Uint8List pdf, {
-    List<int>? pages,
-    double dpi = 72,
-  }) async* {
-    requests.add((pages, dpi));
-    final text = latin1.decode(pdf);
-    if (text.contains('/Encrypt')) throw const PdfPasswordException();
-    final m = RegExp(r'pages=(\d+)').firstMatch(text);
-    if (m == null) throw StateError('Invalid PDF structure');
-    final count = int.parse(m.group(1)!);
-    for (final p in pages ?? List.generate(count, (i) => i)) {
-      yield PdfPageImage(
-        index: p,
-        width: (612 * dpi / 72).round(),
-        height: (792 * dpi / 72).round(),
-        png: PreviewFixtures.png,
-      );
-    }
-  }
 }
 
 /// Records downloads.
@@ -332,13 +280,11 @@ class PreviewTestbed {
       ) {
     host = FilePreviewHost.of(h.services)
       ..api = this.api
-      ..rasterizer = rasterizer
       ..downloader = downloader;
   }
 
   final CommandTestHarness h;
   final FakePreviewApi api;
-  final rasterizer = FakePdfRasterizer();
   final downloader = FakeDownloader();
   late final FilePreviewHost host;
   late GoRouter router;

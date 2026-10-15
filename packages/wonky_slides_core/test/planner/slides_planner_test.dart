@@ -202,6 +202,26 @@ void main() {
       expect(deck.model.slides.map((s) => s.id).take(3), [f.title, f.s2, f.s3]);
     });
 
+    test('when grouping a slide of a group at a target then the new group '
+        'goes right after that group (one level, 04 §5.6)', () {
+      final plan = deck.execute(CreateGroup([f.g1], target: InGroup(f.group)));
+
+      final g = plan.result['groupId']! as String;
+      final top = deck.model.indexes.order.topLevel.map((t) => t.id).toList();
+      expect(top.indexOf(g), top.indexOf(f.group) + 1);
+      expect(deck.model.slidesInGroup(g).map((s) => s.id), [f.g1]);
+    });
+
+    test('when creating an empty group at the end then it has no slides and '
+        'the lowest free default title', () {
+      final plan = deck.execute(const CreateGroup([], target: TopLevel()));
+
+      final g = deck.model.group(plan.result['groupId']! as String)!;
+      expect(deck.model.slidesInGroup(g.id), isEmpty);
+      expect(deck.model.indexes.order.topLevel.last.id, g.id);
+      expect(g.title, startsWith('Group '));
+    });
+
     test(
       'when ungrouping then the slides keep their place in the top level',
       () {

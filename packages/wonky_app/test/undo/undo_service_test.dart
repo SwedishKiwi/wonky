@@ -231,4 +231,22 @@ void main() {
     await second.undo();
     expect(values['a'], 0);
   });
+
+  group('Given two steps (discardTop, Slides 03 §6.1)', () {
+    setUp(() {
+      change('a', 1, label: 'First');
+      change('b', 2, label: 'Box');
+    });
+
+    test('when the top step is discarded then it is gone without undoing, '
+        'and an older step is never discarded', () {
+      final steps = undo.undoStepsOf(_doc);
+
+      expect(undo.discardTop(steps.first.id, stack: _doc), isFalse);
+      expect(undo.discardTop(steps.last.id, stack: _doc), isTrue);
+      expect(values['b'], 2);
+      expect(undo.undoStepsOf(_doc).map((s) => s.label), ['First']);
+      expect(undo.canRedo.value, isFalse);
+    });
+  });
 }

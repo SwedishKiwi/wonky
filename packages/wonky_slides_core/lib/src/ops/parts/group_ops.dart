@@ -2,11 +2,24 @@ part of '../operations.dart';
 
 // Slide groups (02 §3.4, 04 §5.12, D11).
 
-/// Creates a group holding [slideIds] at the position of the first one.
+/// Creates a group holding [slideIds] at the position of the first one
+/// (or at [target]).
 final class CreateGroup extends SlidesOperation {
-  const CreateGroup(this.slideIds, {this.title, this.color, this.groupId});
+  const CreateGroup(
+    this.slideIds, {
+    this.title,
+    this.color,
+    this.groupId,
+    this.target,
+  });
 
   final List<String> slideIds;
+
+  /// Where the group goes in the top level (null = the first slide's
+  /// position). An `InGroup` target places the group right after that
+  /// group (one level, 04 §5.12). Required for an empty group (no
+  /// [slideIds], *New group*, 04 §11.7).
+  final SlideTarget? target;
 
   /// Title (null = generated "Group 3").
   final String? title;

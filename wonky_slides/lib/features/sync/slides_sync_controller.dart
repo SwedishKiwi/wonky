@@ -5,6 +5,7 @@ import 'package:wonky_slides_core/interfaces.dart' show SlideImageResolver;
 import 'package:wonky_slides_core/model.dart' show DeckModel;
 import 'package:wonky_slides_core/ops.dart';
 import 'package:wonky_slides_core/schema.dart' show SlidesTables;
+import 'package:wonky_slides_core/templates.dart' show SlidesTemplate;
 import 'package:wonky_sync_kit_flutter/wonky_sync_kit_flutter.dart'
     show AppSyncController, DeviceRowCap, SyncConnectivity;
 
@@ -68,21 +69,37 @@ class SlidesSyncController
   /// [themeKey] with its masters, layouts and their elements, one slide
   /// with layout `title` and its placeholder instances) and writes it in
   /// one transaction with the "Create presentation" `DeckChangeLog` row.
-  /// Returns the space (= deck id = drive item uuid). Throws
+  /// With a built-in [template] (SL-22) the deck is the template's (built
+  /// by the same planner, so a template works offline too). Returns the
+  /// space (= deck id = drive item uuid). Throws
   /// `NoReservedSpaceException` without a usable reservation. Registering
   /// it in the drive is the caller's job (`drive.registerPresentation`).
   Future<UuidValue> createLocalPresentation({
     required String title,
     String themeKey = 'wonky',
+    SlidesTemplate? template,
   }) => createInReservedSpace((space) async {
+    final now = clock.now().toUtc();
+    if (template != null) {
+      final deck = template.build(
+        deckId: space.uuid,
+        userId: replica.userUuid.uuid,
+        now: now,
+        title: title,
+      );
+      await writer.write(
+        spaceId: space,
+        changes: deck.inserts,
+        label: 'Create presentation',
+        actorKind: 'user',
+        sessionId: sessionId,
+      );
+      return;
+    }
     final plan = planner.plan(
       CreateDeck(deckId: space.uuid, title: title, themeKey: themeKey),
       DeckModel(deckId: space.uuid),
-      SlidesPlanContext(
-        userId: replica.userUuid.uuid,
-        now: clock.now().toUtc(),
-        isOwner: true,
-      ),
+      SlidesPlanContext(userId: replica.userUuid.uuid, now: now, isOwner: true),
     );
     await writer.write(
       spaceId: space,

@@ -1,0 +1,3 @@
+### The presenter ends the session.
+class: PresentationEndUpdate
+extends: PresentationUpdate

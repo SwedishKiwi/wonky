@@ -1,17 +1,20 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shad/shad.dart' show ShadApp;
+import 'package:wonky_app/fonts.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_code_flutter/wonky_code_flutter.dart';
 import 'package:wonky_drive/features/preview/file_preview_controller.dart';
 import 'package:wonky_drive/features/preview/preview_api.dart';
 import 'package:wonky_drive/features/preview/preview_bars.dart';
+import 'package:wonky_drive/features/preview/preview_content.dart';
 import 'package:wonky_drive/features/preview/viewers/csv_table_viewer.dart';
 import 'package:wonky_drive/features/preview/viewers/image_viewer.dart';
-import 'package:wonky_drive/features/preview/viewers/pdf_viewer.dart';
 import 'package:wonky_drive/features/preview/viewers/preview_states.dart';
 import 'package:wonky_drive/features/preview/viewers/text_file_viewer.dart';
 import 'package:wonky_drive/l10n/drive_l10n.dart';
@@ -37,11 +40,11 @@ void main() {
         parentUuid: parent,
       );
 
-  DriveItemView pdf({int pages = 3}) => t.api.addFile(
+  DriveItemView pdf() => t.api.addFile(
     'report.pdf',
     mimeType: 'application/pdf',
     category: FileCategory.pdf,
-    content: PreviewFixtures.pdf(pages: pages),
+    content: PreviewFixtures.pdf,
   );
 
   DriveItemView dart() => t.api.addFile(
@@ -85,12 +88,13 @@ void main() {
           expect(tester.takeException(), isNull);
         });
 
-        testWidgets('when a PDF is opened then its pages are shown with '
-            'the page field', (tester) async {
+        testWidgets('when a PDF is opened then the card offers Download '
+            '(no PDF previews in v2)', (tester) async {
           await t.pump(tester, pdf(), brightness: b, size: size);
 
-          expect(find.byKey(PdfViewer.pageKey(0)), findsOneWidget);
-          expect(find.text(l.previewPdfPageOf(3)), findsOneWidget);
+          expect(find.byKey(UnsupportedFileView.cardKey), findsOneWidget);
+          expect(find.byKey(UnsupportedFileView.downloadKey), findsOneWidget);
+          expect(find.text(l.previewErrorTitle), findsNothing);
           expect(tester.takeException(), isNull);
         });
 
@@ -187,47 +191,6 @@ void main() {
 
       expect(find.text(l.previewImageBroken), findsOneWidget);
       expect(find.byKey(ImageViewer.imageKey), findsNothing);
-    });
-
-    testWidgets('when a PDF is broken then the error state shows', (
-      tester,
-    ) async {
-      final v = t.api.addFile(
-        'broken.pdf',
-        mimeType: 'application/pdf',
-        category: FileCategory.pdf,
-        content: PreviewFixtures.brokenPdf,
-      );
-
-      await t.pump(tester, v);
-
-      expect(find.text(l.previewPdfBroken), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    });
-
-    testWidgets('when a PDF is encrypted then the password state offers '
-        'Download', (tester) async {
-      final v = t.api.addFile(
-        'secret.pdf',
-        mimeType: 'application/pdf',
-        category: FileCategory.pdf,
-        content: PreviewFixtures.encryptedPdf,
-      );
-
-      await t.pump(tester, v);
-
-      expect(find.text(l.previewPdfPassword), findsOneWidget);
-      expect(find.byKey(UnsupportedFileView.downloadKey), findsOneWidget);
-    });
-
-    testWidgets('when pdf.js is not available then PDFs ask to download', (
-      tester,
-    ) async {
-      t.rasterizer.isAvailable = false;
-
-      await t.pump(tester, pdf());
-
-      expect(find.text(l.previewPdfUnavailable), findsOneWidget);
     });
 
     testWidgets('when a .txt file holds binary data then the error state '
@@ -479,6 +442,37 @@ void main() {
       expect(active().zoom, isNull);
     });
 
+    testWidgets('when a large image is fitted then the zoom bar shows the '
+        'fitted percentage, not 100 %', (tester) async {
+      // A 2000 × 1000 PNG (D-18: the bar said "100 %" for fitted images).
+      final png = (await tester.runAsync(() async {
+        final recorder = ui.PictureRecorder();
+        Canvas(recorder).drawRect(
+          const Rect.fromLTWH(0, 0, 2000, 1000),
+          Paint()..color = const Color(0xff0284c7),
+        );
+        final image = await recorder.endRecording().toImage(2000, 1000);
+        final data = await image.toByteData(format: ui.ImageByteFormat.png);
+        image.dispose();
+        return data!.buffer.asUint8List();
+      }))!;
+      final item = t.api.addFile(
+        'wide.png',
+        mimeType: 'image/png',
+        category: FileCategory.image,
+        content: png,
+      );
+
+      await t.pump(tester, item);
+
+      final c = active();
+      expect(c.zoom, isNull);
+      expect(c.fitScale, lessThan(1));
+      final percent = (c.fitScale * 100).round();
+      expect(find.text(l.previewZoomPercent(percent)), findsOneWidget);
+      expect(find.text(l.previewZoomPercent(100)), findsNothing);
+    });
+
     testWidgets('when R is pressed then the view rotates and nothing is '
         'saved', (tester) async {
       await t.pump(tester, image());
@@ -567,60 +561,75 @@ void main() {
       expect(find.text('folder ${folder.uuid.uuid}'), findsOneWidget);
       expect(t.services.driveSelection.value.single.uuid, b.uuid);
     });
+
+    testWidgets('when the preview was opened by a link then Esc opens the '
+        "file's folder, not the home", (tester) async {
+      // D-18: a reloaded preview closed to the Drive home.
+      await t.pump(tester, a);
+      await t.settleImages(tester);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+
+      expect(find.text('folder ${folder.uuid.uuid}'), findsOneWidget);
+      expect(t.services.driveSelection.value.single.uuid, a.uuid);
+    });
   });
 
-  group('Given the PDF preview', () {
-    testWidgets('when going to a page then the page indicator follows', (
+  group('Given a PDF', () {
+    testWidgets('when it is previewed then its bytes are not fetched and the '
+        'image tools are off', (tester) async {
+      await t.pump(tester, pdf());
+
+      expect(active().viewer, PreviewViewer.unsupported);
+      expect(t.api.calls.where((c) => c == 'fetch'), isEmpty);
+      expect(active().canZoom, isFalse);
+    });
+  });
+
+  group('Given a narrow preview', () {
+    testWidgets('when ⋮ opens then its menu stays inside the window', (
       tester,
     ) async {
-      await t.pump(tester, pdf(pages: 24));
-
-      final r = await t.h.invoke('drive.preview.goToPage', {'page': 20});
+      // D-18: at 400 px the menu opened to the right of ⋮, off screen.
+      await t.pump(tester, csv(), size: const Size(400, 800));
+      await tester.tap(find.byKey(PreviewTopBar.moreKey));
       await tester.pumpAndSettle();
 
-      expect(r.isOk, isTrue);
-      expect(active().pdfPage, 19);
-      expect(find.byKey(PdfViewer.pageKey(19)), findsOneWidget);
-    });
-
-    testWidgets('when going to a page out of range then it fails', (
-      tester,
-    ) async {
-      await t.pump(tester, pdf(pages: 2));
-
-      final r = await t.h.invoke('drive.preview.goToPage', {'page': 9});
-
-      expect(r.isOk, isFalse);
-    });
-
-    testWidgets('when Mod+G is pressed then the dialog goes to the page', (
-      tester,
-    ) async {
-      await t.pump(tester, pdf(pages: 10));
-
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
-      await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+      final openWith = find.text(l.previewOpenWithApp('Wonky Sheets'));
+      expect(openWith, findsOneWidget);
+      final r = tester.getRect(openWith);
+      expect(r.left, greaterThanOrEqualTo(0));
+      expect(r.right, lessThanOrEqualTo(400));
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pumpAndSettle();
-      expect(find.text(l.previewGoToPageTitle), findsOneWidget);
-      await tester.enterText(find.byType(EditableText).last, '7');
-      await tester.tap(find.text(l.previewGo));
-      await tester.pumpAndSettle();
-
-      expect(active().pdfPage, 6);
-    });
-
-    testWidgets('when an editor views it then the page count is written '
-        'back once', (tester) async {
-      await t.pump(tester, pdf(pages: 4));
-
-      expect(t.api.calls.where((c) => c.startsWith('updateFileMeta')), [
-        'updateFileMeta:{"pages":4}',
-      ]);
     });
   });
 
   group('Given the text preview', () {
+    testWidgets('when code is shown then the bundled mono font is '
+        'registered', (tester) async {
+      // The web has no system monospace font (D-18: code rendered in a
+      // proportional font until JetBrains Mono was registered).
+      await t.pump(tester, dart());
+      final loaded = <String>[];
+      final fonts = AssetFontRegistry(
+        register: (family, faces) async => loaded.add(family),
+      );
+      await tester.pumpWidget(
+        ShadApp(
+          home: TextFileViewer(controller: active(), fonts: fonts),
+        ),
+      );
+      expect(loaded, [TextFileViewer.codeFontFamily]);
+      expect(TextFileViewer.codeFontFamily, 'JetBrains Mono');
+      await tester.pump();
+
+      expect(fonts.isLoaded(TextFileViewer.codeFontFamily), isTrue);
+      expect(fonts.generation.value, 1);
+      expect(find.byKey(TextFileViewer.codeKey), findsOneWidget);
+    });
+
     testWidgets('when Alt+Z is pressed then lines wrap', (tester) async {
       await t.pump(tester, dart());
 

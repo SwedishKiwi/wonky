@@ -10,20 +10,28 @@ import 'package:wonky_client/wonky_client.dart' show UuidValue;
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
+import '../elements/shape/shape_gallery.dart';
+import '../elements/shape/shape_tool.dart';
 import '../../config/menus/context_menu_specs.dart';
 import '../../config/menus/slides_menu_spec.dart';
 import '../../config/panels/slides_panels.dart';
 import '../../l10n/slides_l10n.dart';
+import '../canvas/slide_canvas_controller.dart';
+import '../collab/slides_collab.dart';
 import '../model/deck_session.dart';
 import '../sync/slides_data.dart' show openDeckSession;
+import '../layouts/layout_gallery.dart' show galleryLayouts;
+import '../themes/theme_previews.dart';
 import '../toolbar/slides_toolbar.dart';
 import 'chrome_prefs.dart';
 import 'deck_body.dart';
+import '../text_editing/text_editing_host.dart' show textEditingOf;
 import 'deck_document_controller.dart';
 import 'deck_editor_controller.dart';
 import 'deck_loading_view.dart';
 import 'deck_status_bar.dart';
 import 'present_button.dart';
+import '../present/present_session_banner.dart';
 import 'slide_labels.dart';
 
 /// Opens the deck session of a presentation (tests inject fakes).
@@ -64,6 +72,7 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
   );
   DeckSession? _session;
   DeckEditorController? _editor;
+  SlideCanvasController? _canvas;
   SlidesChromePrefs? _prefs;
   Object? _error;
   final _toolbar = WonkyToolbarController();
@@ -110,6 +119,10 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
       );
       doc.attach(editor);
       _editor = editor;
+      // The canvas state of the deck (renderer, viewport, selection; SL-12).
+      _canvas = SlideCanvasController.attach(editor);
+      // Presence, soft locks and hints (SL-21, 09 §1–§2).
+      SlidesCollab.attach(editor, presence: doc.presence);
     }
     setState(() {});
   }
@@ -120,9 +133,15 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
     if (kIsWeb) unawaited(BrowserContextMenu.enableContextMenu());
     _session?.loadState.removeListener(_onLoadState);
     final editor = _editor;
+    final canvas = _canvas;
     final session = _session;
+    // Pending typing is written while the session is still open (SL-13).
+    if (editor != null) textEditingOf(editor).dispose();
+    if (editor != null) SlidesCollab.of(editor)?.dispose();
     // The shell deactivates the document after this frame; dispose after.
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      canvas?.dispose();
+      if (editor != null) ThemePreviews.maybeOf(editor)?.dispose();
       editor?.dispose();
       doc.dispose();
       if (session != null) unawaited(session.dispose());
@@ -157,7 +176,11 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
     List<WonkyMenuEntry> layouts(BuildContext context, String id, String key) {
       final r = MenuResolver(s);
       return [
-        for (final layout in SlideLabels.layouts(editor.model))
+        // Apply layout ▸ lists the current slide's theme (SL-17).
+        for (final layout
+            in id == 'slides.slide.applyLayout'
+                ? galleryLayouts(editor)
+                : SlideLabels.layouts(editor.model))
           ?r.commandEntry(
             context,
             id,
@@ -190,6 +213,30 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
         },
       },
       widgets: {
+        // The shape galleries (SL-14).
+        SlidesMenuIds.shapeGallery: (context, close) => ShapeGallery(
+          selected: ShapeInsert.geometryOf(editor.armedTool),
+          onSelected: (g) {
+            close();
+            s.dispatcher.invoke(
+              'slides.insert.shape',
+              args: {'geometry': g},
+              source: InvocationSource.menu,
+              context: context,
+            );
+          },
+        ),
+        SlidesMenuIds.changeShapeGallery: (context, close) => ShapeGallery(
+          onSelected: (g) {
+            close();
+            s.dispatcher.invoke(
+              'slides.shape.change',
+              args: {'geometry': g},
+              source: InvocationSource.menu,
+              context: context,
+            );
+          },
+        ),
         SlidesMenuIds.tablePicker: (context, close) => WonkyTableSizePicker(
           onSelected: (rows, cols) {
             close();
@@ -288,10 +335,15 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
               child: WonkyPopupMenuHost(
                 child: KeyedSubtree(
                   key: _bodyKey,
-                  child: DeckBody(
+                  // "You're presenting on …" (SL-19, Slides 10 §5.2).
+                  child: PresentSessionBanner(
                     services: s,
-                    editor: editor,
-                    onContextMenu: _openMenu,
+                    itemUuid: widget.itemUuid,
+                    child: DeckBody(
+                      services: s,
+                      editor: editor,
+                      onContextMenu: _openMenu,
+                    ),
                   ),
                 ),
               ),

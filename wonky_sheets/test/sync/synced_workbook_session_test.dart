@@ -222,6 +222,34 @@ void main() {
       expect(s.loadState.value, isA<WorkbookUnavailable>());
     });
 
+    test('when the membership returns while the spreadsheet is open then it '
+        'reloads and turns ready again', () async {
+      final s = await open();
+      final reloads = s.fullReloads;
+      // A change that only the membership read filter hid and showed:
+      // stored in the replica, but without journal entries.
+      final remote = await planOnReplica(
+        replica,
+        (m) => setInput(m, 2, 2, 'while unshared'),
+      );
+      await remoteWrite(replica, remote.changes);
+      await replica.db.unsafeExecute(
+        'DELETE FROM "sheets_row_journal" WHERE "id" > ${s.cursor}',
+      );
+      await revokeLocally(replica, space);
+      await s.ingestRemote();
+      expect(s.loadState.value, isA<WorkbookUnavailable>());
+
+      await grantLocally(replica, space);
+      await s.ingestRemote();
+
+      await eventually(() => s.loadState.value is WorkbookReady);
+      expect(s.fullReloads, greaterThan(reloads));
+      final sheet = s.model.sheets.single;
+      expect(s.model.cellAt(sheet.id, 2, 2)?.content, 's:while unshared');
+      expect(s.canEdit, isTrue);
+    });
+
     test(
       'when the space turns read-only then the role drops to viewer',
       () async {

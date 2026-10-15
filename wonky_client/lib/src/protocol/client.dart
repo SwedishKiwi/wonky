@@ -171,6 +171,14 @@ import 'package:wonky_client/src/protocol/sheets/scripts/models/script_fetch_res
     as _iyfk9f1k;
 import 'package:wonky_client/src/protocol/sheets/scripts/models/script_run_response.dart'
     as _iaw9fhnx;
+import 'package:wonky_client/src/protocol/slides/present/models/presentation_event.dart'
+    as _i693xhmf;
+import 'package:wonky_client/src/protocol/slides/present/models/presentation_join.dart'
+    as _ia63nl87;
+import 'package:wonky_client/src/protocol/slides/present/models/presentation_session_info.dart'
+    as _iwz86pi3;
+import 'package:wonky_client/src/protocol/slides/present/models/presentation_update.dart'
+    as _igyvhitp;
 import 'package:wonky_client/src/protocol/write/messages/doc_client_message.dart'
     as _isw33y8i;
 import 'package:wonky_client/src/protocol/write/messages/doc_server_message.dart'
@@ -1422,6 +1430,23 @@ class EndpointFile extends _isc.EndpointRef {
       'sourceFileUuid': sourceFileUuid,
       'newFileUuid': newFileUuid,
       'targetItemUuid': targetItemUuid,
+    },
+  );
+
+  /// (v2, Slides 03 A-03-4) Image proxy for images inserted by URL into
+  /// drive item [itemUuid] (any app; caller needs viewer access): the bytes
+  /// of the https image [url]. Private addresses, other ports, redirects
+  /// and non-images are refused; ≤ 10 MB. The client stores the bytes as
+  /// an ordinary (offline-first, quota-checked) upload.
+  _ida.Future<_idt.ByteData> fetchImage(
+    _isc.UuidValue itemUuid,
+    String url,
+  ) => caller.callServerEndpoint<_idt.ByteData>(
+    'file',
+    'fetchImage',
+    {
+      'itemUuid': itemUuid,
+      'url': url,
     },
   );
 
@@ -2710,6 +2735,123 @@ class EndpointSlidesSync extends _isc.EndpointRef {
       );
 }
 
+/// Server-side Slides exports (Slides 10 §11.5, `slidesExport`): the same
+/// shape as Write's `writeExport`. Formats: `pdf` (`png`/`pngZip` are P1).
+/// [optionsJson] holds the `SlidesPdfOptions` of 10 §11.1; [revision]
+/// (older versions) is P1.
+/// {@category Endpoint}
+class EndpointSlidesExport extends _isc.EndpointRef {
+  EndpointSlidesExport(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'slidesExport';
+
+  /// Exports deck [itemUuid]; the result is downloaded through its signed
+  /// URL (15 min; the stored file expires after 24 h).
+  _ida.Future<_ia6gray1.ExportResultView> export(
+    _isc.UuidValue itemUuid,
+    String format,
+    String optionsJson,
+    int? revision,
+  ) => caller.callServerEndpoint<_ia6gray1.ExportResultView>(
+    'slidesExport',
+    'export',
+    {
+      'itemUuid': itemUuid,
+      'format': format,
+      'optionsJson': optionsJson,
+      'revision': revision,
+    },
+  );
+
+  /// Progress events (`loading`, `layout`, `fonts`, `images`, `packaging`,
+  /// `uploading`); the last one is `done` or `error`. Cancel by closing.
+  _ida.Stream<_i1vrysbd.ExportProgressEvent> exportWithProgress(
+    _isc.UuidValue itemUuid,
+    String format,
+    String optionsJson,
+    int? revision,
+  ) =>
+      caller.callStreamingServerEndpoint<
+        _ida.Stream<_i1vrysbd.ExportProgressEvent>,
+        _i1vrysbd.ExportProgressEvent
+      >(
+        'slidesExport',
+        'exportWithProgress',
+        {
+          'itemUuid': itemUuid,
+          'format': format,
+          'optionsJson': optionsJson,
+          'revision': revision,
+        },
+        {},
+      );
+}
+
+/// The presentation session of Wonky Slides (Slides 10 §6, A-10-5): the
+/// presenter view in this window drives the audience view on another
+/// device or browser (v2 is single-window, v2 review Q5/Q29).
+/// {@category Endpoint}
+class EndpointPresentation extends _isc.EndpointRef {
+  EndpointPresentation(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'presentation';
+
+  /// Joins a session on [deckUuid] (a presenter without a session id
+  /// creates one). The first event is a [PresentationWelcome], or a
+  /// [PresentationEndedEvent] when the session can't be joined.
+  _ida.Stream<_i693xhmf.PresentationEvent> join(
+    _isc.UuidValue deckUuid,
+    _ia63nl87.PresentationJoin join,
+    _ida.Stream<_igyvhitp.PresentationUpdate> updates,
+  ) =>
+      caller.callStreamingServerEndpoint<
+        _ida.Stream<_i693xhmf.PresentationEvent>,
+        _i693xhmf.PresentationEvent
+      >(
+        'presentation',
+        'join',
+        {
+          'deckUuid': deckUuid,
+          'join': join,
+        },
+        {'updates': updates},
+      );
+
+  /// The caller's own live presenter session on [deckUuid], or null.
+  _ida.Future<_iwz86pi3.PresentationSessionInfo?> findSession(
+    _isc.UuidValue deckUuid,
+  ) => caller.callServerEndpoint<_iwz86pi3.PresentationSessionInfo?>(
+    'presentation',
+    'findSession',
+    {'deckUuid': deckUuid},
+  );
+}
+
+/// *Import theme from a presentation…* (Slides 05 §9, SL-17,
+/// `slidesThemes`): the themes of another deck the caller can view, so the
+/// client can copy one into the open deck (`ImportTheme.themeEntry`).
+/// {@category Endpoint}
+class EndpointSlidesThemes extends _isc.EndpointRef {
+  EndpointSlidesThemes(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'slidesThemes';
+
+  /// The themes of presentation [itemUuid] (viewer+) as JSON:
+  /// `{"v": 1, "sourceItemUuid", "defaultThemeId", "themes": [entry…]}`,
+  /// each entry the theme's rows (`SlidesClipboardCodec.themeEntry`: the
+  /// `deck_theme` columns plus `masters`, `layouts`, `elements`) with
+  /// `usedBy` (slides using it). Errors: notFound, forbidden.
+  _ida.Future<String> list(_isc.UuidValue itemUuid) =>
+      caller.callServerEndpoint<String>(
+        'slidesThemes',
+        'list',
+        {'itemUuid': itemUuid},
+      );
+}
+
 /// Write documents: the OT editing stream and helpers (Write 03 §1).
 /// {@category Endpoint}
 class EndpointDocument extends _isc.EndpointRef {
@@ -3149,6 +3291,9 @@ class Client extends _isc.ServerpodClientShared {
     sheetsVersion = EndpointSheetsVersion(this);
     slides = EndpointSlides(this);
     slidesSync = EndpointSlidesSync(this);
+    slidesExport = EndpointSlidesExport(this);
+    presentation = EndpointPresentation(this);
+    slidesThemes = EndpointSlidesThemes(this);
     document = EndpointDocument(this);
     writeExport = EndpointWriteExport(this);
     writeHistory = EndpointWriteHistory(this);
@@ -3208,6 +3353,12 @@ class Client extends _isc.ServerpodClientShared {
 
   late final EndpointSlidesSync slidesSync;
 
+  late final EndpointSlidesExport slidesExport;
+
+  late final EndpointPresentation presentation;
+
+  late final EndpointSlidesThemes slidesThemes;
+
   late final EndpointDocument document;
 
   late final EndpointWriteExport writeExport;
@@ -3246,6 +3397,9 @@ class Client extends _isc.ServerpodClientShared {
     'sheetsVersion': sheetsVersion,
     'slides': slides,
     'slidesSync': slidesSync,
+    'slidesExport': slidesExport,
+    'presentation': presentation,
+    'slidesThemes': slidesThemes,
     'document': document,
     'writeExport': writeExport,
     'writeHistory': writeHistory,

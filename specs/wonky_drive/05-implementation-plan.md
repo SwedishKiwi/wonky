@@ -561,32 +561,35 @@ S-D2
   (reusing D-14's `drive.file.*` commands) instead of *Open*.
 
 **D-14 · Drive: file previews** — starts with spike S-D1
-- Scope: `FilePreviewScreen` (`/file/:uuid`), image viewer, PDF viewer (S-D1 library,
-  self-hosted worker), text/code viewer on `CodeView` (D-2), CSV table (P1), "everything else"
+- Scope: `FilePreviewScreen` (`/file/:uuid`), image viewer, ~~PDF viewer (S-D1 library,
+  self-hosted worker)~~ (dropped: no PDF previews in v2, 02 §6.3), text/code viewer on `CodeView` (D-2), CSV table (P1), "everything else"
   card, error states for malformed files.
 - Owns: `wonky_drive/lib/features/preview/`.
-- Acceptance: each viewer tested with a valid and a malformed fixture (truncated PNG, broken
-  PDF, binary named `.txt`) → error state, not a crash; light/dark goldens; preview budgets of
+- Acceptance: each viewer tested with a valid and a malformed fixture (truncated PNG, binary
+  named `.txt`) → error state, not a crash; light/dark goldens; preview budgets of
   suite 11 §2 measured on the fixtures.
 - **As built:** `wonky_drive/lib/features/preview/`: `FilePreviewScreen` (`/file/:uuid`, top bar,
   viewer bar, ‹ ›, trashed banner with *Restore*, details panel = the shell's
   `DriveDetailsPanel`, now exported; overlay below 768 px), `FilePreviewController` (phases
   loading / uploading (polls `drive.fileUploadStatus` every 3 s) / ready / offline / tooLarge /
-  failed / notFound / notAFile (redirects to the item's app); problems imageBroken, pdfBroken,
-  pdfPassword, pdfUnavailable, notText), `FilePreviewHost` (per-shell collaborators, 100 MB
+  failed / notFound / notAFile (redirects to the item's app); problems imageBroken, notText), `FilePreviewHost` (per-shell collaborators, 100 MB
   `PreviewByteCache`, the active preview), `FilePreviewApi` / `ServerFilePreviewApi`
   (`drive.fileContentUrl`, `file.getUrl` for the server preview image, `http` GET with a
-  50 MB cap, `drive.updateFileMeta` for the PDF page count), `PreviewType` (viewer by the sniffed
-  MIME type; active types only as text), viewers `ImageViewer`, `PdfViewer` +
-  `PdfDocumentState` + `PrintingPdfRasterizer` (S-D1: `printing` + self-hosted pdf.js, 02 §6.3),
-  `TextFileViewer` (`CodeView`, `PreviewTokenizer`), `CsvTableViewer`, `UnsupportedFileView`,
+  50 MB cap), `PreviewType` (viewer by the sniffed MIME type; active types only as text; PDFs
+  get the *Download* card), viewers `ImageViewer`, `TextFileViewer` (`CodeView`, `PreviewTokenizer`), `CsvTableViewer`, `UnsupportedFileView`,
   `FileCategoryIcon`; `PlatformFileDownloader` (web: hidden `<a download>` via `dart:js_interop`,
   same tab; desktop: not yet). Commands (`preview_commands.dart`, registered by
   `DriveAppConfig.commands`): `drive.file.preview` (`Space`, drive scope), `drive.file.openWith`
   (→ `<app>/import?file=`), `drive.file.download` (`{uuids}` or the open preview),
-  `drive.preview.next/previous/zoomIn/zoomOut/zoomFit/zoomActual/rotate/goToPage/toggleWrap/
+  `drive.preview.next/previous/zoomIn/zoomOut/zoomFit/zoomActual/rotate/toggleWrap/
   copyAll/close` in the `drivePreview` key scope (inactive in text fields). D-13 and D-17 reuse
   these ids. `wonky_core/files.dart` gained `CsvSniffer`.
+- **PDF previews removed (user decision after D-18, [v2-review](../v2-review.md)):** the
+  S-D1 PDF viewer (`PdfViewer`, `PdfDocumentState`, `PrintingPdfRasterizer`, page field,
+  `drive.preview.goToPage`, password/broken/unavailable states, page count via
+  `drive.updateFileMeta`), `web/index.html`'s `dartPdfJsBaseUrl`, `tool/fetch_pdfjs.sh` and the
+  `printing` dependency were deleted; PDFs show the *Download* card like every other
+  non-previewable file (02 §6.3, §6.7).
 
 **D-15 · MCP & AI for Drive** (Drive 01 §3, suite 09)
 - Scope: `drive.upload_file`, `drive.create_upload`/`drive.complete_upload`,
@@ -666,14 +669,29 @@ S-D2
 - Owns: `wonky_drive/integration_test/`, `wonky_write/integration_test/` and
   `wonky_sheets/integration_test/` (new v2 journeys only), `AGENTS.md`, `specs/`.
 - Acceptance: J-D1…J-D10 pass; M8 exit criteria met.
+- **As built:** the journeys were walked through by hand in the release builds (wasm,
+  `localhost:8082`, light and dark, 900 px and ~480 px) with the built-in browser: files for
+  uploads are generated in the page and handed to `file_picker`'s input (OS drops can't be
+  synthesized, D-13), the quota is simulated with `user_storage.quotaBytesOverride` on the dev
+  database, J-D9/J-D10 run as server tests. The **backfill dry run** ran on the development
+  database (no production copy exists yet): see [03 §11](03-storage-quota.md#11-as-built-d-9).
+  The **web E2E runner** is not set up: this machine has no chromedriver (not downloaded), so
+  suite [15 §9](../15-writing-tests.md) documents the steps and the `integration_test`
+  journeys J-D1…J-D10 stay open (`TODO.md`). Bugs found and fixed: see `STATUS.md` D-18 —
+  notably image previews on the web (`ImageDimensions` header reader in
+  `wonky_core/files.dart`; `ImageDescriptor.encoded` has no size there), the code font of
+  text previews (JetBrains Mono registered through `AssetFontRegistry`), uploads of an
+  offline-opened folder going to My Drive (`DriveController` only writes the shared drive
+  state while it is the active home) and the *Open with Wonky Sheets* dialog
+  (`showImportDialog(fileLocked: true)`: no *Change file*, only *Create new spreadsheet*).
 
 ## 5. Spikes (timeboxed, inside their package)
 
 | ID | In | Question | Timebox | Exit |
 |----|----|----------|---------|------|
-| S-D1 | D-14 | PDF rendering under cross-origin isolation: `printing` raster with self-hosted pdf.js vs `pdfrx` (PDFium WASM) — bundle size, speed on a 100-page PDF, memory | 4 h | Chosen library + `web/` assets recipe in 02 §6.3 |
+| S-D1 | D-14 | PDF rendering under cross-origin isolation: `printing` raster with self-hosted pdf.js vs `pdfrx` (PDFium WASM) — bundle size, speed on a 100-page PDF, memory | 4 h | Chose `printing` + self-hosted pdf.js; **superseded**: the user decided on no PDF previews in v2 (02 §6.3), so the viewer was removed and the pdf.js files were never fetched |
 | S-D2 | D-13 | Web upload plumbing: large blobs (50 MB) in OPFS via `sqlite_async`, folder drops (`webkitGetAsEntry`), XHR progress through Serverpod's `FileUploader` on web | 4 h | Confirmed limits in 02 §4.1, folder upload in or out of M8 |
-| S-D3 | D-9 | Cost of `SheetsSizeEstimator` (`pg_column_size` over a 1M-cell space) and of the backfill on a production-sized copy | 2 h | Cadence in 03 §2 confirmed or an incremental estimate chosen |
+| S-D3 | D-9 | Cost of `SheetsSizeEstimator` (`pg_column_size` over a 1M-cell space) and of the backfill on a production-sized copy | 2 h | Cadence in 03 §2 confirmed or an incremental estimate chosen. **Done:** cadence confirmed (03 §11); after D-18 the user chose a compact content estimate (empty spreadsheet ~80 KB → 2.3 KB), same index-driven query shape |
 
 ## 6. Acceptance tests (M8 exit)
 
@@ -683,7 +701,7 @@ flutter_driver, suite 11 §1.1):
 | # | Journey |
 |---|---------|
 | J-D1 | Sign in at `/` → lands on Wonky Write's home (`/write/`); the left menu shows the four apps and the meter "x MB of 50 MB used"; *Wonky Drive* opens `/drive/` |
-| J-D2 | Upload 3 files by drag-and-drop into a new folder; preview the image, the PDF and a `.dart` file in light and dark; download one |
+| J-D2 | Upload 3 files by drag-and-drop into a new folder; preview the image and a `.dart` file in light and dark (the PDF shows the *Download* card); download one |
 | J-D3 | Upload until the quota is full: the pre-check dialog, the server refusal on a forced upload, the over-quota banner in Drive and in the Write home; empty trash → banner disappears live |
 | J-D4 | *Open with Wonky Sheets* on a CSV → spreadsheet opens in Sheets; Back returns to Drive |
 | J-D5 | Write home lists only documents and the folders that contain documents; *Open in Wonky Drive* shows the same folder with all kinds |
@@ -713,9 +731,9 @@ desktop-only code paths are added (suite 01 A13); `AGENTS.md` lists the Drive ap
 
 | Risk | Impact | Mitigation |
 |------|--------|-----------|
-| PDF rendering on web under COEP (pdf.js from a CDN is blocked) | No PDF previews | S-D1; self-host the worker; fallback "Download to view" |
+| ~~PDF rendering on web under COEP (pdf.js from a CDN is blocked)~~ | — | Retired: no PDF previews in v2 (user decision, 02 §6.3); PDFs download / *Open with* |
 | Large blobs in web local storage (IndexedDB fallback keeps the DB in memory) | Memory pressure, lost queued uploads | 5 MB cap for persisted blobs without OPFS; volatile rows with a clear message (02 §4.1) |
-| Size estimates for big spreadsheets are expensive or jumpy | DB load, confusing meters | S-D3; throttled estimator; incremental fallback; reconcile |
+| Size estimates for big spreadsheets are expensive or jumpy | DB load, confusing meters | S-D3; throttled estimator; incremental fallback; reconcile (re-estimates spreadsheets nightly — time it on the production copy) |
 | Existing users above 50 MB after the backfill | Support load, frustration | Non-destructive over-quota state, clear notification and Storage page; no grace (Q15) |
 | Four web builds in `flutter_build` (deploy pre-hook time, CI minutes) | Slower deploys | Build apps in parallel in the script; cache Flutter; build only changed apps in CI |
 | Old cached web clients and new enum values | Crashes on drive lists | `minClientVersion` bump (D-1) |

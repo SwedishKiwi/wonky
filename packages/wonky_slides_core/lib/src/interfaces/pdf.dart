@@ -29,6 +29,7 @@ final class SlidesPdfOptions {
     this.includeSkipped = false,
     this.range = 'all',
     this.groupIds,
+    this.slideIds,
     this.pageSize = SlidesPdfPageSize.slide,
     this.orientation = SlidesPdfOrientation.auto,
     this.margins = SlidesPdfMargins.none,
@@ -60,6 +61,10 @@ final class SlidesPdfOptions {
 
   /// Only these groups' slides (overrides [range]).
   final List<String>? groupIds;
+
+  /// Only these slides, in deck order (overrides [range] and [groupIds]):
+  /// `current`/`selection` resolved by the caller (SL-20, additive).
+  final List<String>? slideIds;
   final SlidesPdfPageSize pageSize;
   final SlidesPdfOrientation orientation;
   final SlidesPdfMargins margins;
@@ -94,6 +99,7 @@ final class SlidesExportResources {
     required this.images,
     this.textLayout,
     this.lineBreakHints = const {},
+    this.info = const SlidesPdfDocumentInfo(),
   });
 
   final FontProvider fonts;
@@ -103,7 +109,47 @@ final class SlidesExportResources {
   final TextLayoutEngine? textLayout;
 
   /// `<elementId>` or `<elementId>/<cellId>` → line-end offsets.
+  ///
+  /// Reserved: the layout engine contract carries no element ids, so the
+  /// app passes its Flutter engine as [textLayout] instead (the PDF then
+  /// uses the screen's own layout results, 10 §11.3 "As built (SL-20)").
   final Map<String, List<int>> lineBreakHints;
+
+  /// Document metadata and header/footer values (SL-20, additive).
+  final SlidesPdfDocumentInfo info;
+}
+
+/// Metadata of an exported document (10 §11.3 step 5) and the values of
+/// notes/handout headers that the deck model doesn't hold (SL-20).
+final class SlidesPdfDocumentInfo {
+  /// Creates the info.
+  const SlidesPdfDocumentInfo({
+    this.title,
+    this.author,
+    this.subject,
+    this.modified,
+    this.dateLabel,
+    this.revision,
+  });
+
+  /// Title (null = the deck title).
+  final String? title;
+
+  /// The owner's name.
+  final String? author;
+
+  /// The Drive description.
+  final String? subject;
+
+  /// The deck's modified time (creation/modification dates of the PDF,
+  /// so equal inputs give equal bytes); null = a fixed epoch.
+  final DateTime? modified;
+
+  /// The localized date of headers (null = `modified` as `yyyy-mm-dd`).
+  final String? dateLabel;
+
+  /// The deck revision (part of the deterministic document id).
+  final String? revision;
 }
 
 /// The result of a PDF export.

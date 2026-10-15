@@ -4,8 +4,6 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_core/files.dart';
-import 'package:wonky_drive/features/preview/pdf_document.dart';
-import 'package:wonky_drive/features/preview/pdf_rasterizer.dart';
 import 'package:wonky_drive/features/preview/preview_cache.dart';
 import 'package:wonky_drive/features/preview/preview_content.dart';
 
@@ -33,11 +31,12 @@ void main() {
         PreviewViewer.unsupported,
         null,
       ),
+      // No PDF previews in v2 (Drive 02 §6.3): the *Download* card.
       (
         'report.pdf',
         'application/pdf',
         FileCategory.pdf,
-        PreviewViewer.pdf,
+        PreviewViewer.unsupported,
         null,
       ),
       (
@@ -79,12 +78,12 @@ void main() {
       ),
       // A .jpg that is really HTML (AC-D2.4): source text, never rendered.
       ('cat.jpg', 'text/html', FileCategory.text, PreviewViewer.text, 'html'),
-      // A .png that is really a PDF is shown as a PDF.
+      // A .png that is really a PDF is not shown as an image.
       (
         'scan.png',
         'application/pdf',
         FileCategory.pdf,
-        PreviewViewer.pdf,
+        PreviewViewer.unsupported,
         null,
       ),
       (
@@ -221,91 +220,6 @@ void main() {
       final cache = PreviewByteCache(maxBytes: 10)..put('a', Uint8List(11));
 
       expect(cache.get('a'), isNull);
-    });
-  });
-
-  group('Given the printing rasterizer', () {
-    test('when the PDF is encrypted then it reports a password error before '
-        'rendering', () async {
-      final r = PrintingPdfRasterizer(pdfJsBaseUrl: 'http://localhost/');
-
-      expect(
-        r.raster(PreviewFixtures.encryptedPdf).toList(),
-        throwsA(isA<PdfPasswordException>()),
-      );
-    });
-  });
-
-  group('Given an open PDF document', () {
-    test('when scanned then page sizes come from the low-dpi pass', () async {
-      final doc = PdfDocumentState(
-        FakePdfRasterizer(),
-        PreviewFixtures.pdf(pages: 5),
-      );
-      addTearDown(doc.dispose);
-
-      await doc.open();
-
-      expect(doc.pageCount, 5);
-      expect(doc.pageSizes.first.width, closeTo(612, 6));
-      expect(doc.scanning, isFalse);
-      expect(doc.imageOf(0), isNotNull);
-    });
-
-    test('when it has more than 300 pages then only 300 are shown', () async {
-      final doc = PdfDocumentState(
-        FakePdfRasterizer(),
-        PreviewFixtures.pdf(pages: 320),
-      );
-      addTearDown(doc.dispose);
-
-      await doc.open();
-
-      expect(doc.pageCount, PreviewLimits.pdfPages);
-      expect(doc.truncated, isTrue);
-    });
-
-    test('when it is broken then the error is set', () async {
-      final doc = PdfDocumentState(
-        FakePdfRasterizer(),
-        PreviewFixtures.brokenPdf,
-      );
-      addTearDown(doc.dispose);
-
-      await doc.open();
-
-      expect(doc.error, isNotNull);
-      expect(doc.pageCount, 0);
-    });
-
-    test('when it is encrypted then it is password-protected', () async {
-      final doc = PdfDocumentState(
-        FakePdfRasterizer(),
-        PreviewFixtures.encryptedPdf,
-      );
-      addTearDown(doc.dispose);
-
-      await doc.open();
-
-      expect(doc.passwordProtected, isTrue);
-    });
-
-    test('when visible pages are requested then they are rendered sharp '
-        'once', () async {
-      final r = FakePdfRasterizer();
-      final doc = PdfDocumentState(r, PreviewFixtures.pdf(pages: 10));
-      addTearDown(doc.dispose);
-      await doc.open();
-
-      doc.ensure([0, 1, 2], 192);
-      await pumpEventQueue();
-      doc.ensure([0, 1, 2], 192);
-      await pumpEventQueue();
-
-      final sharp = r.requests.where((q) => q.$2 == 192).toList();
-      expect(sharp, hasLength(1));
-      expect(sharp.single.$1, [0, 1, 2]);
-      expect(doc.imageOf(1)!.width, 1632);
     });
   });
 }

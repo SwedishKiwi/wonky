@@ -245,6 +245,9 @@ class _WonkyFormDialogState extends State<WonkyFormDialog>
           },
           'value': _all[f.id],
           if (f is SelectFieldSpec) 'options': f.options.keys.toList(),
+          // (v2) What each option says (Slides' Go to slide lists slides
+          // by id; agents need the labels).
+          if (f is SelectFieldSpec) 'optionLabels': f.options,
           if (_errors[f.id] != null) 'error': _errors[f.id],
         },
     ],

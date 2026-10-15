@@ -238,7 +238,7 @@ class _DriveSearchFieldState extends State<DriveSearchField> {
               for (final m in _matches)
                 ShadButton.ghost(
                   mainAxisAlignment: MainAxisAlignment.start,
-                  leading: DriveKindIcon(m.kind, size: 18),
+                  leading: DriveKindIcon.item(m, size: 18),
                   onPressed: () {
                     _popover.hide();
                     s.openItem(m);

@@ -185,6 +185,17 @@ abstract class WonkyAppConfig {
     );
   }
 
+  /// (v2) The picture of a template card (suite 05 §3.1), or null for the
+  /// shell's miniature drawn from `TemplateView.previewStyle`/`previewText`.
+  /// Wonky Slides renders the first slide of its built-in templates
+  /// (Slides 04 §15). [width] × [height] is the card's preview area.
+  Widget? templatePreview(
+    BuildContext context,
+    TemplateView template, {
+    required double width,
+    required double height,
+  }) => null;
+
   // ------------------------------------------------------------------ v2
 
   /// What the home lists and offers (suite 03 §3.3): `HomeScope.all()` for

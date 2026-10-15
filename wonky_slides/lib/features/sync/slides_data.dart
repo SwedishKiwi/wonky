@@ -8,6 +8,7 @@ import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_core/wonky_core.dart' show Role;
 import 'package:wonky_slides_core/ops.dart' show SlidesMutationPlanner;
 import 'package:wonky_slides_core/planner.dart' show SlidesPlanner;
+import 'package:wonky_slides_core/templates.dart' show SlidesTemplates;
 import 'package:wonky_sync_kit_flutter/wonky_sync_kit_flutter.dart'
     show
         ReplicaInstallation,
@@ -173,8 +174,10 @@ abstract final class SlidesData {
   /// (works offline; `CreateDeck` = deck row, default theme copy, a title
   /// slide and the "Create presentation" log row in one transaction), then
   /// `drive.registerPresentation` (queued while offline; the item uuid is
-  /// the space uuid). Templates and devices without a usable reservation
-  /// while online create on the server (`drive.createPresentation`).
+  /// the space uuid). Built-in templates (`SlidesTemplates`, SL-22) are
+  /// built locally the same way; other templates (presentations published
+  /// as templates) and devices without a usable reservation while online
+  /// create on the server (`drive.createPresentation`).
   /// Returns the item uuid. Throws `NoReservedSpaceException` offline
   /// before the first reservations arrived.
   static Future<UuidValue?> createPresentation(
@@ -189,18 +192,25 @@ abstract final class SlidesData {
       templateUuid: templateUuid,
       name: name,
     );
+    final builtin = templateUuid == null
+        ? null
+        : SlidesTemplates.byUuid(templateUuid.uuid);
     final ctx = services.navigatorContext;
     final title =
         name ??
+        builtin?.name ??
         (ctx == null
             ? slidesL10nOf(services).untitledPresentation
             : services.config.untitledName(ctx));
-    if (templateUuid != null) return onServer();
+    if (templateUuid != null && builtin == null) return onServer();
     final controller = await SlidesData.ready(services);
     if (controller == null) return onServer();
     final UuidValue space;
     try {
-      space = await controller.createLocalPresentation(title: title);
+      space = await controller.createLocalPresentation(
+        title: title,
+        template: builtin,
+      );
     } on NoReservedSpaceException {
       if (services.connectivity.online) return onServer();
       rethrow;

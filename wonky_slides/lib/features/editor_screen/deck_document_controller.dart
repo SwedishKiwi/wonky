@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_client/wonky_client.dart' show DriveItemKind, UuidValue;
@@ -6,6 +8,10 @@ import 'package:wonky_slides_core/session.dart' show SlidesRowsUndoHandler;
 import 'package:wonky_ui/wonky_ui.dart' show SyncStatus;
 
 import '../../l10n/slides_l10n.dart';
+import '../canvas/slide_canvas_controller.dart' show selectionOf;
+import '../collab/slides_collab.dart';
+import '../navigator/navigator_controller.dart' show navigatorOf;
+import '../text_editing/text_editing_host.dart' show textEditingOf;
 import 'deck_editor_controller.dart';
 
 /// The shell's view of an open presentation (suite 03 §5, Slides 04 §2):
@@ -74,6 +80,30 @@ class DeckDocumentController extends DocumentController {
     notifyListeners();
   }
 
+  // ---- Collaboration (09 §1–§2; SL-21) ----
+
+  PresenceSession? _presence;
+
+  /// The shell's presence session of the file (cursor, hints, follow).
+  PresenceSession? get presence => _presence;
+
+  @override
+  void attachPresence(PresenceSession? presence) {
+    _presence = presence;
+    final ed = _editor;
+    if (ed != null) SlidesCollab.of(ed)?.setPresence(presence);
+  }
+
+  @override
+  void revealParticipant(String sessionId, {int? userId}) => unawaited(
+    _editor?.invokeCommand('slides.presence.jumpTo', {'sessionId': sessionId}),
+  );
+
+  @override
+  void followParticipant(String sessionId) => unawaited(
+    _editor?.invokeCommand('slides.presence.follow', {'sessionId': sessionId}),
+  );
+
   void update({String? title, Role? role}) {
     if (title != null) this.title = title;
     if (role != null) {
@@ -95,19 +125,77 @@ class DeckDocumentController extends DocumentController {
   @override
   String? get selectionSummary => _editor?.describeSelection();
 
-  // ---- Edit menu (cut/copy/paste come with SL-18's clipboard) ----
+  // ---- Edit menu ----
+  //
+  // The shell's Cut/Copy/Paste/Paste without formatting run the Slides
+  // clipboard commands (SL-18, 03 §12): they act on the body being edited,
+  // the selected table cells, the canvas selection, or — when the
+  // navigator owns the clipboard — slides and groups (SL-16, 04 §5.8).
+
+  bool _enabled(String id) =>
+      _editor != null && services.dispatcher.stateOf(id).enabled;
+
+  Future<void> _run(String id, [Map<String, Object?> args = const {}]) async {
+    await _editor?.invokeCommand(id, args, InvocationSource.menu);
+  }
 
   @override
-  bool get canCut => false;
+  bool get canCut => _enabled('slides.edit.cut');
 
   @override
-  bool get canCopy => false;
+  bool get canCopy => _enabled('slides.edit.copy');
 
   @override
-  bool get canPaste => false;
+  bool get canPaste => _enabled('slides.edit.paste');
 
   @override
-  bool get canSelectAll => false;
+  Future<void> cut() => _run('slides.edit.cut');
+
+  @override
+  Future<void> copy() => _run('slides.edit.copy');
+
+  @override
+  Future<void> paste({bool plainText = false}) =>
+      _run('slides.edit.paste', {if (plainText) 'plainText': true});
+
+  /// Mod+A on the canvas selects every unlocked, visible element of the
+  /// selection scope (03 §3.3; SL-12); while editing text, all text of the
+  /// body (SL-13). The navigator scope extends this (SL-16).
+  @override
+  bool get canSelectAll => _editor != null;
+
+  @override
+  void selectAll() {
+    final ed = _editor;
+    if (ed == null) return;
+    final text = textEditingOf(ed).active;
+    if (text != null) {
+      text.selectAll();
+      return;
+    }
+    // The navigator or grid view selects every slide (04 §5.9; SL-16).
+    if (ed.mode == DeckViewMode.grid || ed.navigatorFocus.hasFocus) {
+      navigatorOf(ed).selectAll();
+      return;
+    }
+    selectionOf(ed).selectAll();
+  }
+
+  // ---- Undo ----
+
+  /// Pending typing is written first, so menu, toolbar, palette and MCP
+  /// undo/redo see the burst as its own step (03 §6.1, SL-13).
+  @override
+  Future<void> beforeUndo() async {
+    final ed = _editor;
+    if (ed != null) textEditingOf(ed).commit();
+  }
+
+  @override
+  Future<void> beforeRedo() async {
+    final ed = _editor;
+    if (ed != null) textEditingOf(ed).commit();
+  }
 
   // ---- View ----
 
@@ -131,8 +219,11 @@ class DeckDocumentController extends DocumentController {
       _editor?.session.syncStatus ?? super.syncStatus;
 
   @override
-  Map<String, Object?> describeState() =>
-      _editor?.describeState() ?? const {'loading': true};
+  Map<String, Object?> describeState() {
+    final ed = _editor;
+    if (ed == null) return const {'loading': true};
+    return {...ed.describeState(), ...?SlidesCollab.of(ed)?.describeState()};
+  }
 
   @override
   void onRoleChanged(Role role) {

@@ -123,3 +123,41 @@ extension _TextPart on _Planner {
     return 'Text box options';
   }
 }
+
+extension _PlaceholderPart on _Planner {
+  /// *Reset to layout* (03 §6.2): instance frame and style columns → null
+  /// (inherit from the layout placeholder again); the text stays.
+  String resetPlaceholders(ResetPlaceholders op) {
+    final ids = unique(op.elementIds);
+    for (final id in ids) {
+      final e = elementOf(id);
+      if (e.slideId == null || e.placeholderOf == null) {
+        invalid('Only placeholders on a slide can be reset to the layout', {
+          'id': id,
+        });
+      }
+      b.set(
+        e,
+        {
+          ElementCols.x: null,
+          ElementCols.y: null,
+          ElementCols.width: null,
+          ElementCols.height: null,
+          ElementCols.rotation: null,
+          ElementCols.textStyleJson: null,
+          ElementCols.fillJson: null,
+          ElementCols.strokeJson: null,
+          ElementCols.effectsJson: null,
+          ElementCols.opacity: null,
+        },
+        together: const {
+          ElementCols.x,
+          ElementCols.y,
+          ElementCols.width,
+          ElementCols.height,
+        },
+      );
+    }
+    return plural(ids.length, 'Reset to layout', 'Reset to layout');
+  }
+}

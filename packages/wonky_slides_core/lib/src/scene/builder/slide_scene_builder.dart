@@ -13,6 +13,7 @@ import 'dart:math' as math;
 import 'package:vector_math/vector_math_64.dart' show Matrix4;
 import 'package:wonky_charts/wonky_charts.dart' show SStrokeCap, SStrokeJoin;
 
+import '../../code/code_element_data.dart' show CodeBoxStyle;
 import '../../connectors/connector_router.dart';
 import '../../geometry/path_ops.dart';
 import '../../geometry/shape_library.dart';
@@ -30,6 +31,7 @@ import '../../theme/model/common.dart';
 import '../../theme/model/object_styles.dart';
 import '../../theme/resolve/resolved_theme.dart';
 import '../nodes/scene_nodes.dart';
+import '../nodes/table_grid.dart';
 import '../nodes/text_layout.dart';
 import 'code_layout.dart';
 import 'image_adjust.dart';
@@ -56,7 +58,14 @@ final class SlideSceneBuilder {
     final all = <String, ResolvedElement>{
       for (final e in slide.painted) e.id: e,
     };
-    final b = _Build(this, ctx, (id) => all[id]);
+    final b = _Build(
+      this,
+      ctx,
+      (id) => all[id],
+      background: slide.background.effectiveColor(
+        ctx.theme.colorOf('bg1') ?? 0xffffffff,
+      ),
+    );
     final nodes = <SceneNode>[
       for (final e in slide.masterElements) ?b.element(e),
       for (final e in slide.layoutElements) ?b.element(e),
@@ -92,7 +101,14 @@ final class SlideSceneBuilder {
     }
 
     index(elements);
-    final b = _Build(this, context, (id) => all[id]);
+    final b = _Build(
+      this,
+      context,
+      (id) => all[id],
+      background: background.effectiveColor(
+        context.theme.colorOf('bg1') ?? 0xffffffff,
+      ),
+    );
     return SlideScene(
       slideId: id,
       width: width,
@@ -111,6 +127,31 @@ final class SlideSceneBuilder {
     SceneContext context, {
     ResolvedElement? Function(String id)? lookup,
   }) => _Build(this, context, lookup ?? (_) => null).element(element);
+
+  /// The laid-out grid of table [element] (SL-15): the same layout the
+  /// scene draws, with [cellText] (`"<rowId>|<columnId>"` → Delta JSON)
+  /// overriding stored cell bodies (the cell being edited). [context] must
+  /// carry the slide's theme and the deck. Null when it isn't a table or
+  /// has no rows/columns.
+  TableGrid? tableGrid(
+    ResolvedElement element,
+    SceneContext context, {
+    Map<String, String?> cellText = const {},
+  }) {
+    final deck = context.deck;
+    if (element.record.kind != ElementKind.table || deck == null) return null;
+    final ix = deck is DeckModel
+        ? deck.indexes.table(element.id)
+        : TableIndex.of(deck, element.id);
+    final layout = _TableLayout(
+      _Build(this, context, (_) => null),
+      element,
+      ix,
+      cellText: cellText,
+    );
+    layout.build();
+    return layout.grid;
+  }
 }
 
 final class _CacheEntry {
@@ -123,11 +164,15 @@ final class _CacheEntry {
 }
 
 final class _Build {
-  _Build(this.owner, this.ctx, this.lookup);
+  _Build(this.owner, this.ctx, this.lookup, {this.background});
 
   final SlideSceneBuilder owner;
   final SceneContext ctx;
   final ResolvedElement? Function(String id) lookup;
+
+  /// The effective slide background (ARGB) behind the elements, when known
+  /// (code palettes `auto`, 07 §2.5).
+  final int? background;
   final Map<String, SuRect> frames = {};
   final Map<String, List<({double x, double y})>> routes = {};
 
@@ -149,6 +194,7 @@ final class _Build {
     ctx.codeStates[e.id] ?? '',
     ctx.generation,
     if (e.record.kind == ElementKind.line) _glueKey(e),
+    if (e.record.kind == ElementKind.code) background ?? '',
   ].join('|');
 
   String _glueKey(ResolvedElement line) {
@@ -212,7 +258,7 @@ final class _Build {
       case ElementKind.icon:
         return _wrap(e, _icon(e), e.frame);
       case ElementKind.code:
-        return _wrap(e, _code(e), e.frame, defaultShadow: _codeShadow());
+        return _wrap(e, _code(e), e.frame, defaultShadow: _codeShadow(e));
       case ElementKind.chart:
         return _wrap(e, _chart(e), e.frame);
     }
@@ -713,15 +759,18 @@ final class _Build {
   // ---------------------------------------------------------------------
   // Code and charts
 
-  NodeEffects? _codeShadow() => switch (theme.codeStyle.shadow) {
-    'none' => null,
-    'strong' => const NodeEffects(
-      shadows: [NodeShadow(color: 0x59000000, dy: 16, blur: 40)],
-    ),
-    _ => const NodeEffects(
-      shadows: [NodeShadow(color: 0x2e000000, dy: 8, blur: 24)],
-    ),
-  };
+  /// The box shadow: the element's `box.shadow` (07 §3.1) or the theme's.
+  NodeEffects? _codeShadow(ResolvedElement e) =>
+      switch (CodeBoxStyle.fromJson(e.data?['box']).shadow ??
+      theme.codeStyle.shadow) {
+        'none' => null,
+        'strong' => const NodeEffects(
+          shadows: [NodeShadow(color: 0x59000000, dy: 16, blur: 40)],
+        ),
+        _ => const NodeEffects(
+          shadows: [NodeShadow(color: 0x2e000000, dy: 8, blur: 24)],
+        ),
+      };
 
   List<SceneNode> _code(ResolvedElement e) {
     final w = e.frame.width, h = e.frame.height;
@@ -735,6 +784,7 @@ final class _Build {
       stateIndex: ctx.purpose == ScenePurpose.edit
           ? ctx.codeStates[e.id]
           : null,
+      background: background,
     );
     if (scene == null) return const [];
     return [CodeNode(elementId: e.id, scene: scene, dst: SuRect(0, 0, w, h))];
@@ -799,11 +849,17 @@ final class _Build {
 /// from axis sizes (null = even split of the rest, scaled to the frame),
 /// rows growing to fit their text, merges, theme areas, bands and borders.
 final class _TableLayout {
-  _TableLayout(this.b, this.e, this.ix);
+  _TableLayout(this.b, this.e, this.ix, {this.cellText = const {}});
 
   final _Build b;
   final ResolvedElement e;
   final TableIndex ix;
+
+  /// Bodies overriding stored cell text (`"<rowId>|<columnId>"`).
+  final Map<String, String?> cellText;
+
+  /// The grid of the last [build].
+  TableGrid? grid;
 
   ResolvedTheme get theme => b.theme;
 
@@ -884,6 +940,8 @@ final class _TableLayout {
 
     // Cell content.
     final cells = <(int, int, int, int, _CellText?)>[]; // r, c, rs, cs
+    final cellPads = <List<double>>[];
+    final cellStyles = <ResolvedTextStyles>[];
     final rowNeed = [...rowMin];
     final spanNeeds = <(int, int, double)>[]; // first row, last row, need
     for (var r = 0; r < rows.length; r++) {
@@ -895,15 +953,21 @@ final class _TableLayout {
         final pad = _padding(rec?.padding) ?? defaultPadding;
         final cellW = _sum(colW, c, cs);
         _CellText? text;
-        final body = TextBody.fromJson(rec?.text);
+        final key = '${rows[r].id}|${cols[c].id}';
+        final body = TextBody.fromJson(
+          cellText.containsKey(key) ? cellText[key] : rec?.text,
+        );
+        final styles = stylesOf(r, c);
+        cellPads.add(pad);
+        cellStyles.add(styles);
         if (!body.isBlank) {
-          final styles = stylesOf(r, c);
           final layout = b.ctx.textLayout.layout(
             body,
             styles,
             width: math.max(1.0, cellW - pad[1] - pad[3]),
           );
           text = _CellText(layout, pad, rec?.vAlign ?? 'top');
+          text.partId = key;
           final need = layout.height + pad[0] + pad[2];
           if (rs == 1) {
             rowNeed[r] = math.max(rowNeed[r], need);
@@ -921,6 +985,32 @@ final class _TableLayout {
     final colX = _prefix(colW);
     final rowY = _prefix(rowNeed);
     final totalH = rowY.last;
+    grid = TableGrid(
+      elementId: e.id,
+      columnX: colX,
+      rowY: rowY,
+      rowIds: [for (final a in rows) a.id],
+      columnIds: [for (final a in cols) a.id],
+      cells: [
+        for (final (i, (r, c, rs, cs, t)) in cells.indexed)
+          TableGridCell(
+            row: r,
+            column: c,
+            rowSpan: rs,
+            colSpan: cs,
+            rowId: rows[r].id,
+            columnId: cols[c].id,
+            x: colX[c],
+            y: rowY[r],
+            width: colX[c + cs] - colX[c],
+            height: rowY[r + rs] - rowY[r],
+            padding: cellPads[i],
+            vAlign: ix.cellAt(r, c)?.vAlign ?? 'top',
+            styles: cellStyles[i],
+            layout: t?.layout,
+          ),
+      ],
+    );
 
     final inner = <SceneNode>[];
     final text = <SceneNode>[];
@@ -952,6 +1042,7 @@ final class _TableLayout {
             layout: t.layout,
             originX: x + t.pad[3],
             originY: y + t.pad[0] + dy,
+            partId: t.partId,
           ),
         );
       }
@@ -1104,4 +1195,5 @@ final class _CellText {
   final TextLayoutResult layout;
   final List<double> pad;
   final String vAlign;
+  String? partId;
 }

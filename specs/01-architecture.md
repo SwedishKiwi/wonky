@@ -161,7 +161,8 @@ wonky_sync_kit        → (v2) wonky_core, wonky_sync_models, serverpod_database
 wonky_sync_kit_flutter→ (v2) wonky_sync_kit, wonky_app, wonky_ui, wonky_client, wonky_sync_models, serverpod_offline_sync_client,
                         serverpod_database (replica, sync controller, writer, change journal)
 wonky_slides_core     → (v2) wonky_core, wonky_sync_models (model types + ids only), wonky_sync_kit, wonky_charts,
-                        wonky_numfmt, wonky_code, wonky_rich_text, wonky_fonts, pdf, image, vector_math, crypto
+                        wonky_numfmt, wonky_code, wonky_rich_text, wonky_fonts, pdf, image, vector_math, crypto,
+                        html (clipboard HTML: tables and rich text pasted from other apps, Slides 03 §12.5)
 wonky_sheets_script   → wonky_core, wonky_sheets_core, dart_eval, eval_annotation, native_synchronization
 wonky_sync_models     → serverpod_database, serverpod_offline_sync, serverpod_serialization, uuid
 wonky_server          → serverpod, serverpod_auth_idp_server, serverpod_offline_sync(_server), serverpod_cloud_storage,
@@ -176,8 +177,8 @@ wonky_ui              → flutter, shad
 wonky_app             → wonky_ui, wonky_core, wonky_client, serverpod_flutter, serverpod_auth_idp_flutter, go_router, provider, mcp_dart,
                         wonky_spellcheck (v2; spelling glue and dictionaries moved from Write),
                         wonky_fonts (v2; `AssetFontRegistry` / `BundledAssetFontProvider`, Slides 05 §3.1)
-wonky_drive           → (v2) wonky_app, wonky_ui, wonky_core, wonky_client, wonky_code_flutter (text previews), printing (PDF
-                        raster, spike Drive 05 S-D1), file_picker, file_saver, http
+wonky_drive           → (v2) wonky_app, wonky_ui, wonky_core, wonky_client, wonky_code_flutter (text previews), file_picker,
+                        file_saver, http (no PDF previews in v2, Drive 02 §6.3)
 wonky_write           → wonky_app, wonky_ui, wonky_write_core, wonky_code + wonky_code_flutter (v2), super_editor (vendored), super_clipboard,
                         printing, file_saver, file_picker
 wonky_sheets          → wonky_app, wonky_ui, wonky_sheets_core, wonky_sheets_script, two_dimensional_scrollables (auxiliary
@@ -301,8 +302,9 @@ library.
 | `wonky_write`, `wonky_sheets` (v2: and `wonky_drive`, `wonky_slides`) | `wonky_core`, `wonky_client`, `shad`, `go_router` | Ids/commands/undo, repositories calling endpoints (never widgets, 11 §6), shad UI (02), routes (A9) |
 | `wonky_write` | `dart_quill_delta` | Client side of the Delta OT (A4) |
 | `wonky_server` | `mime` | (v2) Magic-number sniffing of uploaded files (Drive 02 §5) |
-| `wonky_drive` | `printing` | (v2) PDF page rasterization for previews (Drive 02 §6.3; spike S-D1 may swap it for `pdfrx`) |
 | `wonky_slides` | `flutter_scene`, `vector_math` | (v2) 3D transitions and the chart camera (Slides 06, 08) |
+| `wonky_slides` | `qr` | (v2) QR code of the presentation audience link (Slides 10 §5.2); pure Dart, already resolved through `pdf` |
+| `wonky_slides` | `http`, `flutter_svg` | (v2) Downloading uploaded images from signed URLs; rasterizing SVG images on insert (Slides 03 §6.5, SL-15) |
 | `wonky_write` | `http` | Fetches server-side exports |
 | `wonky_write` | `sqlite_async` | Offline document cache (with `wonky_app`'s `LocalDatabase`) |
 

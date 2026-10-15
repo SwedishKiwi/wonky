@@ -499,7 +499,7 @@ after 30 days.
 | `PlaceholderType` | `title`, `subtitle`, `body`, `picture`, `chart`, `table`, `code`, `caption`, `bigNumber`, `quote`, `attribution`, `slideNumber`, `footer`, `date`, `object` |
 | `TableDimension` | `row`, `column` |
 | `BuildKind` | `buildIn`, `buildOut`, `emphasis`, `motion` (append-only; 06 A-06-2) |
-| `BuildTrigger` | `onClick`, `withPrevious`, `afterPrevious` (`onElementClick` reserved, P2) |
+| `BuildTrigger` | `onClick`, `withPrevious`, `afterPrevious`, `onElementClick` (added in S-2, reserved for P2: never written yet) |
 
 Enums are serialized by name. New values are additive and need a lock-step schema release.
 
@@ -541,7 +541,7 @@ use a subset (§4.3). Validator/normalizer: `SlidesDeltaValidator`, `SlidesDelta
 | `style` | theme text style key: `title`, `subtitle`, `heading`, `body`, `body2`, `caption`, `quote`, `attribution`, `bigNumber`, `label` | null = the box's default style (placeholder type or `body`) |
 | `align` | `left`, `center`, `right`, `justify` | null = text style's |
 | `list` | `bullet`, `ordered`, `check`, `unchecked` | |
-| `listStyle` | bullet glyph key (`disc`, `circle`, `square`, `dash`, `arrow`, `check`, `star`, `emoji:<char>`, `none`) or numbering (`decimal`, `lowerAlpha`, `upperAlpha`, `lowerRoman`, `upperRoman`) | null = theme default per level (05 §2.5) |
+| `listStyle` | bullet glyph key (`disc`, `circle`, `square`, `dash`, `arrow`, `check`, `star`, `emoji:<char>`, `none`) or numbering (`decimal`, `lowerAlpha`, `upperAlpha`, `lowerRoman`, `upperRoman`) | null = theme default per level (05 §2.5). A paragraph without `list` and `style` takes `list`/`listStyle`/`listStart`/`indent` from the box defaults (`textStyleJson.defaults`, e.g. a body placeholder's bullets); `listStyle: none` turns such a default list off (SL-13) |
 | `listStart` | int ≥ 0 | Ordered lists: first number of the run |
 | `indent` | 0–8 | Lists and plain paragraphs |
 | `lineHeight` | multiplier 0.7–3 | |
@@ -555,6 +555,13 @@ Constraints (validated before every write, client and server): canonical form (n
 adjacent equal attributes merged, ends with `"\n"`); no control characters except `\n`, U+2028,
 and `\t` (converted to 4 spaces outside lists); unknown attributes dropped; ≤ 20,000 characters
 per body (§13); links restricted to the schemes above.
+
+*As built (SL-7, SL-8):* the schemas are `SlidesText` (`wonky_slides_core/lib/src/model/text/`);
+`SlidesDeltaValidator` (issues `{code, message, op?, attribute?}`: `not_a_delta`,
+`not_an_insert`, `embed`, `missing_final_newline`, `control_character`, `unknown_attribute`,
+`invalid_attribute`, `not_canonical`, `too_long`) and `SlidesDeltaNormalizer` (canonical form,
+truncation keeping the cut line's paragraph attributes, `fromPlainText` with list detection) are
+in `lib/src/text/` (`package:wonky_slides_core/text.dart`).
 
 ### 4.2 Effective text style
 
@@ -819,7 +826,7 @@ Collapsed groups are **per user and device** (D6/D11): never synced.
 | `DeckChangeLogReceipt` | Exactly-once consumption of `DeckChangeLog` rows (as `SheetsChangeLogReceipt`). |
 | `SlidesSnapshotIndex` | Per version: slide list (id, title, group, skipped), changed slide/element ids since the previous version with author ids (09 §4.1). |
 | `ItemVersionState` | Shared (suite 07, Sheets A-10-3). |
-| `ServerChangeRecord` | Inverse data of server-executed changes (restore, MCP, AI) for `slides.serverChange` undo (shared format with Sheets). |
+| `ServerChangeRecord` | Inverse data of server-executed changes (restore, MCP, AI) for `slides.serverChange` undo (shared format with Sheets). *As built (SL-8):* the Sheets table itself — `spreadsheetUuid` holds the deck space; `slides.revertChange`/`reapplyChange` only accept records of presentations, Sheets' only of spreadsheets. |
 | `ChartLinkSourceState` | Cache of each linked spreadsheet chart's current `sourceVersion` for update checks (08). |
 
 ---
@@ -892,6 +899,13 @@ count as spreadsheets (suite 12 §2.6 as built).
   uuid; replayed into My Drive when the folder went away). Templates, and devices online
   without a usable reservation, create on the server (`drive.createPresentation`); offline
   without a reservation nothing is created and a toast asks to connect.
+- *As built (SL-22):* built-in templates are pure-Dart decks (`SlidesTemplates`,
+  `package:wonky_slides_core/templates.dart`: planner operations on a built-in theme), so the
+  app builds them **locally in a reserved space like a blank deck** (works offline;
+  `createLocalPresentation(template:)`, one write with the "Create presentation" log row) and
+  the server builds the same deck for `drive.createPresentation(templateUuid)`
+  (`SlidesTemplateDecks.write` through `ServerSlidesWriter`). Only presentations published as
+  templates (items) are server copies (online).
 - **Copy** (*Make a copy*, copy from a version, templates): `DeckCopier` (core,
   `wonky_slides_core/lib/src/copy/`) rewrites every id for the new space (row ids are global):
   fresh UUIDv7 for every row; deterministic ids recomputed (`tableCellId`, `placeholderInstanceId`,
@@ -901,6 +915,16 @@ count as spreadsheets (suite 12 §2.6 as built).
   element refs, `Deck.themeId`); uploaded files re-homed (`FileEndpoint.copyToItem`, quota-checked,
   D3); `DeckChangeLog` not copied; `ChartLink` rows kept (the copy stays linked if the user can
   read the spreadsheet).
+- *As built (SL-8):* `DeckCopier.copy` (`package:wonky_slides_core/copy.dart`) returns the rows,
+  the id map and the files to re-home (`FileRehome`). Themes with a `sourceKey` get
+  `themeCopyId(newDeck, sourceKey)`, their parts `themePartId(theme, partKey)` with the built-in
+  part key when the part is a built-in's deterministic row (so re-applying that built-in in the
+  copy adds nothing), else the source row id; themes without provenance get fresh ids. Match
+  keys of theme elements follow their ids; slide elements keep theirs. Rows whose owner is gone
+  are left out. The server copies decks with `DeckCopies` (`drive.copy`, templates):
+  quota check of the source's size + attachments, `DeckCopier` rows written by
+  `ServerSlidesWriter` ("Copy presentation" change-log row), drive item, images re-homed with
+  `file.copyToItem`, size measured.
 
 ---
 
@@ -1033,7 +1057,7 @@ headless and UI edits are identical.
 |------|------------|
 | Deck | `SetDeckProps` (title, size + scale mode, appearance, numbering, footer, defaults), `SetDeckTheme` |
 | Slides | `AddSlides(layoutId, after, count, inGroup?)`, `DuplicateSlides`, `DeleteSlides`, `MoveSlides(ids, target: TopLevel(before/after) \| InGroup(groupId, before/after))`, `SetSlideProps` (skip, background, layout + placeholder remap, transition, notes, hideMasterElements), `ResetSlideToLayout` |
-| Groups | `CreateGroup(slideIds, title, color)`, `Ungroup(groupId)`, `MoveGroups(ids, before/after)`, `SetGroupProps` (title, color, skipped), `DeleteGroups(ids, withSlides)`, `DuplicateGroups` |
+| Groups | `CreateGroup(slideIds, title, color, target?)` (target: top-level position; required for an empty group — SL-16), `Ungroup(groupId)`, `MoveGroups(ids, before/after)`, `SetGroupProps` (title, color, skipped), `DeleteGroups(ids, withSlides)`, `DuplicateGroups` |
 | Clipboard | `PasteSlides(payload, target, themeMode: keepSource \| useDestination)`, `PasteElements(payload, slideId, at?)` |
 | Elements | `InsertElements`, `UpdateFrames` (move/resize/rotate/flip; names exactly the frame columns it changes), `SetElementProps` (fill, stroke, effects, opacity, locked, hidden, name, alt text, link, matchKey, readingKey), `DeleteElements`, `ReorderZ(op)`, `AlignDistribute`, `GroupElements`, `UngroupElements`, `ReplaceImage`, `SetElementData` (kind payload) |
 | Text | `SetText(target, delta)` (whole body), `FormatText(targets, attrs, range?)`, `SetTextBoxStyle` |
@@ -1185,6 +1209,17 @@ and recorded here.
 |---------|---------|-----------|------------------|
 | (before S-1) | Sheets tables of the first iteration | — | `1a5f0730-2976-5ef7-b870-dbdc1b965fa5:8faad583-3b96-5cb4-a39e-5b141d5f9b15` |
 | **S-1** (M9, SL-2) | + the 13 Slides tables of §3 (as built) and their 7 enums; additions A-03-1, A-08-2 (`sheetId`), A-10-1, A-10-2 | server + client `20261014234831373-slides-s1` (only `CREATE TABLE`/index/FK; no data change) | `b54df85b-b26f-5da7-aa12-d8761b0c27cc:588b3c43-b2f7-5c93-a691-bb5704e6ffe8` |
+| **S-2** (M10, SL-24) | + `BuildTrigger.onElementClick` (reserved for interactive decks, 06 A-06-2: S-2 clients decode it, the timeline skips such builds, the planner refuses to write it). The other 06 §20 additions are JSON schemas of existing columns (`optionsJson`, `transitionJson`, `defaultsJson` keys) — no table change. New guard: `SyncSchemaRelease.syncEnumsHash` | none (`create_migration`: no changes) | unchanged; enums hash `137e402a-d9fd-5f33-99f2-0c4ef7340b37:656de501-33c1-57fb-90bd-364b8be5aa08` |
+
+**Enum values (S-2).** The engine's `syncTablesHash` covers table definitions (columns, types,
+nullability, FKs, unique indexes) but not the values of enum columns, which are stored by name —
+yet a value a peer doesn't know fails to decode there. `SyncSchemaRelease.syncEnumsHash` (two
+UUIDv5 of the sorted `Enum:values` list of every synced enum, `SyncSchemaRelease.syncedEnums`)
+is checked by `wonky_sync_models/test/tables/sync_schema_release_test.dart`, which also checks
+that every generated enum is listed: appending an enum value fails it until the release is
+bumped and recorded here. An enum-only release doesn't change `syncTablesHash`, so peers of the
+previous release still sync; that is safe only while no row uses the new value (reserved values
+like `onElementClick`), otherwise the release must ride along with a table change.
 
 The Slides table codec is `SlidesSyncedTables` (`wonky_sync_models/tables.dart`, next to Sheets'
 `SyncedTables`; the two sets are disjoint) and the shared kit's set is `SlidesTableSet.tables`

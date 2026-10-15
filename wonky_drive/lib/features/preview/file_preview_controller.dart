@@ -3,12 +3,12 @@ import 'dart:convert';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_core/files.dart';
 
-import 'pdf_document.dart';
 import 'preview_api.dart';
 import 'preview_content.dart';
 import 'preview_host.dart';
@@ -47,15 +47,6 @@ enum PreviewProblem {
 
   /// The image doesn't decode (damaged or truncated).
   imageBroken,
-
-  /// The PDF doesn't open (damaged).
-  pdfBroken,
-
-  /// The PDF is encrypted.
-  pdfPassword,
-
-  /// PDF rendering isn't available (pdf.js not served).
-  pdfUnavailable,
 
   /// A text file whose bytes are binary.
   notText,
@@ -101,9 +92,6 @@ class FilePreviewController extends ChangeNotifier {
   /// Decoded text (text and CSV viewers).
   TextPreview? text;
 
-  /// The open PDF.
-  PdfDocumentState? pdf;
-
   CsvTable? _csv;
 
   /// The CSV table (first [PreviewLimits.csvRows] rows), parsed lazily.
@@ -125,7 +113,7 @@ class FilePreviewController extends ChangeNotifier {
 
   // ------------------------------------------------------------ view state
 
-  /// Zoom factor (1 = actual size); null = fit (image) / fit width (PDF).
+  /// Zoom factor (1 = actual size); null = fit.
   double? zoom;
 
   /// The scale "fit" currently means (reported by the viewer).
@@ -139,14 +127,6 @@ class FilePreviewController extends ChangeNotifier {
 
   /// CSV shown as a table (else as text).
   bool csvAsTable = true;
-
-  /// The PDF page in view (0-based, reported by the viewer).
-  int pdfPage = 0;
-
-  final StreamController<int> _pageJumps = StreamController.broadcast();
-
-  /// Pages the PDF viewer should scroll to ([goToPage]).
-  Stream<int> get pageJumps => _pageJumps.stream;
 
   Timer? _poll;
   bool _disposed = false;
@@ -233,8 +213,6 @@ class FilePreviewController extends ChangeNotifier {
     _csv = null;
     fromServerPreview = false;
     uploadPercent = null;
-    pdf?.dispose();
-    pdf = null;
   }
 
   void _readMeta(DriveItemView v) {
@@ -342,45 +320,52 @@ class FilePreviewController extends ChangeNotifier {
         text = decoded;
         phase = PreviewPhase.ready;
         _notify();
-      case PreviewViewer.pdf:
-        if (!await host.rasterizer.available()) {
-          if (id != _loadId || _disposed) return;
-          return _fail(PreviewProblem.pdfUnavailable);
-        }
-        if (id != _loadId || _disposed) return;
-        final doc = pdf = PdfDocumentState(host.rasterizer, data);
-        doc.addListener(_onPdfChanged);
-        phase = PreviewPhase.ready;
-        _notify();
-        await doc.open();
-        if (id != _loadId || _disposed) return;
-        if (doc.passwordProtected) return _fail(PreviewProblem.pdfPassword);
-        if (doc.error != null) return _fail(PreviewProblem.pdfBroken);
-        unawaited(_writePageCount(v, doc));
       case PreviewViewer.unsupported:
         phase = PreviewPhase.ready;
         _notify();
     }
   }
 
-  /// Reads the image header (size, format) without decoding the pixels.
+  /// Reads the image size from its header without decoding the pixels
+  /// ([ImageDimensions]; Flutter's `ImageDescriptor.encoded` can't report the
+  /// size on the web). Formats the header reader doesn't know fall back to
+  /// the engine: the descriptor (native), else a decode (web).
   Future<bool> _checkImage(Uint8List data) async {
+    final size = ImageDimensions.read(data) ?? await _engineImageSize(data);
+    if (size == null) return false;
+    // The original's size from the metadata wins over a preview's.
+    if (imageWidth == null || !fromServerPreview) {
+      imageWidth = size.width;
+      imageHeight = size.height;
+    }
+    return true;
+  }
+
+  static Future<ImageDimensions?> _engineImageSize(Uint8List data) async {
+    ui.ImmutableBuffer? buffer;
+    ui.ImageDescriptor? d;
     try {
-      final buffer = await ui.ImmutableBuffer.fromUint8List(data);
-      final d = await ui.ImageDescriptor.encoded(buffer);
-      final w = d.width;
-      final h = d.height;
-      d.dispose();
-      buffer.dispose();
-      if (w <= 0 || h <= 0) return false;
-      // The original's size from the metadata wins over a preview's.
-      if (imageWidth == null || !fromServerPreview) {
-        imageWidth = w;
-        imageHeight = h;
+      buffer = await ui.ImmutableBuffer.fromUint8List(data);
+      d = await ui.ImageDescriptor.encoded(buffer);
+      try {
+        final w = d.width;
+        final h = d.height;
+        return w > 0 && h > 0 ? ImageDimensions(w, h) : null;
+      } on UnsupportedError {
+        // Web: the descriptor has no size before decoding.
+        final codec = await d.instantiateCodec();
+        final frame = await codec.getNextFrame();
+        final image = frame.image;
+        final size = ImageDimensions(image.width, image.height);
+        image.dispose();
+        codec.dispose();
+        return size.pixels > 0 ? size : null;
       }
-      return true;
     } on Object {
-      return false;
+      return null;
+    } finally {
+      d?.dispose();
+      buffer?.dispose();
     }
   }
 
@@ -391,27 +376,7 @@ class FilePreviewController extends ChangeNotifier {
     }
   }
 
-  void _onPdfChanged() => _notify();
-
-  /// The first Editor+ viewer writes the page count back (Drive 02 §6.3).
-  Future<void> _writePageCount(DriveItemView v, PdfDocumentState doc) async {
-    if (!v.canEdit || doc.truncated || doc.pageCount == 0) return;
-    final raw = v.fileMetaJson;
-    try {
-      final m = raw == null ? <String, Object?>{} : jsonDecode(raw);
-      if (m is Map && m['pages'] == doc.pageCount) return;
-      final updated = await api.updateFileMeta(
-        v.uuid,
-        jsonEncode({'pages': doc.pageCount}),
-      );
-      if (!_disposed && item?.uuid == updated.uuid) item = updated;
-    } on Object {
-      // Metadata is best effort.
-    }
-  }
-
   void _fail(PreviewProblem p) {
-    pdf?.removeListener(_onPdfChanged);
     problem = p;
     phase = PreviewPhase.failed;
     _notify();
@@ -510,14 +475,11 @@ class FilePreviewController extends ChangeNotifier {
     8.0,
   ];
 
-  /// Zoom limits of the current viewer: images 10–800 %, PDF 25–400 %.
-  (double, double) get zoomRange =>
-      type?.viewer == PreviewViewer.pdf ? (0.25, 4.0) : (0.1, 8.0);
+  /// Zoom limits of the image viewer: 10–800 %.
+  (double, double) get zoomRange => (0.1, 8.0);
 
   bool get canZoom =>
-      phase == PreviewPhase.ready &&
-      (type?.viewer == PreviewViewer.image ||
-          type?.viewer == PreviewViewer.pdf);
+      phase == PreviewPhase.ready && type?.viewer == PreviewViewer.image;
 
   void zoomIn() => _step(1);
   void zoomOut() => _step(-1);
@@ -545,7 +507,7 @@ class FilePreviewController extends ChangeNotifier {
     _notify();
   }
 
-  /// Fit to window (image) / fit width (PDF).
+  /// Fit to window.
   void zoomFit() {
     zoom = null;
     _notify();
@@ -570,24 +532,17 @@ class FilePreviewController extends ChangeNotifier {
     _notify();
   }
 
-  /// Called by the viewer when its fit scale changes (no notification).
-  void reportFitScale(double s) => fitScale = s;
-
-  /// Called by the PDF viewer while scrolling.
-  void reportPage(int page) {
-    if (page == pdfPage) return;
-    pdfPage = page;
-    _notify();
-  }
-
-  /// Scrolls the PDF to [page] (1-based). Returns false when out of range.
-  bool goToPage(int page) {
-    final doc = pdf;
-    if (doc == null || page < 1 || page > doc.pageCount) return false;
-    pdfPage = page - 1;
-    _pageJumps.add(page - 1);
-    _notify();
-    return true;
+  /// Called by the viewer (during layout) when its fit scale changes.
+  void reportFitScale(double s) {
+    if ((s - fitScale).abs() < 1e-9) return;
+    fitScale = s;
+    // Reported during layout: the zoom bar ("56 %") updates after the frame
+    // (it showed 100 % for a fitted image until the next notification).
+    if (zoom == null) {
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        if (!_disposed) _notify();
+      });
+    }
   }
 
   void toggleWrap() {
@@ -627,9 +582,6 @@ class FilePreviewController extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     _poll?.cancel();
-    pdf?.removeListener(_onPdfChanged);
-    pdf?.dispose();
-    _pageJumps.close();
     if (services.currentItem.value?.uuid == itemUuid) {
       services.currentItem.value = null;
     }

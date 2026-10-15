@@ -2,6 +2,8 @@ import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_slides_core/themes.dart' show SlidePlaceholderType;
 
+import '../../features/elements/style/style_toolbar.dart'
+    show arrowItems, quickStyleItems, routingItems;
 import '../../features/settings/slides_settings.dart' show slidesLanguages;
 import '../../l10n/slides_l10n.dart';
 
@@ -19,6 +21,9 @@ abstract final class SlidesMenuIds {
 
   /// Insert › Shape ▸ — the shape gallery (SL-14 supplies the grid).
   static const shapeGallery = 'insert.shape.gallery';
+
+  /// Format › Shape › Change shape ▸ — the shape gallery (SL-14).
+  static const changeShapeGallery = 'format.shape.change.gallery';
 
   /// Insert › Table ▸ — the table size picker.
   static const tablePicker = 'insert.table.picker';
@@ -120,6 +125,7 @@ MenuRoot slidesMenus(ShellMenus shell, {required SlidesLocalizations l}) {
       ])
       .insertAfter('shell.edit.selectAll', [_c('slides.select.escape')])
       .insertAfter(ShellMenuIds.editEndOfSelect, [
+        _c('slides.find.open'),
         _c('slides.find.openReplace'),
         MenuSpec.separator(),
         _c('slides.format.copyStyle'),
@@ -286,7 +292,12 @@ MenuSubmenu insertMenu(SlidesLocalizations l) =>
       ]),
       MenuSpec.submenu('insert.shape', l.menuShape, [
         MenuSpec.custom(SlidesMenuIds.shapeGallery),
-        _c('slides.insert.shape', label: l.menuShapeGallery),
+        _c(
+          'slides.insert.shape',
+          label: l.menuShapeGallery,
+          args: const {'pick': true},
+          menuId: 'insert.shape.all',
+        ),
       ]),
       MenuSpec.submenu('insert.line', l.menuLine, lineInsertItems(l)),
       MenuSpec.submenu('insert.table', l.menuTable, [
@@ -538,23 +549,36 @@ MenuSubmenu formatMenu(SlidesLocalizations l) =>
         tableItems(l, 'format.table'),
       ),
       MenuSpec.submenu('format.shape', l.menuShape, [
-        _c('slides.shape.change'),
-        _c('slides.shape.applyQuickStyle'),
+        MenuSpec.submenu('format.shape.change', l.menuChangeShape, [
+          MenuSpec.custom(SlidesMenuIds.changeShapeGallery),
+          _c(
+            'slides.shape.change',
+            label: l.menuShapeGallery,
+            menuId: 'format.shape.change.all',
+          ),
+        ]),
+        MenuSpec.submenu(
+          'format.shape.quickStyles',
+          l.menuQuickStyles,
+          quickStyleItems(l, null, 'format.shape'),
+        ),
       ]),
       MenuSpec.submenu('format.line', l.menuLine, [
-        _c(
-          'slides.line.setArrow',
-          label: l.lineStartArrow,
-          args: const {'end': 'start'},
-          menuId: 'format.line.startArrow',
+        MenuSpec.submenu(
+          'format.line.startArrow',
+          l.lineStartArrow,
+          arrowItems(l, 'start', 'format.line'),
         ),
-        _c(
-          'slides.line.setArrow',
-          label: l.lineEndArrow,
-          args: const {'end': 'end'},
-          menuId: 'format.line.endArrow',
+        MenuSpec.submenu(
+          'format.line.endArrow',
+          l.lineEndArrow,
+          arrowItems(l, 'end', 'format.line'),
         ),
-        _c('slides.line.setRouting'),
+        MenuSpec.submenu(
+          'format.line.routing',
+          l.menuRouting,
+          routingItems(l, 'format.line'),
+        ),
       ]),
       MenuSpec.submenu('format.code', l.menuCode, [
         _c('slides.code.setLanguage'),

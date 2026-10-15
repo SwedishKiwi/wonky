@@ -62,6 +62,7 @@ Future<ImportDialogResult?> showImportDialog(
   String? activeCell,
   ImportEstimator? estimate,
   UuidValue? exclude,
+  bool fileLocked = false,
 }) => showShadDialog<ImportDialogResult>(
   context: context,
   builder: (_) => ImportDialog(
@@ -72,6 +73,7 @@ Future<ImportDialogResult?> showImportDialog(
     activeCell: activeCell,
     estimate: estimate,
     exclude: exclude,
+    fileLocked: fileLocked,
   ),
 );
 
@@ -85,6 +87,7 @@ class ImportDialog extends StatefulWidget {
     this.activeCell,
     this.estimate,
     this.exclude,
+    this.fileLocked = false,
   });
 
   final ImportFileData? initialFile;
@@ -96,6 +99,13 @@ class ImportDialog extends StatefulWidget {
 
   /// The open spreadsheet (not offered in the *Drive* tab).
   final UuidValue? exclude;
+
+  /// *Open with Wonky Sheets* (`/import?file=`, D-16): the Drive file is the
+  /// source, so the file can't be changed (no *Change file*, no drop) and
+  /// the only location is a new spreadsheet. D-18: the dialog offered
+  /// *Change file* — whose bytes the server conversion of the Drive file
+  /// ignored — and five locations that need an open spreadsheet.
+  final bool fileLocked;
 
   @override
   State<ImportDialog> createState() => _ImportDialogState();
@@ -176,7 +186,7 @@ class _ImportDialogState extends State<ImportDialog>
 
   bool _allowed(ImportLocation l) {
     if (l == ImportLocation.createNew) return true;
-    if (!widget.canEdit) return false;
+    if (!widget.canEdit || widget.fileLocked) return false;
     if (l.createsSheets) return true;
     return _isText;
   }
@@ -313,7 +323,7 @@ class _ImportDialogState extends State<ImportDialog>
 
   Future<void> _onDrop(DropDoneDetails d) async {
     setState(() => _dropping = false);
-    if (d.files.isEmpty) return;
+    if (d.files.isEmpty || widget.fileLocked) return;
     final f = d.files.first;
     final bytes = await f.readAsBytes();
     if (!mounted) return;
@@ -632,7 +642,7 @@ class _ImportDialogState extends State<ImportDialog>
     final theme = ShadTheme.of(context);
     final cs = theme.colorScheme;
     return DropTarget(
-      onDragEntered: (_) => setState(() => _dropping = true),
+      onDragEntered: (_) => setState(() => _dropping = !widget.fileLocked),
       onDragExited: (_) => setState(() => _dropping = false),
       onDragDone: (d) => unawaited(_onDrop(d)),
       child: AnimatedContainer(
@@ -663,12 +673,13 @@ class _ImportDialogState extends State<ImportDialog>
                       style: theme.textTheme.small,
                     ),
                   ),
-                  ShadButton.ghost(
-                    key: const ValueKey<String>('dialog.import.change'),
-                    size: ShadButtonSize.sm,
-                    onPressed: _browse,
-                    child: Text(l.importChangeFile),
-                  ),
+                  if (!widget.fileLocked)
+                    ShadButton.ghost(
+                      key: const ValueKey<String>('dialog.import.change'),
+                      size: ShadButtonSize.sm,
+                      onPressed: _browse,
+                      child: Text(l.importChangeFile),
+                    ),
                 ],
               )
             : Column(
@@ -963,10 +974,12 @@ class _ImportDialogState extends State<ImportDialog>
                 },
                 items: [
                   for (final loc in ImportLocation.values)
-                    if (_allowed(loc) ||
-                        loc == ImportLocation.createNew ||
-                        loc.createsSheets ||
-                        _isText)
+                    if (widget.fileLocked
+                        ? _allowed(loc)
+                        : _allowed(loc) ||
+                              loc == ImportLocation.createNew ||
+                              loc.createsSheets ||
+                              _isText)
                       ShadRadio<ImportLocation>(
                         key: ValueKey<String>('dialog.import.loc.${loc.name}'),
                         value: loc,

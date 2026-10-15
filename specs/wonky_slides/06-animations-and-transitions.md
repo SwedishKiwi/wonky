@@ -749,6 +749,84 @@ starting positions, which hides out-built content.
 | `frameAt` for 100 animating elements | ≤ 0.5 ms |
 | Magic Move plan, 60 elements, character-level text of 1,000 chars | ≤ 15 ms; computed when the slide **before** it is shown (prefetch, §14) |
 
+### 9.8 As built (SL-24)
+
+`package:wonky_slides_core/motion.dart` (`lib/src/motion/{easing,effects,builds,timeline,util}/`;
+the transition stub `stub/transition_stub.dart` stays for SL-25):
+
+- **API.** `SlideTimelineCompiler.compile(SlideMotionInput)` → `SlideTimeline` (`steps`,
+  `stepCount`, `initial`, `endOfStep(i)` (−1 = initial, clamped), `frameAt(TimelinePosition)`,
+  `finalFrame`, `printFrame`, `tracks`, `stepsOfBuild(id)`, `durationMs`, `describe()`,
+  `warnings`). Build the input with **`SlideMotionInput.fromDeck(deck, slideId, {resolved,
+  scene, options, chartShapeOf})`**: resolved element frames/rotation/opacity, text (Delta →
+  `MotionText` with paragraph levels), part boxes from the scene's text layout, chart shapes,
+  code states, the effective transition (slide ▸ deck default ▸ none), slide size and theme color
+  resolution. The plain constructor (`slide`, `builds`) still works but knows no geometry
+  (transforms about the origin, no reference checks) — consumers must move to `fromDeck`.
+  `SlideTimeline(slideId:, steps:)` builds program-less fakes (every frame = edit frame).
+  `TimelineStep {index, durationMs, effects, hasLoops}`, `ScheduledEffect {buildId, elementId,
+  part (0 = whole, k = 1-based natural part), startMs, durationMs, endMs, effectId, kind, role
+  (build | dim), persistent, loops, easing}`.
+- **Frames** (`slide_frame.dart`): `ElementVisualState` keeps the stub's fields and adds
+  `drawReverse`, `fillOpacity`, `clip` (`ClipSpec` wipe/iris: kind, progress, direction, shape,
+  origin, softness — descriptive, the renderer builds it in the unrotated box), `dissolve`
+  (`DissolveState` amount, seed, cell), `colors` (`ColorOverride {from?, to, mix}` by property;
+  the renderer blends from the authored color in OKLab), `highlights` (`TextHighlightState`),
+  `parts` (`TextPartStates {parts: [TextPartState {start, end, visible, opacity, transform,
+  clip, blurSigma, revealEnd, caret, dim, dimColor}], backgroundOpacity}`), `chart`
+  (`ChartRevealState {backgroundOpacity, parts: [ChartPartState {ChartPartKey(role, series,
+  index), grow, opacity}], highlight, highlightMix, azimuthDelta, elevationDelta, camera,
+  fromCamera, cameraMix}`) and `code` (`CodeViewState {stateIndex, fromStateIndex (−1 =
+  empty), mix, mode, highlightStep, fromHighlightStep, highlightMix, typing}`). **Element
+  transforms are slide-space matrices pre-multiplied before the element's own transform** (as
+  the stage and PDF painter apply them); part transforms are in the element's local space (its
+  text node). Frames list only non-edit states; `toJson()` is canonical (sorted, 1e-6 rounding)
+  for the determinism tests.
+- **Evaluation**: persistent geometry is an effective frame per element (center, size,
+  rotation) that motion paths, `moveTo`, `spin` and `grow` change (about their `origin`); the
+  state matrix maps the authored box onto it; running channel effects compose on top
+  (`T(dx,dy) · base · Π T(a)·P·Rx·Ry·Rz·S·T(−a)`). Part-based in-builds keep the element drawn
+  with its unbuilt parts hidden; the box/background (text) or chart background
+  (`includeBackground`) arrives with the first part and leaves with the last part of an out
+  build. Typewriter is part-based too (one part = the whole text without delivery).
+- **Build model**: `EffectCatalog` (every §3 effect as `EffectSpec` with `ParamSpec`s,
+  `validate`, `forElement`, `fallback`), `BuildOptions` (codec of §2.2: errors for wrong types,
+  clamping warnings, unknown keys kept), `TransitionSpec`/`TransitionCatalog`
+  (`effective`, `patch`), `DeckMotionDefaults`, `MotionEasing` (`bind(durationMs)` →
+  `BoundEasing`), `TextParts`, `ChartShape`, `PartOrdering`, and **`BuildEdits`** — the
+  operations behind the §15 commands (`add`, `update` with options merge patches, `move`
+  (index/before/after + trigger), `removeAll`, `copy`/`paste` animation, `setTransition`,
+  `removeTransition`, `setAdvance`, `applyTransitionToAll`); one operation = one undo step.
+- **Planner** (02 §12.1, additive): build columns are validated (catalog effect of the
+  resulting kind, easing grammar, `optionsJson` via `BuildOptions` with clamping warnings and
+  the normalized JSON written, delay 0–60,000 ms, duration 0–20,000 ms, `onElementClick`
+  refused); `MoveBuilds.trigger` writes the first moved build's trigger ("New click");
+  `SetSlideProps.transitionJson` and `SetDeckProps.defaultsJson.transition` are validated;
+  `SetDeckProps.resetSlideTransitions` = *Apply to all slides* in one step; **new slides get
+  `transitionJson` null** (they inherit the deck default; SL-7 copied the default into them).
+
+Deviations and decisions:
+- Seeded randomness is **Mulberry32 seeded by FNV-1a** (32-bit arithmetic, exact on the VM,
+  dart2wasm and the JavaScript debug builds) instead of SplitMix64. Seeds: `hash(buildId:part)`;
+  random order `hash(buildId:0:order)`.
+- Springs: a spring-eased build's `durationMs` is the perceptual `d` (the `d` inside
+  `spring(d,b)` applies when the duration is 0; `BuildEdits.update` keeps both in sync); bounce
+  is clamped to ±0.95; the settle time uses the analytic envelopes (under/overdamped) or a
+  bisection (critical) and is capped at 4 d (e.g. `spring(0.8,−0.5)` hits the cap).
+- `codeHighlight.step` and `codeState.state` are 1-based (07 §4.5; `step: 0` clears, an omitted
+  `state` = the next one). Derived code durations are estimates (28 characters/s for type-in,
+  `durationMs` or 800 ms for morph) until SL-26's `TypingScript` replaces them.
+- Delivery on emphasis: only `highlight` and the transient channel effects (pulse, bounce,
+  shake, blink) use text parts; persistent geometric/color emphasis and motion apply to the
+  whole element. Chart deliveries need a `ChartShape` (from the link snapshot/static data JSON
+  or `chartShapeOf`); without one the chart builds as one part (`deliveryFallback`).
+- Reduced motion: "instant" persistent emphasis jumps to its end state at the start of a 200 ms
+  slot (the frame model has no crossfade; SL-29 may crossfade); `codeState` becomes a 300 ms
+  `crossfade` mode; typewriter/type-in become 200 ms fades per paragraph (code: whole element).
+- Not in the core (SL-29): the blur budget fallback (4 elements, σ ≤ 40), frame-budget
+  degradation, `line` delivery with layout (compiles as `paragraph`).
+- `onElementClick` builds are skipped with the warning `unsupportedTrigger`.
+
 ---
 
 ## 10. Interaction with other features
@@ -1034,11 +1112,11 @@ because they were edited by someone else").
 | # | Change | Reason |
 |---|--------|--------|
 | A-06-1 | `SlideBuild` as in 02 §3.7 (`slide`, `element`, `kind`, `effect`, `sortKey`, `trigger`, `delayMs`, `durationMs`, `easing`, `optionsJson`) — no field changes; this spec defines the values (§2–§4). | §2 |
-| A-06-2 | Enums `BuildKind { buildIn, buildOut, emphasis, motion }` and `BuildTrigger { onClick, withPrevious, afterPrevious }` (enum values are append-only; `onElementClick` reserved for P2). | §2.1, §4.1 |
+| A-06-2 | Enums `BuildKind { buildIn, buildOut, emphasis, motion }` and `BuildTrigger { onClick, withPrevious, afterPrevious, onElementClick }` (enum values are append-only; `onElementClick` added in schema release S-2 and reserved for P2: skipped by the timeline, refused by the planner). | §2.1, §4.1 |
 | A-06-3 | `SlideBuild.optionsJson` schema as §2.2 (`v`, `params`, `delivery`, `afterBuild`, `repeat`, `persist`). | §2.2 |
 | A-06-4 | `Slide.transitionJson` schema as §7.1 (`v`, `type`, `durationMs`, `easing`, `params`, `reverseOnBack`, `advance {mode, afterMs, autoBuilds, buildDelayMs}`, `magicMove {textMatching, matchByContent, fadeUnmatched, rotation, stagger}`). | §7, §8.6 |
 | A-06-5 | `SlideElement.matchKey` as already in 02 §3.5 (generated on create; copied on slide duplicate and cross-slide copy/paste; regenerated on same-slide duplicate). Also: `slides.slide.duplicateForMagicMove` copies keys. | §8.2 |
 | A-06-6 | `SlideElement.name` (02 §3.5) is the Order-list label, Magic Move pass 3 key and the suggested Magic Move ID. | §5.4, §8.3 |
-| A-06-7 | `Deck.defaultsJson` keys owned by 06: `"transition"` (a `transitionJson` object used for new slides; null = `none`) and `"build"` (`{kind, effect, trigger, durationMs, easing}` last used for quick add). | §5.2, §7.1 |
+| A-06-7 | `Deck.defaultsJson` keys owned by 06: `"transition"` (a `transitionJson` object: the transition of every slide whose own `transitionJson` is null — new slides are created with null; absent = `none`) and `"build"` (`{kind, effect, trigger, durationMs, easing}` last used for quick add). | §5.2, §7.1 |
 | A-06-8 | Cascade rules: deleting an `SlideElement` deletes its `SlideBuild` rows; deleting a `Slide` deletes its builds. Maintenance: builds referencing a missing element are deleted by the next editor (no undo step). | §2.1 |
 | A-06-9 | `WonkyColors` tokens `buildIn`, `buildEmphasis`, `buildOut`, `buildMotion` (light/dark) — suite 02 addition. | §5.4 |

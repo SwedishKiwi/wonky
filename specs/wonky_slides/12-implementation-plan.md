@@ -230,6 +230,20 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
 - Owns: `app/features/text_editing/spike/` (deleted or promoted by SL-13).
 - Acceptance: decision record appended to 03 §6.1 (confirm super_editor, or the documented
   fallback with numbers).
+- As built: **super_editor confirmed** (decision record and numbers: 03 §6.1 "Decided by spike
+  SL-4"). The prototype is production-shaped and lives directly in `app/features/text_editing/`
+  (not `spike/`), for SL-13 to extend: `slides_delta_mapper.dart` (`SlidesDeltaMapper`,
+  `SlidesValueAttribution`, `sameDelta`), `slides_text_components.dart` (`SlidesTextStylePhase`,
+  `SlidesTextViewModel`, `SlidesTextComponent(Builder)`, `SlidesTextLayoutSpec`,
+  `slidesRunTextStyle`), `text_edit_geometry.dart` (`TextEditGeometry` from
+  `SlideSceneBuilder.buildElement`, `sceneWithoutText`), `slides_text_reactions.dart`
+  (`SlidesParagraphInheritReaction`, `createSlidesTextEditor`), `slide_text_editor.dart`
+  (`SlideTextEditController`: document, editor, live geometry, 300 ms writes, external patches;
+  `SlideTextEditorOverlay`; `recordTypingStep` + `SlidesTypingUndoEntry`). `wonky_slides` now
+  depends on `super_editor` and `wonky_rich_text` (dev: `flutter_test_robots`). Not wired into
+  the canvas (SL-12/SL-13). Tests: `wonky_slides/test/features/text_editing/` 44 (mapper 11,
+  overlay ≡ static 16 incl. 3 paint comparisons and a negative control, controller/IME/pointer/
+  undo 15, benchmark 2 tagged `slow`).
 
 **SL-5 · Server: deck spaces, `slidesSync`, change-log consumer** (02 §9, 09)
 - Scope: deck kind on `SpaceService` (D-4), `slidesSync.sync` with `onMergeSuccess` and the
@@ -316,6 +330,36 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
 - Owns: `core/{copy,clipboard,text}/**`, `server/headless/**`.
 - Acceptance: copier property test (no id collisions, every reference remapped); clipboard
   round trip; headless create → read → copy tests on the server.
+- As built: core libraries `copy.dart` (`lib/src/copy/`: `DeckCopier.copy(source, deckId:,
+  userId:, now:, title:, ids:, rehomeFiles:)` → `DeckCopy {rows, ids, files, dropped}`;
+  `SlidesIdRemapper` shared with the clipboard; `FileRehome`), `clipboard.dart`
+  (`lib/src/clipboard/`: `SlidesClipboardCodec` builds, encodes, sanitizes and renders 03 §12.2
+  payloads — the planner's `PasteSlides`/`PasteElements` stay the id remapper of pastes — and
+  re-homes files with `rehomeFiles`; `SlidesPasteMappers` maps plain text, Write rich text,
+  grids/TSV, Sheets objects and images to `elements` payloads) and `text.dart`
+  (`lib/src/text/`: `SlidesDeltaValidator`/`SlidesDeltaNormalizer` on SL-7's `SlidesText`, which
+  stays in `model/text/`). Theme copies: a theme with a `sourceKey` gets
+  `themeCopyId(newDeck, sourceKey)`; its parts `themePartId(theme, partKey)` with the built-in
+  part key when the source part is a built-in's deterministic row, else the source row id — so
+  re-applying the same built-in in the copy dedupes. Fresh ids never reuse a source id.
+  Server (`wonky_server/lib/src/slides/`): `headless/` — `HeadlessDeckCache` (11 §2.1 cache and
+  invalidation, pattern of Sheets' provider), `ServerHeadlessDeck` + `SlidesHeadlessProvider`
+  (binds the core contract to `HeadlessDeckContext {session, actor}`; `write(op, force:)` →
+  `HeadlessDeckWrite {plan, changeId, syncVersion, repaired}`), `DeckTextClaims` (presence
+  claims for `being_edited`; the first watch sends a new presence `probe` message that joined
+  sessions answer with `here`); `sync/server_slides_writer.dart` gained `apply` (current rows
+  read first, revives through the OS-7 bulk write, skip rule with coupled columns and
+  column-wise cells), `applyRecorded`, `revert`, `reapply`; `spaces/deck_copies.dart`
+  (`DeckCopies.copy`) used by `drive.copy` and `drive.createPresentation(templateUuid)`;
+  `DeckFactory` plans `CreateDeck` with `SlidesPlanner`. Suite additions: `file.copyToItem`
+  (03 A-03-3) and the Sheets objects clipboard carries `spreadsheetItemUuid`/`objectId`/`sheetId`
+  (A-03-5). Deviations: the headless code lives in `slides/headless/` (11 §2.1 named
+  `slides/mcp/`); `being_edited` is a `WonkyException(conflict)` with `detailsJson {code:
+  being_edited, targets}` (no new error code; SL-40 maps it to the MCP error); deck change
+  records reuse Sheets' `ServerChangeRecord` (`spreadsheetUuid` = deck space, 02 §8 "shared
+  format") — no migration; change-log pruning stays with SL-39 (`TODO.md`); built-in
+  presentation templates (SL-22, since built) were refused with `unavailable`. Tests: core 61, server
+  `test/integration/slides/slides_headless_test.dart` 12 ([STATUS.md](STATUS.md)).
 
 **SL-9 · Client sync and sessions** (02 §9, suite 12)
 - Scope: `SlidesSyncController` on `wonky_sync_kit_flutter`, replica `slides_<userId>.db` (web
@@ -404,6 +448,25 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
   `app/features/{editor_screen,menus,toolbar,inspector,dialogs,home,settings}/**`.
 - Acceptance: 04 AC-1, AC-2, AC-9 (describable dialogs), AC-10, AC-11, AC-12 at the chrome
   level; release build opens an (empty) deck from the home.
+- As built: `wonky_slides/lib/commands/` (`commands.dart` registration index — real commands,
+  then the disabled placeholders (`placeholder_commands.dart`, each naming its WP) of every
+  menu/toolbar/context-menu id without a real registration; `SlidesCommand`,
+  `SlidesKeyScopes`; `chrome_commands.dart`: view modes, panes, inspector + the
+  `slides.panel.animate` alias, zoom, View › Show/Snap toggles, Editing/Viewing, slide
+  navigation, Select tool), `config/menus/` (menubar = canonical id registry, context menus),
+  `config/toolbar/` (contextual section), `config/panels/` (side panel registry),
+  `features/editor_screen/` (`DeckEditorScreen` on `openDeckSession` with the load states,
+  `DeckDocumentController`, `DeckEditorController` with `apply(ctx, op)` = the command write
+  path, responsive body, Present split button in the new `EditorScaffold.titleActions`, status
+  bar, shells of canvas/navigator/notes/grid/outline/masters on a static `SlidePreview`),
+  `features/inspector/` (section registry + Format/Animate/Slide tabs), `features/toolbar/`,
+  `features/dialogs/` (Go to slide), `features/settings/` (four Slides settings sections,
+  `slides.prefs.set`/`slides.presenter.set`), `theme/slides_tokens.dart`. `DeckHarness` runs on
+  the real document/editor controllers. Shell changes (additive): `EditorScaffold.titleActions`,
+  scrolling menubar strip and Star/Move hidden below 480 px (360 px), dialog `optionLabels`.
+  Deviations: 04 §19. The release build signs in and shows the Slides home; opening a deck in
+  the browser was blocked by a stale dev server (no `slides` endpoint) — verified by widget
+  tests instead. Status: [STATUS.md](STATUS.md).
 
 ### 4.5 M9 wave 3 — editing
 
@@ -413,6 +476,23 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
 - Owns: `app/features/{canvas,selection,snapping}/**`, `core/snapping/**`.
 - Provides: selection and transform API for SL-13…SL-15 (merge the API first).
 - Acceptance: 03 AC 1–3; drag perf budgets of 03 §18 (web).
+- As built: core `package:wonky_slides_core/snapping.dart` (`lib/src/snapping/`:
+  `SnapEngine`, `SnapTargets`, `FrameTransforms`, `UserGuides`); app `features/canvas/`
+  (`SlideCanvas(editor:, controller:)`, `SlideCanvasController` — attached per open deck by
+  `DeckEditorScreen`, found with `SlideCanvasController.of(editor)`, owns the deck's
+  `SlideRenderer`; `CanvasController` viewport, overlay and ruler painters, `CanvasTokens`),
+  `features/selection/` (`selectionOf(editor)` → `SelectionController`: select / toggle /
+  enterGroup / escape / selectAll / cycle, entered group, marquee, per-slide memory;
+  `TransformSession`; `ReadingOrder`; `SlideElements`), `commands/canvas_commands.dart`
+  (selection, gesture writes `slides.element.move|resize|nudge|adjust|setLineEnds`, arrange
+  incl. z-order, lock/hide, Edit › Delete/Duplicate of elements, guides, zoom to selection).
+  Wiring into SL-11's chrome: `CanvasRegion` shows `SlideCanvas` once the controller is
+  attached; `DeckDocumentController.selectAll` selects the canvas scope. API for SL-13…SL-15:
+  extend `slides.element.activate` (groups only so far), read `selectionOf(editor)` and
+  `SlideCanvasController.of(editor)` (scene, frames, `hitPath`/`pick`, viewport mapping,
+  `handles()`); element handlers' `extraHandles` aren't consulted yet — the canvas draws shape
+  adjust handles from `ShapeLibrary` and line endpoints from the scene's routes itself.
+  Details and deviations: 03 §5.7, [STATUS.md](STATUS.md).
 
 **SL-13 · Text editing and placeholders** (03 §6.1–§6.2) — web-build token (IME checks)
 - Scope: super_editor overlay, `SlidesDeltaMapper`, text commands, placeholders and prompts,
@@ -420,11 +500,33 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
 - Owns: `app/features/{text_editing,elements/text}/**`.
 - Acceptance: 03 AC 4–5; IME and RTL manual check in Chrome and Safari; line-break equality
   goldens.
+- As built: `app/features/text_editing/` (SL-4's overlay + `SlideTextEditing` host via
+  `textEditingOf(editor)`, `SlideTextEditingLayer`, `TextFormatter`/`TextFormatState`),
+  `app/features/elements/text/` (text box tool on SL-14's `CanvasTools`, toolbar text
+  controls, Inspector › Text, link/value dialogs), `commands/text_commands.dart` (every text
+  format command, text box, links, *Reset to layout*); `slides.element.activate` edits text;
+  core op `ResetPlaceholders`; box-default lists in `TextParagraphs`; shell
+  `UndoService.discardTop` + `DocumentController.beforeRedo`. Soft-lock hook
+  `TextEditLocks` for SL-21. The Chrome/Safari IME/RTL check moved to SL-23 (no web build in
+  SL-13). Details: 03 §6.2.1, [STATUS.md](STATUS.md).
 
 **SL-14 · Shapes, lines, icons, groups, z-order, format painter** (03 §6.3–§6.5, §7–§9)
 - Owns: `app/features/elements/{shape,line,icon,group}/**`, `app/features/format_painter/`.
 - Acceptance: 03 AC 6 (shapes/lines/groups parts) and the z-order/lock/hide tests; every
   command execute → undo → redo.
+- As built: app `features/elements/{shape,line,icon,style,common}/` (shape gallery + tool,
+  line tool, `LucideIconSource` + icon picker, style helpers/sections/toolbar, Arrange and
+  Accessibility sections), `features/format_painter/`, `commands/object_commands.dart` and
+  `commands/style_commands.dart` (one line each in `commands.dart`; their placeholders are
+  gone), the canvas tool hook `features/canvas/canvas_tools.dart` (`CanvasTool`/`CanvasTools`,
+  wired into `SlideCanvas`, the overlay painter and `SlideCanvasController.toolPreview`); core
+  `package:wonky_slides_core/icons.dart` (`LucideGlyphs`, `LucideCatalog`, generator
+  `tool/generate_lucide_glyphs.dart`). Small edits in shared files: `SlideRenderer` defaults
+  to `LucideIconSource`, `slides.element.activate` replaces icons, `slides.select.escape`
+  disarms tools, inspector section builders, toolbar/menu/context-menu specs (gallery slots
+  `insert.shape.gallery`, `format.shape.change.gallery`). New command ids:
+  `slides.icon.replace`, `slides.icon.setStrokeWidth`, `slides.element.rename`; z-order,
+  lock/hide were already SL-12's. Details: 03 §6.11, 04 §13.6, [STATUS.md](STATUS.md).
 
 **SL-15 · Images and tables** (03 §6.6–§6.7)
 - Scope: every image insert path (upload with quota pre-check, Drive, URL via
@@ -432,16 +534,62 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
 - Owns: `app/features/elements/{image,table}/**`, server `platform/files` addition
   `files.fetchImage` (03 A-03-4).
 - Acceptance: 03 AC 7; quota refusal shows the shared dialog; table op property test.
+- As built: `app/features/elements/{image,table}/**`, `app/features/uploads/**`
+  (`SlidesPendingUploads` queue, `SlidesImageService` = the renderers' `SlideImageResolver`
+  wired in `SlideCanvasController.attach`, `DeckThumbnails` and the print preview — the
+  session's own resolver stays the in-memory fallback), `commands/{image,table}_commands.dart`;
+  canvas hook `features/canvas/canvas_interactions.dart` (crop mode, table cells) and
+  `features/elements/element_activation.dart`; text editing of table cells (SL-13's overlay
+  with a cell target), text format targets of cells, the format painter for cells; server
+  `file.fetchImage(itemUuid, url) → bytes` (`platform/files/file_image_proxy.dart`) and
+  `file.copyToItem` for Drive image files. Core (additive): `ReplaceImage.crop`,
+  `TextNode.partId`, `TableGrid` + `SlideSceneBuilder.tableGrid`. Details and deviations:
+  03 §6.12, [STATUS.md](STATUS.md).
 
 **SL-16 · Navigator, slide groups, grid view, notes** (04 §5, §8, §9)
 - Owns: `app/features/{navigator,groups,grid_view,notes}/**`.
 - Acceptance: 04 AC-3, AC-5, AC-8 (grid part); one-level groups only (Q22).
+- As built: `app/features/{navigator,grid_view,notes}/**` (groups live in `navigator/`) and
+  `app/commands/navigator_commands.dart` — the navigator (rows, selection, collapse per user
+  and device, inline rename, color menu, drag and drop with live indicators and one-step
+  drops, Alt copy, insertion caret, §5.9 keyboard), the grid view (light table) and the
+  speaker notes editor (notes subset on super_editor, coalesced typing steps, mini toolbar,
+  zoom); 19 placeholders replaced plus `slides.group.rename/move/toggleCollapsed`,
+  `slides.nav.selectAllSlides`, `slides.navigator.copy/cut/paste`, `slides.notes.zoom`; the
+  shell Edit menu routes cut/copy/paste/select all to the navigator when it owns them.
+  Additive core contract: `CreateGroup.target` (empty groups; a group created from a grouped
+  slide goes after its group) and the lowest free "Group n". Details: 04 §20,
+  [STATUS.md](STATUS.md).
 
 ### 4.6 M9 wave 4 — themes UI, clipboard, presenting, PDF, soft locks
 
 **SL-17 · Themes panel and page setup** (05 §7, §9)
 - Owns: `app/features/themes/**`.
 - Acceptance: 05 AC 1–8 (apply, import, appearance, scaling).
+- As built: app `features/themes/` (`ThemesPanel` + `themesPanelSpec` — the side panel
+  registered in `config/panels/slides_panels.dart`; `ThemePreviews`/`ThemePreviewDeck` —
+  in-memory preview decks (built-ins at the deck size, shared; the deck's own themes copied
+  row for row, rebuilt after theme/master/layout/size changes) drawn by `SlideThumbnail` in the
+  deck appearance, never written to the open deck; `PreviewCard`; `ThemeImport` +
+  `PresentationPickerDialog`; Inspector › Slide › Background `backgroundSection`),
+  `features/layouts/` (`LayoutGallery` — thumbnails of the current slide's theme with prompts,
+  in the toolbar's *Layout ▾* and Inspector › Slide › Layout (`layoutSection`)),
+  `features/page_setup/` (`PageSetupDialog` — custom, MCP-describable, preview of the current
+  slide letterboxed or clipped; `showNumberingDialog` — `WonkyDialogSpec`) and
+  `commands/theme_commands.dart`: `slides.panel.themes`, `slides.theme.apply|import|rename|
+  duplicate|setDefault|delete|removeUnused`, `slides.deck.setAppearance` (toggle without an
+  argument), `slides.slide.applyLayout|resetToLayout|setBackground|applyBackgroundToAll|
+  setHideMasterElements`, `slides.file.pageSetup` + new `slides.deck.setSize`,
+  `slides.deck.openNumbering` + new `slides.deck.setNumbering` (nine placeholders replaced).
+  *Apply theme* with a built-in = `ImportTheme` + `ApplyThemeToSlides` in one transaction (one
+  undo step; scope *all* sets the default, *selected* keeps it). Core (additive):
+  `ImportTheme.themeEntry` + `themeName` (copies a deck theme's rows — element groups, images,
+  every column — deterministic with a `sourceKey`, fresh ids for *Duplicate theme*; shares
+  `copyThemeEntry` with *Keep source formatting* pastes), `SlidesClipboardCodec.themeEntry`
+  public. Server: `slides/themes/` — `SlidesThemesEndpoint` (`slidesThemes.list(itemUuid)`,
+  viewer+, theme entries + usage as JSON). Re-homed theme images get deterministic copy uuids
+  (`themePartId(theme, "file:<n>")`), so repeated imports reuse their copies. Deviations and
+  leftovers: 05 §9 "As built (SL-17)", `TODO.md`.
 
 **SL-18 · Clipboard UI, cross-app paste, find & replace** (03 §12–§13)
 - Scope: web Clipboard API + in-app store, paste mappers (Write, Sheets, HTML, plain text,
@@ -449,6 +597,27 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
   (03 A-03-3, quota-checked), find & replace.
 - Owns: `app/features/{clipboard,find}/**`, `copyToItem` in `wonky_server/lib/src/platform/files/`.
 - Acceptance: 03 AC 8–10; 04 AC-4 (groups across decks, online and offline).
+- As built: core `clipboard/slides_html.dart` (`SlidesHtml`: payload HTML with the embedded
+  `data-wonky-slides` payload, Write's `data-wonky-delta`, single-table grids with formats and
+  merges, any HTML → Write-flavored Delta), `SlidesClipboardCodec.htmlBody`,
+  `SlidesPasteMappers.html|writeText`, and the new `find.dart` (`DeckFind`; `html` joins the
+  core's dependencies); app `features/clipboard/` (`system_clipboard*` — async Clipboard API
+  text/HTML/PNG, Flutter text on desktop; `deck_clipboard.dart` — targets, copy/cut/paste,
+  resolution order, `prepareFiles`; `rehome_queue.dart` — `SlidesRehomeQueue`;
+  `paste_options.dart` — chip), `features/find/` (`find_controller`, `find_bar`,
+  `find_replace_panel`, `find_overlay` with `DeckCanvasOverlays` and the highlight painter),
+  `commands/{clipboard,find}_commands.dart`; small wiring in `commands/commands.dart`,
+  `placeholder_commands.dart` (three placeholders removed), `config/menus/slides_menu_spec.dart`
+  (Edit › Find), `editor_screen/{deck_document_controller,canvas_region}.dart`,
+  `text_editing/text_editing_layer.dart` (Mod+C/X/V), `navigator/navigator_clipboard.dart`
+  (the in-app store also writes the system clipboard; `adopt`, `hasElements`),
+  `commands/navigator_commands.dart` (paste re-homes and shows the chip),
+  `uploads/slides_image_service.dart` (pending copies render from their source), ARB strings;
+  Sheets `features/objects/object_ops.dart` writes object copies to the shared user store
+  (`clipboard.sheetsObjects`) so Slides pastes linked charts across apps. No endpoint changes:
+  `file.copyToItem` (SL-8) is used as is; server test
+  `test/integration/platform/file_copy_to_item_test.dart` covers the paste flows. Deviations
+  and details: 03 §12 / §13 "As built (SL-18)", `TODO.md`.
 
 **SL-19 · Present mode, presenter view, presentation session** (10 §1–§6) — web-build token
 - Scope: present route, full screen with the full-window fallback, keymap scope `present`,
@@ -459,6 +628,18 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
 - Owns: `app/features/present/**`, `server/present/**`.
 - Acceptance: 10 AC 1–5 and 7; a second browser signed in as the same user follows navigation
   ≤ 300 ms p95 on a LAN; the single-window test of 10 §18.
+- As built: app `features/present/` (`PresentScreen` on the `present` child route with
+  `view=presenter|audience`, `PresentSequence` over timeline steps, `PresentController`,
+  `PresentStage`, `SlidePicker`, `PresenterView`, overlays/toolbar/help, *Open on another
+  device…* with a QR code (new justified dependency `qr`), `PresentSessionBanner` in the editor,
+  `PresentationLink` + `ClockOffset`, `PresentPlatform` Fullscreen API behind a conditional
+  import) and `commands/present_commands.dart` (25 commands incl. the undoable
+  `slides.deck.setPresentSettings`); server `slides/present/` (`PresentationEndpoint`
+  `presentation.join`/`findSession`, `PresentationService` on `present:<sessionId>`, 21
+  non-table models). The state message carries elapsed times relative to the send time plus a
+  `serverTimeMs` on every event (10 §6.2 as built). Web checks (full screen, clicker, second
+  browser latency) were not run (no web-build token) and kiosk timers, pre-flight and presence
+  `presenting` are open — `TODO.md`. Details: 10 §6.6, [STATUS.md](STATUS.md).
 
 **SL-20 · PDF export and print preview** (10 §11–§12)
 - Scope: core PDF renderer (slides, notes pages, skipped in/out, group bookmarks, links, embedded
@@ -466,16 +647,74 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
   handouts P1.
 - Owns: `core/export/pdf/**`, `app/features/print/**`, `server/exports/**`.
 - Acceptance: 10 AC 12–14 for M9 options; client/server parity diff < 1 % on the corpus.
+- As built: core `package:wonky_slides_core/pdf.dart` (`lib/src/export/pdf/`) —
+  `SlidesPdfExporter` (the `SlidesPdfRenderer`), `SlidePdfPainter`, `SlidesPdfPlanner` +
+  `SlidesPdfGeometry`, `SlidesPdfOptionsCodec` (JSON, layout defaults, last-used
+  preferences), `SlidesPdfStrings`, and SL-10's TTF measurer `TtfTextMeasurer` (+
+  `TtfFaceSet`, `RecordingTextMeasurer`, `BundledFileFontProvider` over `wonky_fonts` files);
+  additive contract fields `SlidesPdfOptions.slideIds` and `SlidesExportResources.info`
+  (`SlidesPdfDocumentInfo`). Server `slides/exports/` (`SlidesExportEndpoint` =
+  `slidesExport`, `SlidesExportService`, `ServerSlideImageResolver`). App
+  `features/print/` (`PrintPreviewScreen` on the `print` child route, `SlidesPrintController`,
+  `PrintSettingsPanel`, `PdfView`, `SlidesClientExport`) and `commands/print_commands.dart`
+  (`slides.print.open`, `slides.file.download`, `slides.print.print`). Handouts are built
+  (not deferred). Client/server parity is checked on line breaks (stage engine vs TTF layout,
+  all built-in themes) instead of a raster diff (no poppler on the dev machine; `TODO.md`).
+  Details: 10 §11.3 "As built (SL-20)", [STATUS.md](STATUS.md).
 
 **SL-21 · Presence, soft locks, text hints** (09 §1.1, §2)
 - Owns: `app/features/collab/**` (roster, locks, hints).
 - Acceptance: 09 AC 1–3; scenarios 09 §6.4 for locks.
+- As built: `wonky_slides/lib/features/collab/` — `SlidesCollab` (per editor:
+  `SlidesPresenceController`, `SlidesSoftLocks` = the text editing's `TextEditLocks`,
+  `SlidesHints`), `CollabCanvasLayer` (hinted scene, remote outlines and flags, soft-lock
+  outlines/flags/popover, drag outlines, follow banner), `SlidePresenceDots` (navigator, collapsed
+  groups, grid), `NotesLockBanner`, `PresenterPill`; `commands/collab_commands.dart`
+  (`slides.presence.jumpTo|follow|unfollow|followPresenter`, `slides.text.editAnyway`). Hooks:
+  `TextLockTarget` + `…Target` methods on `TextEditLocks` (cells, notes), the notes pane claims
+  its body, `DeckDocumentController` presence forwarding and `ui.get_state` collaborators,
+  `DeckEditorScreen` attaches the collaboration. Presenting is read from SL-19's
+  `activePresentation`; *Follow presenter* joins its audience view. Also fixed SL-9's follow-up:
+  a membership that returns while a deck (or a Sheets workbook) is open reloads it and turns it
+  ready again. Details and deviations: 09 §2.5, [STATUS.md](STATUS.md).
 
 ### 4.7 M9 wave 5 — exit
 
 **SL-22 · Templates (5 of 10)** (04 §15)
 - Owns: `server/templates/**` (decks as JSON fixtures applied by `ServerSlidesWriter`).
 - Acceptance: each template opens offline after first sync; gallery screenshots generated.
+- As built: the decks are **pure-Dart definitions in the core**, not JSON fixtures —
+  `package:wonky_slides_core/templates.dart` (`lib/src/templates/`): `SlidesTemplate` (key,
+  name, description, category, built-in theme, script), `SlidesTemplates.all/byKey/byUuid/
+  uuidOf` (gallery uuid = UUIDv5(URL, `wonky-template:<key>`), same as the server's
+  `BuiltinTemplate.uuid`), `TemplateDeckBuilder` (each slide, group, placeholder text, shape,
+  table and code state is a `SlidesOperation` planned by `SlidesPlanner` against the growing
+  model; `inserts` in dependency order), `TemplateShapes`/`TemplateText`/`TemplatePara`/
+  `TemplateRun` and shared compositions (`decks/parts.dart`: cards, stats, people, timeline,
+  flow; shapes and text only, theme colors only). Five templates, each on its own theme:
+  *Pitch deck* (Aurora, 4 slide groups), *Project kickoff* (Swiss, 3 groups, milestone table),
+  *Weekly update* (Wonky, status table), *Lesson* (Botanical, 3 groups, process flow),
+  *Workshop agenda* (Terminal, 2 groups, schedule table, 2 Python code slides). Server
+  (`wonky_server/lib/src/slides/templates/slides_template_decks.dart`): `SlidesTemplateDecks`
+  (`preview` build with fixed ids for the card text and the size estimate, `write` through
+  `ServerSlidesWriter`); `BuiltinTemplates.all` adds `BuiltinTemplate.presentation(t)` per core
+  template (category by name, `themeKey` = the Slides theme, `previewStyle` from the theme's
+  colors, `previewText` = title slide); `SlidesDecks._fromTemplate` builds built-ins (quota
+  pre-check, reason `template`), `_createDeck` shared with blank decks. Client: built-in
+  templates are created **offline-first** in a reserved space (`SlidesData.createPresentation`
+  → `SlidesSyncController.createLocalPresentation(template:)`); gallery cards of built-ins
+  render their first slide (`WonkyAppConfig.templatePreview` hook →
+  `features/templates/template_preview.dart`, `SlideThumbnail` of an in-memory build);
+  presentation cards are 16:9 in every app (Drive draws a title-slide miniature from
+  `previewStyle`/`previewText`). Gallery screenshots: contact sheets of every template in
+  light and dark are written by `wonky_slides/test/features/templates/slides_templates_test.dart`
+  with `WONKY_TEMPLATE_PNG_DIR=<dir>`. Deviations: categories map to the suite's existing
+  `TemplateCategory` values (Business → *Work*, Engineering → *Education*; no new enum values);
+  Quarterly review, Tech talk, Product launch and Portfolio come with SL-36 (linked charts,
+  type-in, images). Tests: core `test/templates` 39, server
+  `test/integration/slides/slides_templates_test.dart` 8, Slides
+  `test/features/templates` 5, `wonky_app` `test/drive/template_cards_test.dart` 2
+  ([STATUS.md](STATUS.md)).
 
 **SL-23 · M9 integration and exit** — web-build token
 - Scope: J-S1…J-S4, multi-client scenarios for M9, perf budgets, PDF validation corpus,
@@ -490,6 +729,17 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
 - Owns: `core/motion/{timeline,builds,effects}/**`, S-2 model additions.
 - Acceptance: 06 timeline unit tests; determinism (same input → same frames, client ≡ server);
   print frame per Q24.
+- As built: `package:wonky_slides_core/motion.dart` → `lib/src/motion/{easing,effects,builds,
+  timeline,util}/` (the stub's `stub/` keeps only the transition stub for SL-25): the
+  compiler/evaluator (`SlideTimelineCompiler.compile(SlideMotionInput.fromDeck(deck, slideId,
+  {resolved, scene}))`), frames, `EffectCatalog`, `BuildOptions`, `TransitionSpec`,
+  `DeckMotionDefaults`, `MotionEasing`, part segmentation and order, `BuildEdits` (the
+  operations of the 06 §15 build/transition commands); planner validation of builds and
+  transitions, `MoveBuilds.trigger`, `SetDeckProps.resetSlideTransitions`, new slides inherit
+  the deck default transition; the PDF exporter compiles from the resolved slide and scene.
+  **Schema release S-2**: `BuildTrigger.onElementClick` (reserved) + the enum-values guard
+  `SyncSchemaRelease.syncEnumsHash`; no table change, no migration. Details and deviations:
+  06 §9.8, 02 §14.1, [STATUS.md](STATUS.md).
 
 **SL-25 · Transitions and Magic Move core** (06 §7–§8)
 - Owns: `core/motion/{transitions,magic_move}/**`.
@@ -501,6 +751,26 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
   `HighlightSteps` in `wonky_code`; `CodeElementModel` and `CodeScene` in the core.
 - Owns: `packages/wonky_code/lib/src/{layout,typing,morph,steps}/**`, `core/code/**`.
 - Acceptance: 07 §16 unit tests; tokenizer budget of 07 §14.
+- As built: `wonky_code` — `layout/` (`MonoFontMetrics` with the measured JetBrains Mono /
+  Roboto Mono metrics and `fromTtf`, `CodeColumns`, `CodeLayout` + `CodeLayoutOptions`/
+  `CodeRow`/`CodeLayoutLine`/`GridPos`/`CodeRect`, `CodeBoxGeometry`/`CodeBoxOptions`/
+  `CodeChrome`, `CodeAutoFit`), `steps/` (`HighlightSteps`), `typing/` (`CodeEditScript`,
+  `TypingSettings`, `TypingScript`, `typingSeed`), `morph/` (`CodeLexer`, `TokenMorphPlan`,
+  `oklabLerp`), `CachedCodeTokenizer`, and the engine patch SH-6 (next-match search, own
+  scanner; spans unchanged) for the tokenizer budget. `wonky_code` now depends on
+  `wonky_core` (`SequenceDiff`). Core — `lib/src/code/` (`package:wonky_slides_core/code.dart`,
+  not `core/code/`): `CodeElementData`, `CodeAnnotations`, `CodeStateModel`,
+  `CodeElementModel`, `CodeSceneComposer`, `CodeRenderStyle`, `CodeElementLayout` (the scene
+  builder's default `CodeSceneSource`; `BasicCodeLayout` is an alias). `CodeScene` gained
+  additive fields for SL-31/SL-33 (grid columns, line opacity/blur, bars, caret, callouts,
+  morph glyphs, underlay, chrome geometry); `CodeSceneSource.codeScene` gained `step` and
+  `background`. **For SL-31/SL-35/SL-24**: compose scenes with
+  `CodeElementLayout().composer(element, deck, theme, background:)` →
+  `build(state, step:, fromStep:, stepMix:)` / `buildTransition(from:, to:, ms:, mode:,
+  reducedMotion:)`; durations from `CodeElementModel.transitionDurationMs` /
+  `typeInDurationMs`; step counts from `HighlightSteps.count`; Write exports (SL-35) use
+  `DefaultCodeTokenizer`/`CachedCodeTokenizer` (TextMate first). Not built: `tokenizeLine`
+  (07 §5.4), `UnifiedDiff`/`WalkthroughBuilder` (07 §10.2). Details: 07 §2.3 status, [STATUS.md](STATUS.md).
 
 **SL-27 · Chart link core and server** (08 §2.7, §3, §5, §13)
 - Scope: the new `wonky_charts` APIs (reveal state, scene morph, `Chart3DView.lerp`, TTF text
@@ -873,6 +1143,18 @@ slide compiles to zero steps; `printFrame` = edit frame.
 `transform` `Matrix4`, `blurSigma`, `drawProgress`, code state/step), `SlideMotionInput {slide,
 builds}`, `SlideTimelineCompiler.compile` and `TransitionCompiler.compile` →
 `TransitionPlan.cut`. SL-24/SL-25 replace the compilers and extend the types (`motion/`).
+
+**As built (SL-24).** The timeline compiler and frames are real (06 §9.8); the type names of the
+stub stay and its constructors keep compiling (`SlideMotionInput(slide:, builds:)`,
+`SlideTimeline(slideId:, steps:)` = program-less fake, `ElementVisualState(...)`). Consumers
+should build the input with `SlideMotionInput.fromDeck(model, slideId, resolved:, scene:)` so
+transforms are about the elements' centers and part boxes come from the text layout (the PDF
+exporter does; present mode, SL-19, still uses the plain constructor). Player rules for SL-29:
+`frameAt(step, ms)` for `ms ≥ step.durationMs` is the settled `endOfStep(step)` unless
+`step.hasLoops` (an `untilNextClick` emphasis keeps cycling until the next step);
+`endOfStep(-1)` = `initial`. SL-25 replaces `TransitionCompiler`/`TransitionPlan` in
+`stub/transition_stub.dart`; `TransitionSpec` (codec, catalog, `advance`) is already in
+`builds/transition_spec.dart`.
 
 ### 5.6 Code and charts
 

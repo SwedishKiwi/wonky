@@ -43,13 +43,6 @@
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
-  <script>
-    // PDF previews (Drive 02 §6.3): pdf.js is self-hosted in web/pdfjs/
-    // (the app is cross-origin isolated, so a CDN copy would be blocked).
-    // `printing` reads this base URL; fetch the files with
-    // tool/fetch_pdfjs.sh.
-    window.dartPdfJsBaseUrl = new URL('pdfjs/', document.baseURI).href;
-  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

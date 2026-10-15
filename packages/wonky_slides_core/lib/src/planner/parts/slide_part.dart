@@ -28,7 +28,9 @@ extension _SlidePart on _Planner {
         SlidesCols.sortKey: k,
         SlideCols.groupId: groupId,
         SlideCols.layoutId: layoutId,
-        SlidesCols.transitionJson: _defaultTransition(),
+        // null = the deck default (06 §7.1): changing the default later
+        // changes every slide without an own transition.
+        SlidesCols.transitionJson: null,
       });
       instantiate(id, placeholders);
       ids.add(id);
@@ -37,11 +39,19 @@ extension _SlidePart on _Planner {
     return op.count == 1 ? 'New slide' : 'New ${op.count} slides';
   }
 
-  /// The deck's default transition for new slides (06 A-06-7), or null.
-  String? _defaultTransition() {
-    final defaults = decodeMap(deck.deck?.defaultsJson);
-    final t = defaults?['transition'];
-    return t is Map<String, Object?> ? jsonEncode(t) : null;
+  /// A validated `transitionJson` (06 §7.1): wrong types are refused,
+  /// clamped values become plan warnings, unknown keys are kept.
+  String? transitionValue(String? json, String column) {
+    final checked = jsonObject(json, column);
+    if (checked == null) return null;
+    final v = TransitionSpec.decode(checked);
+    if (!v.isValid) {
+      invalid('Invalid transition: ${v.errors.first}', {'column': column});
+    }
+    for (final w in v.warnings) {
+      warnings.add(w.toString());
+    }
+    return v.value.encode();
   }
 
   /// The layout of a new slide: the layout of [afterSlideId], else the
@@ -147,7 +157,7 @@ extension _SlidePart on _Planner {
         if (op.backgroundJson != null)
           SlidesCols.backgroundJson: _background(op.backgroundJson!.value),
         if (op.transitionJson != null)
-          SlidesCols.transitionJson: jsonObject(
+          SlidesCols.transitionJson: transitionValue(
             op.transitionJson!.value,
             SlidesCols.transitionJson,
           ),

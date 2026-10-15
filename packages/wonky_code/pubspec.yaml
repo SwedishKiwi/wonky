@@ -11,6 +11,8 @@ dependencies:
   collection: ^1.19.1
   highlight: ^0.7.0
   string_scanner: ^1.4.1
+  wonky_core:
+    path: ../wonky_core
 
 dev_dependencies:
   lints: '>=3.0.0 <7.0.0'

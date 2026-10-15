@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
@@ -25,6 +27,7 @@ import 'schema.dart';
 import 'unique_index_utils.dart';
 
 part 'merge.dart';
+part 'projection_rebuild.dart';
 
 typedef _CrdtSchema = Map<String, (int, Map<String, CrdtSchemaColumn>)>;
 
@@ -61,6 +64,10 @@ class OfflineSyncDatabaseContext {
   @internal
   bool get registryChanged => _registryChanged;
 
+  /// The foreign key projection rebuilds still pending after a registry
+  /// change, run in the background (patch OS-9).
+  late final _projectionRebuild = _ProjectionRebuildQueue._();
+
   /// Initializes shared schema rows and caches their generated identifiers.
   Future<void> initialize(DatabaseSession session) async {
     if (_schema != null) return;
@@ -84,6 +91,10 @@ class OfflineSyncDatabaseContext {
     );
     final (tableRows, columnRows) = await schemaRegistry.syncAndGetSchema();
     _registryChanged = schemaRegistry.registryChanged;
+    _projectionRebuild._load(
+      markerId: schemaRegistry.projectionRebuildMarkerId,
+      pending: schemaRegistry.pendingProjectionRebuilds,
+    );
 
     final columnsByTableId = <int, Map<String, CrdtSchemaColumn>>{};
     for (final column in columnRows) {
@@ -267,31 +278,105 @@ class CrdtMutationRecorder {
 
   Future<void> _initializeOnce() async {
     await _databaseContext.initialize(_session);
-    if (_databaseContext.registryChanged) {
-      await _rebuildProjectionsForAllSpaces();
-    }
+    // OS-9: a registry change no longer re-projects every space here, on the
+    // first database access. The affected spaces were persisted with the
+    // registry change; they are rebuilt in the background, and on demand
+    // before a write or merge acts in one of them ([ensureSpaceProjected]).
+    _databaseContext._projectionRebuild.attach(this);
     if (persistentUserId != null) {
       await _context.spaceManager.getOrCreate(persistentUserId!);
     }
     _isInitialized = true;
   }
 
-  Future<void> _rebuildProjectionsForAllSpaces() async {
-    final spaces = await OfflineSyncSpace.db.find(
-      _session,
-      include: OfflineSyncSpace.include(currentNode: CrdtNode.include()),
-    );
-    for (final space in spaces) {
-      if (space.currentNode == null || space.currentNodeId == null) continue;
-      await _db.transaction((tx) async {
-        spaceForTransaction[tx] = space;
-        try {
-          await _foreignKeyProjector.project(tx);
-        } finally {
-          spaceForTransaction.remove(tx);
-        }
-      });
+  /// The number of spaces whose foreign key projection is still to be
+  /// rebuilt after a synced-schema change (patch OS-9).
+  int get pendingProjectionRebuilds => _databaseContext._projectionRebuild.pendingCount;
+
+  /// Runs one pass of the pending projection rebuilds now and completes when
+  /// it ends (patch OS-9). Failures are logged and retried later.
+  Future<void> drainProjectionRebuild() =>
+      _databaseContext._projectionRebuild.drain(this);
+
+  /// Stops the background projection rebuild of this recorder's context and
+  /// waits for the space being rebuilt (patch OS-9). Pending spaces stay
+  /// persisted and resume at the next initialization.
+  Future<void> stopProjectionRebuild() => _databaseContext._projectionRebuild.stop();
+
+  /// Rebuilds the foreign key projection of [space] first when a registry
+  /// change left it pending (patch OS-9).
+  ///
+  /// Called before a transaction acts in [space], so its writes and merges
+  /// see the projection of the current foreign key graph. A failure is
+  /// logged and left to the background retry: the space keeps its previous
+  /// projection, which every row outside the changed tables shares.
+  Future<void> ensureSpaceProjected(OfflineSyncSpace space) async {
+    final queue = _databaseContext._projectionRebuild;
+    final spaceId = space.id;
+    if (spaceId == null || !queue.isPending(spaceId)) return;
+    try {
+      await queue._rebuild(spaceId, this);
+    } on Object catch (error, stackTrace) {
+      OfflineSyncProjectionRebuild.log(
+        'Rebuilding the projection of space $spaceId on access failed; '
+        'the background rebuild retries it',
+        error,
+        stackTrace,
+      );
     }
+  }
+
+  /// Re-projects the pending space [spaceId] in one transaction and clears
+  /// its marker in the same transaction (patch OS-9).
+  ///
+  /// Takes the node lock every tracked write and merge takes, so the
+  /// projection never interleaves with a write of the same space. The
+  /// marker is deleted under that lock: when another process already
+  /// rebuilt the space, nothing is projected again.
+  Future<void> _rebuildPendingSpace(
+    int spaceId,
+    Set<String>? seeds, {
+    required int markerId,
+  }) async {
+    final seedTables = seeds
+        ?.where(_databaseContext.syncTableByName.containsKey)
+        .toSet();
+    final markerName = CrdtSchemaRegistry.projectionRebuildColumnName(spaceId);
+    Future<bool> clearMarker(Transaction tx) async {
+      final deleted = await CrdtSchemaColumn.db.deleteWhere(
+        _session,
+        where: (t) => t.tblId.equals(markerId) & t.name.equals(markerName),
+        transaction: tx,
+      );
+      return deleted.isNotEmpty;
+    }
+
+    await _db.transaction((tx) async {
+      final space = await OfflineSyncSpace.db.findById(
+        _session,
+        spaceId,
+        include: OfflineSyncSpace.include(currentNode: CrdtNode.include()),
+        transaction: tx,
+      );
+      if (space == null ||
+          space.currentNode == null ||
+          space.currentNodeId == null ||
+          (seedTables != null && seedTables.isEmpty)) {
+        await clearMarker(tx);
+        return;
+      }
+      spaceForTransaction[tx] = space;
+      try {
+        await _context.withCurrentNodeHlc(tx, (tx) async {
+          await _context.lockAndRefreshCurrentNodeHlc(tx);
+          if (!await clearMarker(tx)) return;
+          await OfflineSyncProjectionRebuild.debugBeforeSpace?.call(spaceId);
+          await _foreignKeyProjector.project(tx, seedTables: seedTables);
+        });
+      } finally {
+        spaceForTransaction.remove(tx);
+      }
+    });
   }
 
   /// The user ID to use for all CRDT operations. This should only be used for

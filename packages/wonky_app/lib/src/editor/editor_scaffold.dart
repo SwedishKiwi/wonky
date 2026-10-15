@@ -558,7 +558,11 @@ class _EditorScaffoldState extends State<EditorScaffold> {
                           onRename: _rename,
                         ),
                       ),
-                      if (item != null) ...[
+                      // Below 480 px Star and Move stay in the File menu
+                      // (the title row must not overflow at 360 px, Slides
+                      // 04 §16).
+                      if (item != null &&
+                          MediaQuery.sizeOf(context).width >= 480) ...[
                         icon(
                           'editor.star',
                           item.starred ? LucideIcons.star : LucideIcons.star,

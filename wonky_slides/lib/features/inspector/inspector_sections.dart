@@ -3,6 +3,15 @@ import 'package:wonky_app/wonky_app.dart';
 
 import '../../l10n/slides_l10n.dart';
 import '../editor_screen/deck_editor_controller.dart';
+import '../elements/common/arrange_section.dart';
+import '../elements/icon/icon_section.dart';
+import '../elements/image/image_section.dart';
+import '../elements/line/line_section.dart';
+import '../elements/style/style_sections.dart';
+import '../elements/table/table_sections.dart';
+import '../elements/text/text_inspector_section.dart';
+import '../layouts/layout_section.dart';
+import '../themes/background_section.dart';
 
 /// Builds the body of an inspector section.
 typedef InspectorSectionBuilder =
@@ -51,36 +60,42 @@ final List<InspectorSectionSpec> inspectorSections = [
     title: _sectionText,
     tab: InspectorTab.format,
     kinds: _textual,
+    builder: textInspectorSection,
   ),
   const InspectorSectionSpec(
     id: 'line',
     title: _sectionLine,
     tab: InspectorTab.format,
     kinds: {DeckSelectionKind.line},
+    builder: lineSection,
   ),
   const InspectorSectionSpec(
     id: 'image',
     title: _sectionImage,
     tab: InspectorTab.format,
     kinds: {DeckSelectionKind.image},
+    builder: imageSection,
   ),
   const InspectorSectionSpec(
     id: 'table',
     title: _sectionTable,
     tab: InspectorTab.format,
     kinds: {DeckSelectionKind.table},
+    builder: tableSection,
   ),
   const InspectorSectionSpec(
     id: 'cell',
     title: _sectionCell,
     tab: InspectorTab.format,
     kinds: {DeckSelectionKind.table},
+    builder: cellSection,
   ),
   const InspectorSectionSpec(
     id: 'icon',
     title: _sectionIcon,
     tab: InspectorTab.format,
     kinds: {DeckSelectionKind.icon},
+    builder: iconSection,
   ),
   const InspectorSectionSpec(
     id: 'code',
@@ -103,6 +118,7 @@ final List<InspectorSectionSpec> inspectorSections = [
       DeckSelectionKind.shape,
       DeckSelectionKind.multiple,
     },
+    builder: fillSection,
   ),
   const InspectorSectionSpec(
     id: 'border',
@@ -114,6 +130,7 @@ final List<InspectorSectionSpec> inspectorSections = [
       DeckSelectionKind.image,
       DeckSelectionKind.multiple,
     },
+    builder: borderSection,
   ),
   const InspectorSectionSpec(
     id: 'effects',
@@ -128,6 +145,7 @@ final List<InspectorSectionSpec> inspectorSections = [
       DeckSelectionKind.group,
       DeckSelectionKind.multiple,
     },
+    builder: effectsSection,
   ),
   const InspectorSectionSpec(
     id: 'arrange',
@@ -145,6 +163,7 @@ final List<InspectorSectionSpec> inspectorSections = [
       DeckSelectionKind.group,
       DeckSelectionKind.multiple,
     },
+    builder: arrangeSection,
   ),
   const InspectorSectionSpec(
     id: 'link',
@@ -169,17 +188,20 @@ final List<InspectorSectionSpec> inspectorSections = [
       DeckSelectionKind.chart,
       DeckSelectionKind.group,
     },
+    builder: accessibilitySection,
   ),
   // ---- Slide tab (04 §7.4); bodies in `slide_tab.dart` until SL-16/17.
   const InspectorSectionSpec(
     id: 'layout',
     title: _sectionLayout,
     tab: InspectorTab.slide,
+    builder: layoutSection,
   ),
   const InspectorSectionSpec(
     id: 'background',
     title: _sectionBackground,
     tab: InspectorTab.slide,
+    builder: backgroundSection,
   ),
   const InspectorSectionSpec(
     id: 'theme',

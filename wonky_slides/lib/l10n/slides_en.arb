@@ -231,6 +231,207 @@
   "@cmdViewToggleRemoteCursors": {
     "description": "Title of the command `slides.view.toggleRemoteCursors` (menus, palette, tooltips, undo)."
   },
+  "cmdPresenceJumpTo": "Jump to collaborator",
+  "@cmdPresenceJumpTo": {
+    "description": "Title of the command `slides.presence.jumpTo` (avatar click: their slide, their selection flashes)."
+  },
+  "cmdPresenceFollow": "Follow",
+  "@cmdPresenceFollow": {
+    "description": "Title of the command `slides.presence.follow` (follow a collaborator's slide and view)."
+  },
+  "cmdPresenceUnfollow": "Stop following",
+  "@cmdPresenceUnfollow": {
+    "description": "Title of the command `slides.presence.unfollow`."
+  },
+  "cmdPresenceFollowPresenter": "Follow presenter",
+  "@cmdPresenceFollowPresenter": {
+    "description": "Title of the command `slides.presence.followPresenter`."
+  },
+  "cmdTextEditAnyway": "Edit anyway",
+  "@cmdTextEditAnyway": {
+    "description": "Title of the command `slides.text.editAnyway` (edit a text someone else is editing)."
+  },
+  "actorViaMcp": "Claude via MCP ({name})",
+  "@actorViaMcp": {
+    "description": "An agent participant writing through MCP for a user.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "actorViaAi": "Assistant ({name})",
+  "@actorViaAi": {
+    "description": "The AI assistant participant working for a user.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "presenceEditingSlide": "Editing slide {number} · {title}",
+  "@presenceEditingSlide": {
+    "description": "Avatar tooltip: what a collaborator is doing.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "presenceViewingSlide": "Viewing slide {number} · {title}",
+  "@presenceViewingSlide": {
+    "description": "Avatar tooltip of a collaborator in Viewing mode.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "presencePresenting": "Presenting",
+  "@presencePresenting": {
+    "description": "Avatar tooltip of a collaborator who presents."
+  },
+  "presenceEditingLayouts": "Editing layouts",
+  "@presenceEditingLayouts": {
+    "description": "Avatar tooltip of a collaborator in the masters view."
+  },
+  "presenceFollowingYou": "Following you",
+  "@presenceFollowingYou": {
+    "description": "Avatar tooltip suffix: this collaborator follows you."
+  },
+  "presenceOnSlide": "On this slide: {names}",
+  "@presenceOnSlide": {
+    "description": "Screen reader label of the presence dots of a navigator row.",
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "presenceInGroup": "In this group: {names}",
+  "@presenceInGroup": {
+    "description": "Screen reader label of the presence dots of a collapsed group header.",
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "presenceEditingFlag": "✎ {name} is editing",
+  "@presenceEditingFlag": {
+    "description": "Flag above a text box a collaborator edits (soft lock).",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "presenceEditingFlagMany": "✎ {names} editing",
+  "@presenceEditingFlagMany": {
+    "description": "Flag above a text box several collaborators edit.",
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "presenceEditingHover": "{name} is editing this text — double-click to edit anyway",
+  "@presenceEditingHover": {
+    "description": "Flag text while hovering a text box a collaborator edits.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "softLockMessage": "{name} is editing this text.",
+  "@softLockMessage": {
+    "description": "Soft-lock popover (04 §13.11) when entering a text someone edits.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "softLockNotesMessage": "{name} is editing these notes.",
+  "@softLockNotesMessage": {
+    "description": "Soft-lock question when entering speaker notes someone edits.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "softLockRaceMessage": "{name} started editing this text first.",
+  "@softLockRaceMessage": {
+    "description": "Popover after two people started editing one text at once and the other was first.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "softLockCancel": "Cancel",
+  "@softLockCancel": {
+    "description": "Soft-lock popover: do not edit."
+  },
+  "softLockEditAnyway": "Edit anyway",
+  "@softLockEditAnyway": {
+    "description": "Soft-lock popover: edit although someone else edits."
+  },
+  "softLockStop": "Stop editing",
+  "@softLockStop": {
+    "description": "Lost claim race: stop editing the text."
+  },
+  "softLockKeep": "Keep editing",
+  "@softLockKeep": {
+    "description": "Lost claim race: keep editing (both edit, the later write wins)."
+  },
+  "notesEditingBanner": "✎ {name} is editing the notes",
+  "@notesEditingBanner": {
+    "description": "Banner in the speaker notes while a collaborator edits them.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "followBanner": "Following {name}",
+  "@followBanner": {
+    "description": "Canvas banner while following a collaborator.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "followStop": "Stop",
+  "@followStop": {
+    "description": "Stops following (canvas banner)."
+  },
+  "presenterPill": "{name} is presenting",
+  "@presenterPill": {
+    "description": "Status bar pill while a collaborator presents.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "presenterFollow": "Follow",
+  "@presenterFollow": {
+    "description": "Follows the presenter (status bar pill)."
+  },
+  "toastPresenterNotFound": "That presentation has ended.",
+  "@toastPresenterNotFound": {
+    "description": "Toast when following a presenter who stopped presenting."
+  },
   "cmdViewToggleSmartGuides": "Smart guides",
   "@cmdViewToggleSmartGuides": {
     "description": "Title of the command `slides.view.toggleSmartGuides` (menus, palette, tooltips, undo)."
@@ -2447,5 +2648,2857 @@
   "toastUndoPartial": "Some changes weren’t undone because a collaborator changed them since",
   "@toastUndoPartial": {
     "description": "Toast when an undo skipped a collaborator’s newer changes."
+  },
+  "cmdSelectElements": "Select objects",
+  "@cmdSelectElements": {
+    "description": "Title of the command `slides.select.elements` (menus, palette, tooltips, undo)."
+  },
+  "cmdSelectNext": "Select next object",
+  "@cmdSelectNext": {
+    "description": "Title of the command `slides.select.next` (menus, palette, tooltips, undo)."
+  },
+  "cmdSelectPrevious": "Select previous object",
+  "@cmdSelectPrevious": {
+    "description": "Title of the command `slides.select.previous` (menus, palette, tooltips, undo)."
+  },
+  "cmdElementMove": "Move",
+  "@cmdElementMove": {
+    "description": "Title of the command `slides.element.move` (menus, palette, tooltips, undo)."
+  },
+  "cmdElementResize": "Resize",
+  "@cmdElementResize": {
+    "description": "Title of the command `slides.element.resize` (menus, palette, tooltips, undo)."
+  },
+  "cmdElementNudge": "Nudge",
+  "@cmdElementNudge": {
+    "description": "Title of the command `slides.element.nudge` (menus, palette, tooltips, undo)."
+  },
+  "cmdElementAdjust": "Adjust shape",
+  "@cmdElementAdjust": {
+    "description": "Title of the command `slides.element.adjust` (menus, palette, tooltips, undo)."
+  },
+  "cmdElementSetLineEnds": "Move line end",
+  "@cmdElementSetLineEnds": {
+    "description": "Title of the command `slides.element.setLineEnds` (menus, palette, tooltips, undo)."
+  },
+  "cmdElementLock": "Lock",
+  "@cmdElementLock": {
+    "description": "Title of the command `slides.element.lock` (menus, palette, tooltips, undo)."
+  },
+  "cmdElementUnlock": "Unlock",
+  "@cmdElementUnlock": {
+    "description": "Title of the command `slides.element.unlock` (menus, palette, tooltips, undo)."
+  },
+  "cmdGuidesMove": "Move guide",
+  "@cmdGuidesMove": {
+    "description": "Title of the command `slides.guides.move` (menus, palette, tooltips, undo)."
+  },
+  "cmdGuidesDelete": "Delete guide",
+  "@cmdGuidesDelete": {
+    "description": "Title of the command `slides.guides.delete` (menus, palette, tooltips, undo)."
+  },
+  "undoRotate": "Rotate",
+  "@undoRotate": {
+    "description": "Undo label of a rotation (drag or Rotate 90°)."
+  },
+  "undoFlip": "Flip",
+  "@undoFlip": {
+    "description": "Undo label of Flip horizontally/vertically."
+  },
+  "reasonSelectObject": "Select an object",
+  "@reasonSelectObject": {
+    "description": "Reason shown on a disabled command that needs a selected object."
+  },
+  "reasonSelectTwoObjects": "Select at least 2 objects",
+  "@reasonSelectTwoObjects": {
+    "description": "Reason shown on a disabled command (match size)."
+  },
+  "reasonSelectThreeObjects": "Select at least 3 objects",
+  "@reasonSelectThreeObjects": {
+    "description": "Reason shown on a disabled command (distribute)."
+  },
+  "reasonObjectLocked": "Unlock the object first",
+  "@reasonObjectLocked": {
+    "description": "Reason shown on a disabled command when a selected object is locked."
+  },
+  "reasonInsideGroup": "Not available for objects inside a group",
+  "@reasonInsideGroup": {
+    "description": "Reason shown on a disabled command when the selection is inside an element group."
+  },
+  "reasonSelectGroup": "Select a group",
+  "@reasonSelectGroup": {
+    "description": "Reason shown on a disabled command that needs a selected element group."
+  },
+  "reasonNoLockedObjects": "No locked objects on this slide",
+  "@reasonNoLockedObjects": {
+    "description": "Reason shown on a disabled Unlock all."
+  },
+  "reasonNoGuides": "There are no guides",
+  "@reasonNoGuides": {
+    "description": "Reason shown on disabled guide commands."
+  },
+  "reasonNotOnCanvas": "Not available for this object",
+  "@reasonNotOnCanvas": {
+    "description": "Reason shown when the selected object has no such action yet."
+  },
+  "elementKindText": "Text box",
+  "@elementKindText": {
+    "description": "Name of an element kind (screen reader announcements)."
+  },
+  "elementKindShape": "Shape",
+  "@elementKindShape": {
+    "description": "Name of an element kind (screen reader announcements)."
+  },
+  "elementKindLine": "Line",
+  "@elementKindLine": {
+    "description": "Name of an element kind (screen reader announcements)."
+  },
+  "elementKindImage": "Image",
+  "@elementKindImage": {
+    "description": "Name of an element kind (screen reader announcements)."
+  },
+  "elementKindTable": "Table",
+  "@elementKindTable": {
+    "description": "Name of an element kind (screen reader announcements)."
+  },
+  "elementKindCode": "Code",
+  "@elementKindCode": {
+    "description": "Name of an element kind (screen reader announcements)."
+  },
+  "elementKindChart": "Chart",
+  "@elementKindChart": {
+    "description": "Name of an element kind (screen reader announcements)."
+  },
+  "elementKindIcon": "Icon",
+  "@elementKindIcon": {
+    "description": "Name of an element kind (screen reader announcements)."
+  },
+  "elementKindGroup": "Group",
+  "@elementKindGroup": {
+    "description": "Name of an element kind (screen reader announcements)."
+  },
+  "elementKindPlaceholder": "Placeholder",
+  "@elementKindPlaceholder": {
+    "description": "Name of an empty placeholder (screen reader announcements)."
+  },
+  "canvasAnnounceSelected": "{name} selected, {index} of {count} objects",
+  "@canvasAnnounceSelected": {
+    "description": "Screen reader announcement when one object is selected on the canvas.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "index": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "canvasAnnounceSelectedMany": "{count} objects selected",
+  "@canvasAnnounceSelectedMany": {
+    "description": "Screen reader announcement when several objects are selected.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "canvasAnnounceMoved": "Moved to x {x}, y {y}",
+  "@canvasAnnounceMoved": {
+    "description": "Screen reader announcement after a move.",
+    "placeholders": {
+      "x": {
+        "type": "int"
+      },
+      "y": {
+        "type": "int"
+      }
+    }
+  },
+  "canvasElementSemantics": "{name}, {state}",
+  "@canvasElementSemantics": {
+    "description": "Semantics label of a canvas element: its name and state.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "state": {
+        "type": "String"
+      }
+    }
+  },
+  "canvasStateSelected": "selected",
+  "@canvasStateSelected": {
+    "description": "Semantics state of a selected canvas element."
+  },
+  "canvasStateLocked": "locked",
+  "@canvasStateLocked": {
+    "description": "Semantics state of a locked canvas element."
+  },
+  "canvasDimensions": "{width} × {height}",
+  "@canvasDimensions": {
+    "description": "Dimensions badge while resizing (slide units).",
+    "placeholders": {
+      "width": {
+        "type": "int"
+      },
+      "height": {
+        "type": "int"
+      }
+    }
+  },
+  "canvasPosition": "{x}, {y}",
+  "@canvasPosition": {
+    "description": "Position badge while moving (slide units).",
+    "placeholders": {
+      "x": {
+        "type": "int"
+      },
+      "y": {
+        "type": "int"
+      }
+    }
+  },
+  "canvasAngle": "{degrees}°",
+  "@canvasAngle": {
+    "description": "Angle badge while rotating.",
+    "placeholders": {
+      "degrees": {
+        "type": "int"
+      }
+    }
+  },
+  "cmdPrintPrint": "Print PDF",
+  "@cmdPrintPrint": {
+    "description": "Command: print the PDF from the print preview (Slides 10 §14)"
+  },
+  "printPreviewTitle": "Print preview",
+  "@printPreviewTitle": {
+    "description": "Print preview route title (10 §12)"
+  },
+  "printPreviewTitleWithName": "Print preview — {name}",
+  "@printPreviewTitleWithName": {
+    "description": "Print preview title with the deck name",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "printBack": "Back to the presentation",
+  "@printBack": {
+    "description": "Print preview: back button"
+  },
+  "printDownloadPdf": "Download PDF",
+  "@printDownloadPdf": {
+    "description": "Print preview: download button"
+  },
+  "printPrint": "Print",
+  "@printPrint": {
+    "description": "Print preview: print button"
+  },
+  "printSettings": "Settings",
+  "@printSettings": {
+    "description": "Print preview: settings column heading"
+  },
+  "printShowPreview": "Show preview",
+  "@printShowPreview": {
+    "description": "Print preview (narrow): back to the preview"
+  },
+  "printPageCount": "{count, plural, =1{1 page} other{{count} pages}}",
+  "@printPageCount": {
+    "description": "Print preview: page count",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "printUpdatingPreview": "Updating preview…",
+  "@printUpdatingPreview": {
+    "description": "Print preview: rendering"
+  },
+  "printLoadingDeck": "Loading presentation…",
+  "@printLoadingDeck": {
+    "description": "Print preview: waiting for the deck"
+  },
+  "printPreviewFailed": "The preview could not be created",
+  "@printPreviewFailed": {
+    "description": "Print preview: error title"
+  },
+  "printTryAgain": "Try again",
+  "@printTryAgain": {
+    "description": "Print preview: retry"
+  },
+  "printDownloadsDisabledTitle": "Downloads are turned off",
+  "@printDownloadsDisabledTitle": {
+    "description": "Print preview: viewers may not export"
+  },
+  "printDownloadsDisabledBody": "The owner has turned off downloading and printing for viewers and commenters.",
+  "@printDownloadsDisabledBody": {
+    "description": "Print preview: viewers may not export"
+  },
+  "printUnavailableTitle": "Printing isn't available here",
+  "@printUnavailableTitle": {
+    "description": "Toast when printing is not supported"
+  },
+  "printUnavailableBody": "Download the PDF and print it from your PDF viewer.",
+  "@printUnavailableBody": {
+    "description": "Toast when printing is not supported"
+  },
+  "printPdfPreviewLabel": "PDF preview",
+  "@printPdfPreviewLabel": {
+    "description": "Semantics label of the PDF viewer"
+  },
+  "printPdfReady": "The PDF is ready",
+  "@printPdfReady": {
+    "description": "Print preview on desktop"
+  },
+  "printPdfReadyPages": "{count, plural, =1{The PDF is ready: 1 page} other{The PDF is ready: {count} pages}}",
+  "@printPdfReadyPages": {
+    "description": "Print preview on desktop",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "printPdfDesktopHint": "Download the PDF to view or print it.",
+  "@printPdfDesktopHint": {
+    "description": "Print preview on desktop"
+  },
+  "printLayout": "Layout",
+  "@printLayout": {
+    "description": "Print setting"
+  },
+  "printLayoutSlides": "Slides",
+  "@printLayoutSlides": {
+    "description": "Print layout: one slide per page"
+  },
+  "printLayoutNotes": "Notes pages",
+  "@printLayoutNotes": {
+    "description": "Print layout: slide with speaker notes"
+  },
+  "printLayoutHandouts": "Handouts",
+  "@printLayoutHandouts": {
+    "description": "Print layout: several slides per page"
+  },
+  "printPerPage": "Slides per page",
+  "@printPerPage": {
+    "description": "Print setting (handouts)"
+  },
+  "printOrder": "Order",
+  "@printOrder": {
+    "description": "Print setting (handouts)"
+  },
+  "printOrderHorizontal": "Across, then down",
+  "@printOrderHorizontal": {
+    "description": "Handout order"
+  },
+  "printOrderVertical": "Down, then across",
+  "@printOrderVertical": {
+    "description": "Handout order"
+  },
+  "printRange": "Slides to print",
+  "@printRange": {
+    "description": "Print setting"
+  },
+  "printRangeAll": "All slides",
+  "@printRangeAll": {
+    "description": "Print range"
+  },
+  "printRangeCurrent": "Current slide",
+  "@printRangeCurrent": {
+    "description": "Print range"
+  },
+  "printRangeSelection": "Selected slides",
+  "@printRangeSelection": {
+    "description": "Print range"
+  },
+  "printRangeCustom": "Custom range",
+  "@printRangeCustom": {
+    "description": "Print range"
+  },
+  "printRangeHint": "e.g. 1-3, 7",
+  "@printRangeHint": {
+    "description": "Placeholder of the custom range"
+  },
+  "printRangeInvalid": "Enter slide numbers like 1-3, 7",
+  "@printRangeInvalid": {
+    "description": "Invalid custom range"
+  },
+  "printPaper": "Paper",
+  "@printPaper": {
+    "description": "Print setting"
+  },
+  "printPaperSlide": "Slide size",
+  "@printPaperSlide": {
+    "description": "Paper size: the slide's own size"
+  },
+  "printPaperLetter": "Letter",
+  "@printPaperLetter": {
+    "description": "Paper size"
+  },
+  "printPaperLegal": "Legal",
+  "@printPaperLegal": {
+    "description": "Paper size"
+  },
+  "printPaperTabloid": "Tabloid",
+  "@printPaperTabloid": {
+    "description": "Paper size"
+  },
+  "printOrientation": "Orientation",
+  "@printOrientation": {
+    "description": "Print setting"
+  },
+  "printOrientationAuto": "Automatic",
+  "@printOrientationAuto": {
+    "description": "Orientation"
+  },
+  "printOrientationPortrait": "Portrait",
+  "@printOrientationPortrait": {
+    "description": "Orientation"
+  },
+  "printOrientationLandscape": "Landscape",
+  "@printOrientationLandscape": {
+    "description": "Orientation"
+  },
+  "printMargins": "Margins",
+  "@printMargins": {
+    "description": "Print setting"
+  },
+  "printMarginsNone": "None",
+  "@printMarginsNone": {
+    "description": "Margins"
+  },
+  "printMarginsNarrow": "Narrow",
+  "@printMarginsNarrow": {
+    "description": "Margins"
+  },
+  "printMarginsNormal": "Normal",
+  "@printMarginsNormal": {
+    "description": "Margins"
+  },
+  "printBuilds": "Print each build stage",
+  "@printBuilds": {
+    "description": "Print setting (builds as pages, M10)"
+  },
+  "printSkipped": "Include skipped slides",
+  "@printSkipped": {
+    "description": "Print setting"
+  },
+  "printFrame": "Frame slides",
+  "@printFrame": {
+    "description": "Print setting"
+  },
+  "printHeaderFooter": "Header and footer",
+  "@printHeaderFooter": {
+    "description": "Print setting (notes, handouts)"
+  },
+  "printSlideNumbers": "Slide numbers",
+  "@printSlideNumbers": {
+    "description": "Print setting (handouts)"
+  },
+  "printBookmarks": "Bookmarks for sections and slides",
+  "@printBookmarks": {
+    "description": "Print setting"
+  },
+  "printLinks": "Clickable links",
+  "@printLinks": {
+    "description": "Print setting"
+  },
+  "printInkSaver": "Ink saver (no slide backgrounds)",
+  "@printInkSaver": {
+    "description": "Print setting"
+  },
+  "printQuality": "Image quality",
+  "@printQuality": {
+    "description": "Print setting"
+  },
+  "printQualityHigh": "High",
+  "@printQualityHigh": {
+    "description": "Image quality"
+  },
+  "printQualityCompact": "Compact (smaller file)",
+  "@printQualityCompact": {
+    "description": "Image quality"
+  },
+  "printWarnings": "About this PDF",
+  "@printWarnings": {
+    "description": "Heading of export warnings"
+  },
+  "printWarningFonts": "A font could not be embedded; a standard font was used.",
+  "@printWarningFonts": {
+    "description": "Export warning"
+  },
+  "printWarningGlyphs": "Some characters have no glyph in the embedded fonts.",
+  "@printWarningGlyphs": {
+    "description": "Export warning"
+  },
+  "printWarningIcons": "Some icons could not be drawn.",
+  "@printWarningIcons": {
+    "description": "Export warning"
+  },
+  "printWarningImages": "Some images could not be loaded.",
+  "@printWarningImages": {
+    "description": "Export warning"
+  },
+  "printWarningLinks": "Links to slides that are not printed were removed.",
+  "@printWarningLinks": {
+    "description": "Export warning"
+  },
+  "printWarningPages": "Only the first 500 pages were exported.",
+  "@printWarningPages": {
+    "description": "Export warning"
+  },
+  "printWarningEmpty": "No slides match these settings.",
+  "@printWarningEmpty": {
+    "description": "Export warning"
+  },
+  "exportedToast": "Exported “{name}”",
+  "@exportedToast": {
+    "description": "Toast after a download",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "exportFailed": "The export failed",
+  "@exportFailed": {
+    "description": "Toast when an export fails"
+  },
+  "exportFormatUnavailable": "This format is not available yet",
+  "@exportFormatUnavailable": {
+    "description": "Download of PNG/Markdown (P1/P2)"
+  },
+  "pdfSlide": "Slide {number}",
+  "@pdfSlide": {
+    "description": "PDF bookmark of an untitled slide",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "pdfNotesContinued": "Notes (continued) — Slide {number}",
+  "@pdfNotesContinued": {
+    "description": "PDF notes continuation heading",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "pdfPageOf": "Page {page} of {count}",
+  "@pdfPageOf": {
+    "description": "PDF footer",
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pdfUntitledSection": "Untitled section",
+  "@pdfUntitledSection": {
+    "description": "PDF bookmark of an untitled group"
+  },
+  "pdfUntitledPresentation": "Untitled presentation",
+  "@pdfUntitledPresentation": {
+    "description": "Title of a deck without one"
+  },
+  "cmdGroupRename": "Rename group",
+  "@cmdGroupRename": {
+    "description": "Title of the command `slides.group.rename` (menus, palette, tooltips, undo)."
+  },
+  "cmdGroupMove": "Move group",
+  "@cmdGroupMove": {
+    "description": "Title of the command `slides.group.move` (menus, palette, tooltips, undo)."
+  },
+  "cmdGroupToggleCollapsed": "Collapse or expand group",
+  "@cmdGroupToggleCollapsed": {
+    "description": "Title of the command `slides.group.toggleCollapsed`."
+  },
+  "cmdNavSelectAllSlides": "Select all slides",
+  "@cmdNavSelectAllSlides": {
+    "description": "Title of the command `slides.nav.selectAllSlides` (⌘A in the navigator)."
+  },
+  "cmdNavigatorCopy": "Copy slides",
+  "@cmdNavigatorCopy": {
+    "description": "Title of the command `slides.navigator.copy`."
+  },
+  "cmdNavigatorCut": "Cut slides",
+  "@cmdNavigatorCut": {
+    "description": "Title of the command `slides.navigator.cut` (undo label)."
+  },
+  "cmdNavigatorPaste": "Paste slides",
+  "@cmdNavigatorPaste": {
+    "description": "Title of the command `slides.navigator.paste` (undo label)."
+  },
+  "cmdNotesZoom": "Speaker notes zoom",
+  "@cmdNotesZoom": {
+    "description": "Title of the command `slides.notes.zoom`."
+  },
+  "cmdSlideDeleteCount": "{count, plural, =1{Delete slide} other{Delete {count} slides}}",
+  "@cmdSlideDeleteCount": {
+    "description": "Dynamic label of Delete slide with the selection count.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cmdSlideDuplicateCount": "{count, plural, =1{Duplicate slide} other{Duplicate {count} slides}}",
+  "@cmdSlideDuplicateCount": {
+    "description": "Dynamic label of Duplicate slide with the selection count.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cmdEditNotes": "Edit speaker notes",
+  "@cmdEditNotes": {
+    "description": "Undo label of typing in the speaker notes."
+  },
+  "reasonSelectSlides": "Select slides in the navigator",
+  "@reasonSelectSlides": {
+    "description": "Disabled reason: no slide is selected."
+  },
+  "reasonAlreadyGroup": "These slides are already a group",
+  "@reasonAlreadyGroup": {
+    "description": "Disabled reason of Group slides when the selection is exactly one group."
+  },
+  "reasonSkippedWithGroup": "Skipped with group",
+  "@reasonSkippedWithGroup": {
+    "description": "Disabled reason of Skip slide for a slide inside a skipped group."
+  },
+  "reasonNotInGroup": "The slide isn’t in a group",
+  "@reasonNotInGroup": {
+    "description": "Disabled reason of Remove from group / Ungroup."
+  },
+  "reasonNoGroups": "The presentation has no groups",
+  "@reasonNoGroups": {
+    "description": "Disabled reason of the collapse/expand all commands."
+  },
+  "reasonGroupsCantNest": "Groups can’t be nested",
+  "@reasonGroupsCantNest": {
+    "description": "Drop indicator tooltip and disabled reason when groups would go inside a group."
+  },
+  "reasonCantMoveFurther": "The slides can’t move further",
+  "@reasonCantMoveFurther": {
+    "description": "Disabled reason of moving slides at the start/end."
+  },
+  "reasonClipboardNoSlides": "Copy slides or groups first",
+  "@reasonClipboardNoSlides": {
+    "description": "Disabled reason of Paste in the navigator."
+  },
+  "reasonAllCollapsed": "The group is already collapsed",
+  "@reasonAllCollapsed": {
+    "description": "Disabled reason of Collapse group."
+  },
+  "reasonAllExpanded": "The group is already expanded",
+  "@reasonAllExpanded": {
+    "description": "Disabled reason of Expand group."
+  },
+  "navigatorDropHere": "Drop slides here",
+  "@navigatorDropHere": {
+    "description": "Drop zone of an empty, expanded group in the navigator."
+  },
+  "navigatorNewSlideLayout": "New slide with layout",
+  "@navigatorNewSlideLayout": {
+    "description": "Tooltip of the layout chevron next to + New slide."
+  },
+  "navigatorDragSlides": "{count, plural, =1{1 slide} other{{count} slides}}",
+  "@navigatorDragSlides": {
+    "description": "Badge of the drag ghost.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "navigatorDragGroup": "{title} · {count, plural, =1{1 slide} other{{count} slides}}",
+  "@navigatorDragGroup": {
+    "description": "Badge of the drag ghost of a group.",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "navigatorGroupExpanded": "expanded",
+  "@navigatorGroupExpanded": {
+    "description": "Screen reader state of an expanded group header."
+  },
+  "navigatorGroupCollapsed": "collapsed",
+  "@navigatorGroupCollapsed": {
+    "description": "Screen reader state of a collapsed group header."
+  },
+  "navigatorSkipped": "skipped",
+  "@navigatorSkipped": {
+    "description": "Screen reader state of a skipped slide or group."
+  },
+  "navigatorSlideInGroupSemantics": "Slide {number} of {total}, in group {group}: {title}",
+  "@navigatorSlideInGroupSemantics": {
+    "description": "Screen reader label of a slide row inside a group.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "group": {
+        "type": "String"
+      },
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "navigatorGroupMenu": "Group actions",
+  "@navigatorGroupMenu": {
+    "description": "Tooltip of the ⋮ button of a group header."
+  },
+  "navigatorSlideMenu": "Slide actions",
+  "@navigatorSlideMenu": {
+    "description": "Tooltip of the ⋮ button of a slide row."
+  },
+  "navigatorCollapseGroup": "Collapse group (Alt+click: all groups)",
+  "@navigatorCollapseGroup": {
+    "description": "Tooltip of the chevron of an expanded group header."
+  },
+  "navigatorExpandGroup": "Expand group (Alt+click: all groups)",
+  "@navigatorExpandGroup": {
+    "description": "Tooltip of the chevron of a collapsed group header."
+  },
+  "navigatorGroupColor": "Group color",
+  "@navigatorGroupColor": {
+    "description": "Tooltip of the color dot of a group header."
+  },
+  "navigatorRenameField": "Group name",
+  "@navigatorRenameField": {
+    "description": "Label of the inline rename field of a group."
+  },
+  "navigatorSkippedWithGroup": "Skipped with group",
+  "@navigatorSkippedWithGroup": {
+    "description": "Tooltip of the skip badge of a slide inside a skipped group."
+  },
+  "deleteGroupTitle": "Delete group ‘{title}’?",
+  "@deleteGroupTitle": {
+    "description": "Title of the Delete group dialog (04 §13.4).",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteGroupBody": "{count, plural, =1{The group contains 1 slide.} other{The group contains {count} slides.}}",
+  "@deleteGroupBody": {
+    "description": "Body of the Delete group dialog.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteGroupsTitle": "Delete {count} groups?",
+  "@deleteGroupsTitle": {
+    "description": "Title of the Delete group dialog for several groups.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteGroupUngroupOnly": "Ungroup only",
+  "@deleteGroupUngroupOnly": {
+    "description": "Delete group dialog: keep the slides."
+  },
+  "deleteGroupWithSlides": "{count, plural, =1{Delete group and 1 slide} other{Delete group and {count} slides}}",
+  "@deleteGroupWithSlides": {
+    "description": "Delete group dialog: destructive button.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "toastGroupDeleted": "Group deleted",
+  "@toastGroupDeleted": {
+    "description": "Toast after deleting a group (Undo action next to it)."
+  },
+  "chooseGroupTitle": "Add to group",
+  "@chooseGroupTitle": {
+    "description": "Title of the dialog choosing the group for Add to group."
+  },
+  "chooseGroupLabel": "Group",
+  "@chooseGroupLabel": {
+    "description": "Field label of the Add to group dialog."
+  },
+  "chooseGroupButton": "Add",
+  "@chooseGroupButton": {
+    "description": "Primary button of the Add to group dialog."
+  },
+  "gridThumbSize": "Thumbnail size",
+  "@gridThumbSize": {
+    "description": "Label of the grid view thumbnail size slider."
+  },
+  "gridOpenHint": "Double-click a slide to open it",
+  "@gridOpenHint": {
+    "description": "Hint in the grid view toolbar."
+  },
+  "notesBold": "Bold",
+  "@notesBold": {
+    "description": "Speaker notes mini toolbar."
+  },
+  "notesItalic": "Italic",
+  "@notesItalic": {
+    "description": "Speaker notes mini toolbar."
+  },
+  "notesUnderline": "Underline",
+  "@notesUnderline": {
+    "description": "Speaker notes mini toolbar."
+  },
+  "notesBulletList": "Bulleted list",
+  "@notesBulletList": {
+    "description": "Speaker notes mini toolbar."
+  },
+  "notesNumberedList": "Numbered list",
+  "@notesNumberedList": {
+    "description": "Speaker notes mini toolbar."
+  },
+  "notesLink": "Link",
+  "@notesLink": {
+    "description": "Speaker notes mini toolbar."
+  },
+  "notesLinkTitle": "Link",
+  "@notesLinkTitle": {
+    "description": "Title of the speaker notes link dialog."
+  },
+  "notesLinkUrl": "URL",
+  "@notesLinkUrl": {
+    "description": "Field of the speaker notes link dialog."
+  },
+  "notesLinkApply": "Apply",
+  "@notesLinkApply": {
+    "description": "Primary button of the speaker notes link dialog."
+  },
+  "notesLinkRemove": "Remove link",
+  "@notesLinkRemove": {
+    "description": "Button of the speaker notes link dialog."
+  },
+  "notesLinkInvalid": "Enter an http or https address",
+  "@notesLinkInvalid": {
+    "description": "Validation of the speaker notes link dialog."
+  },
+  "notesReadOnly": "View only",
+  "@notesReadOnly": {
+    "description": "Speaker notes of a viewer (read-only)."
+  },
+  "notesNoSlide": "No slide selected",
+  "@notesNoSlide": {
+    "description": "Speaker notes when the deck has no slides."
+  },
+  "undoTyping": "Typing",
+  "@undoTyping": {
+    "description": "Undo step of a typing burst in a text box (SL-13)."
+  },
+  "dialogApply": "Apply",
+  "@dialogApply": {
+    "description": "Primary button of the Slides value dialogs (font size, link, …)."
+  },
+  "linkDialogTitle": "Link",
+  "@linkDialogTitle": {
+    "description": "Title of the link dialog (04 §13.5)."
+  },
+  "linkTargetLabel": "Link to",
+  "@linkTargetLabel": {
+    "description": "Label of the link target select."
+  },
+  "linkTargetUrl": "Web address",
+  "@linkTargetUrl": {
+    "description": "Link target option: a URL typed below."
+  },
+  "linkUrlLabel": "Address",
+  "@linkUrlLabel": {
+    "description": "Label of the URL field of the link dialog."
+  },
+  "linkRemove": "Remove link",
+  "@linkRemove": {
+    "description": "Button of the link dialog that removes the link."
+  },
+  "linkActionNext": "Next slide",
+  "@linkActionNext": {
+    "description": "Element link action."
+  },
+  "linkActionPrevious": "Previous slide",
+  "@linkActionPrevious": {
+    "description": "Element link action."
+  },
+  "linkActionFirst": "First slide",
+  "@linkActionFirst": {
+    "description": "Element link action."
+  },
+  "linkActionLast": "Last slide",
+  "@linkActionLast": {
+    "description": "Element link action."
+  },
+  "linkActionEnd": "End show",
+  "@linkActionEnd": {
+    "description": "Element link action."
+  },
+  "fontLabel": "Font",
+  "@fontLabel": {
+    "description": "Label of the font select."
+  },
+  "fontSizeLabel": "Size",
+  "@fontSizeLabel": {
+    "description": "Label of the font size field."
+  },
+  "colorLabel": "Color (#RRGGBB or theme:accent1; empty = automatic)",
+  "@colorLabel": {
+    "description": "Label of the color field of the text color dialog."
+  },
+  "lineHeightLabel": "Line spacing",
+  "@lineHeightLabel": {
+    "description": "Label of the custom line spacing field."
+  },
+  "listStyleLabel": "Style",
+  "@listStyleLabel": {
+    "description": "Label of the list style select."
+  },
+  "listStartLabel": "Start numbering at",
+  "@listStartLabel": {
+    "description": "Label of the list start field."
+  },
+  "fontThemeHeading": "Theme heading font",
+  "@fontThemeHeading": {
+    "description": "Font option: the theme's heading font."
+  },
+  "fontThemeBody": "Theme body font",
+  "@fontThemeBody": {
+    "description": "Font option: the theme's body font."
+  },
+  "fontThemeMono": "Theme monospace font",
+  "@fontThemeMono": {
+    "description": "Font option: the theme's monospace font."
+  },
+  "listStyleDisc": "Disc",
+  "@listStyleDisc": {
+    "description": "Bullet style."
+  },
+  "listStyleCircle": "Circle",
+  "@listStyleCircle": {
+    "description": "Bullet style."
+  },
+  "listStyleSquare": "Square",
+  "@listStyleSquare": {
+    "description": "Bullet style."
+  },
+  "listStyleDash": "Dash",
+  "@listStyleDash": {
+    "description": "Bullet style."
+  },
+  "listStyleArrow": "Arrow",
+  "@listStyleArrow": {
+    "description": "Bullet style."
+  },
+  "listStyleCheck": "Check mark",
+  "@listStyleCheck": {
+    "description": "Bullet style."
+  },
+  "listStyleStar": "Star",
+  "@listStyleStar": {
+    "description": "Bullet style."
+  },
+  "listStyleNone": "No bullet",
+  "@listStyleNone": {
+    "description": "Bullet style."
+  },
+  "cmdFormatLetterSpacing": "Letter spacing",
+  "@cmdFormatLetterSpacing": {
+    "description": "Command: letter spacing of the selected text."
+  },
+  "cmdFormatInsets": "Text insets",
+  "@cmdFormatInsets": {
+    "description": "Command: text insets of a text box."
+  },
+  "cmdTextExitEditing": "Exit text editing",
+  "@cmdTextExitEditing": {
+    "description": "Command: stops editing text and selects the box."
+  },
+  "cmdTextRemoveLink": "Remove link from text",
+  "@cmdTextRemoveLink": {
+    "description": "Command: removes the link of the selected text."
+  },
+  "reasonNotEditingText": "No text is being edited",
+  "@reasonNotEditingText": {
+    "description": "Disabled reason."
+  },
+  "reasonSelectText": "Select text or a text box",
+  "@reasonSelectText": {
+    "description": "Disabled reason of text format commands."
+  },
+  "reasonSelectTextOrObject": "Select text or an object",
+  "@reasonSelectTextOrObject": {
+    "description": "Disabled reason of Insert link."
+  },
+  "reasonNoLink": "The selection has no link",
+  "@reasonNoLink": {
+    "description": "Disabled reason of Remove link."
+  },
+  "reasonSelectPlaceholder": "Select a placeholder",
+  "@reasonSelectPlaceholder": {
+    "description": "Disabled reason of Reset to layout."
+  },
+  "toastSkippedLocked": "{count, plural, =1{Skipped 1 text box {name} is editing} other{Skipped {count} text boxes others are editing}}",
+  "@toastSkippedLocked": {
+    "description": "Toast when formatting skipped soft-locked text boxes (03 §6.1).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "validationNumberRange": "Enter a number from {min} to {max}",
+  "@validationNumberRange": {
+    "description": "Validation message of number fields.",
+    "placeholders": {
+      "min": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "slideNumberLabel": "Slide {number}",
+  "@slideNumberLabel": {
+    "description": "Text of a link to a slide inserted at the caret.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "themeColorBg1": "Background 1",
+  "@themeColorBg1": {
+    "description": "Theme color name (color picker swatch)."
+  },
+  "themeColorBg2": "Background 2",
+  "@themeColorBg2": {
+    "description": "Theme color name (color picker swatch)."
+  },
+  "themeColorText1": "Text 1",
+  "@themeColorText1": {
+    "description": "Theme color name (color picker swatch)."
+  },
+  "themeColorText2": "Text 2",
+  "@themeColorText2": {
+    "description": "Theme color name (color picker swatch)."
+  },
+  "themeColorAccent": "Accent {n}",
+  "@themeColorAccent": {
+    "description": "Theme accent color name.",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "themeColorLink": "Link",
+  "@themeColorLink": {
+    "description": "Theme color name (color picker swatch)."
+  },
+  "shapeName": "{geometry, select, rect{Rectangle} roundRect{Rounded rectangle} ellipse{Ellipse} triangle{Triangle} rightTriangle{Right triangle} diamond{Diamond} pentagon{Pentagon} hexagon{Hexagon} octagon{Octagon} parallelogram{Parallelogram} trapezoid{Trapezoid} donut{Donut} arc{Arc} blockArc{Block arc} pie{Pie} chord{Chord} frame{Frame} halfFrame{Half frame} plus{Plus} cross{Cross} cylinder{Cylinder} cube{Cube} can{Can} heart{Heart} cloud{Cloud} moon{Moon} sun{Sun} lightning{Lightning bolt} arrowRight{Right arrow} arrowLeft{Left arrow} arrowUp{Up arrow} arrowDown{Down arrow} arrowLeftRight{Left-right arrow} arrowUpDown{Up-down arrow} chevron{Chevron} homePlate{Pentagon arrow} notchedArrow{Notched arrow} curvedArrow{Curved arrow} circularArrow{Circular arrow} uTurn{U-turn arrow} star4{4-point star} star5{5-point star} star6{6-point star} star8{8-point star} star12{12-point star} burst{Burst} ribbon{Ribbon} wave{Wave} seal{Seal} speech{Speech bubble} speechRound{Round speech bubble} thought{Thought bubble} calloutRect{Rectangular callout} calloutLine{Line callout} banner{Banner} process{Process} decision{Decision} terminator{Terminator} document{Document} data{Data} manualInput{Manual input} predefinedProcess{Predefined process} connector{Connector} offPage{Off-page connector} delay{Delay} storage{Stored data} brace{Brace} bracket{Bracket} doubleBrace{Double brace} custom{Custom shape} other{Shape}}",
+  "@shapeName": {
+    "description": "Name of a shape geometry (shape gallery, Change shape, MCP).",
+    "placeholders": {
+      "geometry": {
+        "type": "String"
+      }
+    }
+  },
+  "shapeCategory": "{category, select, basic{Basic shapes} arrows{Arrows} stars{Stars and badges} callouts{Callouts} flowchart{Flowchart} brackets{Brackets} custom{Custom} other{Shapes}}",
+  "@shapeCategory": {
+    "description": "Category heading of the shape gallery.",
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "iconCategory": "{category, select, all{All icons} recent{Recently used} arrows{Arrows} business{Business} charts{Charts} communication{Communication} devices{Devices} development{Development} files{Files} food{Food and drink} media{Media} nature{Nature} people{People} security{Security} shapes{Shapes} text{Text} clock{Time} tools{Tools} travel{Travel} weather{Weather} other{Icons}}",
+  "@iconCategory": {
+    "description": "Category of the icon picker sidebar.",
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "arrowStyleName": "{style, select, none{None} triangle{Arrow} open{Open arrow} stealth{Stealth arrow} circle{Circle} diamond{Diamond} bar{Bar} other{Arrow}}",
+  "@arrowStyleName": {
+    "description": "Arrowhead style of a line end.",
+    "placeholders": {
+      "style": {
+        "type": "String"
+      }
+    }
+  },
+  "arrowSizeName": "{size, select, s{Small} m{Medium} l{Large} other{Medium}}",
+  "@arrowSizeName": {
+    "description": "Arrowhead size.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "dashName": "{dash, select, solid{Solid} dash{Dashed} dot{Dotted} dashDot{Dash-dot} longDash{Long dash} other{Solid}}",
+  "@dashName": {
+    "description": "Border/line dash style.",
+    "placeholders": {
+      "dash": {
+        "type": "String"
+      }
+    }
+  },
+  "capName": "{cap, select, butt{Flat} round{Round} square{Square} other{Flat}}",
+  "@capName": {
+    "description": "Line cap style.",
+    "placeholders": {
+      "cap": {
+        "type": "String"
+      }
+    }
+  },
+  "routingName": "{routing, select, straight{Straight} elbow{Elbow} curved{Curved} other{Straight}}",
+  "@routingName": {
+    "description": "Line routing.",
+    "placeholders": {
+      "routing": {
+        "type": "String"
+      }
+    }
+  },
+  "quickStyleName": "{index, select, 0{Accent 1} 1{Accent 2} 2{Accent 3} 3{Accent 4} 4{Accent 5} 5{Accent 6} 6{Outline} 7{Soft tint} other{Style}}",
+  "@quickStyleName": {
+    "description": "Name of a shape quick style (toolbar and Format › Shape menu).",
+    "placeholders": {
+      "index": {
+        "type": "String"
+      }
+    }
+  },
+  "strokeWidthLabel": "{width} pt",
+  "@strokeWidthLabel": {
+    "description": "Border/line weight in the weight menu.",
+    "placeholders": {
+      "width": {
+        "type": "String"
+      }
+    }
+  },
+  "cmdIconReplace": "Replace icon…",
+  "@cmdIconReplace": {
+    "description": "Command: choose another icon for the selected icon."
+  },
+  "cmdIconSetStrokeWidth": "Icon stroke width",
+  "@cmdIconSetStrokeWidth": {
+    "description": "Command: set the stroke width of Lucide icons."
+  },
+  "cmdElementRename": "Rename object",
+  "@cmdElementRename": {
+    "description": "Command: set an element's name (Layers panel, Arrange section)."
+  },
+  "menuChangeShape": "Change shape",
+  "@menuChangeShape": {
+    "description": "Submenu: change the geometry of the selected shapes."
+  },
+  "menuQuickStyles": "Quick styles",
+  "@menuQuickStyles": {
+    "description": "Submenu: theme-based shape styles."
+  },
+  "menuRouting": "Routing",
+  "@menuRouting": {
+    "description": "Submenu: line routing."
+  },
+  "menuWeight": "Weight",
+  "@menuWeight": {
+    "description": "Border/line weight menu."
+  },
+  "menuDash": "Dash",
+  "@menuDash": {
+    "description": "Border/line dash menu."
+  },
+  "menuBorderColor": "Border color",
+  "@menuBorderColor": {
+    "description": "Toolbar: border color picker."
+  },
+  "menuLineColor": "Line color",
+  "@menuLineColor": {
+    "description": "Toolbar: line color picker."
+  },
+  "menuFillColor": "Fill color",
+  "@menuFillColor": {
+    "description": "Toolbar: fill color picker."
+  },
+  "menuIconColor": "Icon color",
+  "@menuIconColor": {
+    "description": "Toolbar: icon color picker."
+  },
+  "colorThemeDefault": "Theme default",
+  "@colorThemeDefault": {
+    "description": "Color picker reset: use the theme's default object style."
+  },
+  "styleLabelColor": "Color",
+  "@styleLabelColor": {
+    "description": "Inspector label."
+  },
+  "styleLabelWeight": "Weight",
+  "@styleLabelWeight": {
+    "description": "Inspector label (border/line width)."
+  },
+  "styleLabelDash": "Dash",
+  "@styleLabelDash": {
+    "description": "Inspector label."
+  },
+  "styleLabelCap": "Ends",
+  "@styleLabelCap": {
+    "description": "Inspector label: line cap."
+  },
+  "styleLabelArrowSize": "Arrow size",
+  "@styleLabelArrowSize": {
+    "description": "Inspector label."
+  },
+  "styleLabelRouting": "Routing",
+  "@styleLabelRouting": {
+    "description": "Inspector label."
+  },
+  "styleLabelShadow": "Shadow",
+  "@styleLabelShadow": {
+    "description": "Inspector label: drop shadow switch."
+  },
+  "styleLabelGlow": "Glow",
+  "@styleLabelGlow": {
+    "description": "Inspector label: glow switch."
+  },
+  "styleLabelOpacity": "Opacity",
+  "@styleLabelOpacity": {
+    "description": "Inspector label."
+  },
+  "styleLabelNoFill": "No fill",
+  "@styleLabelNoFill": {
+    "description": "Fill picker: transparent."
+  },
+  "styleLabelNoBorder": "No border",
+  "@styleLabelNoBorder": {
+    "description": "Border: none."
+  },
+  "styleLabelGeometry": "Shape",
+  "@styleLabelGeometry": {
+    "description": "Inspector label: the shape geometry."
+  },
+  "styleLabelStrokeWidth": "Stroke width",
+  "@styleLabelStrokeWidth": {
+    "description": "Icon stroke width label."
+  },
+  "styleLabelIcon": "Icon",
+  "@styleLabelIcon": {
+    "description": "Inspector label: the icon's name."
+  },
+  "styleMixed": "Mixed",
+  "@styleMixed": {
+    "description": "A value differs between the selected objects."
+  },
+  "arrangeLabelX": "X",
+  "@arrangeLabelX": {
+    "description": "Arrange section: x position (slide units)."
+  },
+  "arrangeLabelY": "Y",
+  "@arrangeLabelY": {
+    "description": "Arrange section: y position (slide units)."
+  },
+  "arrangeLabelW": "W",
+  "@arrangeLabelW": {
+    "description": "Arrange section: width (slide units)."
+  },
+  "arrangeLabelH": "H",
+  "@arrangeLabelH": {
+    "description": "Arrange section: height (slide units)."
+  },
+  "arrangeLabelRotation": "Rotation",
+  "@arrangeLabelRotation": {
+    "description": "Arrange section: rotation in degrees."
+  },
+  "arrangeLabelName": "Name",
+  "@arrangeLabelName": {
+    "description": "Arrange section: object name."
+  },
+  "arrangeEditInsideGroup": "Edit inside group",
+  "@arrangeEditInsideGroup": {
+    "description": "Arrange section button for element groups."
+  },
+  "arrangeLocked": "Locked",
+  "@arrangeLocked": {
+    "description": "Arrange section: lock switch."
+  },
+  "accessibilityAltText": "Alt text",
+  "@accessibilityAltText": {
+    "description": "Accessibility section: description of the object."
+  },
+  "accessibilityAltTextHint": "Describe the object for people using screen readers",
+  "@accessibilityAltTextHint": {
+    "description": "Placeholder of the alt text field."
+  },
+  "accessibilityDecorative": "Decorative",
+  "@accessibilityDecorative": {
+    "description": "Accessibility section: skipped by screen readers and alt text checks."
+  },
+  "accessibilityReadingOrder": "Reading order: {position} of {count}",
+  "@accessibilityReadingOrder": {
+    "description": "Accessibility section: the object's position in reading order.",
+    "placeholders": {
+      "position": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "altTextDialogTitle": "Alt text",
+  "@altTextDialogTitle": {
+    "description": "Title of the alt text dialog."
+  },
+  "altTextDialogDecorative": "Mark as decorative (screen readers skip it)",
+  "@altTextDialogDecorative": {
+    "description": "Checkbox of the alt text dialog."
+  },
+  "dialogSave": "Save",
+  "@dialogSave": {
+    "description": "Primary button of Slides dialogs that save a value."
+  },
+  "iconPickerTitle": "Insert icon",
+  "@iconPickerTitle": {
+    "description": "Title of the icon picker."
+  },
+  "iconPickerReplaceTitle": "Replace icon",
+  "@iconPickerReplaceTitle": {
+    "description": "Title of the icon picker when replacing an icon."
+  },
+  "iconPickerSearch": "Search icons",
+  "@iconPickerSearch": {
+    "description": "Search field of the icon picker."
+  },
+  "iconPickerEmpty": "No icons match “{query}”",
+  "@iconPickerEmpty": {
+    "description": "Icon picker without results.",
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "iconPickerCount": "{count, plural, =1{1 icon} other{{count} icons}}",
+  "@iconPickerCount": {
+    "description": "Number of icons shown in the picker.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "iconPickerRecentEmpty": "Icons you insert show up here",
+  "@iconPickerRecentEmpty": {
+    "description": "Empty Recently used category of the icon picker."
+  },
+  "iconPickerStroke": "Stroke",
+  "@iconPickerStroke": {
+    "description": "Icon picker: stroke width."
+  },
+  "iconPickerColor": "Color",
+  "@iconPickerColor": {
+    "description": "Icon picker: icon color."
+  },
+  "iconPickerCategory": "Category",
+  "@iconPickerCategory": {
+    "description": "Icon picker: category select (narrow widths)."
+  },
+  "iconPickerInsert": "Insert",
+  "@iconPickerInsert": {
+    "description": "Icon picker primary button."
+  },
+  "iconPickerReplace": "Replace",
+  "@iconPickerReplace": {
+    "description": "Icon picker primary button when replacing."
+  },
+  "shapeGalleryTitle": "Shapes",
+  "@shapeGalleryTitle": {
+    "description": "Title of the All shapes dialog."
+  },
+  "shapeGalleryChoose": "Choose",
+  "@shapeGalleryChoose": {
+    "description": "Primary button of the All shapes dialog."
+  },
+  "reasonSelectShape": "Select a shape",
+  "@reasonSelectShape": {
+    "description": "Disabled reason."
+  },
+  "reasonSelectLine": "Select a line",
+  "@reasonSelectLine": {
+    "description": "Disabled reason."
+  },
+  "reasonSelectIcon": "Select an icon",
+  "@reasonSelectIcon": {
+    "description": "Disabled reason."
+  },
+  "reasonSelectOneObject": "Select one object",
+  "@reasonSelectOneObject": {
+    "description": "Disabled reason."
+  },
+  "reasonNoFill": "Select a shape, text box or icon",
+  "@reasonNoFill": {
+    "description": "Disabled reason of fill commands."
+  },
+  "reasonNoBorder": "Select a shape, line, text box, image or icon",
+  "@reasonNoBorder": {
+    "description": "Disabled reason of border commands."
+  },
+  "reasonPlaceholdersCantGroup": "Placeholders can't be grouped",
+  "@reasonPlaceholdersCantGroup": {
+    "description": "Disabled reason of Group."
+  },
+  "reasonSameLevel": "Select objects in the same group",
+  "@reasonSameLevel": {
+    "description": "Disabled reason of Group."
+  },
+  "reasonNoStyleCopied": "Copy a style first",
+  "@reasonNoStyleCopied": {
+    "description": "Disabled reason of Paste style."
+  },
+  "painterArmed": "Click an object to apply the format",
+  "@painterArmed": {
+    "description": "Announcement when Paint format is armed."
+  },
+  "toolArmedShape": "Click or drag on the slide to insert the shape",
+  "@toolArmedShape": {
+    "description": "Announcement when a shape tool is armed."
+  },
+  "toolArmedLine": "Drag on the slide to draw the line",
+  "@toolArmedLine": {
+    "description": "Announcement when a line tool is armed."
+  },
+  "colorAutomatic": "Automatic",
+  "@colorAutomatic": {
+    "description": "Reset option of the text color picker (the style's color)."
+  },
+  "inspectorMixed": "Mixed",
+  "@inspectorMixed": {
+    "description": "Inspector value when the selection has different values."
+  },
+  "spacingBeforeLabel": "Space before",
+  "@spacingBeforeLabel": {
+    "description": "Inspector › Text: space before paragraphs (su)."
+  },
+  "spacingAfterLabel": "Space after",
+  "@spacingAfterLabel": {
+    "description": "Inspector › Text: space after paragraphs (su)."
+  },
+  "reasonSelectImage": "Select an image",
+  "@reasonSelectImage": {
+    "description": "Disabled reason of image commands."
+  },
+  "reasonNoDownload": "Downloading isn't allowed for this presentation",
+  "@reasonNoDownload": {
+    "description": "Disabled reason of Download original."
+  },
+  "reasonSelectTable": "Select a table",
+  "@reasonSelectTable": {
+    "description": "Disabled reason of table commands."
+  },
+  "reasonSelectCells": "Select table cells",
+  "@reasonSelectCells": {
+    "description": "Disabled reason of commands that need a cell range."
+  },
+  "reasonNoMergedCells": "No merged cells in the selection",
+  "@reasonNoMergedCells": {
+    "description": "Disabled reason of Unmerge cells."
+  },
+  "undoCropImage": "Crop image",
+  "@undoCropImage": {
+    "description": "Undo label of a crop."
+  },
+  "cmdImageCropApply": "Apply crop",
+  "@cmdImageCropApply": {
+    "description": "Enter in crop mode."
+  },
+  "cmdImageCropCancel": "Cancel crop",
+  "@cmdImageCropCancel": {
+    "description": "Esc in crop mode."
+  },
+  "cmdImageRetryUpload": "Retry upload",
+  "@cmdImageRetryUpload": {
+    "description": "Retries an image upload refused for storage."
+  },
+  "cmdImageRemoveNotUploaded": "Remove image",
+  "@cmdImageRemoveNotUploaded": {
+    "description": "Removes an image that couldn't be uploaded."
+  },
+  "cmdTableResizeAxes": "Resize rows or columns",
+  "@cmdTableResizeAxes": {
+    "description": "Command: write row heights / column widths (border drag)."
+  },
+  "cmdTableSetCellPadding": "Cell padding",
+  "@cmdTableSetCellPadding": {
+    "description": "Command: cell padding."
+  },
+  "cmdTableClearCells": "Clear cells",
+  "@cmdTableClearCells": {
+    "description": "Command: clear the text of the selected cells."
+  },
+  "cmdTableSelectCells": "Select cells",
+  "@cmdTableSelectCells": {
+    "description": "Command: select a cell range."
+  },
+  "cmdTableMoveSelection": "Move cell selection",
+  "@cmdTableMoveSelection": {
+    "description": "Command: arrow keys in a table."
+  },
+  "cmdTableNextCell": "Next cell",
+  "@cmdTableNextCell": {
+    "description": "Command: Tab in a table."
+  },
+  "cmdTablePreviousCell": "Previous cell",
+  "@cmdTablePreviousCell": {
+    "description": "Command: Shift+Tab in a table."
+  },
+  "cmdTableEditCell": "Edit cell",
+  "@cmdTableEditCell": {
+    "description": "Command: edit the active cell's text."
+  },
+  "cmdTableClearCellSelection": "Select the whole table",
+  "@cmdTableClearCellSelection": {
+    "description": "Command: Esc in a cell selection."
+  },
+  "imageNotAvailable": "This image isn't available right now.",
+  "@imageNotAvailable": {
+    "description": "Toast when an image's bytes can't be loaded."
+  },
+  "imagePickTitle": "Choose images",
+  "@imagePickTitle": {
+    "description": "File picker title for images."
+  },
+  "imageClipboardEmpty": "There's no image on the clipboard.",
+  "@imageClipboardEmpty": {
+    "description": "Insert from clipboard without an image."
+  },
+  "imageUrlInvalid": "Enter an https:// image address.",
+  "@imageUrlInvalid": {
+    "description": "URL validation message."
+  },
+  "imageFetchFailed": "Couldn't load this image.",
+  "@imageFetchFailed": {
+    "description": "Insert by URL / Drive failure."
+  },
+  "imageOutOfStorage": "You're out of storage.",
+  "@imageOutOfStorage": {
+    "description": "Insert refused for quota (agents)."
+  },
+  "imageRejectedTooLarge": "Couldn't insert '{name}' — images can be at most 50 MB.",
+  "@imageRejectedTooLarge": {
+    "description": "Image too large.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "imageRejectedFormat": "Couldn't insert '{name}' — this image type isn't supported.",
+  "@imageRejectedFormat": {
+    "description": "Unsupported image type (03 §6.5.1).",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "imageInsertDialogTitle": "Insert image",
+  "@imageInsertDialogTitle": {
+    "description": "Title of the image source dialog."
+  },
+  "imageReplaceDialogTitle": "Replace image",
+  "@imageReplaceDialogTitle": {
+    "description": "Title of the image source dialog when replacing."
+  },
+  "imageSourceLabel": "Source",
+  "@imageSourceLabel": {
+    "description": "Field label of the image source select."
+  },
+  "dialogContinue": "Continue",
+  "@dialogContinue": {
+    "description": "Dialog button."
+  },
+  "dialogInsert": "Insert",
+  "@dialogInsert": {
+    "description": "Dialog button."
+  },
+  "dialogCancel": "Cancel",
+  "@dialogCancel": {
+    "description": "Dialog button."
+  },
+  "imageUrlDialogTitle": "Insert image by URL",
+  "@imageUrlDialogTitle": {
+    "description": "Title of the URL dialog (04 §13.2)."
+  },
+  "imageUrlDialogBody": "The image is fetched through Wonky Work and stored with the presentation.",
+  "@imageUrlDialogBody": {
+    "description": "Description of the URL dialog."
+  },
+  "imageUrlLabel": "Image address",
+  "@imageUrlLabel": {
+    "description": "URL field label."
+  },
+  "imageMaskDialogTitle": "Mask with shape",
+  "@imageMaskDialogTitle": {
+    "description": "Title of the mask dialog."
+  },
+  "imageMaskShape": "Shape",
+  "@imageMaskShape": {
+    "description": "Mask shape field."
+  },
+  "imageMaskNone": "No mask",
+  "@imageMaskNone": {
+    "description": "Removes the mask."
+  },
+  "imageDriveDialogTitle": "Insert image from Wonky Drive",
+  "@imageDriveDialogTitle": {
+    "description": "Title of the Drive image picker."
+  },
+  "imageDriveSearch": "Search images",
+  "@imageDriveSearch": {
+    "description": "Search field of the Drive image picker."
+  },
+  "imageDriveImage": "Image",
+  "@imageDriveImage": {
+    "description": "Select field of the Drive image picker (MCP)."
+  },
+  "imageDriveFailed": "Couldn't load your images. Check your connection.",
+  "@imageDriveFailed": {
+    "description": "Drive picker error."
+  },
+  "imageDriveEmpty": "No images found.",
+  "@imageDriveEmpty": {
+    "description": "Drive picker without results."
+  },
+  "cropAspectFree": "Free",
+  "@cropAspectFree": {
+    "description": "Crop aspect preset."
+  },
+  "cropAspectOriginal": "Original",
+  "@cropAspectOriginal": {
+    "description": "Crop aspect preset."
+  },
+  "cropFill": "Fill",
+  "@cropFill": {
+    "description": "Crop bar: image covers the box."
+  },
+  "cropFit": "Fit",
+  "@cropFit": {
+    "description": "Crop bar: whole image in the box."
+  },
+  "cropDone": "Done",
+  "@cropDone": {
+    "description": "Crop bar: commit."
+  },
+  "imageNotUploadedOutOfStorage": "Not uploaded — out of storage",
+  "@imageNotUploadedOutOfStorage": {
+    "description": "Badge on an image refused for storage (Drive 03 §6.3)."
+  },
+  "imageRetry": "Retry",
+  "@imageRetry": {
+    "description": "Retry button of the badge."
+  },
+  "imageRemove": "Remove",
+  "@imageRemove": {
+    "description": "Remove button of the badge."
+  },
+  "tableSizeInvalid": "Enter a number from 1 to {max}.",
+  "@tableSizeInvalid": {
+    "description": "Insert table dialog validation.",
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "tableInsertDialogTitle": "Insert table",
+  "@tableInsertDialogTitle": {
+    "description": "Insert table dialog title."
+  },
+  "tableRows": "Rows",
+  "@tableRows": {
+    "description": "Field label."
+  },
+  "tableColumns": "Columns",
+  "@tableColumns": {
+    "description": "Field label."
+  },
+  "cmdThemeApply": "Apply theme",
+  "@cmdThemeApply": {
+    "description": "Title of `slides.theme.apply` (Themes panel; undo label)."
+  },
+  "cmdThemeImport": "Import theme from a presentation…",
+  "@cmdThemeImport": {
+    "description": "Title of `slides.theme.import`."
+  },
+  "cmdThemeRename": "Rename theme…",
+  "@cmdThemeRename": {
+    "description": "Title of `slides.theme.rename`."
+  },
+  "cmdThemeDuplicate": "Duplicate theme",
+  "@cmdThemeDuplicate": {
+    "description": "Title of `slides.theme.duplicate`."
+  },
+  "cmdThemeSetDefault": "Set as default theme",
+  "@cmdThemeSetDefault": {
+    "description": "Title of `slides.theme.setDefault`."
+  },
+  "cmdThemeDelete": "Remove theme",
+  "@cmdThemeDelete": {
+    "description": "Title of `slides.theme.delete`."
+  },
+  "cmdThemeRemoveUnused": "Remove unused themes",
+  "@cmdThemeRemoveUnused": {
+    "description": "Title of `slides.theme.removeUnused`."
+  },
+  "cmdDeckSetSize": "Change slide size",
+  "@cmdDeckSetSize": {
+    "description": "Title of `slides.deck.setSize`."
+  },
+  "cmdDeckSetNumbering": "Set slide numbers and footer",
+  "@cmdDeckSetNumbering": {
+    "description": "Title of `slides.deck.setNumbering`."
+  },
+  "undoChangeSlideSize": "Change slide size",
+  "@undoChangeSlideSize": {
+    "description": "Undo label of Page setup."
+  },
+  "undoNumbering": "Slide numbers and footer",
+  "@undoNumbering": {
+    "description": "Undo label of the slide numbers dialog."
+  },
+  "reasonThemeInUse": "Used by slides — apply another theme to them first",
+  "@reasonThemeInUse": {
+    "description": "Disabled reason of Remove theme."
+  },
+  "reasonThemeIsDefault": "Already the default theme",
+  "@reasonThemeIsDefault": {
+    "description": "Disabled reason of Set as default theme."
+  },
+  "reasonNoUnusedThemes": "Every theme is in use",
+  "@reasonNoUnusedThemes": {
+    "description": "Disabled reason of Remove unused themes."
+  },
+  "themesPanelTitle": "Themes",
+  "@themesPanelTitle": {
+    "description": "Title of the Themes side panel."
+  },
+  "themesApplyTo": "Apply to",
+  "@themesApplyTo": {
+    "description": "Themes panel: heading of the scope choice."
+  },
+  "themesApplyAll": "All slides",
+  "@themesApplyAll": {
+    "description": "Themes panel scope: every slide."
+  },
+  "themesApplySelected": "{count, plural, =1{Selected slide} other{Selected slides ({count})}}",
+  "@themesApplySelected": {
+    "description": "Themes panel scope: the selected slides.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "themesInPresentation": "In this presentation",
+  "@themesInPresentation": {
+    "description": "Themes panel: heading of the deck's themes."
+  },
+  "themesBuiltIn": "Built-in themes",
+  "@themesBuiltIn": {
+    "description": "Themes panel: heading of the built-in themes."
+  },
+  "themesImport": "Import theme from a presentation…",
+  "@themesImport": {
+    "description": "Themes panel button."
+  },
+  "themesDefault": "Default",
+  "@themesDefault": {
+    "description": "Badge of the deck's default theme."
+  },
+  "themesUsedBy": "{count, plural, =0{Not used} =1{Used by 1 slide} other{Used by {count} slides}}",
+  "@themesUsedBy": {
+    "description": "Usage of a theme.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "themesMore": "More actions for {name}",
+  "@themesMore": {
+    "description": "Semantics label of a theme's ⋮ button.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "themeUntitled": "Untitled theme",
+  "@themeUntitled": {
+    "description": "Name shown for a theme without a name."
+  },
+  "themePreviewSubtitle": "Title and subtitle",
+  "@themePreviewSubtitle": {
+    "description": "Subtitle drawn on theme previews."
+  },
+  "themeCopyName": "{name} copy",
+  "@themeCopyName": {
+    "description": "Name of a duplicated theme.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "themeRenameTitle": "Rename theme",
+  "@themeRenameTitle": {
+    "description": "Rename theme dialog title."
+  },
+  "themeNameLabel": "Name",
+  "@themeNameLabel": {
+    "description": "Rename theme dialog field."
+  },
+  "themeNameEmpty": "Enter a name",
+  "@themeNameEmpty": {
+    "description": "Rename theme validation."
+  },
+  "themeRenameButton": "Rename",
+  "@themeRenameButton": {
+    "description": "Rename theme dialog button."
+  },
+  "themeImportPickTitle": "Import theme from a presentation",
+  "@themeImportPickTitle": {
+    "description": "Presentation picker title."
+  },
+  "themeImportSearch": "Search presentations",
+  "@themeImportSearch": {
+    "description": "Presentation picker search field."
+  },
+  "themeImportPresentation": "Presentation",
+  "@themeImportPresentation": {
+    "description": "Presentation picker field (MCP)."
+  },
+  "themeImportNoPresentations": "No other presentations",
+  "@themeImportNoPresentations": {
+    "description": "Presentation picker empty state."
+  },
+  "themeImportOffline": "Connect to the internet to import a theme",
+  "@themeImportOffline": {
+    "description": "Theme import needs the server."
+  },
+  "themeImportChooseTitle": "Choose a theme",
+  "@themeImportChooseTitle": {
+    "description": "Theme chooser title (decks with several themes)."
+  },
+  "themeImportOption": "{name} — {count, plural, =0{not used} =1{1 slide} other{{count} slides}}",
+  "@themeImportOption": {
+    "description": "A theme of the source deck in the chooser.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "themeImportButton": "Import",
+  "@themeImportButton": {
+    "description": "Theme chooser button."
+  },
+  "themeImported": "Theme “{name}” added",
+  "@themeImported": {
+    "description": "Toast after importing a theme.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "themeApplyToAll": "Apply to all slides",
+  "@themeApplyToAll": {
+    "description": "Toast action after importing a theme."
+  },
+  "backgroundResetToLayout": "Reset to layout background",
+  "@backgroundResetToLayout": {
+    "description": "Inspector › Slide › Background."
+  },
+  "pageSetupTitle": "Page setup",
+  "@pageSetupTitle": {
+    "description": "Page setup dialog title."
+  },
+  "pageSetupPreset": "Slide size",
+  "@pageSetupPreset": {
+    "description": "Page setup: size preset."
+  },
+  "pageSetupUnit": "Unit",
+  "@pageSetupUnit": {
+    "description": "Page setup: unit of width and height."
+  },
+  "pageSetupContent": "Existing content",
+  "@pageSetupContent": {
+    "description": "Page setup: scaling choice heading."
+  },
+  "pageSetupScale": "Scale content to fit",
+  "@pageSetupScale": {
+    "description": "Page setup: scale content."
+  },
+  "pageSetupDontScale": "Don't scale",
+  "@pageSetupDontScale": {
+    "description": "Page setup: keep frames."
+  },
+  "pageSetupPreview": "Preview",
+  "@pageSetupPreview": {
+    "description": "Page setup: preview label."
+  },
+  "pageSetupApply": "Apply",
+  "@pageSetupApply": {
+    "description": "Apply button of page setup and slide numbers."
+  },
+  "pageSetupEnterSize": "Enter a width and a height.",
+  "@pageSetupEnterSize": {
+    "description": "Page setup validation."
+  },
+  "pageSetupSideRange": "Each side must be between 320 and 7,680 su.",
+  "@pageSetupSideRange": {
+    "description": "Page setup validation."
+  },
+  "pageSetupAspectRange": "The aspect ratio must be between 1:4 and 4:1.",
+  "@pageSetupAspectRange": {
+    "description": "Page setup validation."
+  },
+  "sizeCustom": "Custom",
+  "@sizeCustom": {
+    "description": "Custom slide size."
+  },
+  "numberingTitle": "Slide numbers and footer",
+  "@numberingTitle": {
+    "description": "Slide numbers dialog title."
+  },
+  "numberingShow": "Show slide numbers",
+  "@numberingShow": {
+    "description": "Slide numbers dialog field."
+  },
+  "numberingFirst": "First slide number",
+  "@numberingFirst": {
+    "description": "Slide numbers dialog field."
+  },
+  "numberingFirstInvalid": "Enter a number from 0 to 9999",
+  "@numberingFirstInvalid": {
+    "description": "Slide numbers validation."
+  },
+  "numberingHideOnTitle": "Don't show on title slides",
+  "@numberingHideOnTitle": {
+    "description": "Slide numbers dialog field."
+  },
+  "numberingFooter": "Footer",
+  "@numberingFooter": {
+    "description": "Slide numbers dialog field."
+  },
+  "numberingFooterHint": "Empty = no footer",
+  "@numberingFooterHint": {
+    "description": "Slide numbers dialog placeholder."
+  },
+  "imageUploading": "Uploading…",
+  "@imageUploading": {
+    "description": "Image section: the image is still uploading from this device."
+  },
+  "imageAdjustments": "Adjustments",
+  "@imageAdjustments": {
+    "description": "Image section heading."
+  },
+  "imageBrightness": "Brightness",
+  "@imageBrightness": {
+    "description": "Image adjustment."
+  },
+  "imageContrast": "Contrast",
+  "@imageContrast": {
+    "description": "Image adjustment."
+  },
+  "imageSaturation": "Saturation",
+  "@imageSaturation": {
+    "description": "Image adjustment."
+  },
+  "imageTemperature": "Temperature",
+  "@imageTemperature": {
+    "description": "Image adjustment."
+  },
+  "imageBlur": "Blur",
+  "@imageBlur": {
+    "description": "Image adjustment."
+  },
+  "imageGrayscale": "Grayscale",
+  "@imageGrayscale": {
+    "description": "Image adjustment toggle."
+  },
+  "imageSepia": "Sepia",
+  "@imageSepia": {
+    "description": "Image adjustment toggle."
+  },
+  "imageInvert": "Invert",
+  "@imageInvert": {
+    "description": "Image adjustment toggle."
+  },
+  "tableStyle": "Style",
+  "@tableStyle": {
+    "description": "Table section: table style."
+  },
+  "tableStyleTheme": "Theme",
+  "@tableStyleTheme": {
+    "description": "Table style: the theme's."
+  },
+  "tableStyleNone": "None",
+  "@tableStyleNone": {
+    "description": "Table style: plain."
+  },
+  "tableHeaderRow": "Header row",
+  "@tableHeaderRow": {
+    "description": "Table option."
+  },
+  "tableFirstColumn": "First column",
+  "@tableFirstColumn": {
+    "description": "Table option."
+  },
+  "tableBandedRows": "Banded rows",
+  "@tableBandedRows": {
+    "description": "Table option."
+  },
+  "tableBandedColumns": "Banded columns",
+  "@tableBandedColumns": {
+    "description": "Table option."
+  },
+  "tableTotalRow": "Total row",
+  "@tableTotalRow": {
+    "description": "Table option."
+  },
+  "tableCellsSelected": "{count, plural, =1{1 cell selected} other{{count} cells selected}}",
+  "@tableCellsSelected": {
+    "description": "Cell section: size of the cell selection.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tableCellFill": "Fill",
+  "@tableCellFill": {
+    "description": "Cell section: cell fill."
+  },
+  "tableStyleFill": "Table style",
+  "@tableStyleFill": {
+    "description": "Reset of the cell fill (back to the table style)."
+  },
+  "tableVerticalAlign": "Align",
+  "@tableVerticalAlign": {
+    "description": "Cell section: vertical alignment."
+  },
+  "tableCellPadding": "Padding",
+  "@tableCellPadding": {
+    "description": "Cell section: cell padding (su)."
+  },
+  "tableStyleDefault": "Default",
+  "@tableStyleDefault": {
+    "description": "Placeholder of the padding select."
+  },
+  "tableBorders": "Borders",
+  "@tableBorders": {
+    "description": "Cell section: borders."
+  },
+  "tableBorderEdge": "{edge, select, all{All borders} outer{Outer borders} inner{Inner borders} horizontal{Inner horizontal borders} vertical{Inner vertical borders} top{Top border} bottom{Bottom border} left{Left border} right{Right border} none{Clear borders} other{Borders}}",
+  "@tableBorderEdge": {
+    "description": "Edge buttons of the border picker.",
+    "placeholders": {
+      "edge": {
+        "type": "String"
+      }
+    }
+  },
+  "tableBorderStyle": "{style, select, solid{Solid} dashed{Dashed} dotted{Dotted} other{Solid}}",
+  "@tableBorderStyle": {
+    "description": "Border styles.",
+    "placeholders": {
+      "style": {
+        "type": "String"
+      }
+    }
+  },
+  "cmdPresentEnd": "End presentation",
+  "@cmdPresentEnd": {
+    "description": "Title of the command `slides.present.end`."
+  },
+  "cmdPresentNext": "Next",
+  "@cmdPresentNext": {
+    "description": "Title of the command `slides.present.next` (next step or slide)."
+  },
+  "cmdPresentPrevious": "Previous",
+  "@cmdPresentPrevious": {
+    "description": "Title of the command `slides.present.previous`."
+  },
+  "cmdPresentNextSlide": "Next slide",
+  "@cmdPresentNextSlide": {
+    "description": "Title of the command `slides.present.nextSlide` (skips remaining builds)."
+  },
+  "cmdPresentPreviousSlide": "Previous slide",
+  "@cmdPresentPreviousSlide": {
+    "description": "Title of the command `slides.present.previousSlide`."
+  },
+  "cmdPresentGoTo": "Go to slide",
+  "@cmdPresentGoTo": {
+    "description": "Title of the command `slides.present.goTo`."
+  },
+  "cmdPresentFirst": "First slide",
+  "@cmdPresentFirst": {
+    "description": "Title of the command `slides.present.first`."
+  },
+  "cmdPresentLast": "Last slide",
+  "@cmdPresentLast": {
+    "description": "Title of the command `slides.present.last`."
+  },
+  "cmdPresentBlank": "Black or white screen",
+  "@cmdPresentBlank": {
+    "description": "Title of the command `slides.present.blank`."
+  },
+  "cmdPresentPicker": "Slide picker",
+  "@cmdPresentPicker": {
+    "description": "Title of the command `slides.present.picker`."
+  },
+  "cmdPresentTool": "Pointer tool",
+  "@cmdPresentTool": {
+    "description": "Title of the command `slides.present.tool` (laser, pen, highlighter, eraser)."
+  },
+  "cmdPresentClearInk": "Clear ink on this slide",
+  "@cmdPresentClearInk": {
+    "description": "Title of the command `slides.present.clearInk`."
+  },
+  "cmdPresentUndoInk": "Undo last ink stroke",
+  "@cmdPresentUndoInk": {
+    "description": "Title of the command `slides.present.undoInk`."
+  },
+  "cmdPresentTimer": "Presenter timer",
+  "@cmdPresentTimer": {
+    "description": "Title of the command `slides.present.timer` (start, pause, reset)."
+  },
+  "cmdPresentJoinAsAudience": "Show audience view here",
+  "@cmdPresentJoinAsAudience": {
+    "description": "Title of the command `slides.present.joinAsAudience`."
+  },
+  "cmdPresentToggleFullscreen": "Full screen",
+  "@cmdPresentToggleFullscreen": {
+    "description": "Title of the command `slides.present.toggleFullscreen`."
+  },
+  "cmdPresentToggleSkipped": "Show skipped slides",
+  "@cmdPresentToggleSkipped": {
+    "description": "Title of the command `slides.present.toggleSkipped` (presenter view)."
+  },
+  "cmdPresentNotesSize": "Speaker notes size",
+  "@cmdPresentNotesSize": {
+    "description": "Title of the command `slides.present.notesSize`."
+  },
+  "cmdPresentHelp": "Keyboard shortcuts",
+  "@cmdPresentHelp": {
+    "description": "Title of the command `slides.present.help` (the help overlay while presenting)."
+  },
+  "cmdDeckSetPresentSettings": "Presentation settings",
+  "@cmdDeckSetPresentSettings": {
+    "description": "Title (and undo label) of the command `slides.deck.setPresentSettings`."
+  },
+  "reasonNotPresenting": "Not presenting",
+  "@reasonNotPresenting": {
+    "description": "Disabled reason of in-presentation commands."
+  },
+  "reasonPresenterViewOnly": "Only in the presenter view",
+  "@reasonPresenterViewOnly": {
+    "description": "Disabled reason of presenter-view commands."
+  },
+  "presentUnknownSlide": "That slide isn’t in this presentation",
+  "@presentUnknownSlide": {
+    "description": "Error of a go-to command with an unknown slide."
+  },
+  "presentSlideLabel": "Slide {number} of {total}",
+  "@presentSlideLabel": {
+    "description": "Screen reader label of the presented slide.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "presentEndScreen": "End of presentation — click to exit",
+  "@presentEndScreen": {
+    "description": "End screen after the last slide."
+  },
+  "presentCatchingUp": "Catching up…",
+  "@presentCatchingUp": {
+    "description": "Audience view while the presenter's slide is still syncing."
+  },
+  "presentToolbarLabel": "Presentation controls",
+  "@presentToolbarLabel": {
+    "description": "Screen reader label of the present toolbar."
+  },
+  "presentCounterLabel": "Slide {number} of {total}. Open the slide picker",
+  "@presentCounterLabel": {
+    "description": "Screen reader label of the toolbar's slide counter.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "presentToolLaser": "Laser pointer",
+  "@presentToolLaser": {
+    "description": "Present tool."
+  },
+  "presentToolPen": "Pen",
+  "@presentToolPen": {
+    "description": "Present tool."
+  },
+  "presentToolHighlighter": "Highlighter",
+  "@presentToolHighlighter": {
+    "description": "Present tool."
+  },
+  "presentToolEraser": "Eraser",
+  "@presentToolEraser": {
+    "description": "Present tool."
+  },
+  "presentBlackScreen": "Black screen",
+  "@presentBlackScreen": {
+    "description": "Present action covering the slide in black."
+  },
+  "presentWhiteScreen": "White screen",
+  "@presentWhiteScreen": {
+    "description": "Present action covering the slide in white."
+  },
+  "presentEnd": "End",
+  "@presentEnd": {
+    "description": "Button that ends the presentation."
+  },
+  "presentGoToNumber": "Go to {number}",
+  "@presentGoToNumber": {
+    "description": "Overlay while digits are typed to go to a slide.",
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "presentHelpTitle": "Presenting shortcuts",
+  "@presentHelpTitle": {
+    "description": "Title of the shortcut help overlay while presenting."
+  },
+  "presentHelpGoToNumber": "Go to slide number",
+  "@presentHelpGoToNumber": {
+    "description": "Help overlay row."
+  },
+  "presentHelpDigits": "1 2 3 … Enter",
+  "@presentHelpDigits": {
+    "description": "Help overlay keys for going to a slide by number."
+  },
+  "presentHelpTemporaryLaser": "Laser while held (move the mouse)",
+  "@presentHelpTemporaryLaser": {
+    "description": "Help overlay row for holding Cmd/Ctrl."
+  },
+  "presentTimerPause": "Pause or resume the timer",
+  "@presentTimerPause": {
+    "description": "Present timer action."
+  },
+  "presentTimerResume": "Resume the timer",
+  "@presentTimerResume": {
+    "description": "Present timer action."
+  },
+  "presentTimerReset": "Reset the timer",
+  "@presentTimerReset": {
+    "description": "Present timer action."
+  },
+  "presentNotesLarger": "Larger notes",
+  "@presentNotesLarger": {
+    "description": "Presenter view notes size."
+  },
+  "presentNotesSmaller": "Smaller notes",
+  "@presentNotesSmaller": {
+    "description": "Presenter view notes size."
+  },
+  "presentResume": "Resume (clicker F5)",
+  "@presentResume": {
+    "description": "Help overlay row: F5 resumes while presenting."
+  },
+  "presentFullscreenHint": "Press F11 (⌃⌘F on Mac) for full screen",
+  "@presentFullscreenHint": {
+    "description": "Hint when the browser refused full screen."
+  },
+  "presentFullscreenButton": "Full screen",
+  "@presentFullscreenButton": {
+    "description": "Button that enters full screen."
+  },
+  "presentAudienceTitle": "Audience view",
+  "@presentAudienceTitle": {
+    "description": "Title of the audience view's start card."
+  },
+  "presentAudienceBody": "This screen shows the slides of your presentation.",
+  "@presentAudienceBody": {
+    "description": "Audience view start card."
+  },
+  "presentAudienceBodyFrom": "This screen shows the slides you present on {device}.",
+  "@presentAudienceBodyFrom": {
+    "description": "Audience view start card with the presenter's device.",
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "presentAudienceKeys": "A clicker or the arrow keys here also move the presentation.",
+  "@presentAudienceKeys": {
+    "description": "Audience view start card hint."
+  },
+  "presentAudienceStay": "Stay in window",
+  "@presentAudienceStay": {
+    "description": "Audience view start card: keep the window."
+  },
+  "presentGoToSlideMenu": "Go to slide…",
+  "@presentGoToSlideMenu": {
+    "description": "Present context menu item that opens the slide picker."
+  },
+  "presentPickerTitle": "Go to slide",
+  "@presentPickerTitle": {
+    "description": "Title of the slide picker while presenting."
+  },
+  "presentPickerFilter": "Filter by title or number",
+  "@presentPickerFilter": {
+    "description": "Placeholder of the slide picker filter."
+  },
+  "presentPickerClose": "Close",
+  "@presentPickerClose": {
+    "description": "Closes the slide picker."
+  },
+  "presentPickerNoMatch": "No slides match",
+  "@presentPickerNoMatch": {
+    "description": "Slide picker with a filter that matches nothing."
+  },
+  "presentPickerGroup": "{title}, {count, plural, =1{1 slide} other{{count} slides}}",
+  "@presentPickerGroup": {
+    "description": "Screen reader label of a group header in the slide picker.",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "presentPickerSlide": "Slide {number}: {title}",
+  "@presentPickerSlide": {
+    "description": "Screen reader label of a slide in the picker and the strip.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "presentPickerSkipped": "Skipped",
+  "@presentPickerSkipped": {
+    "description": "Screen reader hint of a skipped slide."
+  },
+  "presentOpenOnDeviceTitle": "Open on another device",
+  "@presentOpenOnDeviceTitle": {
+    "description": "Title of the audience link dialog."
+  },
+  "presentOpenOnDeviceBody": "Open this link on the computer or browser that shows the slides — for example the one connected to the projector. Sign in with your account there.",
+  "@presentOpenOnDeviceBody": {
+    "description": "Body of the audience link dialog."
+  },
+  "presentOpenOnDeviceHint": "Or open this presentation there and choose “Show audience view here”.",
+  "@presentOpenOnDeviceHint": {
+    "description": "Hint in the audience link dialog."
+  },
+  "presentAudienceLink": "Audience link",
+  "@presentAudienceLink": {
+    "description": "Label of the audience link field."
+  },
+  "presentCopyLink": "Copy link",
+  "@presentCopyLink": {
+    "description": "Copies the audience link."
+  },
+  "presentLinkCopied": "Copied",
+  "@presentLinkCopied": {
+    "description": "Button label after the link was copied."
+  },
+  "presentDone": "Done",
+  "@presentDone": {
+    "description": "Closes the audience link dialog."
+  },
+  "presentQrLabel": "QR code of the audience link",
+  "@presentQrLabel": {
+    "description": "Screen reader label of the QR code."
+  },
+  "presentOfflineNoDevices": "Offline — other devices can’t join",
+  "@presentOfflineNoDevices": {
+    "description": "Presenting without a connection."
+  },
+  "presentOfflineNoDevicesBody": "You can keep presenting here. Other devices join once you’re back online.",
+  "@presentOfflineNoDevicesBody": {
+    "description": "Presenting without a connection, details."
+  },
+  "presentConnecting": "Connecting…",
+  "@presentConnecting": {
+    "description": "Presentation session status."
+  },
+  "presentSessionEnded": "Not connected to other devices",
+  "@presentSessionEnded": {
+    "description": "Presenter view: the session ended."
+  },
+  "presentAudienceDevices": "{count, plural, =0{No other devices yet} =1{1 other device} other{{count} other devices}}",
+  "@presentAudienceDevices": {
+    "description": "Presenter view: devices showing the audience view.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "presentPresenterAway": "Waiting for the presenter…",
+  "@presentPresenterAway": {
+    "description": "Audience view while the presenter reconnects."
+  },
+  "presentWaitingForPresenter": "Waiting for the presenter",
+  "@presentWaitingForPresenter": {
+    "description": "Audience view before the first state arrives."
+  },
+  "presentAudienceEndedToast": "The presentation ended",
+  "@presentAudienceEndedToast": {
+    "description": "Toast on the audience device when the presenter ends."
+  },
+  "presentAudienceNotFound": "This presentation isn’t running",
+  "@presentAudienceNotFound": {
+    "description": "Audience link of a session that ended or never existed."
+  },
+  "presentAudienceNotFoundBody": "Ask the presenter for a new link, or open the presentation and choose “Show audience view here”.",
+  "@presentAudienceNotFoundBody": {
+    "description": "Audience link that can't be joined, details."
+  },
+  "presentAudienceNoAccess": "Only the presenter can show this audience view",
+  "@presentAudienceNoAccess": {
+    "description": "Audience link opened by another account."
+  },
+  "presentTakeOverTitle": "Take over the presentation?",
+  "@presentTakeOverTitle": {
+    "description": "Dialog when the presenter view is already open elsewhere."
+  },
+  "presentTakeOverBody": "You’re presenting this in another window. Take over the presentation from your other window?",
+  "@presentTakeOverBody": {
+    "description": "Body of the take-over dialog."
+  },
+  "presentTakeOver": "Take over",
+  "@presentTakeOver": {
+    "description": "Confirms taking over the presentation."
+  },
+  "presentTakeOverCancel": "Present here only",
+  "@presentTakeOverCancel": {
+    "description": "Keeps the other window's session; presents alone here."
+  },
+  "presentTakenOverToast": "Your presentation continues in another window",
+  "@presentTakenOverToast": {
+    "description": "Toast when another window took over the presentation."
+  },
+  "presentExtendedHintTitle": "Showing the slides on a projector?",
+  "@presentExtendedHintTitle": {
+    "description": "One-time hint with an extended display."
+  },
+  "presentExtendedHintBody": "Open this presentation in a window there and choose “Show audience view here” — or use “Open on another device…”.",
+  "@presentExtendedHintBody": {
+    "description": "One-time hint with an extended display, details."
+  },
+  "presenterViewTitle": "Presenter view",
+  "@presenterViewTitle": {
+    "description": "Title of the presenter view (narrow)."
+  },
+  "presenterViewTitleWithName": "Presenter view — {name}",
+  "@presenterViewTitleWithName": {
+    "description": "Title of the presenter view.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "presenterOtherDevice": "Other device…",
+  "@presenterOtherDevice": {
+    "description": "Presenter view header button: open on another device."
+  },
+  "presenterCurrent": "Current slide",
+  "@presenterCurrent": {
+    "description": "Presenter view: label of the current slide."
+  },
+  "presenterCurrentStep": "Current slide · step {step} of {count}",
+  "@presenterCurrentStep": {
+    "description": "Presenter view: current slide with builds.",
+    "placeholders": {
+      "step": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "presenterAudienceBlack": "Audience: black screen",
+  "@presenterAudienceBlack": {
+    "description": "Presenter view while the screen is black."
+  },
+  "presenterAudienceWhite": "Audience: white screen",
+  "@presenterAudienceWhite": {
+    "description": "Presenter view while the screen is white."
+  },
+  "presenterShowSlide": "Show slide",
+  "@presenterShowSlide": {
+    "description": "Presenter view: returns from black/white."
+  },
+  "presenterNextBuild": "Next: build {step} of {count}",
+  "@presenterNextBuild": {
+    "description": "Presenter view: the next step of this slide.",
+    "placeholders": {
+      "step": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "presenterNextSlide": "Next slide: {title}",
+  "@presenterNextSlide": {
+    "description": "Presenter view: the next slide.",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "presenterNextSlideUntitled": "Next slide",
+  "@presenterNextSlideUntitled": {
+    "description": "Presenter view: the next slide without a title."
+  },
+  "presenterNextEnd": "End of presentation",
+  "@presenterNextEnd": {
+    "description": "Presenter view: nothing follows."
+  },
+  "presenterNextExit": "Next: exit",
+  "@presenterNextExit": {
+    "description": "Presenter view on the end screen."
+  },
+  "presenterNotes": "Speaker notes",
+  "@presenterNotes": {
+    "description": "Presenter view notes label."
+  },
+  "presenterNoNotes": "No speaker notes for this slide",
+  "@presenterNoNotes": {
+    "description": "Presenter view: empty notes."
+  },
+  "presenterElapsed": "Elapsed {time}",
+  "@presenterElapsed": {
+    "description": "Screen reader label of the timer.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "presenterRemaining": "Remaining {time}",
+  "@presenterRemaining": {
+    "description": "Screen reader label of the countdown.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "presenterSlideOf": "Slide {number} / {total}",
+  "@presenterSlideOf": {
+    "description": "Presenter view: slide counter.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "presenterAhead": "{time} ahead",
+  "@presenterAhead": {
+    "description": "Pacing against rehearsed timings.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "presenterBehind": "{time} behind",
+  "@presenterBehind": {
+    "description": "Pacing against rehearsed timings.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "presenterStrip": "Slides",
+  "@presenterStrip": {
+    "description": "Screen reader label of the presenter view's strip."
+  },
+  "presentBannerTitle": "You’re presenting on {device}",
+  "@presentBannerTitle": {
+    "description": "Editor banner while a presentation session of the user is live.",
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "presentBannerTitleNoDevice": "You’re presenting this presentation",
+  "@presentBannerTitleNoDevice": {
+    "description": "Editor banner while a session is live (no device label)."
+  },
+  "presentBannerDismiss": "Dismiss",
+  "@presentBannerDismiss": {
+    "description": "Hides the presenting banner."
+  },
+  "cmdEditCopy": "Copy",
+  "@cmdEditCopy": {
+    "description": "Copies the selection: objects, text or table cells (SL-18)."
+  },
+  "cmdEditCut": "Cut",
+  "@cmdEditCut": {
+    "description": "Cuts the selection: objects, text or table cells (SL-18)."
+  },
+  "cmdEditPaste": "Paste",
+  "@cmdEditPaste": {
+    "description": "Pastes the clipboard into the selection or the slide (SL-18)."
+  },
+  "reasonCopyNotAllowed": "The owner turned off copying for viewers",
+  "@reasonCopyNotAllowed": {
+    "description": "Disabled reason of Copy for viewers when copying is off."
+  },
+  "reasonPasteObjectsOnSlide": "Paste objects on a slide",
+  "@reasonPasteObjectsOnSlide": {
+    "description": "Paste in the navigator when the clipboard holds objects."
+  },
+  "reasonPasteSlidesNotInCells": "Paste slides in the slide navigator",
+  "@reasonPasteSlidesNotInCells": {
+    "description": "Paste into table cells when the clipboard holds slides."
+  },
+  "toastClipboardEmpty": "There is nothing to paste",
+  "@toastClipboardEmpty": {
+    "description": "Paste with an empty (or unreadable) clipboard."
+  },
+  "toastPasteClipped": "Only the cells that fit in the table were pasted",
+  "@toastPasteClipped": {
+    "description": "Paste into table cells larger than the table."
+  },
+  "toastPasteTruncated": "Only the first 50 rows and 20 columns were pasted",
+  "@toastPasteTruncated": {
+    "description": "A pasted grid larger than the table limits."
+  },
+  "pasteChartLinked": "Linked to the spreadsheet",
+  "@pasteChartLinked": {
+    "description": "Paste options chip: the chart stays linked to Wonky Sheets."
+  },
+  "pasteOptionsLabel": "Paste options",
+  "@pasteOptionsLabel": {
+    "description": "Screen reader label of the paste options chip."
+  },
+  "cmdFindNext": "Find next",
+  "@cmdFindNext": {
+    "description": "Command: next find match."
+  },
+  "cmdFindPrevious": "Find previous",
+  "@cmdFindPrevious": {
+    "description": "Command: previous find match."
+  },
+  "cmdFindReplace": "Replace",
+  "@cmdFindReplace": {
+    "description": "Command/button: replace the current match."
+  },
+  "cmdFindReplaceAll": "Replace all",
+  "@cmdFindReplaceAll": {
+    "description": "Command/button: replace every match."
+  },
+  "undoReplaceAll": "Replace all",
+  "@undoReplaceAll": {
+    "description": "Undo step label of Replace all."
+  },
+  "findClose": "Close find",
+  "@findClose": {
+    "description": "Closes the find bar or the find and replace panel."
+  },
+  "findPlaceholder": "Find in presentation",
+  "@findPlaceholder": {
+    "description": "Placeholder of the find bar."
+  },
+  "findNoResults": "No results",
+  "@findNoResults": {
+    "description": "Find status without matches."
+  },
+  "findOfCount": "{current} of {total}",
+  "@findOfCount": {
+    "description": "Find status: current match of all.",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "findMatchesCount": "{count, plural, =1{1 match} other{{count} matches}}",
+  "@findMatchesCount": {
+    "description": "Find status before stepping to a match.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "findReplaceTitle": "Find and replace",
+  "@findReplaceTitle": {
+    "description": "Title of the find and replace panel."
+  },
+  "findLabel": "Find",
+  "@findLabel": {
+    "description": "Find field label."
+  },
+  "replaceLabel": "Replace with",
+  "@replaceLabel": {
+    "description": "Replace field label."
+  },
+  "findMatchCase": "Match case",
+  "@findMatchCase": {
+    "description": "Find option."
+  },
+  "findWholeWords": "Whole words",
+  "@findWholeWords": {
+    "description": "Find option."
+  },
+  "findUseRegex": "Use regular expressions",
+  "@findUseRegex": {
+    "description": "Find option."
+  },
+  "findIncludeNotes": "Include speaker notes",
+  "@findIncludeNotes": {
+    "description": "Find option."
+  },
+  "findIncludeSkipped": "Include skipped slides",
+  "@findIncludeSkipped": {
+    "description": "Find option."
+  },
+  "findScope": "Search in",
+  "@findScope": {
+    "description": "Find scope label."
+  },
+  "findScopeAll": "All slides",
+  "@findScopeAll": {
+    "description": "Find scope option."
+  },
+  "findScopeCurrent": "Current slide",
+  "@findScopeCurrent": {
+    "description": "Find scope option."
+  },
+  "findScopeSelected": "Selected slides",
+  "@findScopeSelected": {
+    "description": "Find scope option."
+  },
+  "findButtonPrevious": "Previous",
+  "@findButtonPrevious": {
+    "description": "Find panel button."
+  },
+  "findButtonNext": "Next",
+  "@findButtonNext": {
+    "description": "Find panel button."
+  },
+  "findInvalidRegex": "This regular expression is not valid",
+  "@findInvalidRegex": {
+    "description": "Find error for an invalid regular expression."
+  },
+  "toastReplacedAll": "{count, plural, =0{Nothing was replaced} =1{Replaced 1 instance of “{find}” with “{replace}”} other{Replaced {count} instances of “{find}” with “{replace}”}}",
+  "@toastReplacedAll": {
+    "description": "Toast after Replace all (03 §13).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "find": {
+        "type": "String"
+      },
+      "replace": {
+        "type": "String"
+      }
+    }
+  },
+  "toastReplaceSkipped": "{count, plural, =1{1 match in text {name} is editing was skipped} other{{count} matches in text {name} is editing were skipped}}",
+  "@toastReplaceSkipped": {
+    "description": "Replace all skipped bodies soft-locked by another person.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "toastFindBodyLocked": "{name} is editing this text",
+  "@toastFindBodyLocked": {
+    "description": "Replace refused on a body soft-locked by another person.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   }
 }

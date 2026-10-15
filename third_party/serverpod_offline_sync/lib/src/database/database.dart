@@ -103,6 +103,24 @@ class OfflineSyncDatabase implements Database {
     await _recorder.ensureInitialized();
   }
 
+  /// The number of spaces whose foreign key projection a synced-schema
+  /// change left to rebuild in the background (patch OS-9). Read after
+  /// initialization; 0 when nothing is pending.
+  int get pendingProjectionRebuilds => _recorder.pendingProjectionRebuilds;
+
+  /// Runs one pass of the pending projection rebuilds now, without the start
+  /// delay or a retry backoff, and completes when it ends (patch OS-9).
+  /// Failures are logged and retried later, never thrown.
+  Future<void> drainProjectionRebuild() async {
+    await _ensureInitialized();
+    await _recorder.drainProjectionRebuild();
+  }
+
+  /// Stops the background projection rebuild and waits for the space being
+  /// rebuilt (patch OS-9); call before closing the underlying database.
+  /// Pending spaces stay persisted and resume at the next initialization.
+  Future<void> stopProjectionRebuild() => _recorder.stopProjectionRebuild();
+
   /// The hash describing the synchronized schema configured for this database.
   String get syncTablesHash => _sync.currentSyncTablesHash;
 
@@ -1006,6 +1024,9 @@ class OfflineSyncDatabase implements Database {
 
     // Ensure that the space exists with a node before starting the transaction.
     final space = await _recorder.getOrCreateSpace(effectiveSpaceId);
+    // OS-9: a space a synced-schema change left pending is re-projected
+    // before anything acts in it (one transaction of its own).
+    await _recorder.ensureSpaceProjected(space);
 
     return transaction<R>(
       (tx) async {

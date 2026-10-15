@@ -178,6 +178,14 @@ import 'package:wonky_server/src/generated/sheets/scripts/models/script_fetch_re
     as _i540ar91;
 import 'package:wonky_server/src/generated/sheets/scripts/models/script_run_response.dart'
     as _ijolphc0;
+import 'package:wonky_server/src/generated/slides/present/models/presentation_event.dart'
+    as _ieyo7nqv;
+import 'package:wonky_server/src/generated/slides/present/models/presentation_join.dart'
+    as _ieucpeca;
+import 'package:wonky_server/src/generated/slides/present/models/presentation_session_info.dart'
+    as _i3wfcxhm;
+import 'package:wonky_server/src/generated/slides/present/models/presentation_update.dart'
+    as _i0rcw8q1;
 import 'package:wonky_server/src/generated/write/messages/doc_client_message.dart'
     as _i64vpekp;
 import 'package:wonky_server/src/generated/write/messages/doc_server_message.dart'
@@ -391,6 +399,12 @@ class TestEndpoints {
 
   late final _SlidesSyncEndpoint slidesSync;
 
+  late final _SlidesExportEndpoint slidesExport;
+
+  late final _PresentationEndpoint presentation;
+
+  late final _SlidesThemesEndpoint slidesThemes;
+
   late final _DocumentEndpoint document;
 
   late final _WriteExportEndpoint writeExport;
@@ -508,6 +522,18 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
     slidesSync = _SlidesSyncEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    slidesExport = _SlidesExportEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    presentation = _PresentationEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    slidesThemes = _SlidesThemesEndpoint(
       endpoints,
       serializationManager,
     );
@@ -3561,6 +3587,41 @@ class _FileEndpoint {
                   _localCallContext.arguments,
                 )
                 as _ida.Future<_i28n3m1r.FileUrlView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_idt.ByteData> fetchImage(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue itemUuid,
+    String url,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'file',
+            method: 'fetchImage',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'file',
+          methodName: 'fetchImage',
+          parameters: _ist.testObjectToJson({
+            'itemUuid': itemUuid,
+            'url': url,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_idt.ByteData>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -6897,6 +6958,219 @@ class _SlidesSyncEndpoint {
       _localTestStreamManager.outputStreamController,
     );
     return _localTestStreamManager.outputStreamController.stream;
+  }
+}
+
+class _SlidesExportEndpoint {
+  _SlidesExportEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_ilqg61i8.ExportResultView> export(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue itemUuid,
+    String format,
+    String optionsJson,
+    int? revision,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'slidesExport',
+            method: 'export',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'slidesExport',
+          methodName: 'export',
+          parameters: _ist.testObjectToJson({
+            'itemUuid': itemUuid,
+            'format': format,
+            'optionsJson': optionsJson,
+            'revision': revision,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ilqg61i8.ExportResultView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Stream<_iqisbum6.ExportProgressEvent> exportWithProgress(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue itemUuid,
+    String format,
+    String optionsJson,
+    int? revision,
+  ) {
+    var _localTestStreamManager =
+        _ist.TestStreamManager<_iqisbum6.ExportProgressEvent>();
+    _ist.callStreamFunctionAndHandleExceptions(
+      () async {
+        var _localUniqueSession =
+            (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+              endpoint: 'slidesExport',
+              method: 'exportWithProgress',
+            );
+        var _localCallContext = await _endpointDispatch
+            .getMethodStreamCallContext(
+              createSessionCallback: (_) => _localUniqueSession,
+              endpointPath: 'slidesExport',
+              methodName: 'exportWithProgress',
+              arguments: {
+                'itemUuid': itemUuid,
+                'format': format,
+                'optionsJson': optionsJson,
+                'revision': revision,
+              },
+              requestedInputStreams: [],
+              serializationManager: _serializationManager,
+            );
+        await _localTestStreamManager.callStreamMethod(
+          _localCallContext,
+          _localUniqueSession,
+          {},
+        );
+      },
+      _localTestStreamManager.outputStreamController,
+    );
+    return _localTestStreamManager.outputStreamController.stream;
+  }
+}
+
+class _PresentationEndpoint {
+  _PresentationEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Stream<_ieyo7nqv.PresentationEvent> join(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue deckUuid,
+    _ieucpeca.PresentationJoin join,
+    _ida.Stream<_i0rcw8q1.PresentationUpdate> updates,
+  ) {
+    var _localTestStreamManager =
+        _ist.TestStreamManager<_ieyo7nqv.PresentationEvent>();
+    _ist.callStreamFunctionAndHandleExceptions(
+      () async {
+        var _localUniqueSession =
+            (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+              endpoint: 'presentation',
+              method: 'join',
+            );
+        var _localCallContext = await _endpointDispatch
+            .getMethodStreamCallContext(
+              createSessionCallback: (_) => _localUniqueSession,
+              endpointPath: 'presentation',
+              methodName: 'join',
+              arguments: {
+                'deckUuid': deckUuid,
+                'join': _idc.jsonDecode(_is.SerializationManager.encode(join)),
+              },
+              requestedInputStreams: ['updates'],
+              serializationManager: _serializationManager,
+            );
+        await _localTestStreamManager.callStreamMethod(
+          _localCallContext,
+          _localUniqueSession,
+          {'updates': updates},
+        );
+      },
+      _localTestStreamManager.outputStreamController,
+    );
+    return _localTestStreamManager.outputStreamController.stream;
+  }
+
+  _ida.Future<_i3wfcxhm.PresentationSessionInfo?> findSession(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue deckUuid,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'presentation',
+            method: 'findSession',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'presentation',
+          methodName: 'findSession',
+          parameters: _ist.testObjectToJson({'deckUuid': deckUuid}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_i3wfcxhm.PresentationSessionInfo?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
+class _SlidesThemesEndpoint {
+  _SlidesThemesEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<String> list(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue itemUuid,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'slidesThemes',
+            method: 'list',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'slidesThemes',
+          methodName: 'list',
+          parameters: _ist.testObjectToJson({'itemUuid': itemUuid}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<String>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
   }
 }
 

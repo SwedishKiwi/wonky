@@ -6,8 +6,9 @@ import '../../l10n/slides_l10n.dart';
 import '../inspector/deck_inspector.dart';
 import 'canvas_region.dart';
 import 'deck_editor_controller.dart';
-import 'navigator_shell.dart';
-import 'notes_pane.dart';
+import '../grid_view/slide_grid_view.dart';
+import '../navigator/slide_navigator.dart';
+import '../notes/notes_pane.dart';
 import 'view_mode_shells.dart';
 
 /// The editor body (Slides 04 §2, §16): navigator │ canvas over the notes
@@ -52,7 +53,11 @@ class DeckBody extends StatelessWidget {
         editor: ed,
         onContextMenu: onContextMenu,
       ),
-      DeckViewMode.grid => GridViewShell(services: services, editor: ed),
+      DeckViewMode.grid => SlideGridView(
+        services: services,
+        editor: ed,
+        onContextMenu: onContextMenu,
+      ),
       DeckViewMode.outline => OutlineViewShell(services: services, editor: ed),
       DeckViewMode.masters => MastersModeShell(services: services),
     };
@@ -87,7 +92,7 @@ class DeckBody extends StatelessWidget {
     final navWidth = c.maxWidth < 1024 && !ed.isNarrow
         ? 140.0
         : ed.navigatorWidth.clamp(160.0, 400.0);
-    final navigator = NavigatorShell(
+    final navigator = SlideNavigator(
       services: services,
       editor: ed,
       width: navWidth,

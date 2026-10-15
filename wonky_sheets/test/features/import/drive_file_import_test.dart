@@ -5,7 +5,6 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:shad/shad.dart';
 import 'package:wonky_app/testing.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_client/wonky_client.dart';
@@ -229,15 +228,17 @@ void main() {
 
       expect(find.byKey(const ValueKey('dialog.import')), findsOneWidget);
       expect(api.downloaded, [file.uuid]);
-      // Only *Create new spreadsheet*: nothing is open to import into.
-      expect(
-        tester
-            .widget<ShadRadio<ImportLocation>>(
-              find.byKey(const ValueKey('dialog.import.loc.insertSheets')),
-            )
-            .enabled,
-        isFalse,
-      );
+      // Only *Create new spreadsheet*: nothing is open to import into, and
+      // the Drive file can't be swapped for another one (D-18: *Change file*
+      // was offered, but the server converts the Drive file).
+      for (final loc in ImportLocation.values) {
+        expect(
+          find.byKey(ValueKey('dialog.import.loc.${loc.name}')),
+          loc == ImportLocation.createNew ? findsOneWidget : findsNothing,
+          reason: loc.name,
+        );
+      }
+      expect(find.byKey(const ValueKey('dialog.import.change')), findsNothing);
       await tester.tap(find.byKey(const ValueKey('dialog.import.confirm')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));

@@ -3,18 +3,43 @@ part of '../operations.dart';
 // Themes, masters and layouts (02 §12.1 "Themes", 05; planner SL-7,
 // SL-17, SL-28).
 
-/// Imports a theme tree into the deck: a built-in ([builtInKey]) or a
-/// theme package JSON ([packageJson], `ThemePackage.toJson`), with
-/// deterministic ids (`SlidesIds.themeCopyId/themePartId`).
+/// Imports a theme tree into the deck: a built-in ([builtInKey]), a
+/// theme package JSON ([packageJson], `ThemePackage.toJson`) or the rows of
+/// a deck theme ([themeEntry]), with deterministic ids
+/// (`SlidesIds.themeCopyId/themePartId`).
 final class ImportTheme extends SlidesOperation {
-  const ImportTheme({this.builtInKey, this.packageJson, this.sourceKey})
-    : assert((builtInKey == null) != (packageJson == null));
+  const ImportTheme({
+    this.builtInKey,
+    this.packageJson,
+    this.themeEntry,
+    this.sourceKey,
+    this.themeName,
+  }) : assert(
+         (builtInKey != null ? 1 : 0) +
+                 (packageJson != null ? 1 : 0) +
+                 (themeEntry != null ? 1 : 0) ==
+             1,
+       );
 
   final String? builtInKey;
   final Map<String, Object?>? packageJson;
 
-  /// Provenance for package imports (`deck:<item>:<theme>`).
+  /// The rows of a theme of a deck (SL-17: *Import theme from a
+  /// presentation*, *Duplicate theme*): an entry of a clipboard payload's
+  /// `themes` (`SlidesClipboardCodec.themeEntry` — the `deck_theme` columns
+  /// plus `masters`, `layouts` and `elements` row lists). Copied with every
+  /// row (element groups, images, all columns); with a [sourceKey] the ids
+  /// are deterministic (`themeCopyId(deck, sourceKey)`,
+  /// `themePartId(theme, sourceRowId)`), so repeated imports merge; without
+  /// one the copy gets fresh ids (a duplicate).
+  final Map<String, Object?>? themeEntry;
+
+  /// Provenance for package and theme-entry imports
+  /// (`deck:<item>:<theme>`, `SlidesIds.deckThemeSourceKey`).
   final String? sourceKey;
+
+  /// The copy's name (null = the source's).
+  final String? themeName;
 
   @override
   String get name => 'ImportTheme';

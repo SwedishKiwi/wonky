@@ -488,79 +488,14 @@ extension _ClonePart on _Planner {
     for (final t in _rows(p['themes'])) {
       final oldTheme = t[SlidesCols.id] as String?;
       if (oldTheme == null) continue;
-      final themeId = SlidesIds.themeCopyId(
-        deck.deckId,
-        SlidesIds.deckThemeSourceKey(source, oldTheme),
+      final sourceKey = SlidesIds.deckThemeSourceKey(source, oldTheme);
+      out.addAll(
+        copyThemeEntry(
+          t,
+          themeId: SlidesIds.themeCopyId(deck.deckId, sourceKey),
+          sourceKey: sourceKey,
+        ),
       );
-      String part(String id) => SlidesIds.themePartId(themeId, id);
-      if (!b.exists(SlidesTables.deckTheme, themeId)) {
-        if (deck.count(SlidesTables.deckTheme) + 1 > limits.maxThemesPerDeck) {
-          limit(
-            'A presentation can have at most ${limits.maxThemesPerDeck} themes.',
-          );
-        }
-        final items = OrderKeys.sorted([
-          for (final x in deck.themes) (x.sortKey, x.id),
-        ]);
-        b.insert(SlidesTables.deckTheme, {
-          for (final c in SlidesTables.columns[SlidesTables.deckTheme]!)
-            c: t[c],
-          SlidesCols.id: themeId,
-          DeckThemeCols.deckId: deck.deckId,
-          DeckThemeCols.sourceKey: SlidesIds.deckThemeSourceKey(
-            source,
-            oldTheme,
-          ),
-          SlidesCols.sortKey: OrderKeys.last(items),
-          SlidesCols.createdAt: ctx.now,
-        });
-      }
-      for (final m in _rows(t['masters'])) {
-        final id = part('${m[SlidesCols.id]}');
-        if (!b.exists(SlidesTables.slideMaster, id)) {
-          b.insert(SlidesTables.slideMaster, {
-            for (final c in SlidesTables.columns[SlidesTables.slideMaster]!)
-              c: m[c],
-            SlidesCols.id: id,
-            SlideMasterCols.themeId: themeId,
-            SlidesCols.createdAt: ctx.now,
-          });
-        }
-      }
-      for (final l in _rows(t['layouts'])) {
-        final old = '${l[SlidesCols.id]}';
-        final id = part(old);
-        out[old] = id;
-        if (!b.exists(SlidesTables.slideLayout, id)) {
-          b.insert(SlidesTables.slideLayout, {
-            for (final c in SlidesTables.columns[SlidesTables.slideLayout]!)
-              c: l[c],
-            SlidesCols.id: id,
-            SlideLayoutCols.masterId: part('${l[SlideLayoutCols.masterId]}'),
-            SlidesCols.createdAt: ctx.now,
-          });
-        }
-      }
-      for (final e in _rows(t['elements'])) {
-        final id = part('${e[SlidesCols.id]}');
-        if (b.exists(SlidesTables.slideElement, id)) continue;
-        String? mapped(String col) {
-          final v = e[col];
-          return v == null ? null : part('$v');
-        }
-
-        insertElement({
-          for (final c in SlidesTables.columns[SlidesTables.slideElement]!)
-            c: e[c],
-          SlidesCols.id: id,
-          SlidesCols.slideId: null,
-          ElementCols.layoutId: mapped(ElementCols.layoutId),
-          ElementCols.masterId: mapped(ElementCols.masterId),
-          SlidesCols.parentId: mapped(SlidesCols.parentId),
-          ElementCols.placeholderOf: mapped(ElementCols.placeholderOf),
-          SlidesCols.createdAt: ctx.now,
-        });
-      }
     }
     return out;
   }

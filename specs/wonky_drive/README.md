@@ -13,7 +13,7 @@ routes).
 | # | Spec | Summary |
 |---|------|---------|
 | 01 | [Overview](01-overview.md) | Purpose, scope, prioritized features, how Drive relates to the app homes, limits, document map |
-| 02 | [Files, uploads & previews](02-files-uploads-previews.md) | The `file` kind, upload flow (queue, offline, resumability), MIME sniffing, previews (images, PDF, text/code, audio), *Open with* conversions, downloads, upload versions (P2) |
+| 02 | [Files, uploads & previews](02-files-uploads-previews.md) | The `file` kind, upload flow (queue, offline, resumability), MIME sniffing, previews (images, text/code, audio; no PDF previews in v2), *Open with* conversions, downloads, upload versions (P2) |
 | 03 | [Storage quota](03-storage-quota.md) | 50 MB per user: what counts, accounting tables, enforcement per endpoint, errors, UI (meters, banners, dialogs, Storage page), ownership transfer, trash, backfill migration |
 | 04 | [Screens & menus](04-screens-menus.md) | Drive home (left menu, views, grid/list, details, multi-select, drag-and-drop, upload panel), preview screen, Storage page, Drive settings, commands, keyboard, light/dark |
 | 05 | [Implementation plan](05-implementation-plan.md) | Milestone M8 as work packages D-1…D-18 in waves (owned folders, contracts, acceptance tests), spikes, journeys, risks |

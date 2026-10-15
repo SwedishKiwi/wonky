@@ -1,7 +1,10 @@
+import 'dart:typed_data';
+
 import 'package:serverpod/serverpod.dart';
 
 import '../common/models.dart';
 import '../users/user_service.dart';
+import 'file_image_proxy.dart';
 import 'file_service.dart';
 
 /// Uploads and signed downloads (suite 12 §1.1). Idempotent on the
@@ -60,6 +63,22 @@ class FileEndpoint extends Endpoint {
     sourceFileUuid: sourceFileUuid,
     newFileUuid: newFileUuid,
     targetItemUuid: targetItemUuid,
+  );
+
+  /// (v2, Slides 03 A-03-4) Image proxy for images inserted by URL into
+  /// drive item [itemUuid] (any app; caller needs viewer access): the bytes
+  /// of the https image [url]. Private addresses, other ports, redirects
+  /// and non-images are refused; ≤ 10 MB. The client stores the bytes as
+  /// an ordinary (offline-first, quota-checked) upload.
+  Future<ByteData> fetchImage(
+    Session session,
+    UuidValue itemUuid,
+    String url,
+  ) async => FileImageProxy.fetch(
+    session,
+    await UserService.actorOf(session),
+    itemUuid,
+    url,
   );
 
   Future<List<FileUrlView>> getUrls(

@@ -44,6 +44,7 @@ final class _Planner {
     SetText() => setText(op),
     FormatText() => formatText(op),
     SetTextBoxStyle() => setTextBoxStyle(op),
+    ResetPlaceholders() => resetPlaceholders(op),
     InsertTableAxes() => insertTableAxes(op),
     DeleteTableAxes() => deleteTableAxes(op),
     MoveTableAxes() => moveTableAxes(op),

@@ -48,8 +48,9 @@
   script bridge's SharedArrayBuffer), every cross-origin subresource must send CORP/CORS headers:
   external images (Write image-by-URL, Sheets `IMAGE()`) are therefore loaded through the
   server's image proxy (`/files/proxy?url=…`, SSRF-protected, cached), never directly. (v2)
-  Drive's PDF viewer ships pdf.js (or PDFium WASM) from the app's own `web/` folder for the
-  same reason (Drive 02 §6.3).
+  Drive has no PDF viewer (no PDF previews in v2, Drive 02 §6.3), so no pdf.js/PDFium is
+  shipped; a later PDF viewer would have to be served from the app's own `web/` folder for the
+  same reason.
 - **Script workers**: Sheets scripts (installable/time-driven triggers, MCP `run_function`) run
   on server instances started with the `sheets.scripts.worker: true` role, consuming a job queue
   with an isolate pool (Sheets 09); API instances don't execute scripts. One combined role is

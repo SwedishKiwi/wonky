@@ -321,6 +321,69 @@ Each is one undo step naming `x,y` (and `width,height` for match size).
   (teal) and hidden when presenting/printing.
 - Master/layout guides (P2): guides of the slide's layout are shown dashed.
 
+
+### 5.7 As built (SL-12)
+
+- **Code.** Core `package:wonky_slides_core/snapping.dart` (`lib/src/snapping/`, not
+  `geometry/snapping.dart`): `SnapEngine` (`snapMove`, `snapResize` with equal size,
+  `snapPoint` with connection-site gluing, `snapAngle`), `SnapTargets` (built once per drag;
+  sorted lines + binary search; a query over 500 elements stays well under the 2 ms
+  budget), `FrameTransforms`
+  (`resize` by handle in the frame's rotated axes with aspect/center/flip, `scaleInBox`,
+  `rotateAbout`, `constrain`, `toChild`/`deltaToChild` = inverse of `GroupSpace.toParent`),
+  `UserGuides` (`Deck.guidesJson` codec). App: `features/canvas/` (`SlideCanvas`,
+  `SlideCanvasController` — one per open deck, attached by the editor screen, owns the deck's
+  `SlideRenderer` over the session's image resolver; `CanvasController` = viewport;
+  `CanvasOverlayPainter`; `RulerPainter`; `CanvasTokens`), `features/selection/`
+  (`SelectionController` via `selectionOf(editor)`, `TransformSession`, `ReadingOrder`,
+  `SlideElements`), `commands/canvas_commands.dart`.
+- **Selection** ids stay in `DeckEditorController.selectedElementIds` (chrome, undo snapshots,
+  MCP); `SelectionController` adds the entered group, the marquee and per-slide memory.
+  Mod+click deep-selects when it hits a child of a group that isn't entered, otherwise it
+  toggles like Shift+click; Mod pressed *during* a drag disables snapping. A click (no drag)
+  on an element of a multi-selection selects it alone. Locked elements are click-through and
+  show a lock badge instead of handles when selected elsewhere; hidden elements aren't drawn
+  or hit. Tab order = `ReadingOrder` (§17.2, locked elements skipped).
+- **Live previews** are element visual states of the stage's `SlideFrame` (a matrix from the
+  start frame to the live frame, conjugated into the parent node's space): nothing is laid
+  out or written while dragging, so text scales visually during a resize and glued
+  connectors follow on drop. Each gesture writes one command on release: `slides.element.move
+  {ids, dx, dy, duplicate?}` (slide-space delta, mapped into group child space per element),
+  `slides.element.resize {frames, label: resize|rotate}` (stored frames — children in their
+  group's child space; only the given columns), `slides.element.adjust {id, key, value}`
+  (`dataJson.adjust`), `slides.element.setLineEnds {id, start, end}` (slide points, optional
+  `elementId`/`site`; frame = the endpoints' box, rotation/flips cleared, `start/end`
+  normalized with base-62 `connect`), `slides.guides.add|move|delete {axis, at, index}`.
+  Values are rounded to 0.01 su. Esc while dragging cancels the gesture.
+- **Nudges** (`slides.element.nudge {dx, dy}`, arrows / Shift+arrows) coalesce into one step
+  when the same selection is nudged within the undo service's 1,000 ms window (the Sheets
+  object pattern: the top step is replaced with merged row changes).
+- **Snapping preferences:** object snapping (slide, elements, equal spacing/size) needs both
+  *Smart guides* and *Snap to objects*; *Snap to guides* controls user guides. Guides draw on
+  the overlay in `slidesGuide`; equal-size matches draw a bar under each matching box.
+- **Viewport:** zoom stays in the editor (`DeckEditorController.zoom`/`zoomFit`, SL-11's
+  steps); the canvas owns the pan, fits with a 48 px margin (16 px below 768 px), pans the
+  pasteboard (one slide beyond each edge) with the wheel, Space/middle-drag and auto-scroll,
+  zooms around the pointer with Mod+wheel and pinch, and draws thin scrollbar indicators
+  (not draggable).
+- **Arrange:** align with one element aligns to the slide, a single child of an entered group
+  to its group's box; distribute and match size need one common parent; *Rotate 90°* turns
+  each element about its own center. Edit › Delete/Duplicate act on elements and fall back to
+  `slides.slide.delete`/`duplicate` without an element selection; duplicating (and Alt-drag
+  duplicating) is limited to top-level elements. `slides.element.activate` (Enter /
+  double-click) enters element groups; SL-13/SL-15 extend it for text, tables and crop.
+- **Rulers and guides (P1):** rulers overlay the top/left 20 px of the canvas (they don't
+  shift it); dragging from a ruler adds a guide, dragging a guide (within 4 px) moves it, off
+  the slide deletes it; `Deck.guidesJson` is the object `{"v":1,"guides":[{"axis":"v",
+  "at":960}]}` (the planner stores JSON objects only). Not built: double-click → position
+  input, layout guides (P2).
+- **Tokens** live in `features/canvas/canvas_tokens.dart` (`CanvasTokens`, light/dark) rather
+  than `theme/slides_tokens.dart`.
+- **Not built (TODO.md):** Alt distance labels (P1), drop on a navigator thumbnail (P1), smart
+  duplicate offset (P1), *Scale text* for multi-resize (P1), Mod+arrow 1-px nudge (P2),
+  remote transform hints (09 §2.4), snap to grid (P2). (Text-box resize rules: SL-13, §6.2
+  "As built".)
+
 ---
 
 ## 6. Element kinds
@@ -348,6 +411,72 @@ text boxes, confirmed by a timeboxed spike at the start of M9 (Slides 12 work pa
 measuring open-editor latency (< 50 ms target) and the line-break equality test. Only if the
 spike fails both does the fallback — a custom `EditableText`-based rich editor (lighter, but IME,
 multi-paragraph selection, lists and RTL rebuilt) — get a decision record.
+
+**Decided by spike SL-4: super_editor overlay confirmed** (prototype in
+`wonky_slides/lib/features/text_editing/`, tests in `wonky_slides/test/features/text_editing/`; no
+super_editor patch needed). The fallback is not needed. How the overlay matches the static text
+*by construction*:
+
+- **Same paragraph model, same styles.** A custom style phase (`SlidesTextStylePhase`) builds the
+  core `TextParagraphs` of the document being edited (the model the `FlutterTextLayoutEngine`
+  lays out) and gives every paragraph view model its *display* text (caps, U+2028) with one
+  presentation-only attribution per styled run whose `TextStyle` has the engine's values (font,
+  weight, size × auto-fit, height + even leading, letter spacing, decorations, highlight). Our
+  component (`SlidesTextComponent`) puts super_editor's `TextComponent` at the paragraph's text
+  indent with full layout width (alignment happens inside the paragraph, as in the engine), the
+  view model padding carries space before/after, and list markers are the engine's own marker
+  paragraphs at the engine's offsets. `TextScaler.noScaling`; stylesheet without padding or max
+  width.
+- **Same geometry.** `TextEditGeometry` rebuilds the element with the body being edited through
+  `SlideSceneBuilder.buildElement` and takes the text node's transform chain (element rotation and
+  flips, group space, shape text rectangle, insets, vertical anchor) and layout (width,
+  `fitScale`, height). So auto-fit (`shrink` scale, `resize` growth) and anchors follow every
+  keystroke (live auto-fit) without duplicated math. The overlay is laid out in su at that width
+  and transformed by zoom × that matrix; the static text of the edited element is left out of the
+  stage while editing (`sceneWithoutText`). A blank body is laid out as one zero-width character
+  with the paragraph's attributes (the caret of an empty box or placeholder sits on the first
+  line; no prompt).
+- **Mapping.** `SlidesDeltaMapper`: paragraph → `ParagraphNode`, `list: bullet|ordered` →
+  `ListItemNode`, `check|unchecked` → `TaskNode`, `indent` → node indent, other block attributes
+  in node metadata `slidesBlock`; `bold/italic/underline/strike/code/script` → super_editor's
+  attributions, `link` → `LinkAttribution`, valued attributes → `SlidesValueAttribution`; soft
+  break U+2028 ⇄ `"\n"` in the node. Enter at the end of a paragraph keeps its paragraph
+  attributes (`SlidesParagraphInheritReaction`; super_editor starts a plain paragraph there).
+- **Editor setup.** `SuperEditor` inside its own non-scrolling, shrink-wrapped `CustomScrollView`
+  (super_editor attaches to the nearest vertical `Scrollable`, which must not be the canvas's),
+  mouse gestures, IME input, no editor history; super_editor's undo/redo and Esc actions are
+  replaced by host keys (Esc → exit; Mod+Z / Mod+Shift+Z / Ctrl+Y → write pending typing, then the
+  shell's undo stack); caret 2 logical px at any zoom; links don't open while editing.
+- **Writes and undo.** Edits stay in the document and are written as `SetText` after 300 ms idle
+  and on exit (02 §4.4). Each write is one `slides.rows` entry pushed with the coalescing key
+  `slides.text:<elementId>` (one step per burst). Typing entries (`SlidesTypingUndoEntry`)
+  coalesce by **composing** updates of the same row: the kit's `RowsUndoEntry.coalesce` appends
+  changes, and the rows undo inverts each change against the current model, skipping columns whose
+  value isn't the change's `after`, so two appended writes of one `text` column undid only the last
+  one — fixed since in `wonky_sync_kit` (`composeRowChanges`), and `SlidesTypingUndoEntry` now
+  uses the kit's coalescing. Undo, redo and collaborators' changes of the body are
+  patched into the document (SE-2 `ApplyDocumentPatchRequest`, caret clamped); unwritten local
+  edits win (LWW, soft lock).
+
+Measurements (widget-test VM: debug JIT, software raster; slower than a release web build):
+
+| Check | Result |
+|-------|--------|
+| Glyph equality: every character's box in the overlay's `RenderParagraph` vs the engine's `ui.Paragraph` (±0.01 su), paragraph origins and heights, overlay height = static content height | Equal for wrapped text, mixed inline styles (bold, italic, sizes, caps, letter spacing, superscript, highlight, underline, strike, mono), title/caption styles, center/right/justify, line height, space before/after, bullets on 3 levels, numbered with `listStart`, checklists, empty paragraphs, soft breaks, RTL, empty body, filled and empty title placeholders, shrink-to-fit shape (scale < 1, middle anchor), rotated 30° and 90°, and after typing (resize growth, live shrink) |
+| Screen position of a glyph at 30° / 90° | Equals the static transform of the engine's glyph box (±0.01 px) |
+| Paint comparison (static frame vs. stage without the text + overlay, real bundled fonts) | 0 differing px of 10,594 / 10,242 / 5,714 inked px (0°×0.5, 0°×0.75, 90°×0.5), max channel delta 0; negative control (overlay off by ≈ 0.35 px): 63 % of inked px differ |
+| Delta ⇄ document round trip | Unchanged for every inline and block attribute of 02 §4.1, lists/tasks/levels, soft breaks, emoji, empty bodies |
+| Pointer at 0°, 30°, 90° | Click puts the caret before the clicked glyph; a drag selects to the glyph under the pointer |
+| Web IME (super_editor web path, simulated) | The hidden input gets the edited paragraph's transform = zoom × rotation |
+| Enter text editing (controller + document + geometry + first frame) | median 10–12 ms, max 18 ms (first open in a fresh VM ≈ 190–220 ms: JIT) — budget < 50 ms |
+| Typing (IME delta → document → style phase → layout → paint) | p50 5–6 ms, p95 7–8 ms per keystroke; geometry rebuild 0.15 ms — budget < 16 ms p95 |
+
+Open for SL-13 (`TODO.md`): IME composition, dead keys and RTL by hand in Chrome and Safari (web
+build); flush pending typing before menu/toolbar undo too (only the overlay's keys do it now);
+selection chrome from `TextEditGeometry` while typing (the stored frame updates on write);
+`Localizations` locale reaches the overlay's paragraphs but not the engine's (CJK fallback);
+caps transforms that change length (ß → SS) show the source text while editing; checklist
+glyphs ☑/☐ are missing from the bundled fonts (both renderers).
 
 **Behavior**:
 
@@ -393,6 +522,87 @@ exit (02 §4.4) — one step "Typing" per burst; formatting commands are one ste
   placeholder's instance (`placeholderOf`), so a later layout change moves it with the layout.
 - Deleting a placeholder instance's content leaves the empty placeholder; deleting the
   (selected) empty placeholder removes it from the slide (it can be restored with *Reset slide*).
+
+### 6.2.1 As built (SL-13): text editing, format commands, placeholders
+
+- **Code.** `wonky_slides/lib/features/text_editing/`: SL-4's overlay (`SlideTextEditController`,
+  `SlideTextEditorOverlay`, mapper, components, `TextEditGeometry` — now also the live derived
+  box `frame`) plus `text_editing_host.dart` (`textEditingOf(editor)` → `SlideTextEditing`: one
+  session per deck, `begin(id, {at, caretOffset, insert, selectAll})`, `end`, `commit`,
+  `placeCaretAt`, the soft-lock hook `TextEditLocks`, `typeToEdit`), `text_editing_layer.dart`
+  (`SlideTextEditingLayer`: the overlay at the slide origin inside the `slidesText` scope) and
+  `text_format.dart` (`TextFormatScope`, `TextFormatState`, `TextFormatter`, `paragraphsOf`,
+  `effectiveList`). `features/elements/text/`: `TextBoxTool` (a `CanvasTools` box tool, SL-14's
+  registry), `text_toolbar.dart` (contextual *Text* controls), `text_inspector_section.dart`
+  (Inspector › Format › Text), `text_dialogs.dart` (value/choice/link `WonkyDialogSpec`s).
+  `lib/commands/text_commands.dart` registers every `slides.format.*` text command,
+  `slides.format.letterSpacing` / `insets` (new ids), `slides.text.exitEditing`,
+  `slides.text.removeLink`, `slides.insert.textBox`, `slides.insert.link`,
+  `slides.element.setLink` / `removeLink`, `slides.element.resetPlaceholder`; SL-12's
+  `slides.element.activate` edits text-capable elements (`{x, y}` = caret point).
+- **Activation.** Double-click (caret at the click point via the overlay's document layout,
+  after the first layout), Enter (caret at the end), a printable character with one
+  text-capable element selected (`typeToEdit` in the canvas scope, before the keymap: with a
+  box selected, T types a "T"), a single click (no drag) on an empty text placeholder
+  (*Click to add title*), creating a text box. The canvas keeps the keyboard focus during
+  the click, so the host focuses the editor explicitly after layout. Editing ends on Esc /
+  Mod+Enter / `slides.text.exitEditing` (box stays selected), a press outside the box (the
+  press then selects as usual), any selection or slide change, losing edit access, the
+  element disappearing. A press inside the box but beside the laid-out text moves the caret
+  to the nearest position; a right-click inside opens `context.text`.
+- **Keys.** The `slidesText` scope is a `Focus` around the overlay: super_editor first (typing,
+  IME, caret, clipboard, Mod+A, Enter, Shift+Enter), then host keys (Esc, Mod+Enter, Tab /
+  Shift+Tab → `slides.format.indent` / `outdent` on any paragraph, Mod+Z / Mod+Shift+Z →
+  write pending typing + shell undo/redo), then `slidesText` bindings and chords with
+  Mod/Alt of the global scope (format commands, link, comments); everything else is passed
+  to the platform and never reaches the canvas scope (no nudges, Delete, tools). super_editor's
+  own Cmd+B / Cmd+I are removed so bold/italic are commands (one undo step).
+- **Writes and undo.** Typing as SL-4 (300 ms idle, "Typing" steps coalescing per burst).
+  `DeckDocumentController.beforeUndo` / `beforeRedo` (new shell hook) and every format command
+  write pending typing first. Format commands while editing format the selected range with
+  `FormatText` (one step; the document is patched back from the stored body, selection kept);
+  with a collapsed caret they change super_editor's typing attributes (no step, like Write).
+  Without editing they format whole bodies of the selected text-capable elements (group
+  children included), skipping bodies `TextEditLocks.heldBy` names (toast). Paragraph
+  commands (indent, list toggles, list style) write one `FormatText` per paragraph in the
+  same step; *Increase/Decrease font size* steps each run from its effective size (steps of
+  §6.1 continued 240 … 800). Bold off on theme-bold text writes `weight: 400`.
+- **Text boxes.** The tool (toolbar toggle, menu, T) arms `armedTool = 'text'`; a click creates
+  an auto-width box (`wrap: false`, `autofit: resize`), a drag ≥ 8 su a fixed-width box; the
+  palette and agents insert 960 × 120 su at the slide center (agents get it selected, not
+  edited; optional `text`). A text box (not a placeholder) that is blank when editing ends is
+  deleted; when its creation is still the top undo step that step is dropped
+  (`UndoService.discardTop`), else the deletion is its own step. Resizing an auto-width box by
+  hand switches it to `wrap: true` in the same step (resize frame arg `wrap`); top/bottom
+  handles of `autofit: resize` boxes write the minimum height (the scene grows it).
+- **Placeholders.** Prompts come from the layout (scene `PromptNode`, edit purpose only); the
+  edited body's prompt/text is left out of the stage while editing. *Reset to layout* is the
+  new core op `ResetPlaceholders(elementIds)` (frame, rotation, `textStyleJson`, fill, stroke,
+  effects, opacity → null; text kept). **Box-default lists:** paragraphs without a `list` and
+  without their own `style` take `textStyleJson.defaults.list` / `listStyle` / `listStart` /
+  `indent` from the box (placeholder chain) in `TextParagraphs` — so the static engines, PDF
+  and the overlay draw a body placeholder's bullets alike; `listStyle: none` on a paragraph
+  turns a default list off (what the list toggle writes). Picture/chart/table/code
+  placeholder buttons belong to SL-15/SL-31/SL-32.
+- **Links.** `slides.insert.link {url? | slideId?}` (Mod+K): a range gets the `link`
+  attribute, a caret gets the URL (or "Slide n") inserted as linked text; without editing it
+  sets the element link. The link popover of 04 §13.5 is a `WonkyDialogSpec`
+  (`dialog.slides.link`: target select — web address, every slide, element actions — and the
+  address field, *Remove link*), MCP-operable.
+- **Chrome.** The contextual toolbar's *Text* controls (04 §6.2) mirror `TextFormatState`:
+  style, font (theme fonts + bundled families), size field, B/I/U toggles, text color and
+  highlight split buttons (`WonkyColorPicker` with theme swatches), link, align/anchor,
+  lists + list styles + restart numbering, line spacing + space before/after, outdent,
+  indent, clear. Inspector › Text has style, font, size, B/I/U/S/super/sub, caps, letter
+  spacing, alignment, anchor, line spacing, space before/after, lists and list style,
+  text fitting and insets. The toolbar and the section listen to the host (caret moves).
+- **Hook for SL-21.** `textEditingOf(editor).locks = …` (`request` may show the soft-lock
+  popover asynchronously; `claim`/`release`; `heldBy`).
+- **Not built / open (TODO.md):** IME, dead keys, emoji picker and RTL checked only in widget
+  tests (simulated IME incl. a composition) — check by hand in Chrome and Safari; autoformat
+  (`- `, `1. `, `[ ] `); the overflow `+` badge (P1); Mod+click-to-follow links; overwritten
+  text review and the soft-lock popover (SL-21); localized built-in prompts; caps
+  transforms that change length show the source text while editing; checklist glyphs.
 
 ### 6.3 Shapes
 
@@ -612,6 +822,165 @@ rules are normative for all renderers (canvas, thumbnails, presenting, PDF):
   masks); the canvas may still prefer the frame for text boxes (§3.2).
 
 ---
+
+### 6.11 As built (SL-14): shapes, lines, icons, groups, format painter
+
+- **Code.** App `features/elements/{shape,line,icon,style,common}/`, `features/format_painter/`,
+  `commands/{object,style}_commands.dart`, the canvas tool hook `features/canvas/canvas_tools.dart`;
+  core `package:wonky_slides_core/icons.dart` (`LucideGlyphs` name → code point map generated
+  from `lucide_icons_flutter` by `tool/generate_lucide_glyphs.dart`, `LucideCatalog`). (The plan
+  named `elements/{shape,line,icon,group}`; groups need no folder of their own — their commands
+  are in `object_commands.dart`, the Arrange/Accessibility sections in `elements/common/`.)
+- **Insert tools.** `slides.insert.shape {geometry}` / `slides.insert.line {routing, arrows}`
+  from the UI arm a canvas tool (`DeckEditorController.armedTool` = `shape:<key>` /
+  `line:<routing>:<arrows>`); with a frame (`x, y, width, height` / `start`, `end`) or from an
+  agent they insert directly (agents: centered default size). S / L arm the last shape / line.
+  Armed tools are `CanvasTool`s resolved by `CanvasTools` (a registry other packages can add
+  to): box gestures (click = default size centered on the click — 240 su, natural-aspect
+  shapes such as arrows 320 × 160; drag = the box, Shift 1:1, Alt from the center, snapped to
+  objects/guides, Mod disables snapping), line gestures (endpoints glue to connection sites,
+  Shift 45°, click = a 400 su horizontal line), pick gestures (format painter). Line tools show
+  the sites of the shape under the pointer. Esc (`slides.select.escape`) disarms; inserting
+  selects the new element and returns to Select. Inserts write no style (theme defaults at
+  render time); arrows write `strokeJson.{start,end}Arrow: triangle`. *All shapes…* =
+  `slides.insert.shape {pick: true}` (gallery dialog, MCP-describable).
+- **Icons.** `LucideIconSource` (every `SlideRenderer`'s default) draws glyphs with the weighted
+  Lucide fonts: stroke width 1 / 1.5 / 2 / 2.5 / 3 → `Lucide200…600` (never used as
+  `const IconData`, so icon-font tree shaking keeps them whole). `slides.insert.icon {name,
+  strokeWidth, color}` (picker without a name), `slides.insert.emoji {char}` (shell
+  `WonkyEmojiPicker`, 240 su), `slides.icon.replace {name?}` (picker; double-click / Enter on an
+  icon), `slides.icon.setStrokeWidth {value}` (new ids). Names may be aliases; the canonical
+  name is stored.
+- **Shapes and lines.** `slides.shape.change {geometry}` keeps frame, text, style, builds and
+  `matchKey`, drops `adjust`/`path`; `slides.shape.applyQuickStyle {index}` writes fill, stroke
+  and `textStyleJson.defaults.color` (the theme's `quickStyles`, else eight defaults: accent
+  1–6 solid, outline, soft tint); `slides.line.setArrow {end: start|end|both, style?, size?}`
+  merges the arrow keys into `strokeJson`; `slides.line.setRouting {routing}` clears
+  `waypoints`.
+- **Style commands.** `slides.format.fill {color | fill | none}` (null color = theme default),
+  `slides.format.stroke {color, width, dash, cap, join | none | reset}` (a merge into the
+  stroke, keeping arrowheads; a value after `none` brings the border back), `slides.format.effects
+  {shadow, glow: bool | object, blur | reset}` (merge; `shadow: true` = the theme shadow),
+  `slides.format.opacity {value}` (1 clears). All take optional `ids`, apply to the kinds that
+  have the property (fill: text, shape, icon; stroke: text, shape, line, image, icon) and are
+  disabled with a reason otherwise. Without a value from the UI (*Fill…*, *Border…*,
+  *Effects…*, *Opacity…*) they open the inspector section.
+- **Groups.** `slides.arrange.group` (canvas scope: Mod+G and ⌥Mod+G) / `ungroup` (Mod+Shift+G,
+  ⌥Mod+Shift+G) run the planner's `GroupElements` / `UngroupElements` (identity child space at
+  creation, baking on ungroup, builds removed with the planner's warning as a toast), select the
+  new group / the children and keep the entered group. Disabled reasons: fewer than two
+  objects, placeholders, different parents.
+- **Format painter.** `slides.format.paintFormat` captures the first selected element's style
+  (`ElementStylePayload`: fill, stroke, effects, opacity; text-capable: `textStyleJson` and the
+  longest run's inline + the first paragraph's block attributes; images: mask and adjustments)
+  and arms the `paintFormat` pick tool; a click applies it (`{targetIds}`, one undo step) and
+  disarms; a second click on the brush within 500 ms (or `{sticky: true}`) keeps it armed until
+  Esc or the brush. Arrowheads are only painted onto lines. `copyStyle` / `pasteStyle {style?,
+  ids?}` use the same payload (in-app clipboard; `copyStyle` returns it for MCP).
+- **Inspector and toolbar.** Format sections Fill, Border, Effects (shadow, glow, opacity
+  slider — one step on release), Line (color, weight, dash, ends, arrowheads + size, routing),
+  Icon (name, *Replace icon…*, color, stroke width, background fill), Arrange (X/Y/W/H and
+  rotation for top-level objects, align/distribute, order, flip, rotate, lock, name =
+  `slides.element.rename`, *Edit inside group*) and Accessibility (alt text, *Decorative*,
+  reading order position; `slides.element.editAltText {altText?, decorative?}` opens a dialog
+  without arguments). The contextual toolbar has fill/border/line/icon color split buttons
+  with the color picker (theme colors row, *Theme default*), weight, dash, quick styles, the
+  *Change shape* gallery, start/end arrow and routing menus, icon stroke width and *Replace
+  icon*; Insert › Shape ▸, the toolbar shape menu and Format › Shape › Change shape ▸ show the
+  drawn gallery; context menus add Change shape ▸ (shapes), Line ▸ (lines) and *Replace icon…*
+  (icons).
+- **Not built:** see `TODO.md` "Shapes, lines, icons, groups, format painter leftovers (SL-14)".
+
+### 6.12 As built (SL-15): images and tables
+
+- **Code.** App `features/elements/image/` (`image_rules.dart` formats, sniffing,
+  `SlidesImagePrep` (SVG → PNG at 2× ≤ 4,096 px, BMP → PNG, > 40 MP downscaled to PNG),
+  `SlidesImageIo` picker/save; `image_geometry.dart` `ImageGeometry` (placement, cover crop,
+  reset height) and `CropState`; `crop_mode.dart` `ImageCropMode`; `image_canvas.dart`
+  (`ImageDrops`, `ImageCanvasLayer`: web drop zone + out-of-storage badges); `image_dialogs.dart`
+  (source, URL, mask and Drive picker dialogs); `image_section.dart`; `image_clipboard*.dart`,
+  `external_drop*.dart`), `features/elements/table/` (`table_cells.dart` `TableRange`,
+  `TableCellSelection`, `TableGeometry`; `table_interaction.dart` `TableCanvasMode`;
+  `table_sections.dart` Table/Cell sections + `TableBorderPicker`), `features/uploads/`
+  (`SlidesPendingUploads` = `LocalPendingUpload` queue in `slides_uploads_<userId>.db`;
+  `SlidesImageService` = the deck's `SlideImageResolver`), `commands/{image,table}_commands.dart`.
+  Shared hooks added on the way: `features/canvas/canvas_interactions.dart`
+  (`CanvasInteraction`: element-kind modes that take presses before the default gestures, paint
+  on the overlay, filter the stage scene, add canvas widgets (`CanvasChrome`) and key scopes —
+  the canvas region tries `slidesCrop`/`slidesTable` before `slidesCanvas`),
+  `features/elements/element_activation.dart` (`slides.element.activate` per kind), the
+  `tableSelection` canvas token (`slidesTableSelection`).
+- **Images.** `slides.insert.image {source: upload|drive|url|clipboard|drop, url?,
+  fileItemUuid?, x?, y?}` (no source: a source dialog; upload picks several files, inserted
+  cascaded by 24 su). Bytes are validated (sniffed), prepared, quota-checked
+  (`storageChecks.ensureRoom`, reason `image`, the deck's item — agents get the server's
+  `quotaExceeded` instead), stored in the device queue and referenced as
+  `wonky-file://<client uuid>` at once; the image renders from the local bytes until uploaded
+  (`SlidesImageService` tries local bytes → queue → the session's resolver → the server: signed
+  URL, polling while another user's upload is pending; `https://` sources through
+  `file.fetchImage`). A refused upload shows "Not uploaded — out of storage" on the canvas and
+  in the Image section with *Retry* (`slides.image.retryUpload`) and *Remove*
+  (`slides.image.removeNotUploaded`, one step). *From Wonky Drive* copies the image file into the
+  deck on the server (`file.copyToItem`, which now also accepts Drive files with an image MIME
+  type); *By URL* fetches through **`file.fetchImage(itemUuid, url) → bytes`** (A-03-4, viewer
+  access to the item; SSRF rules of `SafeImageFetcher`) and uploads the bytes like any insert.
+  An empty picture placeholder (selected, or under a drop point) is filled with the image cropped
+  to cover it (`ReplaceImage` with a cover crop). Activation (double-click / Enter): crop mode;
+  on an empty picture placeholder *Insert image*.
+- **Replace / reset / mask / adjust / crop.** `slides.image.replace {source…}` keeps frame, mask,
+  adjustments, builds and match key and re-fits a cover crop (core: `ReplaceImage.crop`, additive).
+  `slides.image.reset` removes crop, mask and adjustments and restores the natural aspect at the
+  current width (one step: data + frame). `slides.image.mask {geometry | none}` (UI: a dialog
+  with the basic shapes). `slides.image.adjust {brightness, contrast, saturation, temperature
+  (−100…100, stored −1…1), blur (0…40), grayscale, sepia, invert | reset}` (UI without values
+  opens Inspector › Image; sliders write on release). `slides.image.crop {crop, x, y, width,
+  height}` writes crop and frame in one step "Crop image"; without `crop` the UI enters
+  **crop mode**: the image's node leaves the stage scene and the overlay draws the whole image
+  dimmed, the crop box bright with thirds and L-shaped handles; side/corner handles resize the
+  box inside the image (Shift or a preset keeps the aspect), dragging inside moves the image
+  under the box; the floating crop bar (a `CanvasChrome`) has the aspect presets Free, Original,
+  1:1, 4:3, 16:9, 3:2, 9:16, *Fill*, *Fit*, *Cancel*, *Done*. Enter (`slides.image.cropApply`),
+  *Done* or a click outside commit; Esc (`slides.image.cropCancel`) or *Cancel* leave. Crop
+  mode ends when the selection or slide changes. `slides.image.downloadOriginal` saves the
+  original bytes (download permission).
+- **Tables.** `slides.insert.table {rows, cols, x?, y?, width?}` (palette: a rows/columns
+  dialog; menu/toolbar: the size picker) — 80 % of the slide wide, centered, rows one line of
+  the theme's table text + cell padding high, `style: theme` with header row and banded rows.
+  With one table selected, the `TableCanvasMode` interaction takes presses inside the table
+  (the outer 1.5 × 4 px band stays the table's: move and handles): a click edits the cell
+  (SL-13's overlay with a **cell target** — `SlideTextEditController.cellRowId/cellColumnId`
+  write `SetText(CellText)`, geometry from the table layout, `TextEditGeometry.ofCell`, the
+  stage hides only that cell's text node), a drag or Shift+click selects a cell range
+  (highlighted), dragging an inner column border resizes the two columns beside it (every
+  column's width is written so the shares stay) and an inner row border the row's minimum
+  height (`slides.table.resizeAxes {id, sizes}`, one step), right-click opens `context.table`.
+  Cell keys while editing: Tab / Shift+Tab next/previous cell (Tab in the last cell inserts a
+  row), arrows at the start/end of the text (Up/Down in the first/last paragraph) move to the
+  neighbor cell, Esc selects the cell. `slidesTable` scope (a cell range, not editing): arrows
+  / Shift+arrows (`slides.table.select*` / `extend*`), Tab / Shift+Tab, Enter
+  (`slides.table.editCell`), Delete/Backspace (`slides.table.clearCells`), Esc
+  (`slides.table.clearCellSelection`); typing edits the active cell. The cell selection is view
+  state (`TableCellSelection`, axis ids, cleared when the table stops being the single
+  selection); `slides.table.selectCells {id, row, column, rowSpan, colSpan}` sets it for agents.
+- **Table commands** act on explicit `row`/`column`/`rowSpan`/`colSpan` args, else the cell
+  selection, else the cell being edited, else the whole table: `insertRow {below}`,
+  `insertColumn {right}` (relative to the range), `deleteRows`/`deleteColumns` (need cells;
+  deleting every row/column deletes the table), `delete`, `mergeCells` (range > one cell) /
+  `unmergeCells`, `distributeRows`/`distributeColumns` (laid-out sizes averaged),
+  `setOptions {style, headerRow, firstColumn, bandedRows, bandedColumns, totalRow,
+  cellPadding}`, `setCellFill {color | none}`, `setBorders {edges, width, style, color}` (edges
+  of the `TableBorderPicker`; shared inner edges are written once — on the lower cell's top and
+  the right cell's left; `none` clears the cell borders, the table style's stay),
+  `setCellAlign {vAlign}`, `setCellPadding {padding | all}` (new id), `clearCells`; without
+  values from the UI they open Inspector › Table/Cell. Text format commands on a selected table
+  format the selected cells' (else every cell's) whole text (`TextFormatTarget.cell`), and the
+  format painter copies a cell's fill, borders, padding, vertical align and dominant text
+  attributes onto the clicked cell (03 §9; `ElementStylePayload.cell`).
+- **Core additions (additive):** `ReplaceImage.crop`; `TextNode.partId`
+  (`"<rowId>|<columnId>"` on table cell text); `TableGrid`/`TableGridCell` and
+  `SlideSceneBuilder.tableGrid(element, context, {cellText})` — the same layout the scene draws
+  (column/row edges, grown rows, merges, padding, vertical align, cell styles).
+- **Not built / deviations:** see `TODO.md` "Images and tables leftovers (SL-15)".
 
 ## 7. Element groups
 
@@ -841,6 +1210,80 @@ The Sheets object payload must carry `spreadsheetItemUuid` and `objectId` (addit
 *Paste without formatting* (⇧⌘V) pastes plain text into the editing body or a new text box with
 the theme body style.
 
+*As built (SL-8, core only; the UI is SL-18):* `package:wonky_slides_core/clipboard.dart` —
+`SlidesClipboardCodec` (`copyElements` with descendants and placeholder instances materialized
+to their effective frame, `copySlides` for slides and groups with their themes, `copyText`;
+`encode`/`decode`/`sanitize` for untrusted payloads — known columns only, UUID ids, text
+normalized, dependents of missing elements dropped, ≤ 200,000 rows; `plainText`/`markdown`;
+`fileUuids`/`rehomeFiles` for cross-deck pastes; `checkLimits`) and `SlidesPasteMappers`
+(`plainText`, `writeDelta` — Write tables become table elements from their inline Markdown,
+`parseTsv`/`tsv`/`grid` with formats, merges and the 50 × 20 cut, `sheetsObject` — linked chart
+when the item names `spreadsheetItemUuid` + `objectId`, else static; images — `image`). Mappers
+return `elements` payloads for `PasteElements` and warning codes (`truncated`,
+`remote_images`). HTML paste (P1) is not built yet.
+
+*As built (SL-18):* app `features/clipboard/` + `commands/clipboard_commands.dart`;
+core `SlidesHtml` (`clipboard/slides_html.dart`), `SlidesClipboardCodec.htmlBody`,
+`SlidesPasteMappers.html` / `writeText`.
+
+- **Commands.** `slides.edit.copy`, `slides.edit.cut`, `slides.edit.paste {plainText?, text?,
+  html?, imageBase64?, imageType?}` (hidden from the palette; the shell's `shell.edit.cut|copy|
+  paste|pasteWithoutFormatting` reach them through `DeckDocumentController`, and the text
+  layer runs them for Mod+C/X/V and ⇧Mod+V while a body is edited) and
+  `slides.edit.pasteSpecial {mode: useDestination|keepSource|unlinked|linked}`. The target is
+  the body being edited, else the selected table cells, else the navigator/grid (slides and
+  groups; with nothing selected on the canvas, non-slide content still goes to the canvas),
+  else the canvas. Each paste or cut is one undo step.
+- **Representations (§12.1).** One `ClipboardItem` with `text/plain` (outline or text) and
+  `text/html` — readable HTML (paragraphs, headings, nested lists, inline formatting, tables
+  as `<table>` with merges and fills, code as `<pre>`, slides as an `<h2>` title + their text)
+  with the payload embedded as base64url JSON in `data-wonky-slides` (the pattern of Write's
+  `data-wonky-delta`; payloads > 4 M characters are not embedded) — plus the in-app store
+  (`SlidesSlideClipboard`: memory + `slides.clipboard` in the user store). Pasting reads the
+  embedded payload, else the in-app payload when the system clipboard holds exactly its plain
+  text without HTML (desktop) or can't be read (permission denied). The async Clipboard API
+  accepts no custom MIME types (only `web `-prefixed ones in Chrome), so
+  `application/x-wonky-slides` travels as the embedded HTML payload; `image/png` of copied
+  elements and the `text/markdown` marker are not written (Write pastes the HTML).
+- **Resolution order of a paste.** Slides payload → Sheets objects (the plain-text marker
+  `wonky-sheets-objects:<id>` + `clipboard.sheetsObjects` in the user's local store, which the
+  Wonky Work apps of one origin share; Sheets writes it on *Copy* of objects) → Write's Delta
+  (`data-wonky-delta`) → an image without HTML text (inserted through `slides.insert.image
+  {source: drop}`: validation, quota pre-check, offline upload queue) → HTML (one table →
+  table element with bold/italic/colors/fills/alignment/merges; anything else → Write-flavored
+  Delta → text box, images, tables, code) → TSV (≥ 2 columns) → a single URL (text box with
+  the link) → plain text (lists detected). *Paste without formatting* takes the plain text
+  only. In a text body: rich text at the caret replacing the selection (schema-filtered;
+  Write headings → `title`/`heading`, lists kept, embeds dropped; the last pasted paragraph
+  merges into the caret's). In table cells: TSV, HTML tables, Sheets cells or a copied Slides
+  table fill from the range's top-left cell (one value fills the whole range), clipped to the
+  table (toast), and the pasted range is selected; cells copy as TSV + an HTML table.
+- **Positions.** Elements paste at the same positions on another slide; on their source slide
+  repeated pastes cascade by 32 su (32, 64, …); after a cut the first paste lands in place.
+- **Cross-deck and cross-app files (A-03-3).** `DeckClipboard.prepareFiles`: every
+  `wonky-file://` of a payload from another deck — and of Write/Sheets content — gets a new
+  uuid **deterministic per (target deck, source file)** (`SlidesIds.themePartId(deck,
+  'file:<source>')`), so a re-run of the same paste (*Keep source formatting*) and repeated
+  pastes reuse one copy; the bytes the device knows (payload `files[].size`, filled at copy
+  time from the image cache, or cached images) are pre-checked against the deck owner's quota
+  (`StorageChecks.ensureRoom`; refusal → the quota dialog, nothing pasted); the copies go to
+  `SlidesRehomeQueue` (`features/clipboard/rehome_queue.dart`: per user in the device store
+  `user.<id>.slides.rehome`, offline-first, backoff 2 s → 10 min, 12 attempts per start — the
+  target may not be registered yet or the source still uploading). While pending, the image
+  renders from its source (`SlidesImageService` resolves the new uuid to the source) and counts
+  as uploading; a quota refusal of a copy shows the *Not uploaded — out of storage* badge with
+  *Retry*/*Remove* (deviation: §12.3 said "removes the image with a toast"). `https://`
+  images of pasted HTML keep their URL (drawn through the image proxy, not re-hosted).
+- **Paste options chip (04 §13.12).** `PasteOptions` + `PasteOptionsChip` in the canvas
+  overlay layer: after a cross-deck slides/groups paste (*Use destination theme* ✓ / *Keep
+  source formatting*) and a linked Sheets chart paste (*Linked to the spreadsheet* ✓ / *Paste
+  chart unlinked*). It hides after 10 s or when another undo step lands; choosing an option
+  runs `slides.edit.pasteSpecial`, which undoes the paste (still the top step) and pastes again
+  in the chosen mode in its own transaction — the stack keeps one step. Not offered for
+  cross-deck element pastes (their `theme:` refs resolve against the destination, as
+  specified); the chart chip sits at the pasted chart's bottom-right, the slides chip at the
+  canvas' bottom-right corner.
+
 ---
 
 ## 13. Find and replace
@@ -858,6 +1301,29 @@ the theme body style.
 - *Replace all* = one undo step "Replace all" (toast "Replaced 12 instances of 'x' with 'y'");
   bodies soft-locked by others are skipped and reported ("2 matches in text Anna is editing were
   skipped").
+
+*As built (SL-18):* core `DeckFind` (`package:wonky_slides_core/find.dart`: bodies in
+presentation order — slide elements in reading order with groups expanded, table cells row by
+row, then the slide's notes; options `matchCase`, `wholeWords` (Unicode letters/digits),
+`useRegex` (`$1…$9`, `$$` in replacements), `includeNotes`, `includeSkipped` (slide or group
+skipped), `scope` all/current/selected; `replaceRanges` keeps the first replaced character's
+inline attributes); app `features/find/` (`DeckFindController` per editor — matches
+recomputed 150 ms after deck changes, the current match kept by body and offset;
+`SlidesFindBar`; `FindReplacePanel` — non-modal over the canvas, MCP-describable
+`dialog.slides.findReplace` with fields `find`, `replace`, `scope`, `matchCase`, `wholeWords`,
+`useRegex`, `includeNotes`, `includeSkipped` and buttons `previous`, `next`, `replace`,
+`replaceAll`, `done`; `FindHighlights` — `findMatch`/`findMatchActive` rectangles from the
+canvas scene's text runs, split per character proportionally; `DeckCanvasOverlays` — the layer
+above the canvas region, outside the `slidesCanvas` key scope) and
+`commands/find_commands.dart`: `slides.find.open {query?}` (⌘F; prefills the selected text),
+`slides.find.openReplace {find?, replace?}` (⇧⌘H), `slides.find.next|previous {query?,
+options…}`, `slides.find.replace|replaceAll {find|query, replace, options…}` and
+`slides.find.close` (new id). *Next* makes the match's slide current and selects the match in
+its body (text editing; when another participant holds the body the element is only
+selected); notes matches open the notes pane. *Replace all* is one step (label
+`undoReplaceAll`), returns `{replaced, skipped, message, skippedMessage}` and toasts the §13
+messages. Not built: code text (P1 `includeCode`), group titles (P1), master/layout text in
+master editing (SL-28), highlights inside the notes pane.
 
 ---
 
@@ -977,7 +1443,7 @@ by slide with *Fix* actions:
 |------|-------------|
 | View/canvas | `slides.view.zoom {percent}`, `slides.view.zoomFit`, `slides.view.zoomIn`, `slides.view.zoomOut`, `slides.view.zoomToSelection`, `slides.view.toggleRulers`, `slides.view.toggleSmartGuides`, `slides.view.toggleSnapObjects`, `slides.view.toggleSnapGuides`, `slides.view.toggleSnapGrid` (P2) |
 | Selection | `slides.select.elements {ids}`, `slides.select.next`, `slides.select.previous`, `slides.select.escape`, `slides.select.enterGroup`, `slides.select.sameKind` (P2), `slides.element.activate` |
-| Elements | `slides.element.move`, `…resize`, `…nudge`, `…rename`, `…toggleLock`, `…lock`, `…unlock`, `…unlockAll`, `…hide`, `…show`, `…editAltText`, `…setLink`, `…removeLink`, `…resetPlaceholder`, `…setMatchKey` (06) |
+| Elements | `slides.element.move`, `…resize`, `…nudge`, `…adjust` (SL-12), `…setLineEnds` (SL-12), `…rename`, `…toggleLock`, `…lock`, `…unlock`, `…unlockAll`, `…hide`, `…show`, `…editAltText`, `…setLink`, `…removeLink`, `…resetPlaceholder`, `…setMatchKey` (06) |
 | Arrange | `slides.arrange.align`, `…distribute`, `…centerOnSlide`, `…matchSize`, `…order`, `…setZ`, `…rotate`, `…flip`, `…group`, `…ungroup`, `…tidy` (P2) |
 | Insert | `slides.insert.textBox`, `…shape`, `…line`, `…image`, `…table`, `…icon`, `…emoji`, `…code`, `…chart`, `…chartFromSheets`, `…link`, `…specialCharacter` |
 | Text/format | `slides.format.bold`, `…italic`, `…underline`, `…strikethrough`, `…font`, `…fontSize`, `…increaseFontSize`, `…decreaseFontSize`, `…textColor`, `…highlight`, `…script`, `…caps`, `…letterSpacing`, `…lineHeight`, `…paragraphSpacing`, `…align`, `…anchor`, `…list`, `…listStyle`, `…listStart`, `…indent`, `…outdent`, `…textStyle`, `…autofit`, `…insets`, `…clear`, `…fill`, `…stroke`, `…effects`, `…opacity`, `…paintFormat`, `…copyStyle`, `…pasteStyle`; `slides.text.exitEditing`, `slides.text.removeLink` |
@@ -996,9 +1462,9 @@ by slide with *Fix* actions:
 |---|----------|
 | A-03-1 | `Deck.guidesJson: String?` — `[{"axis":"v"\|"h","at":<su>}]`, whole-value LWW (§5.6). |
 | A-03-2 | Shape geometry keys of §6.3 are the `dataJson.geometry` enum (core `ShapeLibrary`, with geometry functions, adjust defaults and connection sites, shared by renderers and MCP). |
-| A-03-3 | **Suite (files)**: `FileEndpoint.copyToItem(sourceFileUuid, newFileUuid, targetItemUuid)` idempotent on `newFileUuid`, quota-checked (D3); queued offline. Used by cross-deck paste, `DeckCopier`, *Insert image from Drive*. |
-| A-03-4 | **Suite (files)**: generalize Sheets' image proxy `sheets.fetchImage` to `files.fetchImage(url) → fileUuid` for all apps. |
-| A-03-5 | **Sheets 08 §9.5**: the objects clipboard payload carries `spreadsheetItemUuid` and `objectId` so Slides can paste a linked chart. |
+| A-03-3 | **Suite (files)**: `FileEndpoint.copyToItem(sourceFileUuid, newFileUuid, targetItemUuid)` idempotent on `newFileUuid`, quota-checked (D3); queued offline. Used by cross-deck paste, `DeckCopier`, *Insert image from Drive*. *Built (SL-8):* images the caller can read, target Editor+, charged to the target owner's attachment bytes. |
+| A-03-4 | **Suite (files)**: generalize Sheets' image proxy `sheets.fetchImage` to `files.fetchImage(url) → fileUuid` for all apps. *Built (SL-15):* `file.fetchImage(itemUuid, url) → bytes` (viewer of the item; the client stores the bytes as an ordinary queued, quota-checked upload, so offline-first inserts and URL inserts share one path). |
+| A-03-5 | **Sheets 08 §9.5**: the objects clipboard payload carries `spreadsheetItemUuid` and `objectId` so Slides can paste a linked chart. *Built (SL-8):* plus `sheetId` (`wonky_sheets/lib/features/objects/object_ops.dart`). |
 | A-03-6 | **Shared packages** (decided, v2 review Q23): Write's Hunspell engine moves to the pure-Dart `wonky_spellcheck`; the Flutter glue (`SpellEngine`, dictionary loading, spelling dialogs) and the emoji picker move to `wonky_app`, so Slides doesn't import Write. |
 | A-03-7 | Tokens (registered by `wonky_slides/lib/theme/slides_tokens.dart`, light/dark): `slidesSelection`, `slidesHandleFill`, `slidesAdjustHandle`, `slidesGuide`, `slidesUserGuide`, `slidesTableSelection`, `placeholderBorder`, `slideShadow`, `spellingError`. |
 

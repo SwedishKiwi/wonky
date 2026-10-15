@@ -1,0 +1,8 @@
+### A device joined to a presentation session (the presenter's roster).
+class: PresentationParticipant
+fields:
+  connectionId: String
+  role: PresentationRole
+  deviceLabel: String
+  userId: int
+  displayName: String

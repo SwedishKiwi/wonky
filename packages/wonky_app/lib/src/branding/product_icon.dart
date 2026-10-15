@@ -1,6 +1,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
-import 'package:wonky_client/wonky_client.dart' show DriveItemKind;
+import 'package:wonky_client/wonky_client.dart'
+    show DriveItemKind, DriveItemView, FileCategory;
+import 'package:wonky_core/files.dart' show FileTypes;
 
 import '../drive/drive_format.dart';
 
@@ -66,10 +68,38 @@ class WonkyProductIcon extends StatelessWidget {
 }
 
 /// The icon of a drive item kind (folder, document, spreadsheet glyphs in
-/// their kind colors). Files keep plain glyphs; product icons stand for the
-/// apps only.
+/// their kind colors). Uploaded files show their category glyph in the
+/// category color when [category] is given (`DriveKindIcon.item`, Drive 04
+/// §11); product icons stand for the apps only.
 class DriveKindIcon extends StatelessWidget {
-  const DriveKindIcon(this.kind, {super.key, this.size = 20, this.folderColor});
+  const DriveKindIcon(
+    this.kind, {
+    super.key,
+    this.size = 20,
+    this.folderColor,
+    this.category,
+    this.code = false,
+  });
+
+  /// The icon of [item]: its kind, or its file category for uploaded files
+  /// (text files with a highlighting language get the code glyph).
+  DriveKindIcon.item(
+    DriveItemView item, {
+    Key? key,
+    double size = 20,
+    Color? folderColor,
+  }) : this(
+         item.kind,
+         key: key,
+         size: size,
+         folderColor: folderColor,
+         category: item.kind == DriveItemKind.file
+             ? item.fileCategory ?? FileCategory.other
+             : null,
+         code:
+             item.kind == DriveItemKind.file &&
+             FileTypes.languageOf(item.name) != null,
+       );
 
   final DriveItemKind kind;
   final double size;
@@ -77,9 +107,24 @@ class DriveKindIcon extends StatelessWidget {
   /// Color of the folder glyph (defaults to the muted foreground).
   final Color? folderColor;
 
+  /// The category of an uploaded file ([DriveItemKind.file] only).
+  final FileCategory? category;
+
+  /// Whether a text file shows the code glyph.
+  final bool code;
+
   @override
   Widget build(BuildContext context) {
-    final colors = ShadTheme.of(context).colorScheme;
+    final theme = ShadTheme.of(context);
+    final colors = theme.colorScheme;
+    final category = kind == DriveItemKind.file ? this.category : null;
+    if (category != null) {
+      return Icon(
+        fileCategoryIcon(category, code: code),
+        size: size,
+        color: fileCategoryColor(category, colors, theme.brightness),
+      );
+    }
     return Icon(
       kindIcon(kind),
       size: size,

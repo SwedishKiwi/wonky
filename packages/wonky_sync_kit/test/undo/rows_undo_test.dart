@@ -130,4 +130,67 @@ void main() {
       expect(handler.decoder!({'changes': 'nope'}), isNull);
     });
   });
+
+  group('Given two coalesced typing writes of the same column', () {
+    test('when undone then the column returns to its value before the first '
+        'write', () async {
+      final target = _Target();
+      target.rows.apply([
+        RowChange.insert('slide', 's1', {'title': 'A'}),
+      ]);
+      final first = RowChange.update(
+        'slide',
+        's1',
+        {'title': 'A'},
+        {'title': 'AB'},
+      );
+      final second = RowChange.update(
+        'slide',
+        's1',
+        {'title': 'AB'},
+        {'title': 'ABC'},
+      );
+      target.rows.apply([first, second]);
+
+      final merged = _Entry([first]).coalesce(_Entry([second]))! as _Entry;
+      await _Handler(target).undo(merged);
+
+      expect(merged.changes, hasLength(1));
+      expect(target.rows.rows['slide']!['s1']!['title'], 'A');
+    });
+  });
+
+  group('Given sequential changes of one row', () {
+    test('when an insert is followed by an update then one insert remains', () {
+      final out = composeRowChanges([
+        RowChange.insert('slide', 's1', {'n': 1, 't': 'a'}),
+        RowChange.update('slide', 's1', {'t': 'a'}, {'t': 'b'}),
+      ]);
+
+      expect(out.single.op, RowOp.insert);
+      expect(out.single.columnsAfter, containsPair('t', 'b'));
+    });
+
+    test('when an insert is followed by a delete then nothing remains', () {
+      final out = composeRowChanges([
+        RowChange.insert('slide', 's1', {'n': 1}),
+        RowChange.insert('slide', 's2', {'n': 2}),
+        RowChange.delete('slide', 's1', {'n': 1}),
+      ]);
+
+      expect(out.map((c) => c.rowId), ['s2']);
+    });
+
+    test('when an update is followed by a delete then the delete keeps the '
+        'original values', () {
+      final out = composeRowChanges([
+        RowChange.update('slide', 's1', {'t': 'a'}, {'t': 'b'}),
+        RowChange.delete('slide', 's1', {'t': 'b', 'n': 1}),
+      ]);
+
+      expect(out.single.op, RowOp.delete);
+      expect(out.single.columnsBefore, containsPair('t', 'a'));
+      expect(out.single.columnsBefore, containsPair('n', 1));
+    });
+  });
 }

@@ -24,7 +24,7 @@ backfill for existing users. It is authoritative for anything that counts or blo
 | Source | Counted | Charged to | Measured as | Updated |
 |--------|---------|------------|-------------|---------|
 | Document content | ✓ | item owner | UTF-8 length of the current Delta JSON (snapshot + ops since, i.e. the document as it is now; the op log is history and is not counted) | With the throttled search-text update of the OT service (≤ every 10 s while edited) and on import/copy/restore |
-| Spreadsheet content | ✓ | item owner | `SheetsSizeEstimator`: `sum(pg_column_size(row))` over the space's live rows of every Sheets synced table | By the change-log consumer, at most every 5 min per space (trailing), and after server imports, copies, version restores |
+| Spreadsheet content | ✓ | item owner | `SheetsSizeEstimator`: a compact **content** estimate (user decision, §11): 2 KB per spreadsheet + 256 B per sheet + each non-empty cell (16 B + the bytes of its non-null value/format columns) + each row/column with non-default height/width, hidden or format (16 B + its properties) + 256 B per chart, image, pivot, rule, range, filter or script object (+ script source); default rows/columns and empty cells count nothing | By the change-log consumer, at most every 5 min per space (trailing), after server imports, copies, version restores, and nightly by the reconcile (§4.3) |
 | Presentation content | ✓ | item owner | Same estimator over the Slides synced tables (Slides 02) | Same cadence (Slides change log) |
 | Uploaded file (`file` kind) | ✓ | item owner (the uploader) | Exact stored size | At `completeFileUpload` (reserved at `createFileUpload`, §5) |
 | Images / attachments in documents, over cells, on slides (`StoredFile.kind == image`) | ✓ | owner of the item they belong to | Exact stored size, summed in `DriveItem.attachmentBytes` | At upload completion (+), when the weekly orphan cleanup deletes an unreferenced image (−) |
@@ -187,7 +187,9 @@ commit).
 backfill or by an operator) recomputes every counter from the sources (`drive_item` sizes by
 owner, kind and trash state; open reservations; expired reservations are deleted first),
 writes the corrected row and logs `storage.drift {userId, field, before, after}` when a counter
-was off by more than 1 % or 64 KB. A test asserts that after any sequence of service calls the
+was off by more than 1 % or 64 KB. Before recounting, it re-estimates the user's spreadsheets
+(`StorageMaintenance.nightlyKinds`), so a changed estimator corrects every user by the next
+night and a missed trailing refresh can't leave a stale size. A test asserts that after any sequence of service calls the
 reconciled row equals the maintained one.
 
 ## 5. Reservations
@@ -470,8 +472,42 @@ reconcile), `StorageFutureCall`, `StorageEvents`, `StorageHooks` (one-line enfor
   12.9 MB in ~35 ms; 1M cells → 125 MB in ~3 s; a small space next to 2M foreign cells → 6 ms
   (cost follows the space, not the table; a plain `WHERE "spaceId" = …` would scan the whole
   table — no index on `spaceId`). The 5-minute cadence is confirmed. **Finding:** a cell row
-  costs ~125 bytes, so 50 MB holds ~400k cells, less than `maxCellsPerSpreadsheet` (1M) — see
-  `TODO.md`.
+  costs ~125 bytes, so 50 MB holds ~400k cells, less than `maxCellsPerSpreadsheet` (1M) —
+  resolved by the content estimate below.
+- **Backfill dry run (D-18)** on the development database (no production copy yet; 43 users,
+  41 spreadsheets, 69 documents, 3 uploads): the backfill ran 10 s after `serverpod start`
+  and left no user pending (43/43 with `reconciledAt`), nobody over the quota or in the 90 %
+  warning, median usage 85 KB, total 12 MB. Spreadsheets dominate: the largest user has
+  8.4 MB, one sheet of 50k cells estimated at 8.29 MB (**~166 B/cell**, slightly above
+  S-D3's 125 B because of formats and the change log); and **every new spreadsheet costs
+  ~80 KB before any cell is typed** (its 1,000 `sheet_row` + 26 `sheet_column` rows: the
+  welcome spreadsheet is 83 KB with 24 cells, a 12-cell CSV import 82 KB), so 50 MB hold
+  ~600 empty spreadsheets. Documents are small (1.4 KB average).
+- **Decided: a compact content estimate for spreadsheets** (user, after D-18: "an estimate is
+  ok"). `SheetsSizeEstimator` no longer sums `pg_column_size` of the stored rows; it counts
+  content (§2 table): a 2 KB base per spreadsheet and 256 B per sheet; cells, `sheet_row` and
+  `sheet_column` only when they carry something — 16 B plus the bytes of their non-null
+  value/format columns (`SheetsSizeEstimator.valueBytes`, derived from the generated tables:
+  text by UTF-8 length, numbers/dates 8, ints 4, enums 1, `true` flags 1; ids, references,
+  sort keys and `createdAt` never count); 256 B per row of every other table (charts and
+  images as `embedded_object`, pivots, merges, groups, named/protected ranges, CF/DV rules,
+  filters, filter views, bandings, script projects/triggers/properties, macros), script files
+  256 B + their source. The query keeps S-D3's shape (driven by `crdt_data_rows (spaceId,
+  tblId, uuidRowId)`, one `UNION ALL` over the tables) — only the per-row expression changed;
+  `SpaceSizeEstimator` keeps `pg_column_size` as its default (`rowBytes`, `baseBytes` are the
+  override points). `StorageHooks.sheetsEstimate` (template and sheet-list pre-checks) uses the
+  same constants and mirrors `SpreadsheetFactory` (cells it writes, bold, number formats,
+  formula references in stored form), so the pre-check and the measured size agree (the
+  *Monthly budget* template: 4,571 B pre-check, 4,555 B measured). Existing users are
+  corrected without a migration: the nightly reconcile re-estimates every spreadsheet before
+  recounting (§4.3) — the first night logs one `storage.drift` per user with spreadsheets.
+  Numbers (embedded Postgres, laptop; old = `pg_column_size` of the same rows): a new empty
+  spreadsheet **82,410 B → 2,304 B** (base + one sheet; its 1,000 default rows and 26 columns
+  count nothing); a 50k-cell sheet (5,000 rows × 10 columns, one short text and nine number
+  columns, no formats) **6.78 MB (136 B/cell) → 1.23 MB (24.7 B/cell)**, estimated in 86 ms
+  (old query 57 ms). 50 MB now hold ~2M such cells, above `maxCellsPerSpreadsheet` (1M).
+  Slides keeps `pg_column_size` (`SlidesSizeEstimator`): a new empty deck costs **~18 KB**
+  (theme, master and layout rows) — the same effect, 4× smaller; left as is (TODO.md).
 - **Enforcement** (§7.2) as built: uploads (D-8) and image uploads reserve; `drive.import` /
   MCP `drive.import` check the source size before any work and, for documents, the converted
   content + image bytes before anything is stored (spreadsheets: the source size; the real size
@@ -504,8 +540,9 @@ reconcile), `StorageFutureCall`, `StorageEvents`, `StorageHooks` (one-line enfor
   all counters (incl. `reservedBytes`) recomputed under the row lock; drifts > 1 % or 64 KB are
   logged as `storage.drift {userId, field, before, after}`.
 - Not built: the weekly orphan-image cleanup (§2 "−" path) does not exist yet; the per-user
-  override has no admin tool. (MCP results' `storage` field, `drive.get_storage` and the
-  snake_case `quota_exceeded` details came with D-15, suite 09 §4.)
+  override has no admin tool; the backfill dry run on a production copy is still to do.
+  (MCP results' `storage` field, `drive.get_storage` and the snake_case `quota_exceeded`
+  details came with D-15, suite 09 §4.)
 
 ## 12. As built (D-11)
 

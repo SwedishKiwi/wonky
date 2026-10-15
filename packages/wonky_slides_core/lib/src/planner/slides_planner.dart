@@ -27,6 +27,11 @@ import '../model/index/deck_indexes.dart';
 import '../model/index/placeholder_index.dart';
 import '../model/resolve/slide_resolver.dart';
 import '../model/text/slides_text.dart';
+import '../motion/builds/build_options.dart' show BuildOptions;
+import '../motion/builds/transition_spec.dart'
+    show DeckMotionDefaults, TransitionSpec;
+import '../motion/easing/motion_easing.dart' show MotionEasing;
+import '../motion/effects/effect_catalog.dart' show EffectCatalog;
 import '../ops/change_summary.dart';
 import '../ops/operations.dart';
 import '../ops/plan_context.dart';

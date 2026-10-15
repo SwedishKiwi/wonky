@@ -74,3 +74,12 @@ Consequences worth knowing before building:
 | 28 | Linked chart auto-update | Recommendation accepted: client-side in M10; server reverse index in M11 only if needed | [08 §5.5](wonky_slides/08-charts-from-sheets.md) |
 | 29 | Presenter view windows | **User (web only):** single window — presenter view here, audience on another device or browser, one presentation-session state model; no second local window in v2 | [10 §5.2](wonky_slides/10-presenting-and-pdf.md) |
 | 30 | Desktop multi-window | **User (web only):** deferred (no spike in v2); recorded with the possible later second window | [10 §5.3](wonky_slides/10-presenting-and-pdf.md) |
+
+## Decisions during the build
+
+Decided by the user after the M8 check (D-18), while building M9–M11.
+
+| # | Question | Decision | Recorded in |
+|---|----------|----------|-------------|
+| B1 | Fetch and self-host pdf.js (~4 MB) for Drive's PDF preview | **User:** "No need for previews" — no PDF previews in v2. PDFs show the *Download* card like every other non-previewable file; the PDF viewer, `tool/fetch_pdfjs.sh`, `dartPdfJsBaseUrl` and `printing` in `wonky_drive` were removed | [Drive 02 §6.3](wonky_drive/02-files-uploads-previews.md), [Drive 05 S-D1](wonky_drive/05-implementation-plan.md) |
+| B2 | Spreadsheet size for the quota: exact stored bytes vs a content estimate | **User:** "an estimate is ok" — count content (non-empty cells, rows/columns with non-default properties, objects at a fixed cost, a small base), not stored rows; a new empty spreadsheet costs a few KB instead of ~80 KB | [Drive 03 §11](wonky_drive/03-storage-quota.md) |

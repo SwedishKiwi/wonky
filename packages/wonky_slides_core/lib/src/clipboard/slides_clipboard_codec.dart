@@ -14,6 +14,7 @@ import '../schema/slides_schema.dart';
 import '../text/slides_delta.dart';
 import '../theme/layout/placeholder_type.dart';
 import '../theme/model/common.dart';
+import 'slides_html.dart';
 
 /// The Wonky Slides clipboard payload `application/x-wonky-slides` v1
 /// (03 §12.2): built from a deck selection on copy, parsed and sanitized on
@@ -151,7 +152,7 @@ abstract final class SlidesClipboardCodec {
     payload
       ..['themes'] = [
         for (final t in deck.themes)
-          if (themeIds.contains(t.id)) _themeEntry(deck, t),
+          if (themeIds.contains(t.id)) themeEntry(deck, t),
       ]
       ..['groups'] = [
         for (final g in groups)
@@ -264,7 +265,11 @@ abstract final class SlidesClipboardCodec {
     ],
   };
 
-  static Map<String, Object?> _themeEntry(DeckModel deck, DeckThemeRec t) {
+  /// The rows of theme [t] of [deck]: its `deck_theme` columns plus
+  /// `masters`, `layouts` and `elements` (of masters and layouts) — the
+  /// `themes` entries of a payload, and `ImportTheme.themeEntry` (SL-17:
+  /// theme import and duplicate). JSON-safe (dates as ISO strings).
+  static Map<String, Object?> themeEntry(DeckModel deck, DeckThemeRec t) {
     final masters = deck.mastersOf(t.id);
     return {
       ..._json(t.columns),
@@ -677,6 +682,36 @@ abstract final class SlidesClipboardCodec {
     return out.join('\n');
   }
 
+  /// Readable `text/html` content of a payload (03 §12.1; the embedded
+  /// payload is added by `SlidesHtml.ofPayload`): text bodies with their
+  /// formatting, tables as `<table>`, code as `<pre>`; slides as their
+  /// title (`<h2>`) followed by their text.
+  static String htmlBody(Map<String, Object?> payload) {
+    if (payload['kind'] == kindText) {
+      final t = payload['text'];
+      return SlidesHtml.ofDelta(t is Map ? t['delta'] : null);
+    }
+    final ctx = _PayloadView(payload);
+    if (payload['kind'] == kindElements) {
+      return ctx.htmlOf(ctx.topElements(null));
+    }
+    final out = StringBuffer();
+    for (final s in ctx.slides) {
+      final (title, _) = ctx.outline(s);
+      final rest = [
+        for (final e in ctx.topElements('${s[SlidesCols.id]}'))
+          if (e[ElementCols.placeholderType] != SlidePlaceholderType.title.name)
+            e,
+      ];
+      out.write(
+        '<h2>${SlidesHtml.escape(title.isEmpty ? 'Untitled slide' : title)}'
+        '</h2>',
+      );
+      out.write(ctx.htmlOf(rest));
+    }
+    return out.toString();
+  }
+
   static String _plainOfDelta(Object? text) {
     final d = text is Map ? text['delta'] : null;
     final t = SlidesDeltaNormalizer().normalizeValue(d).delta;
@@ -795,6 +830,91 @@ final class _PayloadView {
       }
     }
     return out;
+  }
+
+  /// HTML of [list] (groups expanded; images and charts skipped).
+  String htmlOf(List<Map<String, Object?>> list) {
+    final out = StringBuffer();
+    for (final e in list) {
+      final id = '${e[SlidesCols.id]}';
+      switch (ElementKind.fromName(e[SlidesCols.kind])) {
+        case ElementKind.group:
+          out.write(htmlOf(childrenOf(id)));
+        case ElementKind.table:
+          out.write(_tableHtml(id));
+        case ElementKind.code:
+          final t = textOf([e]);
+          if (t.isNotEmpty) {
+            out.write('<pre><code>${SlidesHtml.escape(t.first)}</code></pre>');
+          }
+        default:
+          final text = e[SlidesCols.text];
+          if (text is String && !SlidesText.isBlank(text)) {
+            out.write(SlidesHtml.ofDelta(SlidesText.parse(text)));
+          }
+      }
+    }
+    return out.toString();
+  }
+
+  List<Map<String, Object?>> _axesOf(String elementId, String dim) =>
+      [
+        for (final a in axes)
+          if (a[SlidesCols.elementId] == elementId &&
+              a[TableAxisCols.dimension] == dim)
+            a,
+      ]..sort(
+        (a, b) => _byOrder(
+          '${a[SlidesCols.sortKey] ?? ''}',
+          a[SlidesCols.id],
+          '${b[SlidesCols.sortKey] ?? ''}',
+          b[SlidesCols.id],
+        ),
+      );
+
+  String _tableHtml(String elementId) {
+    final rows = _axesOf(elementId, TableAxisDimension.row.name);
+    final cols = _axesOf(elementId, TableAxisDimension.column.name);
+    final byPos = {
+      for (final c in cells)
+        if (c[SlidesCols.elementId] == elementId)
+          '${c[TableCellCols.rowId]}:${c[TableCellCols.columnId]}': c,
+    };
+    final covered = <(int, int)>{};
+    final out = StringBuffer('<table><tbody>');
+    for (final (i, r) in rows.indexed) {
+      out.write('<tr>');
+      for (final (j, c) in cols.indexed) {
+        if (covered.contains((i, j))) continue;
+        final cell = byPos['${r[SlidesCols.id]}:${c[SlidesCols.id]}'];
+        final rs = (cell?[TableCellCols.rowSpan] as num?)?.toInt() ?? 1;
+        final cs = (cell?[TableCellCols.colSpan] as num?)?.toInt() ?? 1;
+        for (var dr = 0; dr < rs; dr++) {
+          for (var dc = 0; dc < cs; dc++) {
+            if (dr > 0 || dc > 0) covered.add((i + dr, j + dc));
+          }
+        }
+        final fill = cell?[TableCellCols.fill];
+        out.write('<td');
+        if (rs > 1) out.write(' rowspan="$rs"');
+        if (cs > 1) out.write(' colspan="$cs"');
+        if (fill is String && fill.startsWith('#')) {
+          out.write(' style="background-color:${SlidesHtml.escape(fill)}"');
+        }
+        out.write('>');
+        final text = cell?[SlidesCols.text];
+        if (text is String && !SlidesText.isBlank(text)) {
+          final html = SlidesHtml.ofDelta(SlidesText.parse(text));
+          // One paragraph: no <p> wrapper (spreadsheets paste it as a value).
+          final single = RegExp(r'^<p>(.*)</p>$').firstMatch(html);
+          out.write(single?.group(1) ?? html);
+        }
+        out.write('</td>');
+      }
+      out.write('</tr>');
+    }
+    out.write('</tbody></table>');
+    return out.toString();
   }
 
   List<String> _table(String elementId) {

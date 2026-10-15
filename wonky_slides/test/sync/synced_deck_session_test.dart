@@ -173,6 +173,37 @@ void main() {
       await eventually(() => s.loadState.value is DeckUnavailable);
     });
 
+    test('when the membership returns while the deck is open then it '
+        'reloads and turns ready again', () async {
+      final s = await open();
+      final reloads = s.fullReloads;
+      // A change that only the membership read filter hid and showed:
+      // stored in the replica, but without journal entries.
+      await writeOp(
+        host.replica,
+        space,
+        (_) => const SetDeckProps(title: 'Renamed while unshared'),
+      );
+      await host.replica.db.unsafeExecute(
+        'DELETE FROM "sheets_row_journal" WHERE "id" > ${s.cursor}',
+      );
+      await revokeLocally(host.replica, space);
+      host.mergesController.add(space);
+      await eventually(() => s.loadState.value is DeckUnavailable);
+
+      await grantLocally(host.replica, space);
+      host.mergesController.add(space);
+
+      await eventually(() => s.loadState.value is DeckReady);
+      expect(s.fullReloads, greaterThan(reloads));
+      expect(s.model.deck?.title, 'Renamed while unshared');
+      expect(s.canEdit, isTrue);
+      expect(
+        canonical(await reloadModel(host.replica, space)),
+        canonical(s.model),
+      );
+    });
+
     test('when the membership turns read-only then an editor becomes a '
         'viewer and can no longer write', () async {
       final s = await open();

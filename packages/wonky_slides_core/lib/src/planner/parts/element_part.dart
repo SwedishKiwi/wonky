@@ -607,7 +607,7 @@ extension _ElementPart on _Planner {
       'src': op.src,
       'naturalWidth': op.naturalWidth,
       'naturalHeight': op.naturalHeight,
-      'crop': null,
+      'crop': op.crop,
       'fileName': op.fileName,
       'mimeType': op.mimeType,
     });

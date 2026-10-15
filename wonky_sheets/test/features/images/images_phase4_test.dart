@@ -301,6 +301,15 @@ void main() {
       expect(clip.lastText, startsWith('wonky-sheets-objects:'));
       final sys = await s.editor.clipboard.system.read();
       expect(sys?.plainText, clip.lastText);
+      // Wonky Slides pastes the objects from the shared user store
+      // (Slides 03 §12.4: a linked chart).
+      final shared = await tester.runAsync(
+        () => s.editor.services.userStore.read('clipboard.sheetsObjects'),
+      );
+      expect('wonky-sheets-objects:${(shared! as Map)['id']}', clip.lastText);
+      final item = ((shared as Map)['items'] as List).single as Map;
+      expect(item['objectId'], isNotNull);
+      expect(item['spreadsheetItemUuid'], isNotNull);
     });
   });
 }

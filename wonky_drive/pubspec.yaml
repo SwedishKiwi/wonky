@@ -22,11 +22,9 @@ dependencies:
   # File upload… picker (Drive 02 §3.1).
   file_picker: ^13.1.0
   go_router: ^18.0.2
-  # File previews: signed-URL fetches (Drive 02 §6.1) and PDF rasterizing
-  # with the self-hosted pdf.js in web/pdfjs/ (§6.3, spike S-D1).
+  # File previews: signed-URL fetches (Drive 02 §6.1).
   http: ^1.6.0
   intl: ^0.20.3
-  printing: ^5.15.1
   shad: ^0.99.4
   wonky_app:
     path: ../packages/wonky_app

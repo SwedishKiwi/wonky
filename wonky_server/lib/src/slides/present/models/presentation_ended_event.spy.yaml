@@ -1,0 +1,8 @@
+### The session is over for this connection; the stream closes after it.
+### Reasons: ended (by the presenter), expired (presenter gone 30 s),
+### takenOver (another presenter connection), presenterActive (a presenter
+### join without takeOver while one is connected), notFound.
+class: PresentationEndedEvent
+extends: PresentationEvent
+fields:
+  reason: String

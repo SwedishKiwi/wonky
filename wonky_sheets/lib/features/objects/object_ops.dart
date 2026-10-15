@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:clock/clock.dart';
@@ -229,10 +230,36 @@ abstract final class ObjectOps {
         'rangesA1': ranges,
         'title': o.title,
         'altText': o.altText,
+        // Slides 03 A-03-5: a chart pasted into Wonky Slides links back.
+        'spreadsheetItemUuid': ed.session.itemUuid.uuid,
+        'objectId': o.id,
+        'sheetId': o.sheetId,
       });
     }
     final id = ed.services.ids.nextString();
+    // Slides 03 §12.4: the other Wonky Work apps (same origin, same user
+    // store) paste the objects from the marker on the system clipboard.
+    unawaited(_share(ed, id, items));
     return clip = ObjectClip(id, items, ed.clipboard.last);
+  }
+
+  /// Key of the shared objects copy in the user's local store (read by
+  /// Wonky Slides' paste with the [clipMarker] text).
+  static const sharedClipKey = 'clipboard.sheetsObjects';
+
+  static Future<void> _share(
+    SheetEditorController ed,
+    String id,
+    List<Map<String, Object?>> items,
+  ) async {
+    try {
+      await ed.services.userStore.write(sharedClipKey, {
+        'id': id,
+        'items': items,
+      });
+    } catch (_) {
+      // Best effort: pasting inside Sheets uses the in-memory clip.
+    }
   }
 
   /// Rebuilds a chart spec's ranges from the clip's A1 texts against [ed]'s

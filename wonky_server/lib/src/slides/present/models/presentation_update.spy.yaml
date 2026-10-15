@@ -1,0 +1,5 @@
+### Client → server messages of a presentation session (Slides 10 §6.2).
+### Only the presenter sends state, laser, ink and end; audiences and
+### remotes send commands.
+class: PresentationUpdate
+sealed: true

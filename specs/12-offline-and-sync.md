@@ -319,7 +319,27 @@ patch exists. Priority for in-house patches: U11 (M0), U7 and U6 (M3), U1/U2 (M4
 | U9 | Server-side write validation/rejection | Client-side guards; protected ranges advisory |
 | U10 | Rolling schema evolution (additive columns without lock-step) | Batched synced-schema releases |
 | U11 | Client API: rows changed in a space since an HLC (`changedRowsSince`) for incremental in-memory models | **Done app-side** (no engine patch): merged changes keep their author's HLC, so a late offline edit has an *old* HLC and "since HLC h" misses it. Instead SQLite triggers on the synced tables and on `crdt_data_rows` (visibility: deletes, revivals, FK projection) append `(space, table, row)` to the local `sheets_row_journal`, whose integer id is a local change sequence; only spaces open on the device (`sheets_journal_space`) are journaled. Sessions re-read the journaled rows after each merge (`SheetsChangeJournal`, `RemotePatch`). |
+| U12 | A synced-schema (registry) change must not re-project every space synchronously on the first database access (incident 2026-10-15: S-1 crashed `serverpod start` with an exhausted connection pool) | **Done in-house, patch OS-9** (below) |
 
+
+**Projection rebuild after a synced-schema change (OS-9).** Each synced-schema release
+(S-1…S-3, §2.6) changes the CRDT registry, and the foreign key projection (visibility, FK
+repair, unique claims) of the affected spaces must be recomputed for the new graph. The
+reconciliation now persists *which* spaces need it in the same transaction as the registry
+change (rows of a reserved registry entry `#projection_rebuild`, one per space with its seed
+tables), so a crash or restart resumes instead of silently skipping. Only spaces holding rows
+of a table whose registry entry changed are affected (one indexed query per changed table): a
+new table has no rows yet, so S-1's 13 new tables rebuilt nothing; a dropped table rebuilds
+its spaces over every table. Startup does not wait: a background queue (start delay 2 s,
+one space per transaction, one at a time, a short pause between spaces) rebuilds the spaces,
+taking the node lock that writes and merges take; a failure is logged and retried with a
+doubling backoff (30 s … 10 min) and never fails the server. A **write or merge** into a still
+pending space (`transactionForUser`) rebuilds that space first, so it acts on the new graph;
+**reads** of a pending space serve its previous projection until it is rebuilt — identical for
+every row outside the changed tables, and the rebuild is deterministic from the authored state
+(tombstones, field HLCs, attempted values), so nothing synced depends on it. The dev server
+also runs with `maxConnectionCount: 20` (`config/development.yaml`), since hot reloads restart
+it while long transactions still hold connections.
 ## 5. Scale limits (staged)
 
 | Stage | Max cells / spreadsheet | Gate to raise |

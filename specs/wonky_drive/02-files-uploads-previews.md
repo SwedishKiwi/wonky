@@ -2,7 +2,7 @@
 
 This spec defines the **`file` kind** (arbitrary uploaded files as drive items), the upload
 flow (picker, drag-and-drop, upload queue, offline queue, resumability), MIME sniffing,
-in-app previews (images, PDF, text/code, audio), *Open with* conversions to Write and Sheets,
+in-app previews (images, text/code, audio; no PDF previews in v2, §6.3), *Open with* conversions to Write and Sheets,
 downloads, and versions of uploaded files (P2). Storage accounting and enforcement are in
 [03](03-storage-quota.md); the screens in [04](04-screens-menus.md); the security rules for
 uploads in suite [13 §6](../13-security-and-operations.md).
@@ -324,8 +324,8 @@ first 4 KB of the stored object:
 3. Otherwise `application/octet-stream`.
 
 The **declared** type (browser/OS, client) and the extension never override a sniffed binary
-signature. Mismatches are kept as is (a `.png` that is really a PDF is shown as a PDF; its name
-is not changed). Active types are never rendered (§6): `text/html`, `image/svg+xml`,
+signature. Mismatches are kept as is (a `.png` that is really a PDF is treated as a PDF — the
+*Download* card, §6.3; its name is not changed). Active types are never rendered (§6): `text/html`, `image/svg+xml`,
 `application/xhtml+xml`, `text/xml`, JavaScript and every unknown type are previewed as text
 (if text) or not at all.
 
@@ -376,34 +376,23 @@ under `drive/<ownerUuid>/<fileUuid>/`.
   actual size, drag to pan, rotate 90° (view only, not saved), checkerboard behind transparency
   (`canvas` token based, light/dark).
 
-### 6.3 PDF (P0)
+### 6.3 PDF — no previews in v2
 
-- Rendered client-side to raster pages (no PDF JavaScript, forms or links executed): pages are
-  rasterized on demand at the device pixel ratio × zoom (visible pages ± 2), max 300 pages.
-- Library: `printing`'s `Printing.raster` (already used by Write/Sheets for print preview; pdf.js
-  on web — must be **self-hosted** in `web/` because the apps are cross-origin isolated, suite
-  13 §3 — and PDFium on desktop). Spike S-D1 (05) confirms; alternative `pdfrx` (PDFium WASM).
-- **Decided (S-D1, D-14):** `printing` + self-hosted pdf.js. No new dependency, no 4–5 MB PDFium
-  WASM in the bundle, and pdf.js is fetched only when a PDF is opened; `pdfrx` stays the fallback
-  if pdf.js proves too slow on the 100-page budget (suite 11 §2). Recipe: `wonky_drive/web/pdfjs/`
-  holds `pdf.min.mjs`, `pdf.worker.min.mjs`, `cmaps/`, `LICENSE` and `VERSION` of `pdfjs-dist`
-  (the version `printing` targets, 6.2.108), installed by `wonky_drive/tool/fetch_pdfjs.sh`;
-  `web/index.html` sets `window.dartPdfJsBaseUrl = new URL('pdfjs/', document.baseURI).href`,
-  which `printing` uses instead of its CDN. The server serves `.mjs` as `text/javascript` (`mime`)
-  with the COOP/COEP headers of the app, so the module and its worker load same-origin. Before
-  the first raster the client `HEAD`s `pdfjs/pdf.min.mjs` (a missing file would leave `printing`'s
-  loader locked); when it is missing the viewer shows "PDF previews aren't available here.
-  Download the file to view it." Pages are scanned once at 12 dpi (page sizes and placeholders,
-  stopping at 300 pages) and the visible pages ± 2 are rendered sharp at 96 dpi × zoom × device
-  pixel ratio (a second raster stream, so the first page is sharp before the scan ends). 100 %
-  zoom is 1 pt = 4/3 px. An `/Encrypt` trailer (or a pdf.js password error) gives the
-  password state.
-- Viewer: vertical continuous scroll, page indicator "3 / 24", go to page (`Mod+G`), zoom
-  (fit width default, 25–400 %), page thumbnails strip (P1), white paper pages with shadow in
-  both themes. Encrypted PDFs: "This PDF is password-protected. Download it to open it."
-- Metadata: page count is written back with `drive.updateFileMeta(uuid, {pages})` by the first
-  viewer with Editor role (the server can't render PDFs); the first page becomes the thumbnail
-  (client renders 400 × 300 and calls `drive.setThumbnail`, as documents do, suite 05 §2).
+**Decided (user, after D-18): no PDF previews in v2.** PDFs get the same treatment as every
+other file that can't be previewed (§6.7): the card with the category icon (PDF red), name, type
+· size, owner and date, and *Download* (and *Open with* where a conversion exists — none for
+PDFs today). No error or "unavailable" message: a PDF is simply not a previewable type. The
+viewer's bytes are never fetched for a PDF, so opening one costs one `drive.get`.
+
+What was built and removed again: S-D1 had picked `printing`'s `Printing.raster` with a
+self-hosted pdf.js (`wonky_drive/web/pdfjs/`, `window.dartPdfJsBaseUrl`, `tool/fetch_pdfjs.sh`,
+page scan ≤ 300 pages, page field, go to page, fit width, password and broken states, page count
+written back with `drive.updateFileMeta`). The pdf.js files were never committed (a ~4 MB
+third-party download), and the user decided previews aren't worth it. The viewer, the
+`drive.preview.goToPage` command, its strings and the `printing` dependency of `wonky_drive` are
+gone; `drive.updateFileMeta` stays on the server (generic client-measured metadata, §1.1) without
+a v2 caller. PDFs have no thumbnail (the category icon is shown). A later PDF preview would
+start again from S-D1 (`printing` + pdf.js, or `pdfrx`).
 
 ### 6.4 Text and code (P0)
 
@@ -441,7 +430,7 @@ full download). Video files are never played (no video in v2).
 | Kind | Thumbnail |
 |------|-----------|
 | Images | Server, at completion (§6.2) |
-| PDF | First page, rendered by the first Editor+ viewer (§6.3) — P1 |
+| PDF | None in v2 (category icon; no PDF rendering, §6.3) |
 | Text/code | None (kind icon with the extension label) |
 | Documents, spreadsheets, presentations | Rendered by their apps (suite 05 §2 `setThumbnail`; Slides: first slide) |
 
@@ -571,7 +560,8 @@ up space* suggests deleting old ones.
   offline they show "Waiting for connection".
 - **AC-D2.4** A `.jpg` that is really HTML is stored as `text/html`, previewed as source text,
   and downloaded with `Content-Disposition: attachment` and `nosniff`.
-- **AC-D2.5** Image, PDF (24 pages), Dart source and a 3 MB log file preview in light and dark;
+- **AC-D2.5** Image, Dart source and a 3 MB log file preview in light and dark (a PDF shows the
+  *Download* card, §6.3);
   ←/→ moves between files of the folder; Esc returns to the folder with the selection kept.
 - **AC-D2.6** *Open with Wonky Sheets* on a CSV shows the Sheets import dialog, creates a
   spreadsheet next to the CSV, opens it; Back returns to Drive; the CSV still exists.

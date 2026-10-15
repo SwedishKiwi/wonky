@@ -1,0 +1,25 @@
+### The presenter's full state (Slides 10 §6.2 `state`), sent on every
+### change and every 10 s. Elapsed times are relative to the sending
+### moment; the server stamps `sentAtMs` on the event, so followers derive
+### start times in their own clock (offset estimated from server times).
+class: PresentationState
+fields:
+  ### Increases with every change (followers drop older states).
+  revision: int
+  ### The shown slide (null in an empty deck).
+  slideId: String?
+  ### Timeline step on the slide (0 = after the automatic step).
+  step: int
+  ### Milliseconds since the step started when the state was sent.
+  stepElapsedMs: int
+  ### none, black or white.
+  blank: String
+  ### The slide picker is open on the audience (no presenter view).
+  picker: bool
+  ### The end screen is shown.
+  endScreen: bool
+  timerRunning: bool
+  ### Timer milliseconds when the state was sent.
+  timerElapsedMs: int
+  ### The presenter's deck revision (followers wait for sync when behind).
+  deckRevision: String?

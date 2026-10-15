@@ -32,7 +32,7 @@ has an integration test through `/mcp`. Every endpoint has permission tests for 
 9. Theme editor: create theme, apply, verify editor + PDF reflect it in light & dark.
 10. Script: custom function used in a formula; onEdit trigger; time-driven trigger runs on server.
 11. (v2) Drive: sign in at `/` lands on Wonky Write's home (`/write/`); the left menu opens
-    Wonky Drive at `/drive/`; upload files by drag-and-drop, preview image/PDF/code,
+    Wonky Drive at `/drive/`; upload files by drag-and-drop, preview image/code (a PDF shows the *Download* card),
     *Open with* a CSV in Sheets; app homes show only their kind ([Drive 05 §6](wonky_drive/05-implementation-plan.md)).
 12. (v2) Quota: fill the 50 MB, see the refusal and the banners in every app, empty trash, the
     banner disappears live.
@@ -55,14 +55,14 @@ has an integration test through `/mcp`. Every endpoint has permission tests for 
 | Cell commit (local) | < 16 ms; recalculation of 100k dependents < 1 s native, < 2 s web |
 | Sheets remote change visible | < 300 ms via commit hint; < 3 s via sync |
 | Memory | Web tab < 1.5 GB at 1M cells; desktop < 2 GB |
-| Bundle size (web, per app, compressed) | < 6 MB initial (deferred loading for exporters, charts, script runtime, theme editor); (v2) Drive < 4 MB initial (PDF and code viewers deferred) |
+| Bundle size (web, per app, compressed) | < 6 MB initial (deferred loading for exporters, charts, script runtime, theme editor); (v2) Drive < 4 MB initial (code viewer deferred) |
 | (v2) Drive home | First list paint < 1 s with 1,000 items in the folder (cached: < 300 ms); upload throughput limited only by the network (no client re-encoding) |
-| (v2) Previews | Image (≤ 4 MB) < 500 ms after bytes arrive; first PDF page < 1 s for a 100-page PDF; 1 MB text file highlighted < 300 ms |
+| (v2) Previews | Image (≤ 4 MB) < 500 ms after bytes arrive; 1 MB text file highlighted < 300 ms |
 | (v2) Slides | See [Slides 01 §4](wonky_slides/01-overview.md) (60 fps builds and transitions, deck open budgets) |
 
 Use Flutter deferred imports (`deferred as`) for heavy, rarely used features on web: exporters,
 importers, theme editor, chart editor, pivot editor, script editor + runtime, AI panel; (v2)
-Drive's PDF/text/audio viewers, Slides' presenting, PDF export, 3D charts and code type-in.
+Drive's text/audio viewers, Slides' presenting, PDF export, 3D charts and code type-in.
 
 ## 3. Accessibility (WCAG 2.2 AA target)
 - Keyboard: every action reachable by keyboard; visible focus; no traps (Esc always exits

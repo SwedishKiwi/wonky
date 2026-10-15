@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
+import 'package:wonky_app/fonts.dart';
 import 'package:wonky_code_flutter/wonky_code_flutter.dart';
 
 import '../../../l10n/drive_l10n.dart';
@@ -9,10 +12,22 @@ import '../file_preview_controller.dart';
 /// numbers, soft wrap (`Alt+Z`), syntax highlighting by extension and the
 /// light/dark code palette. HTML, SVG and XML are shown as source, never
 /// rendered.
+///
+/// The code font (JetBrains Mono, a `wonky_fonts` asset) is registered with
+/// the engine on first use: the web has no system monospace font, so the
+/// `CodeTextStyler` fallbacks (Menlo, Consolas) never apply there (D-18:
+/// code previews rendered in a proportional font).
 class TextFileViewer extends StatelessWidget {
-  const TextFileViewer({super.key, required this.controller});
+  const TextFileViewer({super.key, required this.controller, this.fonts});
 
   final FilePreviewController controller;
+
+  /// Registers the code font (default [AssetFontRegistry.instance]).
+  final AssetFontRegistry? fonts;
+
+  /// The family of the code text.
+  static final String codeFontFamily =
+      CodeTextStyler.defaultBaseStyle.fontFamily!;
 
   static const codeKey = ValueKey<String>('drive.preview.text');
 
@@ -26,6 +41,16 @@ class TextFileViewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final registry = fonts ?? AssetFontRegistry.instance;
+    unawaited(registry.ensure(codeFontFamily));
+    // Lays the code out again once the font is registered.
+    return ValueListenableBuilder<int>(
+      valueListenable: registry.generation,
+      builder: (context, _, _) => _build(context),
+    );
+  }
+
+  Widget _build(BuildContext context) {
     final t = controller.text!;
     final palette = paletteOf(context);
     return Column(

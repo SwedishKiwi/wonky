@@ -86,9 +86,9 @@ abstract final class UiDriveTools {
     name: 'ui.drive.get_preview_state',
     title: 'Get the preview state',
     description:
-        'Describes the open file preview: uuid, viewer type (image, pdf, '
-        'text, csv, unsupported, error), page and page count (PDF), zoom '
-        '(percent) and the error, if any.',
+        'Describes the open file preview: uuid, viewer type (image, text, '
+        'csv, unsupported, error; PDFs are unsupported), zoom (percent) and '
+        'the error, if any.',
     inputSchema: _schema(),
     annotations: McpToolAnnotations.read,
     scopes: _scopes,

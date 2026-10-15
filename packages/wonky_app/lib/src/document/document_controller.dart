@@ -67,6 +67,10 @@ abstract class DocumentController extends ChangeNotifier {
   /// composition first).
   Future<void> beforeUndo() async {}
 
+  /// Called by `shell.edit.redo` before redoing (e.g. Slides writes pending
+  /// typing first).
+  Future<void> beforeRedo() async {}
+
   // ---- File menu contributions ----
 
   /// Formats offered under File › Download (`docx`, `pdf`, `xlsx` …) with

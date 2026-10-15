@@ -1,0 +1,8 @@
+### A live presentation session of the caller on a deck (the *Show audience
+### view here* banner, Slides 10 §5.2).
+class: PresentationSessionInfo
+fields:
+  sessionId: String
+  deviceLabel: String
+  ### Server time of the presenter's join (epoch ms).
+  startedAtMs: int

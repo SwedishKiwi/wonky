@@ -1,0 +1,12 @@
+### A participant's role in a presentation session (Slides 10 §6.3).
+enum: PresentationRole
+serialized: byName
+values:
+  ### Drives the session (presenter view); one per session.
+  - presenter
+  ### The presenter's own account on another device or browser.
+  - audience
+  ### Phone remote (P1, SL-41): sends commands.
+  - remote
+  ### Users with access to the deck who follow along (P1).
+  - follower

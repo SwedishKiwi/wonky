@@ -13,12 +13,17 @@ import 'package:wonky_ui/testing.dart';
 /// A [CommandTestHarness] for Wonky Slides with quiet comment and presence
 /// repositories (the editor frame starts both) and a router with the home
 /// and the deck route of [SlidesAppConfig].
-CommandTestHarness slidesHarness({String initialLocation = '/'}) {
+CommandTestHarness slidesHarness({
+  String initialLocation = '/',
+  StorageController? storage,
+  PresenceRepository? presence,
+}) {
   const config = SlidesAppConfig();
   final h = CommandTestHarness(
     config: config,
+    storage: storage,
     comments: QuietCommentRepository(),
-    presence: QuietPresenceRepository(),
+    presence: presence ?? QuietPresenceRepository(),
   );
   h.services.router = GoRouter(
     initialLocation: initialLocation,

@@ -86,3 +86,32 @@ The ids and descriptions below are the history from the vendored package. File p
 - **Files**: `grammars/json.json`, `grammars/css.json`, `grammars/go.json`
 - **Upstream**: to be proposed.
 
+
+## SH-6 — Next-match search, own scanner (performance; Slides SL-26)
+
+Made in `wonky_code` (not in the vendored package), for the 07 §14 tokenizer budget (1,000
+lines of Dart ≤ 15 ms desktop / ≤ 30 ms web). It was ≈ 56 ms on the Dart VM; ≈ 17 ms after the
+patch (VM JIT and AOT, on a loaded 12-core laptop).
+
+- **Reason**: the engine tries every rule at every character and advances one character when
+  none matches; `string_scanner`'s `LineScanner` recounts newlines with a regex on every
+  position change and from the string start whenever a scanner is created at a position; capture
+  patterns were re-parsed (regexes recompiled) on every match.
+- **Changes** (`lib/src/textmate/span_parser.dart`, all marked `WONKY PATCH SH-6`):
+  - the top-level loop and `_scanUpToEndMatch` jump to the leftmost position where the rule
+    list (or the `end` pattern, which wins ties) can match: the leaf regexes of a rule list
+    (simple `match`, multi-line `begin`, through `patterns` and `include`s) are searched with
+    `allMatches(string, from)`; a leftmost search finds exactly the first position where
+    `matchAsPrefix` succeeds, so the spans are unchanged. Results are memoized per scanner and
+    regex ("the next match at or after `from` is `at`" holds for every later `from'` ≤ `at`),
+    and a per-rule-list min-heap of the leaves' next positions answers without visiting every
+    leaf; a memo also lets `scan` skip rules proven not to match at the current position;
+  - the engine's own `LineScanner` (same API subset) computes line/column on demand from a
+    newline index shared with scanners over a prefix of its string; `location` is lazy;
+  - capture `patterns` are parsed once per capture map; the `while`-rule line regex is
+    compiled once.
+- **Verification**: spans identical to the unpatched engine for every grammar sample, every
+  prefix of it, 200 random mutations of it and a 40× repetition (6,068 texts, compared before
+  the change); `test/perf/budgets_test.dart` (`dart test -P slow`) measures the budget.
+- `string_scanner` is no longer imported by the engine (still a declared dependency).
+- **Upstream**: generally useful; to be proposed with the pure-Dart split (Q26).

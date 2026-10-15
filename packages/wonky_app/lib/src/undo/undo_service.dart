@@ -308,6 +308,19 @@ class UndoService extends ChangeNotifier {
     _changed(key);
   }
 
+  /// Drops step [stepId] when it is the top undo step of [stack] (an
+  /// action that turned out to be a no-op and was reverted by its owner,
+  /// e.g. an empty text box that loses editing, Slides 03 §6.1). The redo
+  /// stack is untouched. Returns whether the step was removed.
+  bool discardTop(String stepId, {UndoStackKey? stack}) {
+    final key = stack ?? _activeDocument ?? UndoStackKey.shell;
+    final s = _stacks[key];
+    if (s == null || s.undo.isEmpty || s.undo.last.id != stepId) return false;
+    s.undo.removeLast();
+    _changed(key);
+    return true;
+  }
+
   /// Rebases every step of [stack] over a remote change; steps that become
   /// no-ops disappear.
   void applyRemote(UndoStackKey stack, RemoteChange change) {

@@ -18,7 +18,6 @@ import 'dart:collection';
 import 'dart:convert';
 
 import 'package:collection/collection.dart';
-import 'package:string_scanner/string_scanner.dart';
 
 const _neverMatchingRegexStr = r'^(?!x)x';
 
@@ -46,7 +45,16 @@ abstract class SpanParser {
   static List<ScopeSpan> parse(Grammar grammar, String src) {
     final scopeStack = ScopeStack();
     final scanner = LineScanner(src);
+    final top = grammar._topLevelList;
     while (!scanner.isDone) {
+      // WONKY PATCH SH-6: jump to the next position where the top level can
+      // match instead of trying every rule at every character.
+      final next = _nextCandidate(grammar, top, scanner);
+      if (next < 0) {
+        scanner.position = src.length;
+        break;
+      }
+      if (next > scanner.position) scanner.position = next;
       final foundMatch = grammar.topLevelMatcher.scan(
         grammar,
         scanner,
@@ -58,6 +66,7 @@ abstract class SpanParser {
       }
     }
     scopeStack.popAll(scanner.location);
+    _releaseSearchState();
     return scopeStack.spans;
   }
 }
@@ -93,6 +102,9 @@ class Grammar {
   final String? scopeName;
 
   final GrammarMatcher topLevelMatcher;
+
+  // WONKY PATCH SH-6: a stable list for the next-match search caches.
+  late final List<GrammarMatcher> _topLevelList = [topLevelMatcher];
 
   final Repository repository;
 
@@ -147,6 +159,7 @@ class ScopeSpan {
     final splitScanner = LineScanner(
       scanner.substring(0, end),
       position: start,
+      prefixOf: scanner,
     );
 
     // Start with a copy of the original span
@@ -278,10 +291,13 @@ abstract class GrammarMatcher {
           final captureScanner = LineScanner(
             scanner.substring(0, captureEndLocation.position),
             position: captureStartLocation.position,
+            prefixOf: scanner,
           );
-          GrammarMatcher.parse(
+          // WONKY PATCH SH-6: capture patterns are parsed once (they were
+          // re-parsed, i.e. their regexes recompiled, on every match).
+          (_captureMatchers[capture] ??= GrammarMatcher.parse(
             capture,
-          ).scan(grammar, captureScanner, scopeStack);
+          )).scan(grammar, captureScanner, scopeStack);
         }
 
         scopeStack.pop(captureName, captureEndLocation);
@@ -310,6 +326,8 @@ class _SimpleMatcher extends GrammarMatcher {
 
   @override
   bool scan(Grammar grammar, LineScanner scanner, ScopeStack scopeStack) {
+    // WONKY PATCH SH-6: a memoized search proves most rules can't match here.
+    if (_cannotMatchAt(match, scanner)) return false;
     final location = scanner.location;
     if (scanner.scan(match)) {
       scopeStack.push(name, location);
@@ -440,7 +458,22 @@ class _MultilineMatcher extends GrammarMatcher {
     LineScanner scanner,
     ScopeStack scopeStack,
   ) {
+    final candidates = patterns ?? const <GrammarMatcher>[];
     while (!scanner.isDone && end != null && !scanner.matches(end!)) {
+      // WONKY PATCH SH-6: jump to the earliest position where the end or a
+      // pattern can match (the end wins ties: it is checked first).
+      final pos = scanner.position;
+      final e = _nextMatch(end!, scanner, pos);
+      final p = _nextCandidate(grammar, candidates, scanner);
+      final target = e < 0 ? p : (p < 0 ? e : (e < p ? e : p));
+      if (target < 0) {
+        scanner.position = scanner.string.length;
+        break;
+      }
+      if (target > pos) {
+        scanner.position = target;
+        continue;
+      }
       bool foundMatch = false;
       for (final pattern in patterns ?? <GrammarMatcher>[]) {
         if (pattern.scan(grammar, scanner, scopeStack)) {
@@ -483,7 +516,8 @@ class _MultilineMatcher extends GrammarMatcher {
 
   @override
   bool scan(Grammar grammar, LineScanner scanner, ScopeStack scopeStack) {
-    if (!scanner.matches(begin)) {
+    // WONKY PATCH SH-6: a memoized search proves most rules can't match here.
+    if (_cannotMatchAt(begin, scanner) || !scanner.matches(begin)) {
       return false;
     }
 
@@ -508,6 +542,7 @@ class _MultilineMatcher extends GrammarMatcher {
       final contentScanner = LineScanner(
         scanner.substring(0, end),
         position: start,
+        prefixOf: scanner,
       );
 
       // Capture a marker for where the contents start, used later to split
@@ -534,8 +569,11 @@ class _MultilineMatcher extends GrammarMatcher {
     return true;
   }
 
+  // WONKY PATCH SH-6: compiled once.
+  static final _lineRegExp = RegExp('.*\n');
+
   void _skipLine(LineScanner scanner) {
-    scanner.scan(RegExp('.*\n'));
+    scanner.scan(_lineRegExp);
   }
 
   @override
@@ -805,6 +843,349 @@ class ScopeStackLocation {
 }
 
 extension LineScannerExtension on LineScanner {
-  ScopeStackLocation get location =>
-      ScopeStackLocation(position: position, line: line, column: column);
+  // WONKY PATCH SH-6: line and column are computed on demand.
+  ScopeStackLocation get location => _ScannerLocation(this, position);
+}
+
+// WONKY PATCH SH-6: a location whose line/column are looked up when read
+// (the tokenizer only reads positions).
+class _ScannerLocation extends ScopeStackLocation {
+  _ScannerLocation(this._scanner, int position)
+    : super(position: position, line: 0, column: 0);
+
+  final LineScanner _scanner;
+
+  @override
+  int get line => _scanner._lineOf(position);
+
+  @override
+  int get column => _scanner._columnOf(position);
+}
+
+// WONKY PATCH SH-6: the engine's own scanner instead of `string_scanner`'s
+// `LineScanner`, which counts newlines (with a regex over a substring) on
+// every position change and from the start of the string whenever a scanner
+// is created at a position — a third of the parse time. Line and column are
+// computed on demand from a newline index shared with the scanners created
+// over a prefix of this one's string. Same semantics: `\n` and a lone `\r`
+// end a line; positions are UTF-16 offsets.
+class LineScanner {
+  LineScanner(this.string, {int position = 0, LineScanner? prefixOf})
+    : _position = position,
+      _newlines = prefixOf?._newlines;
+
+  /// The scanned string.
+  final String string;
+
+  int _position;
+  Match? _lastMatch;
+  int _lastMatchPosition = -1;
+  List<int>? _newlines;
+
+  int get position => _position;
+
+  set position(int value) {
+    if (value < 0 || value > string.length) {
+      throw ArgumentError('Invalid position $value');
+    }
+    _position = value;
+  }
+
+  bool get isDone => _position == string.length;
+
+  /// The last successful [scan]/[matches] match at the current position.
+  Match? get lastMatch => _lastMatchPosition == _position ? _lastMatch : null;
+
+  int readChar() {
+    if (isDone) throw StateError('No more input');
+    return string.codeUnitAt(_position++);
+  }
+
+  int? peekChar([int offset = 0]) {
+    final i = _position + offset;
+    return i < 0 || i >= string.length ? null : string.codeUnitAt(i);
+  }
+
+  bool matches(Pattern pattern) {
+    _lastMatch = pattern.matchAsPrefix(string, _position);
+    _lastMatchPosition = _position;
+    return _lastMatch != null;
+  }
+
+  bool scan(Pattern pattern) {
+    if (!matches(pattern)) return false;
+    _position = _lastMatch!.end;
+    _lastMatchPosition = _position;
+    return true;
+  }
+
+  String substring(int start, [int? end]) => string.substring(start, end);
+
+  /// 0-based line of the position.
+  int get line => _lineOf(_position);
+
+  /// 0-based column of the position (UTF-16 units since the line start).
+  int get column => _columnOf(_position);
+
+  int _columnOf(int pos) {
+    final l = _lineOf(pos);
+    return l == 0 ? pos : pos - (_index[l - 1] + 1);
+  }
+
+  /// Offsets of the line-ending characters (`\n`, lone `\r`) of the
+  /// string — of a longer one when shared with a parent scanner (only
+  /// offsets before the position are ever used, and the string is a prefix).
+  List<int> get _index {
+    final cached = _newlines;
+    if (cached != null) return cached;
+    final out = <int>[];
+    for (var i = 0; i < string.length; i++) {
+      final c = string.codeUnitAt(i);
+      if (c == 0x0A ||
+          (c == 0x0D &&
+              (i + 1 >= string.length || string.codeUnitAt(i + 1) != 0x0A))) {
+        out.add(i);
+      }
+    }
+    return _newlines = out;
+  }
+
+  /// Number of line endings before [pos].
+  int _lineOf(int pos) {
+    final index = _index;
+    var lo = 0, hi = index.length;
+    while (lo < hi) {
+      final mid = (lo + hi) >> 1;
+      if (index[mid] < pos) {
+        lo = mid + 1;
+      } else {
+        hi = mid;
+      }
+    }
+    return lo;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// WONKY PATCH SH-6: next-match search (performance, Slides 07 §14).
+//
+// The engine tries every rule at every character and advances one character
+// when none matches. A rule list can only match at the leftmost position
+// where one of its leaf regexes (simple `match`, multi-line `begin`, through
+// `patterns` and `include`s) matches, so the loops jump there first. A
+// leftmost search from `from` finds exactly the first position `q >= from`
+// where `matchAsPrefix(q)` succeeds, so the produced spans are unchanged.
+//
+// Search results are memoized per scanner (= per source string) and regex:
+// "the leftmost match at or after `from` is `at`" stays true for every later
+// `from'` in `[from, at]`. Per rule list, a min-heap of the leaves' next
+// match positions answers "where can this list match next" without visiting
+// every leaf (a scanner only moves forward; a backward query rebuilds).
+
+final _captureMatchers = Expando<GrammarMatcher>('captureMatchers');
+
+final _leafCache = Expando<List<RegExp>>('leafRegExps');
+
+final _states = Expando<_SearchState>('searchStates');
+
+LineScanner? _lastScanner;
+_SearchState? _lastState;
+
+/// The search state of [scanner] (the last one is kept at hand: Expando
+/// lookups are comparatively slow).
+_SearchState _stateOf(LineScanner scanner) {
+  if (identical(scanner, _lastScanner)) return _lastState!;
+  final state = _states[scanner] ??= _SearchState();
+  _lastScanner = scanner;
+  _lastState = state;
+  return state;
+}
+
+/// Forgets the last scanner (no reference to a parsed text is kept).
+void _releaseSearchState() {
+  _lastScanner = null;
+  _lastState = null;
+}
+
+final class _SearchState {
+  final memo = Map<RegExp, _SearchMemo>.identity();
+  final heaps = Map<List<RegExp>, _LeafHeap>.identity();
+}
+
+final class _SearchMemo {
+  _SearchMemo(this.from, this.at);
+
+  final int from;
+
+  /// Leftmost match start at or after [from], or -1 for none.
+  final int at;
+}
+
+/// Leftmost start of a match of [re] at or after [from] in the scanner's
+/// string, or -1.
+int _nextMatch(RegExp re, LineScanner scanner, int from) {
+  final memo = _stateOf(scanner).memo;
+  final m = memo[re];
+  if (m != null && m.from <= from && (m.at < 0 || from <= m.at)) return m.at;
+  final it = re.allMatches(scanner.string, from).iterator;
+  final at = it.moveNext() ? it.current.start : -1;
+  memo[re] = _SearchMemo(from, at);
+  return at;
+}
+
+/// Whether a memoized search shows that [re] has no match starting at the
+/// scanner's position.
+bool _cannotMatchAt(RegExp re, LineScanner scanner) {
+  final m = _stateOf(scanner).memo[re];
+  if (m == null) return false;
+  final pos = scanner.position;
+  return m.from <= pos && (m.at < 0 || m.at > pos);
+}
+
+/// A min-heap of the next match positions of a leaf list (leaves without a
+/// further match are dropped).
+final class _LeafHeap {
+  _LeafHeap(this.leaves);
+
+  final List<RegExp> leaves;
+  final _at = <int>[];
+  final _leaf = <int>[];
+  int _from = -1;
+
+  int next(LineScanner scanner, int from) {
+    if (from < _from || _from < 0) {
+      _at.clear();
+      _leaf.clear();
+      for (var i = 0; i < leaves.length; i++) {
+        final at = _nextMatch(leaves[i], scanner, from);
+        if (at >= 0) _push(at, i);
+      }
+    } else {
+      while (_at.isNotEmpty && _at[0] < from) {
+        final i = _leaf[0];
+        _pop();
+        final at = _nextMatch(leaves[i], scanner, from);
+        if (at >= 0) _push(at, i);
+      }
+    }
+    _from = from;
+    return _at.isEmpty ? -1 : _at[0];
+  }
+
+  void _push(int at, int leaf) {
+    _at.add(at);
+    _leaf.add(leaf);
+    var i = _at.length - 1;
+    while (i > 0) {
+      final parent = (i - 1) >> 1;
+      if (_at[parent] <= _at[i]) break;
+      _swap(i, parent);
+      i = parent;
+    }
+  }
+
+  void _pop() {
+    final last = _at.length - 1;
+    _swap(0, last);
+    _at.removeLast();
+    _leaf.removeLast();
+    var i = 0;
+    final n = _at.length;
+    while (true) {
+      final l = 2 * i + 1, r = l + 1;
+      var m = i;
+      if (l < n && _at[l] < _at[m]) m = l;
+      if (r < n && _at[r] < _at[m]) m = r;
+      if (m == i) break;
+      _swap(i, m);
+      i = m;
+    }
+  }
+
+  void _swap(int a, int b) {
+    final t = _at[a];
+    _at[a] = _at[b];
+    _at[b] = t;
+    final u = _leaf[a];
+    _leaf[a] = _leaf[b];
+    _leaf[b] = u;
+  }
+}
+
+/// The leftmost position at or after the scanner's position where one of
+/// [matchers] can match, -1 for none, or the current position when a rule
+/// can't be analyzed (unknown include: the scan reports it as before).
+int _nextCandidate(
+  Grammar grammar,
+  List<GrammarMatcher> matchers,
+  LineScanner scanner,
+) {
+  final leaves = _listLeaves(grammar, matchers);
+  final from = scanner.position;
+  if (leaves == null) return from;
+  if (leaves.isEmpty) return -1;
+  final state = _stateOf(scanner);
+  final heap = state.heaps[leaves] ??= _LeafHeap(leaves);
+  return heap.next(scanner, from);
+}
+
+final _listLeafCache = Expando<List<RegExp>>('listLeafRegExps');
+final _unanalyzable = Expando<bool>('unanalyzable');
+
+/// The leaves of all [matchers] (cached per list), null when one can't be
+/// analyzed.
+List<RegExp>? _listLeaves(Grammar grammar, List<GrammarMatcher> matchers) {
+  if (_unanalyzable[matchers] == true) return null;
+  final cached = _listLeafCache[matchers];
+  if (cached != null) return cached;
+  final out = <RegExp>[];
+  final ids = Set<RegExp>.identity();
+  for (final m in matchers) {
+    final leaves = _leaves(grammar, m);
+    if (leaves == null) {
+      _unanalyzable[matchers] = true;
+      return null;
+    }
+    for (final r in leaves) {
+      if (ids.add(r)) out.add(r);
+    }
+  }
+  return _listLeafCache[matchers] = out;
+}
+
+/// The regexes [m] starts with (null when an include is unresolved).
+List<RegExp>? _leaves(Grammar grammar, GrammarMatcher m) {
+  final cached = _leafCache[m];
+  if (cached != null) return cached;
+  final out = <RegExp>[];
+  final seen = Set<GrammarMatcher>.identity();
+  bool walk(GrammarMatcher x) {
+    if (!seen.add(x)) return true;
+    switch (x) {
+      case _SimpleMatcher():
+        out.add(x.match);
+      case _MultilineMatcher():
+        out.add(x.begin);
+      case _PatternMatcher():
+        for (final p in x.patterns ?? const <GrammarMatcher>[]) {
+          if (!walk(p)) return false;
+        }
+      case _IncludeMatcher():
+        final target = grammar.repository.matchers[x.include];
+        if (target == null) return false;
+        return walk(target);
+      default:
+        return false;
+    }
+    return true;
+  }
+
+  if (!walk(m)) return null;
+  // Identical regex objects only need one search.
+  final unique = <RegExp>[];
+  final ids = Set<RegExp>.identity();
+  for (final r in out) {
+    if (ids.add(r)) unique.add(r);
+  }
+  return _leafCache[m] = unique;
 }

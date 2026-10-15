@@ -269,7 +269,11 @@ class FakeSlidesServer {
 
   final OfflineSyncDatabaseSession session;
 
-  /// Grants [user] membership of [space].
+  /// Grants [user] membership of [space] with [role] (an existing
+  /// membership's role is updated in place: like the real server, a grant
+  /// never leaves a moment without membership — a sync that observed one
+  /// would drop the space from the device's membership cache and hide its
+  /// rows).
   Future<void> grant(
     UuidValue user,
     UuidValue space, {
@@ -281,16 +285,31 @@ class FakeSlidesServer {
       'INSERT OR IGNORE INTO "offline_sync_spaces" ("uuidSpaceId") '
       "VALUES (x'${hexOf(space)}')",
     );
+    final member =
+        '"userUuid" = x\'${hexOf(user)}\' AND "spaceId" = (SELECT "id" FROM '
+        '"offline_sync_spaces" WHERE "uuidSpaceId" = x\'${hexOf(space)}\')';
     await db.unsafeExecute(
-      'DELETE FROM "offline_sync_space_members" WHERE "userUuid" = '
-      "x'${hexOf(user)}' AND \"spaceId\" = (SELECT \"id\" FROM "
-      "\"offline_sync_spaces\" WHERE \"uuidSpaceId\" = x'${hexOf(space)}')",
+      'UPDATE "offline_sync_space_members" SET "role" = \'$role\' '
+      'WHERE $member',
     );
     await db.unsafeExecute(
       'INSERT INTO "offline_sync_space_members" ("spaceId", "userUuid", "role") '
       "SELECT \"id\", x'${hexOf(user)}', '$role' FROM "
-      "\"offline_sync_spaces\" WHERE \"uuidSpaceId\" = x'${hexOf(space)}'",
+      "\"offline_sync_spaces\" WHERE \"uuidSpaceId\" = x'${hexOf(space)}' "
+      'AND NOT EXISTS (SELECT 1 FROM "offline_sync_space_members" '
+      'WHERE $member)',
     );
+  }
+
+  /// [user]'s role in [space] (null = not a member).
+  Future<String?> roleOf(UuidValue user, UuidValue space) async {
+    final rows = await session.db.unsafeQuery(
+      'SELECT m."role" FROM "offline_sync_space_members" m '
+      'JOIN "offline_sync_spaces" s ON s."id" = m."spaceId" '
+      "WHERE m.\"userUuid\" = x'${hexOf(user)}' "
+      "AND s.\"uuidSpaceId\" = x'${hexOf(space)}'",
+    );
+    return rows.isEmpty ? null : rows.first[0] as String?;
   }
 
   /// Removes [user]'s membership of [space].
@@ -356,8 +375,16 @@ class FakeRemote implements SlidesRemote {
     _check();
     final write =
         subscribeRole == AccessRole.editor || subscribeRole == AccessRole.owner;
-    await server.grant(user, itemUuid, role: write ? 'readWrite' : 'readOnly');
-    return subscribed(itemUuid, role: subscribeRole, alreadyMember: false);
+    // As the real server (`SpaceService.subscribe`): grants only when the
+    // role differs.
+    final wanted = write ? 'readWrite' : 'readOnly';
+    final existing = await server.roleOf(user, itemUuid);
+    if (existing != wanted) await server.grant(user, itemUuid, role: wanted);
+    return subscribed(
+      itemUuid,
+      role: subscribeRole,
+      alreadyMember: existing != null,
+    );
   }
 
   @override

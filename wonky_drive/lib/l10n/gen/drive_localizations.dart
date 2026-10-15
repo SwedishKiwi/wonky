@@ -193,24 +193,6 @@ abstract class DriveLocalizations {
   /// **'This image can\'t be displayed. The file may be damaged.'**
   String get previewImageBroken;
 
-  /// Preview error for a PDF that does not open.
-  ///
-  /// In en, this message translates to:
-  /// **'This PDF can\'t be displayed. The file may be damaged.'**
-  String get previewPdfBroken;
-
-  /// Preview state of an encrypted PDF (Drive 02 §6.3).
-  ///
-  /// In en, this message translates to:
-  /// **'This PDF is password-protected. Download it to open it.'**
-  String get previewPdfPassword;
-
-  /// Preview state when the PDF renderer cannot be loaded.
-  ///
-  /// In en, this message translates to:
-  /// **'PDF previews aren\'t available here. Download the file to view it.'**
-  String get previewPdfUnavailable;
-
   /// Preview error for a text file whose bytes are binary.
   ///
   /// In en, this message translates to:
@@ -385,12 +367,6 @@ abstract class DriveLocalizations {
   /// **'Fit'**
   String get previewZoomFit;
 
-  /// Viewer bar button: fit the PDF page width.
-  ///
-  /// In en, this message translates to:
-  /// **'Fit width'**
-  String get previewZoomFitWidth;
-
   /// Viewer bar button: 100 %.
   ///
   /// In en, this message translates to:
@@ -426,72 +402,6 @@ abstract class DriveLocalizations {
   /// In en, this message translates to:
   /// **'Showing a smaller preview'**
   String get previewServerPreviewNote;
-
-  /// Suffix after the page number field of the PDF viewer bar ("3 / 24").
-  ///
-  /// In en, this message translates to:
-  /// **'/ {count}'**
-  String previewPdfPageOf(int count);
-
-  /// Accessibility label of a PDF page.
-  ///
-  /// In en, this message translates to:
-  /// **'Page {page} of {count}'**
-  String previewPdfPageSemantics(int page, int count);
-
-  /// Accessibility label of the page number field.
-  ///
-  /// In en, this message translates to:
-  /// **'Page number'**
-  String get previewPdfPageField;
-
-  /// Note when a PDF has more pages than the preview shows.
-  ///
-  /// In en, this message translates to:
-  /// **'Showing the first {count} pages. Download the file to see all of them.'**
-  String previewPdfTruncated(int count);
-
-  /// PDF viewer bar while pages are being counted.
-  ///
-  /// In en, this message translates to:
-  /// **'Reading pages…'**
-  String get previewPdfLoadingPages;
-
-  /// Tooltip on the PDF page indicator (accessibility note, Drive 04 §12).
-  ///
-  /// In en, this message translates to:
-  /// **'Pages are shown as images. Download the PDF to select or search its text.'**
-  String get previewPdfTooltip;
-
-  /// Title of the go-to-page dialog.
-  ///
-  /// In en, this message translates to:
-  /// **'Go to page'**
-  String get previewGoToPageTitle;
-
-  /// Label of the page field in the go-to-page dialog.
-  ///
-  /// In en, this message translates to:
-  /// **'Page (1–{count})'**
-  String previewGoToPageLabel(int count);
-
-  /// Validation error of the go-to-page dialog.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter a page between 1 and {count}.'**
-  String previewGoToPageInvalid(int count);
-
-  /// Confirm button of the go-to-page dialog.
-  ///
-  /// In en, this message translates to:
-  /// **'Go'**
-  String get previewGo;
-
-  /// Cancel button of dialogs.
-  ///
-  /// In en, this message translates to:
-  /// **'Cancel'**
-  String get previewCancel;
 
   /// Viewer bar toggle of the text viewer.
   ///
@@ -667,12 +577,6 @@ abstract class DriveLocalizations {
   /// **'Rotate view'**
   String get cmdPreviewRotate;
 
-  /// Command drive.preview.goToPage.
-  ///
-  /// In en, this message translates to:
-  /// **'Go to page…'**
-  String get cmdPreviewGoToPage;
-
   /// Command drive.preview.toggleWrap.
   ///
   /// In en, this message translates to:
@@ -798,6 +702,12 @@ abstract class DriveLocalizations {
   /// In en, this message translates to:
   /// **'Uploading {count} · {percent} %'**
   String uploadPill(int count, int percent);
+
+  /// Collapsed upload panel while every upload waits for the connection (offline).
+  ///
+  /// In en, this message translates to:
+  /// **'{count} waiting'**
+  String uploadPillWaiting(int count);
 
   /// Button that collapses the upload panel to a pill.
   ///

@@ -11,7 +11,8 @@ import '../../l10n/slides_l10n.dart';
 /// (`slides.present.fromCurrent`, ⌘Enter); the chevron opens *Present from
 /// beginning*, *Presenter view*, *Open on another device…*, *Rehearse*,
 /// *Use phone as remote* and *Presenting settings…*. Below 640 px only the
-/// play icon shows (Present and Share stay visible at 360 px, 04 §16).
+/// play icon shows, below 400 px without the chevron (Present and Share
+/// stay visible at 360 px, 04 §16).
 class PresentButton extends StatelessWidget {
   const PresentButton({super.key, required this.services});
 
@@ -35,7 +36,8 @@ class PresentButton extends StatelessWidget {
     builder: (context, _) {
       final l = slidesL10n(context);
       final theme = ShadTheme.of(context);
-      final compact = MediaQuery.sizeOf(context).width < 640;
+      final width = MediaQuery.sizeOf(context).width;
+      final compact = width < 640;
       final state = services.dispatcher.stateOf('slides.present.fromCurrent');
       final shortcut = services.keymap.shortcutTextOf(
         'slides.present.fromCurrent',
@@ -116,7 +118,8 @@ class PresentButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           spacing: 1,
-          children: [main, chevron],
+          // Below 400 px the options stay in View › Present (04 §16).
+          children: [main, if (width >= 400) chevron],
         ),
       );
     },

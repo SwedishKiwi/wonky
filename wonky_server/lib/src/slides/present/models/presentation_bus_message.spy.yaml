@@ -1,0 +1,33 @@
+### Internal session.messages payload on `present:<sessionId>` and
+### `present-deck:<deckUuid>` (Slides 10 §6.1).
+class: PresentationBusMessage
+serverOnly: true
+fields:
+  ### hello, here, who, meta, joined, bye, away, takeover, state, laser, ink,
+  ### command, end, find, found.
+  type: String
+  ### The sending connection.
+  connectionId: String
+  sessionId: String
+  deckUuid: String
+  userId: int
+  role: PresentationRole?
+  deviceLabel: String?
+  displayName: String?
+  ### The session's presenter account (here, meta, found).
+  presenterUserId: int?
+  presenterConnected: bool?
+  state: PresentationState?
+  stateSentAtMs: int?
+  slideId: String?
+  x: double?
+  y: double?
+  inkOp: String?
+  strokeId: String?
+  strokeJson: String?
+  command: String?
+  argsJson: String?
+  sentAtMs: int?
+  startedAtMs: int?
+  ### here/meta/found: the connection (or find request) answered.
+  replyTo: String?

@@ -212,7 +212,11 @@ Single-window page at `/` of each app — layout:
   Project brief → *technical*, Letter → *classic-serif* (centered letterhead), Weekly report →
   *newsletter* (accent headings), Lecture notes → *academic-apa* (centered), To-do list →
   *minimal-mono*, Recipe → *wonky-default* (banner), Story draft → *manuscript* (centered
-  uppercase). Spreadsheet templates have an accent color for their card.
+  uppercase). Spreadsheet templates have an accent color for their card. (v2) Presentation
+  templates (Slides 04 §15) have slide-shaped (16:9, 1.4× wider) cards: the app may supply
+  the picture (`WonkyAppConfig.templatePreview`; Wonky Slides renders the first slide),
+  otherwise a title-slide miniature in the Slides theme's colors (`previewStyle` from the
+  theme, `previewText` = title and subtitle of the first slide).
 - **Filter bar**: view selector (Recent/Last opened by me/Last modified by me/Last modified),
   owner filter, grid/list toggle, sort menu (Name, Last modified, Last opened by me, Size;
   asc/desc), folders-on-top toggle. (v2) The type filter (Documents, Spreadsheets, Folders,

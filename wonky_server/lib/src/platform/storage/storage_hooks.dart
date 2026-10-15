@@ -1,9 +1,12 @@
+import 'dart:convert';
+
 import 'package:serverpod/serverpod.dart';
 
 import '../common/actor.dart';
 import '../common/models.dart';
 import '../drive/templates/builtin_templates.dart' show TemplateSheet;
 import '../files/file_service.dart';
+import 'content_sizes.dart';
 import 'storage_service.dart';
 
 /// One-line quota hooks for the byte-adding paths outside the upload
@@ -74,24 +77,47 @@ abstract final class StorageHooks {
   ) => StorageService.instance.addAttachment(session, item, image.sizeBytes);
 
   /// A pre-check estimate of a spreadsheet created from [sheets] (built-in
-  /// templates, sheet lists of MCP/imports): cell text plus a per-row
-  /// overhead close to `pg_column_size` of the synced rows. The real size
-  /// is measured after creation (`ContentSizes.refresh`).
+  /// templates, sheet lists of MCP/imports) with the constants of
+  /// [SheetsSizeEstimator], following what `SpreadsheetFactory` stores:
+  /// the base, each sheet, each sized column and each cell it writes (a
+  /// value, or bold in a bold row) — its stored content (text + the
+  /// 2-byte prefix; formulas grow by [_formulaRefBytes] per reference in
+  /// their stored-reference form), bold and number format. The real size
+  /// is measured after creation (`ContentSizes.refresh`) and stays close.
   static int sheetsEstimate(List<TemplateSheet> sheets) {
-    const base = 2048; // spreadsheet, sheet and column rows
-    const perCell = 160;
-    const perRow = 120;
-    var n = base;
+    const row = SheetsSizeEstimator.propertyRowBytes;
+    var n = SheetsSizeEstimator.base;
     for (final s in sheets) {
-      n += 512;
-      for (final row in s.rows) {
-        n += perRow;
-        for (final cell in row) {
-          if (cell == null || cell.isEmpty) continue;
-          n += perCell + cell.length;
+      n += SheetsSizeEstimator.sheetBytes;
+      n += s.columnWidths.length * (row + 8);
+      for (final (r, cells) in s.rows.indexed) {
+        final bold = s.boldRows.contains(r);
+        for (final (c, input) in cells.indexed) {
+          final empty = input == null || input.isEmpty;
+          if (empty && !bold) continue;
+          final format = r >= s.frozenRows ? s.numberFormats[c] : null;
+          n +=
+              row +
+              (empty ? 0 : _contentBytes(input)) +
+              (bold ? 1 : 0) +
+              (format == null ? 0 : utf8.encode(format).length);
         }
       }
     }
     return n;
+  }
+
+  /// Bytes a cell reference adds in the stored-reference form of a
+  /// formula (`⟦R:<row id>;C:<column id>⟧`, Sheets 02 §2).
+  static const _formulaRefBytes = 56;
+
+  static final _a1Ref = RegExp(r'\$?[A-Z]{1,3}\$?[0-9]+');
+
+  static int _contentBytes(String input) {
+    final bytes = utf8.encode(input).length;
+    if (input.startsWith('=') && input.length > 1) {
+      return bytes + _a1Ref.allMatches(input).length * _formulaRefBytes;
+    }
+    return bytes + 2;
   }
 }

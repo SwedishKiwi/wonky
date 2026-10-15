@@ -1,5 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
+import 'package:wonky_app/wonky_app.dart'
+    show fileCategoryColor, fileCategoryIcon;
 import 'package:wonky_client/wonky_client.dart';
 
 import '../../l10n/drive_l10n.dart';
@@ -21,44 +23,13 @@ class FileCategoryIcon extends StatelessWidget {
   /// Text files with a highlighting language show the code glyph.
   final bool code;
 
-  static IconData iconOf(FileCategory c, {bool code = false}) => switch (c) {
-    FileCategory.image => LucideIcons.fileImage,
-    FileCategory.pdf => LucideIcons.fileText,
-    FileCategory.text => code ? LucideIcons.fileCode : LucideIcons.fileText,
-    FileCategory.audio => LucideIcons.fileAudio,
-    FileCategory.video => LucideIcons.fileVideo,
-    FileCategory.archive => LucideIcons.fileArchive,
-    FileCategory.document => LucideIcons.fileText,
-    FileCategory.spreadsheet => LucideIcons.fileSpreadsheet,
-    FileCategory.presentation => LucideIcons.presentation,
-    FileCategory.other => LucideIcons.file,
-  };
+  static IconData iconOf(FileCategory c, {bool code = false}) =>
+      fileCategoryIcon(c, code: code);
 
-  /// Category colors, slightly lighter in dark mode for contrast.
-  static Color colorOf(FileCategory c, ShadColorScheme cs, Brightness b) {
-    final dark = b == Brightness.dark;
-    return switch (c) {
-      FileCategory.image =>
-        dark ? const Color(0xffa78bfa) : const Color(0xff7c3aed),
-      FileCategory.pdf =>
-        dark ? const Color(0xfff87171) : const Color(0xffdc2626),
-      FileCategory.text =>
-        dark ? const Color(0xff94a3b8) : const Color(0xff475569),
-      FileCategory.audio =>
-        dark ? const Color(0xfffbbf24) : const Color(0xffb45309),
-      FileCategory.video =>
-        dark ? const Color(0xfff472b6) : const Color(0xffdb2777),
-      FileCategory.archive =>
-        dark ? const Color(0xffd6a77a) : const Color(0xff92400e),
-      FileCategory.document =>
-        dark ? const Color(0xff60a5fa) : const Color(0xff2563eb),
-      FileCategory.spreadsheet =>
-        dark ? const Color(0xff4ade80) : const Color(0xff16a34a),
-      FileCategory.presentation =>
-        dark ? const Color(0xfffb923c) : const Color(0xffea580c),
-      FileCategory.other => cs.mutedForeground,
-    };
-  }
+  /// Category colors, slightly lighter in dark mode for contrast (the
+  /// shell's table, shared with the drive lists).
+  static Color colorOf(FileCategory c, ShadColorScheme cs, Brightness b) =>
+      fileCategoryColor(c, cs, b);
 
   @override
   Widget build(BuildContext context) {

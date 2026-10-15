@@ -11,7 +11,12 @@ import '../../commands/slides_command.dart' show SlidesKeyScopes;
 import '../../config/menus/context_menu_specs.dart';
 import '../../l10n/slides_l10n.dart';
 import '../../theme/slides_tokens.dart';
+import '../canvas/canvas_interactions.dart';
+import '../canvas/slide_canvas.dart';
+import '../canvas/slide_canvas_controller.dart';
+import '../find/find_overlay.dart';
 import '../toolbar/command_ui.dart';
+import '../text_editing/text_editing_host.dart' show typeToEdit;
 import 'deck_editor_controller.dart';
 import 'navigator_shell.dart' show OpenContextMenu;
 import 'slide_labels.dart';
@@ -55,10 +60,34 @@ class _CanvasRegionState extends State<CanvasRegion> {
   @override
   Widget build(BuildContext context) {
     final tokens = SlidesTokens.of(context);
-    return KeymapScope(
-      scope: SlidesKeyScopes.canvas,
-      keymap: widget.services.keymap,
+    // The `slidesCanvas` key scope; typing a character with one text box
+    // selected starts editing it first (03 §3.4, SL-13). The find bar,
+    // the find panel and the paste options chip float above it, outside
+    // the scope (SL-18).
+    final canvas = Focus(
       focusNode: ed.canvasFocus,
+      onKeyEvent: (node, event) {
+        // Element modes first (`slidesCrop`, `slidesTable`, 03 §1.2).
+        final canvas = SlideCanvasController.of(ed);
+        if (canvas != null) {
+          for (final i in CanvasInteractions.of(canvas)) {
+            for (final scope in i.keyScopes) {
+              final r = widget.services.keymap.handle(
+                event,
+                scope,
+                context: context,
+              );
+              if (r == KeyEventResult.handled) return r;
+            }
+          }
+        }
+        if (typeToEdit(ed, event)) return KeyEventResult.handled;
+        return widget.services.keymap.handle(
+          event,
+          SlidesKeyScopes.canvas,
+          context: context,
+        );
+      },
       child: ColoredBox(
         key: const ValueKey<String>('slides.canvas'),
         color: tokens.canvasSurround,
@@ -69,11 +98,26 @@ class _CanvasRegionState extends State<CanvasRegion> {
         ),
       ),
     );
+    return Stack(
+      children: [
+        Positioned.fill(child: canvas),
+        Positioned.fill(child: DeckCanvasOverlays(editor: ed)),
+      ],
+    );
   }
 
   Widget _content(BuildContext context, BoxConstraints c) {
     final entry = ed.currentEntry;
     if (entry == null) return _empty(context);
+    // The real canvas (SL-12) once the screen attached its controller.
+    final canvas = SlideCanvasController.of(ed);
+    if (canvas != null) {
+      return SlideCanvas(
+        editor: ed,
+        controller: canvas,
+        onContextMenu: widget.onContextMenu,
+      );
+    }
     final slide = ed.resolver.resolve(entry.id);
     if (slide == null) return const SizedBox.shrink();
     final l = slidesL10n(context);

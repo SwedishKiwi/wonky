@@ -29,7 +29,116 @@ extension _ThemePart on _Planner {
     return themeId;
   }
 
+  /// Copies a deck theme entry (the `deck_theme` columns plus `masters`,
+  /// `layouts` and `elements` rows, `SlidesClipboardCodec.themeEntry`) as
+  /// theme [themeId] with parts `themePartId(themeId, sourceRowId)`; rows
+  /// that exist already are kept (repeated imports merge, 05 §9). Returns
+  /// source layout id → copied layout id.
+  Map<String, String?> copyThemeEntry(
+    Map<String, Object?> t, {
+    required String themeId,
+    required String? sourceKey,
+    String? name,
+  }) {
+    List<Map<String, Object?>> rows(Object? v) => [
+      if (v is List)
+        for (final r in v)
+          if (r is Map) {for (final e in r.entries) '${e.key}': e.value},
+    ];
+    final out = <String, String?>{};
+    String part(String id) => SlidesIds.themePartId(themeId, id);
+    if (!b.exists(SlidesTables.deckTheme, themeId)) {
+      if (deck.count(SlidesTables.deckTheme) + 1 > limits.maxThemesPerDeck) {
+        limit(
+          'A presentation can have at most ${limits.maxThemesPerDeck} themes.',
+        );
+      }
+      b.insert(SlidesTables.deckTheme, {
+        for (final c in SlidesTables.columns[SlidesTables.deckTheme]!) c: t[c],
+        SlidesCols.id: themeId,
+        DeckThemeCols.deckId: deck.deckId,
+        DeckThemeCols.sourceKey: sourceKey,
+        SlidesCols.name: ?name,
+        SlidesCols.sortKey: _nextThemeKey(),
+        SlidesCols.createdAt: ctx.now,
+      });
+    }
+    for (final m in rows(t['masters'])) {
+      final id = part('${m[SlidesCols.id]}');
+      if (!b.exists(SlidesTables.slideMaster, id)) {
+        b.insert(SlidesTables.slideMaster, {
+          for (final c in SlidesTables.columns[SlidesTables.slideMaster]!)
+            c: m[c],
+          SlidesCols.id: id,
+          SlideMasterCols.themeId: themeId,
+          SlidesCols.createdAt: ctx.now,
+        });
+      }
+    }
+    for (final l in rows(t['layouts'])) {
+      final old = '${l[SlidesCols.id]}';
+      final id = part(old);
+      out[old] = id;
+      if (!b.exists(SlidesTables.slideLayout, id)) {
+        b.insert(SlidesTables.slideLayout, {
+          for (final c in SlidesTables.columns[SlidesTables.slideLayout]!)
+            c: l[c],
+          SlidesCols.id: id,
+          SlideLayoutCols.masterId: part('${l[SlideLayoutCols.masterId]}'),
+          SlidesCols.createdAt: ctx.now,
+        });
+      }
+    }
+    for (final e in rows(t['elements'])) {
+      final id = part('${e[SlidesCols.id]}');
+      if (b.exists(SlidesTables.slideElement, id)) continue;
+      String? mapped(String col) {
+        final v = e[col];
+        return v == null ? null : part('$v');
+      }
+
+      insertElement({
+        for (final c in SlidesTables.columns[SlidesTables.slideElement]!)
+          c: e[c],
+        SlidesCols.id: id,
+        SlidesCols.slideId: null,
+        ElementCols.layoutId: mapped(ElementCols.layoutId),
+        ElementCols.masterId: mapped(ElementCols.masterId),
+        SlidesCols.parentId: mapped(SlidesCols.parentId),
+        ElementCols.placeholderOf: mapped(ElementCols.placeholderOf),
+        SlidesCols.createdAt: ctx.now,
+      });
+    }
+    return out;
+  }
+
   String importTheme(ImportTheme op) {
+    if (op.themeEntry case final entry?) {
+      final name = op.themeName?.trim();
+      if (name != null && (name.isEmpty || name.length > 100)) {
+        invalid('A theme name has 1–100 characters');
+      }
+      if (entry[SlidesCols.id] is! String) invalid('Invalid theme');
+      final themeId = op.sourceKey == null
+          ? newId()
+          : SlidesIds.themeCopyId(deck.deckId, op.sourceKey!);
+      final map = copyThemeEntry(
+        entry,
+        themeId: themeId,
+        sourceKey: op.sourceKey,
+        name: name,
+      );
+      final layoutIds = <String, String>{};
+      for (final id in map.values) {
+        final rec = b.rec(SlidesTables.slideLayout, id!);
+        final key = rec is SlideLayoutRec ? rec.key : null;
+        if (key != null) layoutIds.putIfAbsent(key, () => id);
+      }
+      result['themeId'] = themeId;
+      result['layoutIds'] = layoutIds;
+      result['layoutMap'] = map;
+      return op.sourceKey == null ? 'Duplicate theme' : 'Import theme';
+    }
     final ThemePackage pkg;
     final String? sourceKey;
     if (op.builtInKey != null) {

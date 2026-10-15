@@ -1,8 +1,11 @@
-### What starts an animation step (Slides 02 §3.11, 06 §4.1). Append-only;
-### `onElementClick` is reserved for P2 (A-06-2).
+### What starts an animation step (Slides 02 §3.11, 06 §4.1). Append-only.
+### `onElementClick` (S-2, 06 A-06-2) is reserved for interactive decks (P2):
+### clients of S-2 and later read it, the timeline skips such builds and the
+### planner refuses to write it until the feature exists.
 enum: BuildTrigger
 serialized: byName
 values:
   - onClick
   - withPrevious
   - afterPrevious
+  - onElementClick

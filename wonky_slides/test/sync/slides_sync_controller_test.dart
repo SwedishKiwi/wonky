@@ -7,6 +7,8 @@ import 'package:wonky_core/wonky_core.dart' show Role;
 import 'package:wonky_slides/features/model/deck_session.dart';
 import 'package:wonky_slides/features/sync/slides_sync_controller.dart';
 import 'package:wonky_slides_core/ops.dart';
+import 'package:wonky_slides_core/schema.dart' show SlidesTables;
+import 'package:wonky_slides_core/templates.dart' show SlidesTemplates;
 
 import 'support/random_ops.dart';
 import 'support/slides_sync_harness.dart';
@@ -108,6 +110,65 @@ void main() {
         throwsA(isA<PlanException>()),
       );
     });
+
+    for (final template in [null, SlidesTemplates.all.first]) {
+      final kind = template == null ? 'a blank deck' : 'a built-in template';
+      test(
+        'when $kind is created and opened as the sync loop starts then '
+        'the session holds its theme package before and after the sync',
+        () async {
+          await prepareReservations(a);
+          final space = await a.createLocalPresentation(
+            title: 'Fresh',
+            template: template,
+          );
+          await a.syncNow();
+          final (b, _, _) = await openDevice(server, otherUser);
+          // The sessions subscribe while the loops' first cycles run (the
+          // creator is already a member: its subscribe must not drop the
+          // membership, or the deck's rows vanish from the device's reads).
+          final sa = a.openSession(
+            itemUuid: space,
+            spaceUuid: space,
+            role: Role.owner,
+          );
+          final sb = b.openSession(itemUuid: space, spaceUuid: space);
+          addTearDown(sa.dispose);
+          addTearDown(sb.dispose);
+          a.start();
+          b.start();
+          await sa.opened;
+
+          Future<void> expectThemePackage() async {
+            expect(sa.loadState.value, isA<DeckReady>());
+            final m = sa.model;
+            expect(m.count(SlidesTables.deckTheme), greaterThanOrEqualTo(1));
+            expect(m.count(SlidesTables.slideMaster), greaterThanOrEqualTo(1));
+            expect(m.count(SlidesTables.slideLayout), greaterThan(1));
+            expect(m.slides, isNotEmpty);
+            expect(
+              canonical(m),
+              canonical(await reloadModel(a.replica, space)),
+            );
+          }
+
+          await expectThemePackage();
+          // The deck's first upload and the subscribe of the open session.
+          await a.stop();
+          await a.syncNow();
+          await a.syncNow();
+          await sa.ingestRemote();
+          expect(await a.replica.dirtySpaces(), isEmpty);
+          expect(await a.replica.roleOf(space), isNotNull);
+          await expectThemePackage();
+          await eventually(
+            () => sb.loadState.value is DeckReady,
+            timeout: const Duration(seconds: 20),
+          );
+          expect(canonical(sb.model), canonical(sa.model));
+        },
+      );
+    }
 
     test(
       'when two devices edit the same deck at random then both converge '

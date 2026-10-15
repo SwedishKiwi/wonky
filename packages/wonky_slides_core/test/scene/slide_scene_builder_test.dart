@@ -484,6 +484,75 @@ void main() {
     });
   });
 
+  group('Given a table grid (SL-15)', () {
+    test('when computing the grid then it matches the drawn layout, tags '
+        'cell text with its part id and honors merges', () {
+      final f = SceneFixture();
+      final (t, rows, cols) = f.b.table(
+        f.slideId,
+        rows: 2,
+        cols: 3,
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 100,
+      );
+      f.b.cell(t, rows[1], cols[2], 'Body');
+      final m = f.model();
+      final slide = f.resolve(model: m);
+      final ctx = SceneContext(
+        theme: slide.theme,
+        textLayout: f.engine,
+        deck: m,
+      );
+      final e = slide.element(t)!;
+
+      final grid = f.builder.tableGrid(e, ctx)!;
+      final scene = f.builder.build(slide, ctx);
+
+      expect(grid.columnX.first, 0);
+      expect(grid.columnX.last, closeTo(300, 1e-6));
+      expect(grid.cells, hasLength(6));
+      expect(grid.height, closeTo(scene.frameOf(e).height, 1e-6));
+      final text = _all<TextNode>(SceneFixture.groupOf(scene, t)).single;
+      expect(text.partId, '${rows[1]}|${cols[2]}');
+      final cell = grid.cellOf(rows[1], cols[2])!;
+      final o = cell.textOrigin(cell.layout!.height);
+      expect(text.originX, closeTo(o.x, 1e-6));
+      expect(text.originY, closeTo(o.y, 1e-6));
+      expect(grid.cellAtPoint(cell.x + 1, cell.y + 1), same(cell));
+    });
+
+    test('when a cell body is overridden then the grid lays it out instead '
+        'of the stored text', () {
+      final f = SceneFixture();
+      final (t, rows, cols) = f.b.table(
+        f.slideId,
+        rows: 1,
+        cols: 1,
+        width: 200,
+        height: 40,
+      );
+      final m = f.model();
+      final slide = f.resolve(model: m);
+      final ctx = SceneContext(
+        theme: slide.theme,
+        textLayout: f.engine,
+        deck: m,
+      );
+      final key = '${rows[0]}|${cols[0]}';
+
+      final grid = f.builder.tableGrid(
+        slide.element(t)!,
+        ctx,
+        cellText: {key: '[{"insert":"one\\ntwo\\nthree\\nfour\\n"}]'},
+      )!;
+
+      expect(grid.cells.single.layout, isNotNull);
+      expect(grid.height, greaterThan(40));
+    });
+  });
+
   group('Given an icon', () {
     test('when the icon source knows the glyph then it is drawn as text in '
         'the stroke color', () {

@@ -409,6 +409,34 @@ void main() {
         expect((await TestStorage.row(anna)).documentsBytes, 1234);
       });
 
+      test('when a spreadsheet size is from an older estimator then the '
+          'nightly reconcile re-estimates it and corrects the counter '
+          '(Drive 03 §11)', () async {
+        final view = await endpoints.drive.createSpreadsheet(
+          anna.endpointSession,
+          null,
+          'S',
+          null,
+        );
+        final item = await _item(anna, view.uuid);
+        final current = item.sizeBytes;
+        // The pre-D-18 estimate counted the 1,000 default rows (~80 KB).
+        await DriveItem.db.updateRow(
+          anna.session,
+          item.copyWith(sizeBytes: 80000),
+          columns: (t) => [t.sizeBytes],
+        );
+        await StorageMaintenance.reconcileUser(anna.session, anna.id);
+        final stale = await TestStorage.row(anna);
+
+        await StorageMaintenance.reconcileAll(anna.session);
+
+        expect(stale.spreadsheetsBytes, 80000);
+        expect((await _item(anna, view.uuid)).sizeBytes, current);
+        expect((await TestStorage.row(anna)).spreadsheetsBytes, current);
+        expect(current, lessThan(4 * 1024));
+      });
+
       test(
         'when expired reservations exist then the reconcile deletes them',
         () async {

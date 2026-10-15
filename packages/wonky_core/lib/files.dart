@@ -4,4 +4,5 @@ library;
 
 export 'files/csv_sniffer.dart';
 export 'files/file_types.dart';
+export 'files/image_dimensions.dart';
 export 'files/storage_format.dart';

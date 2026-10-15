@@ -63,6 +63,25 @@ extension _DeckPart on _Planner {
     return 'Create presentation';
   }
 
+  /// `Deck.defaultsJson`: a JSON object whose `transition` (06 A-06-7) is
+  /// a valid transition.
+  String? _defaults(String? json) {
+    final checked = jsonObject(json, DeckCols.defaultsJson);
+    if (checked == null) return null;
+    final raw = decodeMap(checked);
+    final t = raw?['transition'];
+    if (t != null) {
+      if (t is! Map<String, Object?>) {
+        invalid('The default transition must be an object');
+      }
+      final v = TransitionSpec.fromJson(t);
+      if (!v.isValid) invalid('Invalid default transition: ${v.errors.first}');
+    }
+    // Keeps the unknown keys of other specs (07's codeFontSize, …).
+    DeckMotionDefaults.decode(checked);
+    return checked;
+  }
+
   String _title(String raw) {
     final t = raw.trim();
     if (t.isEmpty) invalid('The title must not be empty');
@@ -85,10 +104,7 @@ extension _DeckPart on _Planner {
       if (op.footerText != null) DeckCols.footerText: op.footerText!.value,
       if (op.language != null) DeckCols.language: op.language!.value,
       if (op.defaultsJson != null)
-        DeckCols.defaultsJson: jsonObject(
-          op.defaultsJson!.value,
-          DeckCols.defaultsJson,
-        ),
+        DeckCols.defaultsJson: _defaults(op.defaultsJson!.value),
       if (op.guidesJson != null)
         DeckCols.guidesJson: jsonObject(
           op.guidesJson!.value,
@@ -100,9 +116,17 @@ extension _DeckPart on _Planner {
           DeckCols.presentJson,
         ),
     });
+    if (op.resetSlideTransitions) {
+      for (final s in deck.slides) {
+        if (s.transitionJson != null) {
+          b.set(s, {SlidesCols.transitionJson: null});
+        }
+      }
+    }
     final size = op.size;
     if (size != null) _resize(d, size);
     if (op.title != null) return 'Rename presentation';
+    if (op.resetSlideTransitions) return 'Apply transition to all slides';
     if (size != null) return 'Change slide size';
     if (op.appearance != null) return 'Change appearance';
     return 'Presentation settings';

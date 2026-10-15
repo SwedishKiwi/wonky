@@ -513,6 +513,7 @@ class SyncedWorkbookSession extends WorkbookSessionBase
       // Membership removed (unshared, trashed, evicted). Offline opens of
       // a spreadsheet still on the device keep the cached role.
       if (!initial && _ready) {
+        _accessRemoved = true;
         loadStateNotifier.value = const WorkbookUnavailable(
           'You no longer have access to this spreadsheet.',
         );
@@ -521,6 +522,32 @@ class SyncedWorkbookSession extends WorkbookSessionBase
     }
     final next = SpaceOpening.roleFromMembership(space, role.value);
     if (next != null) roleValue = next;
+    if (_accessRemoved) _onAccessRestored();
+  }
+
+  /// Whether the open spreadsheet turned unavailable because its
+  /// membership disappeared (and may come back: unshare + reshare).
+  bool _accessRemoved = false;
+
+  /// The membership came back while the spreadsheet was open (re-shared):
+  /// rows the engine's membership read filter hid and showed again
+  /// produced no journal entries, so the whole space is re-read
+  /// (`JournalIngestion.needsReload`) before it turns [WorkbookReady]
+  /// again.
+  void _onAccessRestored() {
+    _accessRemoved = false;
+    _ingestion.needsReload = true;
+    // Called from the ingestion's `afterIngest`: the running loop picks
+    // the reload up (`ingest` coalesces), so don't await it here.
+    unawaited(
+      _ingestion.ingest().then((_) {
+        if (_disposed || _accessRemoved) return;
+        if (loadStateNotifier.value is WorkbookUnavailable) {
+          loadStateNotifier.value = const WorkbookReady();
+          _updateStatus();
+        }
+      }),
+    );
   }
 
   final List<FutureOr<void> Function()> _onDispose = [];

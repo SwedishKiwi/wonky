@@ -1,8 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 
-import 'package:wonky_ui/wonky_ui.dart';
-
 import '../../l10n/slides_l10n.dart';
 import '../../theme/slides_tokens.dart';
 
@@ -43,8 +41,14 @@ class DeckLoadingView extends StatelessWidget {
                   width: 220,
                   color: tokens.navigatorBackground,
                   padding: const EdgeInsets.fromLTRB(28, 12, 12, 12),
-                  child: Column(
-                    children: [for (var i = 0; i < 5; i++) bone(86)],
+                  child: ClipRect(
+                    child: OverflowBox(
+                      alignment: Alignment.topCenter,
+                      maxHeight: double.infinity,
+                      child: Column(
+                        children: [for (var i = 0; i < 5; i++) bone(86)],
+                      ),
+                    ),
                   ),
                 ),
               Expanded(
@@ -55,7 +59,13 @@ class DeckLoadingView extends StatelessWidget {
                       widthFactor: 0.7,
                       child: AspectRatio(
                         aspectRatio: 16 / 9,
-                        child: LoadingShimmer.documentPage(),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.card,
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: theme.colorScheme.border),
+                          ),
+                        ),
                       ),
                     ),
                   ),

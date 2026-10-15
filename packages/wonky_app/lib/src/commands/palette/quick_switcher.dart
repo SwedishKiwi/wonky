@@ -116,7 +116,7 @@ class _QuickSwitcherState extends State<_QuickSwitcher> {
               id: i.uuid.uuid,
               title: i.name,
               subtitle: '${describeKind(l, i.kind)} · ${i.owner.displayName}',
-              leading: DriveKindIcon(i.kind, size: 18),
+              leading: DriveKindIcon.item(i, size: 18),
               section: q.trim().isEmpty
                   ? l.quickSwitcherRecent
                   : l.quickSwitcherResults,

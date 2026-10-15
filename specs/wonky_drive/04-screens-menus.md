@@ -144,7 +144,7 @@ The same entries appear in the empty-area context menu of the list (plus *Paste*
   badge, upload progress), Owner, Last modified, File size (counted size, 03 §2), ⋮. Column
   header click sorts. Resizable Name column (P1).
 - **Grid** (`DriveItemCard`): sections *Folders* (compact chips) then *Files* (cards with
-  thumbnail 16:10 — image thumbnail, PDF first page, app thumbnail, else a category icon with
+  thumbnail 16:10 — image thumbnail, app thumbnail, else a category icon with
   the extension label — name, kind icon, ⋮). Card min width 200 px.
 - Layout, sort and *Folders on top* persist per device (`drive.view.*` local prefs; defaults
   from Drive settings, §8).
@@ -184,8 +184,8 @@ The same entries appear in the empty-area context menu of the list (plus *Paste*
 ### 3.6 Details panel
 
 Right panel (`WonkySplitView`, `rail: false`), toggled by `i` / `shell.file.details`:
-thumbnail or preview (images: the preview image; PDF: first page), name, type ("PNG image",
-"PDF document · 24 pages", "Dart source", "Spreadsheet"), dimensions (images), size and
+thumbnail or preview (images: the preview image), name, type ("PNG image",
+"PDF document", "Dart source", "Spreadsheet"), dimensions (images), size and
 "Storage used" (03 §6.5), owner, location (breadcrumb, clickable), sharing summary + *Manage
 access*, created / modified (by) / opened by me, description (editable, Editors+), *Open with*
 (convertible files), *Manage versions* (P2), activity feed. Multi-selection: "3 items selected"
@@ -278,17 +278,16 @@ Loading uses `LoadingShimmer` rows/cards (suite 02 §4.18).
 ```
 
 - Top bar: back (`drive.preview.close`, returns to the previous location with the item
-  selected), category icon, name (rename inline for Editors+, `DocumentTitleField`), *Open with*
+  selected; a preview opened by a link or after a reload returns to the file's folder), category icon, name (rename inline for Editors+, `DocumentTitleField`), *Open with*
   (convertible only), *Download* (hidden when export is not allowed), *Share*, star, ⋮ (Rename,
   Move to…, Make a copy, Details, Upload new version (P2), Move to trash), details toggle,
   close ✕ (same as back).
 - `‹ ›` (and ←/→) step through the **ready files** of the list the preview was opened from
   (folder, search results, starred…), skipping folders and Wonky items; "3 of 12 in "Holiday"".
-- Viewer bar per type: image (zoom −/+, %, Fit, 1:1, rotate), PDF (page n/N with input, zoom,
-  fit width, thumbnails toggle P1), text (wrap toggle, language label, *Copy all*, line count),
-  CSV (Table/Text toggle, P1), audio (P2 player in the body instead).
-- Background: `canvas` token (dark gray in dark mode, light gray in light); PDF pages stay white
-  paper; code uses the light or dark code palette of `wonky_code`.
+- Viewer bar per type: image (zoom −/+, %, Fit, 1:1, rotate), text (wrap toggle, language label, *Copy all*, line count),
+  CSV (Table/Text toggle, P1), audio (P2 player in the body instead). PDFs have no viewer in v2
+  (the *Download* card, 02 §6.3).
+- Background: `canvas` token (dark gray in dark mode, light gray in light); code uses the light or dark code palette of `wonky_code`.
 - The preview of a trashed file shows a banner "This file is in the trash" + *Restore*.
 
 ## 7. Storage page (`/drive/storage`)
@@ -347,7 +346,6 @@ Drive-only commands use `drive.<area>.<action>` and are registered by `wonky_dri
 | `drive.preview.next` / `.previous` | Next / Previous file | — | `→` / `←` (preview scope) | — |
 | `drive.preview.zoomIn` / `.zoomOut` / `.zoomFit` / `.zoomActual` | Zoom | — | `+` / `−` / `0` / `1` | — |
 | `drive.preview.rotate` | Rotate view | — | `R` | — |
-| `drive.preview.goToPage` | Go to page… | `{page}` | `Mod+G` (PDF) | — |
 | `drive.preview.toggleWrap` | Wrap lines | — | `Alt+Z` (text) | — |
 | `drive.preview.close` | Close preview | — | `Esc` | — |
 | `shell.storage.open` | Manage storage (shell command, all apps) | — | — | — |
@@ -373,7 +371,7 @@ in Drive), `shell.file.newFromTemplate`, `shell.file.details` (`i`), `shell.shar
 |-------|------|
 | Global (home) | `/` focus search · `Mod+O` quick switcher (all kinds) · `Mod+Shift+P` palette · `Mod+[` / `Mod+]` back/forward (desktop) |
 | List / grid | arrows move focus · `Shift`+arrows extend · `Mod+A` select all · `Enter` open · `Space` preview (files) · `F2` rename · `Del` trash · `S` star · `.` share · `i` details · `Shift+F` new folder · `Shift+U` upload files · `Esc` clear selection |
-| Preview | `←`/`→` previous/next · `+`/`−`/`0`/`1` zoom · `R` rotate · `Mod+G` go to page · `Alt+Z` wrap · `Mod+C` copy (text selection, P1) · `Esc` close |
+| Preview | `←`/`→` previous/next · `+`/`−`/`0`/`1` zoom · `R` rotate · `Alt+Z` wrap · `Mod+C` copy (text selection, P1) · `Esc` close |
 | Upload panel | `Tab` into the panel · arrows between rows · `Enter` activates the row action |
 
 Single-key bindings are active only when focus is in the list, grid or preview (not in text
@@ -395,9 +393,7 @@ fields), as today.
 - List rows: "holiday.jpg, PNG image, 3.4 MB, modified September 30, owned by me, starred".
 - Upload progress: polite live region; the panel's buttons have labels ("Cancel upload of
   interview.m4a").
-- Preview: image `Semantics(label: name + dimensions)`; PDF pages "Page 3 of 24" (raster
-  only — no text layer; *Download* is the accessible path, noted in the tooltip); text preview
-  exposes the text.
+- Preview: image `Semantics(label: name + dimensions)`; text preview exposes the text.
 - The storage meter has `Semantics(value: "12.3 MB of 50 MB used, 25 percent")`.
 
 ## 13. MCP exposure
@@ -406,7 +402,7 @@ fields), as today.
   *Out of storage*, confirms) are `WonkyDialogSpec` dialogs.
 - `ui.drive.*` (P1, `wonky_drive/lib/mcp/`): `ui.drive.get_selection`,
   `ui.drive.select_items {uuids}`, `ui.drive.get_upload_queue`, `ui.drive.open_preview {uuid}`,
-  `ui.drive.get_preview_state` (type, page, zoom). Uploading bytes goes through headless
+  `ui.drive.get_preview_state` (type, zoom). Uploading bytes goes through headless
   `drive.upload_file` (suite 09 §4), not the bridge. As built (D-17, `UiDriveToolHandlers`): `get_selection`
   reports `view` (`home`, `my_drive`, `folder`, `shared`, `starred`, `recent`, `trash`,
   `search`, `storage` with its `filter`, or `preview`), the folder `{uuid, name, path}` and the
@@ -414,7 +410,7 @@ fields), as today.
   on the shown list (home or Storage page), focuses the first item and returns `not_found`
   (`unavailable` when no list is shown); `get_upload_queue` lists `upload_id`, `item_uuid`,
   `state`, `sent_bytes`, `error`, `converted_to` and totals; `get_preview_state` adds
-  `phase`, `page_count`, `fit`, `rotation`, `wrap`, `has_next/has_previous`.
+  `phase`, `fit`, `rotation`, `wrap`, `has_next/has_previous`.
 
 ## 14. Widget inventory (new)
 
@@ -425,7 +421,7 @@ fields), as today.
 | `WonkyStackedBar` | `wonky_ui` | Stacked usage bar with legend (Storage page, settings) |
 | `DriveKindIcon` (+ `FileCategory` variants) | `wonky_app` | Kind and file-category glyphs |
 | `UploadQueue`, `UploadPanel`, `UploadDropOverlay`, `UploadOptionsDialog` | `wonky_drive` | §4, 02 §3 |
-| `FilePreviewScreen`, `ImageViewer`, `PdfViewer`, `TextFileViewer`, `CsvTableViewer` (P1), `AudioPlayerCard` (P2), `UnsupportedFileView` | `wonky_drive` | §6, 02 §6 |
+| `FilePreviewScreen`, `ImageViewer`, `TextFileViewer`, `CsvTableViewer` (P1), `AudioPlayerCard` (P2), `UnsupportedFileView` | `wonky_drive` | §6, 02 §6 |
 | `StorageScreen` | `wonky_drive` | 03 §6.4 |
 | `CodeView` | `wonky_code_flutter` | Read-only highlighted text (shared with Write and Slides) |
 
@@ -435,11 +431,11 @@ fields), as today.
   `/sheets/` in the same tab; the menu in the Sheets home shows the same four rows with Sheets
   highlighted.
 - **AC-D4.2** Drive lists folders, documents, spreadsheets, presentations and files together;
-  the Type chip narrows to *Files ▸ PDFs*; grid shows image and PDF thumbnails.
+  the Type chip narrows to *Files ▸ PDFs*; grid shows image thumbnails.
 - **AC-D4.3** Dragging 3 selected items onto a tree node moves them; `Mod+Z` moves them back.
 - **AC-D4.4** Dropping 2 OS files onto a folder row uploads them into that folder with the
   overlay text "Upload to Designs"; the upload panel shows progress and completion.
-- **AC-D4.5** `Space` on a PDF opens its preview; `→` goes to the next file; `Esc` returns with
+- **AC-D4.5** `Space` on a PDF opens its preview (the *Download* card); `→` goes to the next file; `Esc` returns with
   the PDF still selected and focused.
 - **AC-D4.6** *Report a bug* in the left menu shows the external-link confirm popover for
   github.com.

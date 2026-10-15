@@ -1,0 +1,7 @@
+class: PresentationInkEvent
+extends: PresentationEvent
+fields:
+  slideId: String
+  op: String
+  strokeId: String?
+  strokeJson: String?

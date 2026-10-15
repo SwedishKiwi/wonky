@@ -64,18 +64,6 @@ class DriveLocalizationsEn extends DriveLocalizations {
       'This image can\'t be displayed. The file may be damaged.';
 
   @override
-  String get previewPdfBroken =>
-      'This PDF can\'t be displayed. The file may be damaged.';
-
-  @override
-  String get previewPdfPassword =>
-      'This PDF is password-protected. Download it to open it.';
-
-  @override
-  String get previewPdfUnavailable =>
-      'PDF previews aren\'t available here. Download the file to view it.';
-
-  @override
   String get previewNotText =>
       'This file can\'t be shown as text. It contains binary data.';
 
@@ -173,9 +161,6 @@ class DriveLocalizationsEn extends DriveLocalizations {
   String get previewZoomFit => 'Fit';
 
   @override
-  String get previewZoomFitWidth => 'Fit width';
-
-  @override
   String get previewZoomActual => 'Actual size';
 
   @override
@@ -198,50 +183,6 @@ class DriveLocalizationsEn extends DriveLocalizations {
 
   @override
   String get previewServerPreviewNote => 'Showing a smaller preview';
-
-  @override
-  String previewPdfPageOf(int count) {
-    return '/ $count';
-  }
-
-  @override
-  String previewPdfPageSemantics(int page, int count) {
-    return 'Page $page of $count';
-  }
-
-  @override
-  String get previewPdfPageField => 'Page number';
-
-  @override
-  String previewPdfTruncated(int count) {
-    return 'Showing the first $count pages. Download the file to see all of them.';
-  }
-
-  @override
-  String get previewPdfLoadingPages => 'Reading pages…';
-
-  @override
-  String get previewPdfTooltip =>
-      'Pages are shown as images. Download the PDF to select or search its text.';
-
-  @override
-  String get previewGoToPageTitle => 'Go to page';
-
-  @override
-  String previewGoToPageLabel(int count) {
-    return 'Page (1–$count)';
-  }
-
-  @override
-  String previewGoToPageInvalid(int count) {
-    return 'Enter a page between 1 and $count.';
-  }
-
-  @override
-  String get previewGo => 'Go';
-
-  @override
-  String get previewCancel => 'Cancel';
 
   @override
   String get previewWrap => 'Wrap lines';
@@ -370,9 +311,6 @@ class DriveLocalizationsEn extends DriveLocalizations {
   String get cmdPreviewRotate => 'Rotate view';
 
   @override
-  String get cmdPreviewGoToPage => 'Go to page…';
-
-  @override
   String get cmdPreviewToggleWrap => 'Wrap lines';
 
   @override
@@ -472,6 +410,11 @@ class DriveLocalizationsEn extends DriveLocalizations {
   @override
   String uploadPill(int count, int percent) {
     return 'Uploading $count · $percent %';
+  }
+
+  @override
+  String uploadPillWaiting(int count) {
+    return '$count waiting';
   }
 
   @override
@@ -1017,18 +960,6 @@ class DriveLocalizationsEnXa extends DriveLocalizationsEn {
       '[Ţĥîš îɱåĝé çåñ\'ţ ƀé ðîšþļåýéð. Ţĥé ƒîļé ɱåý ƀé ðåɱåĝéð. one two three fou]';
 
   @override
-  String get previewPdfBroken =>
-      '[Ţĥîš ÞÐƑ çåñ\'ţ ƀé ðîšþļåýéð. Ţĥé ƒîļé ɱåý ƀé ðåɱåĝéð. one two three fo]';
-
-  @override
-  String get previewPdfPassword =>
-      '[Ţĥîš ÞÐƑ îš þåššŵöŕð-þŕöţéçţéð. Ðöŵñļöåð îţ ţö öþéñ îţ. one two three fou]';
-
-  @override
-  String get previewPdfUnavailable =>
-      '[ÞÐƑ þŕéṽîéŵš åŕéñ\'ţ åṽåîļåƀļé ĥéŕé. Ðöŵñļöåð ţĥé ƒîļé ţö ṽîéŵ îţ. one two three four f]';
-
-  @override
   String get previewNotText =>
       '[Ţĥîš ƒîļé çåñ\'ţ ƀé šĥöŵñ åš ţéẋţ. Îţ çöñţåîñš ƀîñåŕý ðåţå. one two three fou]';
 
@@ -1127,9 +1058,6 @@ class DriveLocalizationsEnXa extends DriveLocalizationsEn {
   String get previewZoomFit => '[Ƒîţ on]';
 
   @override
-  String get previewZoomFitWidth => '[Ƒîţ ŵîðţĥ one]';
-
-  @override
   String get previewZoomActual => '[Åçţûåļ šîžé one]';
 
   @override
@@ -1152,50 +1080,6 @@ class DriveLocalizationsEnXa extends DriveLocalizationsEn {
 
   @override
   String get previewServerPreviewNote => '[Šĥöŵîñĝ å šɱåļļéŕ þŕéṽîéŵ one two]';
-
-  @override
-  String previewPdfPageOf(int count) {
-    return '[/ $count o]';
-  }
-
-  @override
-  String previewPdfPageSemantics(int page, int count) {
-    return '[Þåĝé $page öƒ $count one]';
-  }
-
-  @override
-  String get previewPdfPageField => '[Þåĝé ñûɱƀéŕ one]';
-
-  @override
-  String previewPdfTruncated(int count) {
-    return '[Šĥöŵîñĝ ţĥé ƒîŕšţ $count þåĝéš. Ðöŵñļöåð ţĥé ƒîļé ţö šéé åļļ öƒ ţĥéɱ. one two three four]';
-  }
-
-  @override
-  String get previewPdfLoadingPages => '[Ŕéåðîñĝ þåĝéš… one t]';
-
-  @override
-  String get previewPdfTooltip =>
-      '[Þåĝéš åŕé šĥöŵñ åš îɱåĝéš. Ðöŵñļöåð ţĥé ÞÐƑ ţö šéļéçţ öŕ šéåŕçĥ îţš ţéẋţ. one two three four fi]';
-
-  @override
-  String get previewGoToPageTitle => '[Ĝö ţö þåĝé one]';
-
-  @override
-  String previewGoToPageLabel(int count) {
-    return '[Þåĝé (1–$count) one]';
-  }
-
-  @override
-  String previewGoToPageInvalid(int count) {
-    return '[Éñţéŕ å þåĝé ƀéţŵééñ 1 åñð $count. one two]';
-  }
-
-  @override
-  String get previewGo => '[Ĝö o]';
-
-  @override
-  String get previewCancel => '[Çåñçéļ one]';
 
   @override
   String get previewWrap => '[Ŵŕåþ ļîñéš one]';
@@ -1324,9 +1208,6 @@ class DriveLocalizationsEnXa extends DriveLocalizationsEn {
   String get cmdPreviewRotate => '[Ŕöţåţé ṽîéŵ one]';
 
   @override
-  String get cmdPreviewGoToPage => '[Ĝö ţö þåĝé… one]';
-
-  @override
   String get cmdPreviewToggleWrap => '[Ŵŕåþ ļîñéš one]';
 
   @override
@@ -1426,6 +1307,11 @@ class DriveLocalizationsEnXa extends DriveLocalizationsEn {
   @override
   String uploadPill(int count, int percent) {
     return '[Ûþļöåðîñĝ $count · $percent % one]';
+  }
+
+  @override
+  String uploadPillWaiting(int count) {
+    return '[$count ŵåîţîñĝ one]';
   }
 
   @override

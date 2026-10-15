@@ -195,6 +195,36 @@ class CrdtSchemaRegistry {
   bool get registryChanged => _registryChanged;
   var _registryChanged = false;
 
+  /// Name of the reserved registry row that anchors the pending foreign key
+  /// projection rebuilds (patch OS-9).
+  ///
+  /// Not a valid Serverpod table name, so it never collides with a synced
+  /// table. Its [CrdtSchemaColumn] rows are one per space still to re-project,
+  /// named `space:<offline_sync_spaces.id>`, with the seed tables in
+  /// `dartType` (comma-separated, `*` for every table). Reconciliation hides
+  /// the row and its columns from the registry it returns.
+  static const projectionRebuildMarker = '#projection_rebuild';
+
+  static const _projectionRebuildSpacePrefix = 'space:';
+  static const _projectionRebuildColumnType = 'projectionRebuild';
+  static const _allSeedTables = '*';
+
+  /// The spaces whose foreign key projection still has to be rebuilt after
+  /// the last [syncAndGetSchema], with their seed tables (null: every table).
+  ///
+  /// Includes rebuilds persisted by earlier processes that did not finish
+  /// (patch OS-9), so a crash or restart resumes them.
+  Map<int, Set<String>?> get pendingProjectionRebuilds => _pendingProjectionRebuilds;
+  var _pendingProjectionRebuilds = <int, Set<String>?>{};
+
+  /// The id of the [projectionRebuildMarker] row, when it exists.
+  int? get projectionRebuildMarkerId => _projectionRebuildMarkerId;
+  int? _projectionRebuildMarkerId;
+
+  /// The `name` of the marker column of [spaceId].
+  static String projectionRebuildColumnName(int spaceId) =>
+      '$_projectionRebuildSpacePrefix$spaceId';
+
   /// Serverpod table definitions by table name.
   late final Map<String, TableDefinition> _tableDefinitionsByName;
 
@@ -225,14 +255,31 @@ class CrdtSchemaRegistry {
   /// [OfflineSyncSchemaReconciliationException] without writing registry rows.
   Future<(List<CrdtSchemaTable>, List<CrdtSchemaColumn>)> syncAndGetSchema() async {
     return _session.db.transaction((transaction) async {
-      final existingTables = await CrdtSchemaTable.db.find(
+      final storedTables = await CrdtSchemaTable.db.find(
         _session,
         transaction: transaction,
       );
-      final existingColumns = await CrdtSchemaColumn.db.find(
+      final storedColumns = await CrdtSchemaColumn.db.find(
         _session,
         transaction: transaction,
       );
+      // OS-9: the rebuild marker is not a synced table.
+      var marker = storedTables
+          .where((table) => table.name == projectionRebuildMarker)
+          .firstOrNull;
+      final existingTables = [
+        for (final table in storedTables)
+          if (!identical(table, marker)) table,
+      ];
+      final existingColumns = [
+        for (final column in storedColumns)
+          if (column.tblId != marker?.id) column,
+      ];
+      final markerColumns = [
+        for (final column in storedColumns)
+          if (marker != null && column.tblId == marker.id) column,
+      ];
+
       final plan = await _planReconciliation(
         existingTables: existingTables,
         existingColumns: existingColumns,
@@ -241,13 +288,168 @@ class CrdtSchemaRegistry {
       if (plan.failures.isNotEmpty) {
         throw OfflineSyncSchemaReconciliationException(plan.failures);
       }
-      return _applyReconciliation(
+      // Read before the registry deletes cascade the rows of dropped tables.
+      final newRebuilds = plan.hasMutations
+          ? await _planProjectionRebuilds(plan, existingTables, transaction)
+          : const <int, Set<String>?>{};
+      final result = await _applyReconciliation(
         plan,
         existingTables: existingTables,
         existingColumns: existingColumns,
         transaction: transaction,
       );
+      if (newRebuilds.isNotEmpty && marker == null) {
+        marker = await CrdtSchemaTable.db.insertRow(
+          _session,
+          CrdtSchemaTable(name: projectionRebuildMarker),
+          transaction: transaction,
+        );
+      }
+      _projectionRebuildMarkerId = marker?.id;
+      _pendingProjectionRebuilds = marker == null
+          ? {}
+          : await _persistProjectionRebuilds(
+              markerId: marker.id!,
+              markerColumns: markerColumns,
+              newRebuilds: newRebuilds,
+              transaction: transaction,
+            );
+      return result;
     });
+  }
+
+  /// The spaces whose foreign key projection the planned registry change can
+  /// alter, with the tables to seed their rebuild from (patch OS-9).
+  ///
+  /// Projection is a function of a space's rows and the foreign key graph, so
+  /// only a space holding rows of a table whose registry entry changes can
+  /// project differently: a new table has no rows yet (its edges constrain
+  /// only its own rows), and an unchanged table keeps its own edges. A space
+  /// with rows in a changed table is seeded from the changed tables it holds
+  /// rows of (the projector loads their foreign key components); a space with
+  /// rows in a dropped table is rebuilt over every table, because the
+  /// dropped table's former edges are no longer known. One indexed query per
+  /// changed table finds the spaces, rather than a pass over every space.
+  Future<Map<int, Set<String>?>> _planProjectionRebuilds(
+    _SchemaReconciliationPlan plan,
+    List<CrdtSchemaTable> existingTables,
+    Transaction transaction,
+  ) async {
+    final tableNameById = {for (final table in existingTables) table.id!: table.name};
+    final droppedTableIds = {for (final table in plan.tablesToDelete) table.id!};
+    final changedTableIds = <int>{
+      for (final column in plan.columnsToInsert) ?column.tblId,
+      for (final column in plan.columnsToUpdate) column.tblId,
+      for (final column in plan.columnsToDelete) column.tblId,
+    }..removeAll(droppedTableIds);
+
+    final rebuilds = <int, Set<String>?>{};
+    for (final tableId in droppedTableIds) {
+      for (final spaceId in await _spacesWithRows(tableId, transaction)) {
+        rebuilds[spaceId] = null;
+      }
+    }
+    for (final tableId in changedTableIds) {
+      final tableName = tableNameById[tableId];
+      if (tableName == null) continue;
+      for (final spaceId in await _spacesWithRows(tableId, transaction)) {
+        if (rebuilds.containsKey(spaceId) && rebuilds[spaceId] == null) continue;
+        (rebuilds[spaceId] ??= <String>{}).add(tableName);
+      }
+    }
+    return rebuilds;
+  }
+
+  /// Ids of the spaces holding CRDT rows of [tableId]: an index probe per
+  /// space on `crdt_data_rows (spaceId, tblId, uuidRowId)`.
+  Future<List<int>> _spacesWithRows(int tableId, Transaction transaction) async {
+    final result = await _session.db.unsafeQuery(
+      '''
+SELECT s."id" FROM "offline_sync_spaces" s
+WHERE EXISTS (
+  SELECT 1 FROM "crdt_data_rows" r
+  WHERE r."spaceId" = s."id" AND r."tblId" = $tableId
+)
+ORDER BY s."id"''',
+      transaction: transaction,
+    );
+    return [for (final row in result) row[0] as int];
+  }
+
+  /// Merges [newRebuilds] into the persisted marker rows (seed tables are
+  /// unioned for a space that is still pending) and returns every pending
+  /// rebuild.
+  Future<Map<int, Set<String>?>> _persistProjectionRebuilds({
+    required int markerId,
+    required List<CrdtSchemaColumn> markerColumns,
+    required Map<int, Set<String>?> newRebuilds,
+    required Transaction transaction,
+  }) async {
+    final pending = <int, Set<String>?>{};
+    final rowsBySpaceId = <int, CrdtSchemaColumn>{};
+    for (final column in markerColumns) {
+      if (!column.name.startsWith(_projectionRebuildSpacePrefix)) continue;
+      final spaceId = int.tryParse(
+        column.name.substring(_projectionRebuildSpacePrefix.length),
+      );
+      if (spaceId == null) continue;
+      rowsBySpaceId[spaceId] = column;
+      pending[spaceId] = _decodeSeedTables(column.dartType);
+    }
+    if (newRebuilds.isEmpty) return pending;
+
+    final inserts = <CrdtSchemaColumn>[];
+    final updates = <CrdtSchemaColumn>[];
+    for (final MapEntry(key: spaceId, value: seeds) in newRebuilds.entries) {
+      final stored = rowsBySpaceId[spaceId];
+      if (stored == null) {
+        pending[spaceId] = seeds;
+        inserts.add(
+          CrdtSchemaColumn(
+            tblId: markerId,
+            name: projectionRebuildColumnName(spaceId),
+            columnType: _projectionRebuildColumnType,
+            dartType: _encodeSeedTables(seeds),
+            isNullable: true,
+          ),
+        );
+        continue;
+      }
+      final current = pending[spaceId];
+      final merged = current == null || seeds == null ? null : {...current, ...seeds};
+      pending[spaceId] = merged;
+      final encoded = _encodeSeedTables(merged);
+      if (encoded != stored.dartType) {
+        updates.add(stored.copyWith(dartType: encoded));
+      }
+    }
+    if (inserts.isNotEmpty) {
+      await CrdtSchemaColumn.db.insert(
+        _session,
+        inserts,
+        transaction: transaction,
+      );
+    }
+    if (updates.isNotEmpty) {
+      await CrdtSchemaColumn.db.update(
+        _session,
+        updates,
+        columns: (t) => [t.dartType],
+        transaction: transaction,
+      );
+    }
+    return pending;
+  }
+
+  static String _encodeSeedTables(Set<String>? seeds) =>
+      seeds == null ? _allSeedTables : (seeds.toList()..sort()).join(',');
+
+  static Set<String>? _decodeSeedTables(String encoded) {
+    if (encoded == _allSeedTables) return null;
+    return {
+      for (final name in encoded.split(','))
+        if (name.isNotEmpty) name,
+    };
   }
 
   Future<_SchemaReconciliationPlan> _planReconciliation({

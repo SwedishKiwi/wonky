@@ -86,7 +86,8 @@ class SyncedDeckStrings {
 ///
 /// Role: the subscribe result, then the membership cache after every
 /// ingestion (`SpaceOpening.roleFromMembership`); a removed membership
-/// turns the open deck [DeckUnavailable].
+/// turns the open deck [DeckUnavailable], and a membership that returns
+/// (unshare + reshare) reloads the deck and turns it [DeckReady] again.
 class SyncedDeckSession extends DeckSessionBase implements HostedSpaceSession {
   SyncedDeckSession._(
     this.host, {
@@ -408,12 +409,39 @@ class SyncedDeckSession extends DeckSessionBase implements HostedSpaceSession {
       // Membership removed (unshared, trashed, evicted). Offline opens of
       // a deck still on the device keep the cached role.
       if (!initial && _ready) {
+        _accessRemoved = true;
         loadStateNotifier.value = DeckUnavailable(strings.accessRemoved);
       }
       return;
     }
     final next = SpaceOpening.roleFromMembership(space, role.value);
     if (next != null) roleValue = next;
+    if (_accessRemoved) _onAccessRestored();
+  }
+
+  /// Whether the open deck turned unavailable because its membership
+  /// disappeared (and may come back: unshare + reshare).
+  bool _accessRemoved = false;
+
+  /// The membership came back while the deck was open (re-shared): rows
+  /// the engine's membership read filter hid and showed again produced no
+  /// journal entries, so the whole deck is re-read
+  /// (`JournalIngestion.needsReload`) before it turns [DeckReady] again.
+  void _onAccessRestored() {
+    _accessRemoved = false;
+    _ingestion.needsReload = true;
+    // Called from the ingestion's `afterIngest`: the running loop picks
+    // the reload up (`ingest` coalesces), so don't await it here.
+    unawaited(
+      _ingestion.ingest().then((_) {
+        if (_disposed || _accessRemoved) return;
+        if (loadStateNotifier.value is DeckUnavailable) {
+          loadStateNotifier.value = const DeckReady();
+          _updateStatus();
+          _scheduleMaintenance();
+        }
+      }),
+    );
   }
 
   final List<FutureOr<void> Function()> _onDispose = [];

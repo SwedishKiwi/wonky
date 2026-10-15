@@ -614,6 +614,26 @@ Previews render the theme's `title` layout in the current appearance via `SlideS
 Saving a theme to a personal **theme library** (like Write's) is P2: v1 shares themes through
 templates and *Import theme from a presentation*.
 
+> **As built (SL-17).** Panel layout top to bottom: *Appearance* (Light | Dark buttons), *Apply
+> to* (All slides / Selected slides — panel state, default All), *In this presentation*
+> (preview card of the theme's `title` layout with its name, *Default* badge, "Used by n
+> slides", ⋮ = Rename… / Duplicate / Set as default / Edit theme… (SL-28) / Remove; a click
+> applies), *Remove unused themes* (every unused theme except the default, one step), *Built-in
+> themes* (2–3 columns of previews; the deck's default copy is outlined), *Import theme from a
+> presentation…*. Previews are in-memory preview decks (title layout with the theme name and a
+> subtitle; layout galleries show each layout with its prompts) in the deck's appearance.
+> `slides.theme.apply` takes `builtin` or `themeId` (also `source: {builtin | deckThemeId}`),
+> `scope` (`all` | `selected`) or explicit `slideIds`. `slides.theme.import {itemUuid, themeId,
+> apply}` reads the source deck online through the new `slidesThemes.list` endpoint (the
+> on-device source path is `TODO.md`); several themes → a select dialog (names + usage, no
+> previews); after the import a toast offers *Apply to all slides*. *Duplicate theme* copies
+> every row with fresh ids ("<name> copy", `sourceKey` null). Inspector › Slide › Background
+> sets solid colors (theme colors first) and *Reset to layout background*; gradients/images
+> are not editable there yet. *Slide numbers and footer* (04 §13.3) and Page setup (04 §13.1;
+> units su/px/in/cm, the preview letterboxes with *Scale content* and clips with *Don't
+> scale*) are built; `slides.deck.setSize {preset, width, height, scaleContent}` and
+> `slides.deck.setNumbering` are the MCP-friendly forms of the dialogs.
+
 ---
 
 ## 10. Additions to 02-data-model and suite specs

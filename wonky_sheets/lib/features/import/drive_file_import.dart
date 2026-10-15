@@ -148,6 +148,7 @@ Future<UuidValue?> importDriveFileAsSpreadsheet(
     file: ImportFileData(name: file.name, bytes: bytes),
     location: ImportLocation.createNew,
     canEdit: false,
+    fileLocked: true,
     spreadsheetLocale: SheetsUserDefaults.of(s).locale ?? 'en_US',
   );
   if (picked == null) return null;

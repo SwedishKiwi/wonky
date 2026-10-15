@@ -223,12 +223,12 @@ void main() {
     tearDown(() => t.dispose());
 
     testWidgets('when a preview is opened through the bridge then its state '
-        'reports the viewer, page and zoom', (tester) async {
+        'reports the viewer and zoom', (tester) async {
       final pdf = t.api.addFile(
         'report.pdf',
         mimeType: 'application/pdf',
         category: FileCategory.pdf,
-        content: PreviewFixtures.pdf(pages: 3),
+        content: PreviewFixtures.pdf,
       );
       final png = t.api.addFile(
         'holiday.png',
@@ -259,9 +259,8 @@ void main() {
         t.services,
         'ui.drive.get_preview_state',
       );
-      expect(state.result['type'], 'pdf');
-      expect(state.result['page'], 1);
-      expect(state.result['page_count'], 3);
+      expect(state.result['type'], 'unsupported');
+      expect(state.result['zoom'], isNull);
 
       final sel = await call(tester, t.services, 'ui.drive.get_selection');
       expect(sel.result['view'], 'preview');

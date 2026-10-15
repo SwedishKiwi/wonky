@@ -14,7 +14,6 @@ import 'preview_content.dart';
 import 'preview_host.dart';
 import 'viewers/csv_table_viewer.dart';
 import 'viewers/image_viewer.dart';
-import 'viewers/pdf_viewer.dart';
 import 'viewers/preview_states.dart';
 import 'viewers/text_file_viewer.dart';
 
@@ -123,7 +122,6 @@ class _FilePreviewScreenState extends State<FilePreviewScreen> {
     if (_c.phase != PreviewPhase.ready) return previewStateBody(context, _c);
     return switch (_c.type!.viewer) {
       PreviewViewer.image => ImageViewer(controller: _c),
-      PreviewViewer.pdf => PdfViewer(controller: _c),
       PreviewViewer.text => TextFileViewer(controller: _c),
       PreviewViewer.csv => CsvTableViewer(controller: _c),
       PreviewViewer.unsupported => UnsupportedFileView(controller: _c),

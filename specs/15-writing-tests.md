@@ -249,6 +249,21 @@ endpoints the test tools are regenerated (automatic under `serverpod start`, oth
   workflow `e2e.yml`, nightly). `flutter test` does not support web devices; on web use
   `flutter drive -d chrome --driver=test_driver/integration_test.dart --target=…` with a
   chromedriver on port 4444.
+- **Web runner for the v2 journeys** (Drive 05 §6, J-D1…J-D10; not set up yet — D-18 found no
+  chromedriver on the development machine): (1) install a chromedriver matching the local
+  Chrome (`npx @puppeteer/browsers install chromedriver@stable`, or `brew install
+  chromedriver`) and start it with `chromedriver --port=4444`; (2) `serverpod start`; (3) in
+  the app folder (`wonky_drive`, `wonky_write`, `wonky_sheets`) add
+  `test_driver/integration_test.dart` (`integrationDriver()`) and run one journey per call:
+  `flutter drive -d chrome --release --driver=test_driver/integration_test.dart
+  --target=integration_test/<journey>_test.dart --web-header=Cross-Origin-Opener-Policy=same-origin
+  --web-header=Cross-Origin-Embedder-Policy=require-corp` (the apps need cross-origin
+  isolation for OPFS and the sqlite worker, as `wonky_server` serves them); (4) CI: a Linux
+  job installing Chrome + chromedriver (`browser-actions/setup-chrome`), the same server
+  start as `e2e.yml`, then the loop above. Uploads can't come from a real OS drop in
+  automation (`webkitGetAsEntry()` is null for synthetic `DataTransfer`s): journeys stage
+  files through the upload command (`drive.upload.files` with staged bytes) or the
+  `file_picker` input.
 
 ## 10. Running tests
 

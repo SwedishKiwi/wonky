@@ -234,6 +234,14 @@ import 'sheets/scripts/models/script_run_response.dart' as _is0mvar3;
 import 'sheets/scripts/models/script_runtime_kind.dart' as _iy0fj18f;
 import 'sheets/scripts/models/script_trigger_state.dart' as _ixysij0q;
 import 'slides/models/deck_change_log_receipt.dart' as _ircoml6y;
+import 'slides/present/models/presentation_bus_message.dart' as _ildgqgkz;
+import 'slides/present/models/presentation_event.dart' as _iz9vxb2f;
+import 'slides/present/models/presentation_join.dart' as _ih25cwup;
+import 'slides/present/models/presentation_participant.dart' as _ijgt5qi7;
+import 'slides/present/models/presentation_role.dart' as _i4d7um9r;
+import 'slides/present/models/presentation_session_info.dart' as _ig7ln54r;
+import 'slides/present/models/presentation_state.dart' as _i95fngt4;
+import 'slides/present/models/presentation_update.dart' as _ijdad65m;
 import 'write/mcp/headless_change.dart' as _iilidizm;
 import 'write/messages/doc_bus_message.dart' as _i8zfu67r;
 import 'write/messages/doc_client_message.dart' as _imbts8if;
@@ -439,6 +447,14 @@ export 'sheets/scripts/models/script_run_response.dart';
 export 'sheets/scripts/models/script_runtime_kind.dart';
 export 'sheets/scripts/models/script_trigger_state.dart';
 export 'slides/models/deck_change_log_receipt.dart';
+export 'slides/present/models/presentation_bus_message.dart';
+export 'slides/present/models/presentation_event.dart';
+export 'slides/present/models/presentation_join.dart';
+export 'slides/present/models/presentation_participant.dart';
+export 'slides/present/models/presentation_role.dart';
+export 'slides/present/models/presentation_session_info.dart';
+export 'slides/present/models/presentation_state.dart';
+export 'slides/present/models/presentation_update.dart';
 export 'write/mcp/headless_change.dart';
 export 'write/messages/doc_bus_message.dart';
 export 'write/messages/doc_client_message.dart';
@@ -674,6 +690,25 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_iy0fj18f.ScriptRuntimeKind>,
           _is.getType<_ixysij0q.ScriptTriggerState>,
           _is.getType<_ircoml6y.DeckChangeLogReceipt>,
+          _is.getType<_ildgqgkz.PresentationBusMessage>,
+          _is.getType<_iz9vxb2f.PresentationCommandEvent>,
+          _is.getType<_ijdad65m.PresentationCommandUpdate>,
+          _is.getType<_ijdad65m.PresentationEndUpdate>,
+          _is.getType<_iz9vxb2f.PresentationEndedEvent>,
+          _is.getType<_iz9vxb2f.PresentationInkEvent>,
+          _is.getType<_iz9vxb2f.PresentationStateEvent>,
+          _is.getType<_iz9vxb2f.PresentationWelcome>,
+          _is.getType<_iz9vxb2f.PresentationPresenterEvent>,
+          _is.getType<_iz9vxb2f.PresentationLaserEvent>,
+          _is.getType<_iz9vxb2f.PresentationRosterEvent>,
+          _is.getType<_ijdad65m.PresentationInkUpdate>,
+          _is.getType<_ih25cwup.PresentationJoin>,
+          _is.getType<_ijdad65m.PresentationLaserUpdate>,
+          _is.getType<_ijgt5qi7.PresentationParticipant>,
+          _is.getType<_i4d7um9r.PresentationRole>,
+          _is.getType<_ig7ln54r.PresentationSessionInfo>,
+          _is.getType<_i95fngt4.PresentationState>,
+          _is.getType<_ijdad65m.PresentationStateUpdate>,
           _is.getType<_iilidizm.HeadlessChange>,
           _is.getType<_icpkpcrn.DocAck>,
           _is.getType<_i8zfu67r.DocBusMessage>,
@@ -908,6 +943,25 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_iy0fj18f.ScriptRuntimeKind?>,
           _is.getType<_ixysij0q.ScriptTriggerState?>,
           _is.getType<_ircoml6y.DeckChangeLogReceipt?>,
+          _is.getType<_ildgqgkz.PresentationBusMessage?>,
+          _is.getType<_iz9vxb2f.PresentationCommandEvent?>,
+          _is.getType<_ijdad65m.PresentationCommandUpdate?>,
+          _is.getType<_ijdad65m.PresentationEndUpdate?>,
+          _is.getType<_iz9vxb2f.PresentationEndedEvent?>,
+          _is.getType<_iz9vxb2f.PresentationInkEvent?>,
+          _is.getType<_iz9vxb2f.PresentationStateEvent?>,
+          _is.getType<_iz9vxb2f.PresentationWelcome?>,
+          _is.getType<_iz9vxb2f.PresentationPresenterEvent?>,
+          _is.getType<_iz9vxb2f.PresentationLaserEvent?>,
+          _is.getType<_iz9vxb2f.PresentationRosterEvent?>,
+          _is.getType<_ijdad65m.PresentationInkUpdate?>,
+          _is.getType<_ih25cwup.PresentationJoin?>,
+          _is.getType<_ijdad65m.PresentationLaserUpdate?>,
+          _is.getType<_ijgt5qi7.PresentationParticipant?>,
+          _is.getType<_i4d7um9r.PresentationRole?>,
+          _is.getType<_ig7ln54r.PresentationSessionInfo?>,
+          _is.getType<_i95fngt4.PresentationState?>,
+          _is.getType<_ijdad65m.PresentationStateUpdate?>,
           _is.getType<_iilidizm.HeadlessChange?>,
           _is.getType<_icpkpcrn.DocAck?>,
           _is.getType<_i8zfu67r.DocBusMessage?>,
@@ -981,6 +1035,7 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<Map<int, int>>,
           _is.getType<List<_i9yjzgjk.SheetsContributorStat>>,
           _is.getType<Map<String, int>>,
+          _is.getType<List<_ijgt5qi7.PresentationParticipant>>,
           _is.getType<List<_issmv319.DocumentOpView>>,
           _is.getType<List<_issmv319.DocumentOpView>?>,
           _is.getType<List<_i48sm9f2.ImportWarningView>?>,
@@ -7251,6 +7306,63 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == _ircoml6y.DeckChangeLogReceipt) {
       return _ircoml6y.DeckChangeLogReceipt.fromJson(data) as T;
     }
+    if (t == _ildgqgkz.PresentationBusMessage) {
+      return _ildgqgkz.PresentationBusMessage.fromJson(data) as T;
+    }
+    if (t == _iz9vxb2f.PresentationCommandEvent) {
+      return _iz9vxb2f.PresentationCommandEvent.fromJson(data) as T;
+    }
+    if (t == _ijdad65m.PresentationCommandUpdate) {
+      return _ijdad65m.PresentationCommandUpdate.fromJson(data) as T;
+    }
+    if (t == _ijdad65m.PresentationEndUpdate) {
+      return _ijdad65m.PresentationEndUpdate.fromJson(data) as T;
+    }
+    if (t == _iz9vxb2f.PresentationEndedEvent) {
+      return _iz9vxb2f.PresentationEndedEvent.fromJson(data) as T;
+    }
+    if (t == _iz9vxb2f.PresentationInkEvent) {
+      return _iz9vxb2f.PresentationInkEvent.fromJson(data) as T;
+    }
+    if (t == _iz9vxb2f.PresentationStateEvent) {
+      return _iz9vxb2f.PresentationStateEvent.fromJson(data) as T;
+    }
+    if (t == _iz9vxb2f.PresentationWelcome) {
+      return _iz9vxb2f.PresentationWelcome.fromJson(data) as T;
+    }
+    if (t == _iz9vxb2f.PresentationPresenterEvent) {
+      return _iz9vxb2f.PresentationPresenterEvent.fromJson(data) as T;
+    }
+    if (t == _iz9vxb2f.PresentationLaserEvent) {
+      return _iz9vxb2f.PresentationLaserEvent.fromJson(data) as T;
+    }
+    if (t == _iz9vxb2f.PresentationRosterEvent) {
+      return _iz9vxb2f.PresentationRosterEvent.fromJson(data) as T;
+    }
+    if (t == _ijdad65m.PresentationInkUpdate) {
+      return _ijdad65m.PresentationInkUpdate.fromJson(data) as T;
+    }
+    if (t == _ih25cwup.PresentationJoin) {
+      return _ih25cwup.PresentationJoin.fromJson(data) as T;
+    }
+    if (t == _ijdad65m.PresentationLaserUpdate) {
+      return _ijdad65m.PresentationLaserUpdate.fromJson(data) as T;
+    }
+    if (t == _ijgt5qi7.PresentationParticipant) {
+      return _ijgt5qi7.PresentationParticipant.fromJson(data) as T;
+    }
+    if (t == _i4d7um9r.PresentationRole) {
+      return _i4d7um9r.PresentationRole.fromJson(data) as T;
+    }
+    if (t == _ig7ln54r.PresentationSessionInfo) {
+      return _ig7ln54r.PresentationSessionInfo.fromJson(data) as T;
+    }
+    if (t == _i95fngt4.PresentationState) {
+      return _i95fngt4.PresentationState.fromJson(data) as T;
+    }
+    if (t == _ijdad65m.PresentationStateUpdate) {
+      return _ijdad65m.PresentationStateUpdate.fromJson(data) as T;
+    }
     if (t == _iilidizm.HeadlessChange) {
       return _iilidizm.HeadlessChange.fromJson(data) as T;
     }
@@ -8176,6 +8288,114 @@ class Protocol extends _is.DatabaseSerializationManager
               : null)
           as T;
     }
+    if (t == _is.getType<_ildgqgkz.PresentationBusMessage?>()) {
+      return (data != null
+              ? _ildgqgkz.PresentationBusMessage.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iz9vxb2f.PresentationCommandEvent?>()) {
+      return (data != null
+              ? _iz9vxb2f.PresentationCommandEvent.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ijdad65m.PresentationCommandUpdate?>()) {
+      return (data != null
+              ? _ijdad65m.PresentationCommandUpdate.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ijdad65m.PresentationEndUpdate?>()) {
+      return (data != null
+              ? _ijdad65m.PresentationEndUpdate.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iz9vxb2f.PresentationEndedEvent?>()) {
+      return (data != null
+              ? _iz9vxb2f.PresentationEndedEvent.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iz9vxb2f.PresentationInkEvent?>()) {
+      return (data != null
+              ? _iz9vxb2f.PresentationInkEvent.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iz9vxb2f.PresentationStateEvent?>()) {
+      return (data != null
+              ? _iz9vxb2f.PresentationStateEvent.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iz9vxb2f.PresentationWelcome?>()) {
+      return (data != null
+              ? _iz9vxb2f.PresentationWelcome.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iz9vxb2f.PresentationPresenterEvent?>()) {
+      return (data != null
+              ? _iz9vxb2f.PresentationPresenterEvent.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iz9vxb2f.PresentationLaserEvent?>()) {
+      return (data != null
+              ? _iz9vxb2f.PresentationLaserEvent.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iz9vxb2f.PresentationRosterEvent?>()) {
+      return (data != null
+              ? _iz9vxb2f.PresentationRosterEvent.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ijdad65m.PresentationInkUpdate?>()) {
+      return (data != null
+              ? _ijdad65m.PresentationInkUpdate.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ih25cwup.PresentationJoin?>()) {
+      return (data != null ? _ih25cwup.PresentationJoin.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_ijdad65m.PresentationLaserUpdate?>()) {
+      return (data != null
+              ? _ijdad65m.PresentationLaserUpdate.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ijgt5qi7.PresentationParticipant?>()) {
+      return (data != null
+              ? _ijgt5qi7.PresentationParticipant.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_i4d7um9r.PresentationRole?>()) {
+      return (data != null ? _i4d7um9r.PresentationRole.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_ig7ln54r.PresentationSessionInfo?>()) {
+      return (data != null
+              ? _ig7ln54r.PresentationSessionInfo.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_i95fngt4.PresentationState?>()) {
+      return (data != null ? _i95fngt4.PresentationState.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_ijdad65m.PresentationStateUpdate?>()) {
+      return (data != null
+              ? _ijdad65m.PresentationStateUpdate.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _is.getType<_iilidizm.HeadlessChange?>()) {
       return (data != null ? _iilidizm.HeadlessChange.fromJson(data) : null)
           as T;
@@ -8538,6 +8758,12 @@ class Protocol extends _is.DatabaseSerializationManager
           )
           as T;
     }
+    if (t == List<_ijgt5qi7.PresentationParticipant>) {
+      return (data as List)
+              .map((e) => deserialize<_ijgt5qi7.PresentationParticipant>(e))
+              .toList()
+          as T;
+    }
     if (t == List<_issmv319.DocumentOpView>) {
       return (data as List)
               .map((e) => deserialize<_issmv319.DocumentOpView>(e))
@@ -8892,6 +9118,25 @@ class Protocol extends _is.DatabaseSerializationManager
       _iy0fj18f.ScriptRuntimeKind => 'ScriptRuntimeKind',
       _ixysij0q.ScriptTriggerState => 'ScriptTriggerState',
       _ircoml6y.DeckChangeLogReceipt => 'DeckChangeLogReceipt',
+      _ildgqgkz.PresentationBusMessage => 'PresentationBusMessage',
+      _iz9vxb2f.PresentationCommandEvent => 'PresentationCommandEvent',
+      _ijdad65m.PresentationCommandUpdate => 'PresentationCommandUpdate',
+      _ijdad65m.PresentationEndUpdate => 'PresentationEndUpdate',
+      _iz9vxb2f.PresentationEndedEvent => 'PresentationEndedEvent',
+      _iz9vxb2f.PresentationInkEvent => 'PresentationInkEvent',
+      _iz9vxb2f.PresentationStateEvent => 'PresentationStateEvent',
+      _iz9vxb2f.PresentationWelcome => 'PresentationWelcome',
+      _iz9vxb2f.PresentationPresenterEvent => 'PresentationPresenterEvent',
+      _iz9vxb2f.PresentationLaserEvent => 'PresentationLaserEvent',
+      _iz9vxb2f.PresentationRosterEvent => 'PresentationRosterEvent',
+      _ijdad65m.PresentationInkUpdate => 'PresentationInkUpdate',
+      _ih25cwup.PresentationJoin => 'PresentationJoin',
+      _ijdad65m.PresentationLaserUpdate => 'PresentationLaserUpdate',
+      _ijgt5qi7.PresentationParticipant => 'PresentationParticipant',
+      _i4d7um9r.PresentationRole => 'PresentationRole',
+      _ig7ln54r.PresentationSessionInfo => 'PresentationSessionInfo',
+      _i95fngt4.PresentationState => 'PresentationState',
+      _ijdad65m.PresentationStateUpdate => 'PresentationStateUpdate',
       _iilidizm.HeadlessChange => 'HeadlessChange',
       _icpkpcrn.DocAck => 'DocAck',
       _i8zfu67r.DocBusMessage => 'DocBusMessage',
@@ -9331,6 +9576,44 @@ class Protocol extends _is.DatabaseSerializationManager
         return 'ScriptTriggerState';
       case _ircoml6y.DeckChangeLogReceipt():
         return 'DeckChangeLogReceipt';
+      case _ildgqgkz.PresentationBusMessage():
+        return 'PresentationBusMessage';
+      case _iz9vxb2f.PresentationCommandEvent():
+        return 'PresentationCommandEvent';
+      case _ijdad65m.PresentationCommandUpdate():
+        return 'PresentationCommandUpdate';
+      case _ijdad65m.PresentationEndUpdate():
+        return 'PresentationEndUpdate';
+      case _iz9vxb2f.PresentationEndedEvent():
+        return 'PresentationEndedEvent';
+      case _iz9vxb2f.PresentationInkEvent():
+        return 'PresentationInkEvent';
+      case _iz9vxb2f.PresentationStateEvent():
+        return 'PresentationStateEvent';
+      case _iz9vxb2f.PresentationWelcome():
+        return 'PresentationWelcome';
+      case _iz9vxb2f.PresentationPresenterEvent():
+        return 'PresentationPresenterEvent';
+      case _iz9vxb2f.PresentationLaserEvent():
+        return 'PresentationLaserEvent';
+      case _iz9vxb2f.PresentationRosterEvent():
+        return 'PresentationRosterEvent';
+      case _ijdad65m.PresentationInkUpdate():
+        return 'PresentationInkUpdate';
+      case _ih25cwup.PresentationJoin():
+        return 'PresentationJoin';
+      case _ijdad65m.PresentationLaserUpdate():
+        return 'PresentationLaserUpdate';
+      case _ijgt5qi7.PresentationParticipant():
+        return 'PresentationParticipant';
+      case _i4d7um9r.PresentationRole():
+        return 'PresentationRole';
+      case _ig7ln54r.PresentationSessionInfo():
+        return 'PresentationSessionInfo';
+      case _i95fngt4.PresentationState():
+        return 'PresentationState';
+      case _ijdad65m.PresentationStateUpdate():
+        return 'PresentationStateUpdate';
       case _iilidizm.HeadlessChange():
         return 'HeadlessChange';
       case _icpkpcrn.DocAck():
@@ -10033,6 +10316,63 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (dataClassName == 'DeckChangeLogReceipt') {
       return deserialize<_ircoml6y.DeckChangeLogReceipt>(data['data']);
+    }
+    if (dataClassName == 'PresentationBusMessage') {
+      return deserialize<_ildgqgkz.PresentationBusMessage>(data['data']);
+    }
+    if (dataClassName == 'PresentationCommandEvent') {
+      return deserialize<_iz9vxb2f.PresentationCommandEvent>(data['data']);
+    }
+    if (dataClassName == 'PresentationCommandUpdate') {
+      return deserialize<_ijdad65m.PresentationCommandUpdate>(data['data']);
+    }
+    if (dataClassName == 'PresentationEndUpdate') {
+      return deserialize<_ijdad65m.PresentationEndUpdate>(data['data']);
+    }
+    if (dataClassName == 'PresentationEndedEvent') {
+      return deserialize<_iz9vxb2f.PresentationEndedEvent>(data['data']);
+    }
+    if (dataClassName == 'PresentationInkEvent') {
+      return deserialize<_iz9vxb2f.PresentationInkEvent>(data['data']);
+    }
+    if (dataClassName == 'PresentationStateEvent') {
+      return deserialize<_iz9vxb2f.PresentationStateEvent>(data['data']);
+    }
+    if (dataClassName == 'PresentationWelcome') {
+      return deserialize<_iz9vxb2f.PresentationWelcome>(data['data']);
+    }
+    if (dataClassName == 'PresentationPresenterEvent') {
+      return deserialize<_iz9vxb2f.PresentationPresenterEvent>(data['data']);
+    }
+    if (dataClassName == 'PresentationLaserEvent') {
+      return deserialize<_iz9vxb2f.PresentationLaserEvent>(data['data']);
+    }
+    if (dataClassName == 'PresentationRosterEvent') {
+      return deserialize<_iz9vxb2f.PresentationRosterEvent>(data['data']);
+    }
+    if (dataClassName == 'PresentationInkUpdate') {
+      return deserialize<_ijdad65m.PresentationInkUpdate>(data['data']);
+    }
+    if (dataClassName == 'PresentationJoin') {
+      return deserialize<_ih25cwup.PresentationJoin>(data['data']);
+    }
+    if (dataClassName == 'PresentationLaserUpdate') {
+      return deserialize<_ijdad65m.PresentationLaserUpdate>(data['data']);
+    }
+    if (dataClassName == 'PresentationParticipant') {
+      return deserialize<_ijgt5qi7.PresentationParticipant>(data['data']);
+    }
+    if (dataClassName == 'PresentationRole') {
+      return deserialize<_i4d7um9r.PresentationRole>(data['data']);
+    }
+    if (dataClassName == 'PresentationSessionInfo') {
+      return deserialize<_ig7ln54r.PresentationSessionInfo>(data['data']);
+    }
+    if (dataClassName == 'PresentationState') {
+      return deserialize<_i95fngt4.PresentationState>(data['data']);
+    }
+    if (dataClassName == 'PresentationStateUpdate') {
+      return deserialize<_ijdad65m.PresentationStateUpdate>(data['data']);
     }
     if (dataClassName == 'HeadlessChange') {
       return deserialize<_iilidizm.HeadlessChange>(data['data']);

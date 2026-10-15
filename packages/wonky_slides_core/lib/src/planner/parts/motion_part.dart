@@ -32,7 +32,16 @@ extension _MotionPart on _Planner {
 
   SlideBuildRec _buildOf(String id) => deck.build(id) ?? notFound('Build', id);
 
-  Map<String, Object?> _buildValues(Map<String, Object?> cols) {
+  /// Validates build columns (06 §2–§4): kind/trigger names (the reserved
+  /// `onElementClick` is refused), delay 0–60,000 ms, duration 0–20,000
+  /// ms, a catalog effect of the (resulting) kind, an easing of the 06 §4.3
+  /// grammar and `optionsJson` per 06 §2.2 — wrong types are refused,
+  /// out-of-range values are clamped (plan warnings) and the normalized
+  /// JSON is written. [current] is the build being updated.
+  Map<String, Object?> _buildValues(
+    Map<String, Object?> cols, {
+    SlideBuildRec? current,
+  }) {
     final out = <String, Object?>{};
     for (final MapEntry(:key, :value) in cols.entries) {
       if (!_buildColumns.contains(key)) {
@@ -44,14 +53,24 @@ extension _MotionPart on _Planner {
             invalid('Unknown build kind $value');
           }
         case BuildCols.trigger:
-          if (SlideBuildTrigger.fromName(value) == null) {
-            invalid('Unknown build trigger $value');
+          final t = SlideBuildTrigger.fromName(value);
+          if (t == null) invalid('Unknown build trigger $value');
+          if (t == SlideBuildTrigger.onElementClick) {
+            invalid('Triggers on click of an object are not supported yet');
           }
-        case BuildCols.delayMs || BuildCols.durationMs:
-          if (value is! int || value < 0 || value > 600000) {
-            invalid('$key must be 0–600,000 ms');
+        case BuildCols.delayMs:
+          if (value is! int || value < 0 || value > 60000) {
+            invalid('$key must be 0–60,000 ms');
           }
-        case BuildCols.effect || BuildCols.easing:
+        case BuildCols.durationMs:
+          if (value is! int || value < 0 || value > 20000) {
+            invalid('$key must be 0–20,000 ms');
+          }
+        case BuildCols.easing:
+          if (value is! String || MotionEasing.tryParse(value) == null) {
+            invalid('Unknown easing "$value"', {'column': key});
+          }
+        case BuildCols.effect:
           if (value is! String || value.isEmpty || value.length > 200) {
             invalid('$key must be a non-empty string');
           }
@@ -60,6 +79,33 @@ extension _MotionPart on _Planner {
           continue;
       }
       out[key] = value;
+    }
+    final touchesEffect =
+        out.containsKey(SlidesCols.kind) ||
+        out.containsKey(BuildCols.effect) ||
+        out.containsKey(BuildCols.optionsJson);
+    if (!touchesEffect) return out;
+    final kind =
+        SlideBuildKind.fromName(out[SlidesCols.kind] ?? current?.kind.name) ??
+        SlideBuildKind.buildIn;
+    final effect = (out[BuildCols.effect] ?? current?.effect ?? '') as String;
+    if (EffectCatalog.byId(kind, effect) == null) {
+      invalid('Unknown ${kind.name} effect "$effect"', {'effect': effect});
+    }
+    final options = out.containsKey(BuildCols.optionsJson)
+        ? out[BuildCols.optionsJson] as String?
+        : current?.optionsJson;
+    final v = BuildOptions.decode(options, kind: kind, effect: effect);
+    if (!v.isValid) {
+      invalid('Invalid animation options: ${v.errors.first}', {
+        'issues': [for (final e in v.errors) e.toJson()],
+      });
+    }
+    for (final w in v.warnings) {
+      warnings.add(w.toString());
+    }
+    if (out.containsKey(BuildCols.optionsJson) || v.warnings.isNotEmpty) {
+      out[BuildCols.optionsJson] = v.value.encode();
     }
     return out;
   }
@@ -108,7 +154,8 @@ extension _MotionPart on _Planner {
 
   String updateBuilds(UpdateBuilds op) {
     for (final MapEntry(key: id, value: cols) in op.updates.entries) {
-      b.set(_buildOf(id), _buildValues(cols));
+      final bd = _buildOf(id);
+      b.set(bd, _buildValues(cols, current: bd));
     }
     return 'Change animation';
   }
@@ -135,8 +182,15 @@ extension _MotionPart on _Planner {
         if (ids.contains(it.$2)) deck.build(it.$2)!,
     ];
     final keys = OrderKeys.at(items, at, moving.length, exclude: ids);
+    final trigger = op.trigger;
+    if (trigger == SlideBuildTrigger.onElementClick) {
+      invalid('Triggers on click of an object are not supported yet');
+    }
     for (final (i, bd) in moving.indexed) {
-      b.set(bd, {SlidesCols.sortKey: keys[i]});
+      b.set(bd, {
+        SlidesCols.sortKey: keys[i],
+        if (i == 0 && trigger != null) BuildCols.trigger: trigger.name,
+      });
     }
     return 'Reorder animations';
   }

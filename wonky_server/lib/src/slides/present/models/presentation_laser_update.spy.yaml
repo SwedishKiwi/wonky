@@ -1,0 +1,7 @@
+### Laser position in slide units (null = hidden); ≤ 30 Hz.
+class: PresentationLaserUpdate
+extends: PresentationUpdate
+fields:
+  slideId: String?
+  x: double?
+  y: double?

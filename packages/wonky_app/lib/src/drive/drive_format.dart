@@ -12,9 +12,52 @@ IconData kindIcon(DriveItemKind kind) => switch (kind) {
   DriveItemKind.document => LucideIcons.fileText,
   DriveItemKind.spreadsheet => LucideIcons.sheet,
   DriveItemKind.presentation => LucideIcons.presentation,
-  // Per-category icons of uploaded files come with Drive (D-10/D-14).
+  // Uploaded files: see [fileCategoryIcon] (`DriveKindIcon.item`).
   DriveItemKind.file => LucideIcons.file,
 };
+
+/// Icon of an uploaded file's category (Drive 02 §6.7, Drive 04 §11).
+/// Text files with a highlighting language ([code]) show the code glyph.
+IconData fileCategoryIcon(FileCategory c, {bool code = false}) => switch (c) {
+  FileCategory.image => LucideIcons.fileImage,
+  FileCategory.pdf => LucideIcons.fileText,
+  FileCategory.text => code ? LucideIcons.fileCode : LucideIcons.fileText,
+  FileCategory.audio => LucideIcons.fileAudio,
+  FileCategory.video => LucideIcons.fileVideo,
+  FileCategory.archive => LucideIcons.fileArchive,
+  FileCategory.document => LucideIcons.fileText,
+  FileCategory.spreadsheet => LucideIcons.fileSpreadsheet,
+  FileCategory.presentation => LucideIcons.presentation,
+  FileCategory.other => LucideIcons.file,
+};
+
+/// Color of a file category (Drive 04 §11: image violet, PDF red, text
+/// slate, audio amber, video pink, archive brown, other muted), slightly
+/// lighter in dark mode for contrast.
+Color fileCategoryColor(FileCategory c, ShadColorScheme cs, Brightness b) {
+  final dark = b == Brightness.dark;
+  return switch (c) {
+    FileCategory.image =>
+      dark ? const Color(0xffa78bfa) : const Color(0xff7c3aed),
+    FileCategory.pdf =>
+      dark ? const Color(0xfff87171) : const Color(0xffdc2626),
+    FileCategory.text =>
+      dark ? const Color(0xff94a3b8) : const Color(0xff475569),
+    FileCategory.audio =>
+      dark ? const Color(0xfffbbf24) : const Color(0xffb45309),
+    FileCategory.video =>
+      dark ? const Color(0xfff472b6) : const Color(0xffdb2777),
+    FileCategory.archive =>
+      dark ? const Color(0xffd6a77a) : const Color(0xff92400e),
+    FileCategory.document =>
+      dark ? const Color(0xff60a5fa) : const Color(0xff2563eb),
+    FileCategory.spreadsheet =>
+      dark ? const Color(0xff4ade80) : const Color(0xff16a34a),
+    FileCategory.presentation =>
+      dark ? const Color(0xfffb923c) : const Color(0xffea580c),
+    FileCategory.other => cs.mutedForeground,
+  };
+}
 
 /// Brand color of a kind (Write blue, Sheets green, Slides amber, folders
 /// and files muted).

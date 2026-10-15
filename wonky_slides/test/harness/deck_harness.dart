@@ -35,8 +35,10 @@ class DeckHarness {
     Role role = Role.owner,
     DeckBuilder? fixture,
     SlidesMutationPlanner planner = const SlidesPlanner(),
+    StorageController? storage,
+    PresenceRepository? presence,
   }) {
-    final h = slidesHarness();
+    final h = slidesHarness(storage: storage, presence: presence);
     final b =
         fixture ?? (DeckBuilder()..slide(layoutKey: 'title', title: 'Hi'));
     final uuid = UuidValue.fromString(b.deckId);

@@ -369,6 +369,47 @@ Session ids and pairing keys are unguessable and never logged; joining checks th
 every join; remote commands from a user who loses access are rejected; sessions carry no deck
 content (only positions and ink). Rate limit: 20 commands/s per remote.
 
+### 6.6 As built (SL-19)
+
+- **Endpoint** `PresentationEndpoint` (`client.presentation`): `join(deckUuid, PresentationJoin,
+  Stream<PresentationUpdate>) → Stream<PresentationEvent>` and `findSession(deckUuid) →
+  PresentationSessionInfo?` (the caller's live presenter session, for the *Show audience view
+  here* banner). Server `wonky_server/lib/src/slides/present/`.
+- **Models** (not tables): `PresentationRole` (presenter, audience, remote, follower),
+  `PresentationJoin {sessionId?, role, pairingKey?, deviceLabel, takeOver?}`,
+  `PresentationState {revision, slideId?, step, stepElapsedMs, blank, picker, endScreen,
+  timerRunning, timerElapsedMs, deckRevision?}`, sealed `PresentationUpdate` (`…StateUpdate`,
+  `…LaserUpdate`, `…InkUpdate {slideId, op, strokeId?, strokeJson?}`, `…CommandUpdate {command,
+  argsJson?}`, `…EndUpdate`) and sealed `PresentationEvent {serverTimeMs}` (`…Welcome`,
+  `…StateEvent`, `…LaserEvent`, `…InkEvent`, `…CommandEvent`, `…RosterEvent`,
+  `…PresenterEvent {connected}`, `…EndedEvent {reason}`), `PresentationParticipant`,
+  `PresentationSessionInfo`, server-only `PresentationBusMessage`.
+- **Deviation from §6.2:** elapsed times are relative to the moment the state was sent and every
+  event carries the server time (`serverTimeMs`); followers estimate the clock offset from the
+  smallest `local − server` of recent events (`ClockOffset`) and derive step/timer times locally.
+  Instead of `stepStartedAt` in server time.
+- **Protocol on the bus** (`present:<sessionId>`, flushed to other instances at once): `hello` /
+  `here` / `meta` (members answer while the presenter reconnects) / `joined` (roster of admitted
+  members only) / `who` (presenter rejoin probe) / `takeover` / `away` (presenter stream closed;
+  members end after the 30 s grace) / `bye` / `state` / `laser` / `ink` / `command` / `end`;
+  discovery on `present-deck:<deckUuid>` (`find` → `found`).
+- **Roles:** `audience` and `remote` need the presenter's own account (pairing keys are refused
+  until SL-41); `follower` needs ≥ viewer; every join checks the deck ACL, commands re-check it
+  every 5 s. Audience devices may send commands too (a clicker plugged into the projector
+  machine); followers can't. A presenter join with the id of a live session ends with
+  `presenterActive` until it is repeated with `takeOver` ("Take over the presentation from
+  your other window?"); the old presenter gets `takenOver`. End reasons: `ended`, `expired`,
+  `takenOver`, `presenterActive`, `notFound`, `noAccess`.
+- **Client:** route `/slides/p/:uuid/present` with `view=presenter|audience`, `slide`, `step`,
+  `session`, `share=1` (the presenter view opens *Open on another device…* once connected —
+  `slides.present.openOnAnotherDevice` from the editor). Present mode creates no session; the
+  presenter view publishes its full state on every change and every 10 s and resends ink after
+  rejoining; it keeps presenting offline ("Offline — other devices can't join") and joins once
+  online. The audience view shows a start card (full screen needs a click on that device),
+  waits for unsynced slides ("Catching up…") and returns to the editor when the presentation
+  ends. Keys: the `present` keymap scope of §2.1 (`?` is handled by the screen next to `/`;
+  digits + `Enter` and `Esc` precedence too).
+
 ---
 
 ## 7. Presenting offline
@@ -527,6 +568,27 @@ Not supported (documented): tagged/accessible PDF structure (the `pdf` package h
 **P2**: reading order = placeholder order then z-order, alt texts on images/charts), PDF/A,
 embedded video/audio (none exist), transitions/animations inside the PDF.
 
+**As built (SL-20).** Code in `wonky_slides_core/lib/src/export/pdf/` (library
+`package:wonky_slides_core/pdf.dart`), not `…/src/export/pdf/` under a `core/` folder name.
+The exporter first builds every scene with a recording measurer to find the faces in use,
+loads them (`TtfFaceSet` over the `FontProvider`: bundled families as themselves, others by
+category through `SlidesFonts.resolve`, Open Sans as glyph fallback), then lays text out
+for real: on the server with `TtfTextMeasurer` (TTF advance widths, no kerning — exactly
+what the PDF draws), in the app with its own `FlutterTextLayoutEngine` passed as
+`SlidesExportResources.textLayout` (fonts registered first through `prepareLayoutFonts`), so
+client PDFs use the screen's layout results. `lineBreakHints` stays unused (the engine
+contract carries no element ids). A parity test keeps the two layouts within 1 line on the
+built-in themes (97 % identical breaks). Notes are laid out with the core engine (deck theme
+body font, 12 pt). Element shadows print as offset silhouettes (soft raster shadows P1),
+group opacity is multiplied into each primitive, icons need an embeddable icon font
+(`icon_unavailable` otherwise). The PDF is written on the calling isolate
+(`PdfDocument.write` with event-loop balancing). Additive contract fields:
+`SlidesPdfOptions.slideIds` (`current`/`selection` resolved by the caller) and
+`SlidesExportResources.info` (`SlidesPdfDocumentInfo`: title, author, subject, modified
+time, header date label, revision for the deterministic id). Warning codes: `font_fallback`,
+`glyph_missing`, `icon_unavailable`, `image_missing`, `image_invalid`, `image_limit`,
+`link_dropped`, `page_limit`, `range_unresolved`, `empty_selection`.
+
 ### 11.4 Where exports run
 
 | Situation | Runs on |
@@ -563,6 +625,16 @@ picker), all §11.1 options, file name, *Cancel*, *Apply*. Progress toast for ex
 completion toast "Exported 'Q3 Review.pdf'" (*Show in folder* on desktop); warnings (font
 fallbacks, missing images, excluded link targets) under *Details*.
 
+**As built (SL-20).** `slidesExport.export`/`exportWithProgress` reuse Write's
+`ExportResultView`/`ExportProgressEvent` (no new models); `itemUuid` is the deck's drive item
+(= space). Formats: `pdf`; `png`/`pngZip` and `revision` answer `unavailable` (P1). The
+result cache is per server instance, keyed by the deck's content hash (canonical model dump),
+options, fonts version and user. In the app, *File › Download ▸ PDF* opens the preview;
+`immediate: true` exports with `options` merged over the last-used options (stored in
+`UserPreferences.slidesDefaults.exportOptions`); the full options dialog is not built — the
+preview's settings column holds every §11.1 option. Client exports have no progress toast or
+server switch yet (`TODO.md`).
+
 ---
 
 ## 12. Print preview route (`/slides/p/:uuid/print`)
@@ -592,6 +664,14 @@ route; `Mod+P` inside prints; `Esc` goes back. Viewers/commenters can print only
 `nonEditorsCanExport`.
 
 ---
+
+**As built (SL-20).** `wonky_slides/lib/features/print/`: `PrintPreviewScreen` on the
+`print` child route (`?layout=slides|notes|handouts`), the browser's PDF viewer in an
+`<iframe>` platform view (web; other platforms show a summary), a 300 px settings column
+(below 720 px a header toggle swaps preview and settings), *Download PDF* and *Print* (the
+viewer frame's print dialog). It renders with the open editor's session (the editor stays
+mounted underneath). The viewer's current page is not kept across regenerations (not
+readable from the frame).
 
 ## 13. PNG export (P1) and slide images
 

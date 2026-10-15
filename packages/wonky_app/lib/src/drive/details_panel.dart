@@ -99,7 +99,7 @@ class _DriveDetailsPanelState extends State<DriveDetailsPanel> {
             color: theme.colorScheme.canvas,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Center(child: DriveKindIcon(item.kind, size: 48)),
+          child: Center(child: DriveKindIcon.item(item, size: 48)),
         ),
         const SizedBox(height: 12),
         Text(item.name, style: theme.textTheme.large),

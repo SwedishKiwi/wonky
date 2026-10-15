@@ -276,8 +276,24 @@ abstract final class TextParagraphs {
     double scale,
     List<int> counters,
   ) {
-    final level = ((block['indent'] as num?)?.toInt() ?? 0).clamp(0, 8);
-    final list = block['list'] as String?;
+    // Paragraph list attributes fall back to the box defaults (placeholder
+    // chain, e.g. a body placeholder's bulleted list) when the paragraph
+    // names no style of its own — the rule of every box default (02 §4.2).
+    // `listStyle: none` on a paragraph turns a default list off.
+    final defaults = block['style'] == null
+        ? (styles.box?.defaults ?? const <String, Object?>{})
+        : const <String, Object?>{};
+    final explicitList = block['list'] as String?;
+    final list =
+        explicitList ??
+        (block['listStyle'] == 'none' ? null : defaults['list'] as String?);
+    final fromDefaults = explicitList == null && list != null;
+    final level =
+        ((block['indent'] ?? (fromDefaults ? defaults['indent'] : null))
+                    as num? ??
+                0)
+            .toInt()
+            .clamp(0, 8);
     final listStyles = theme?.lists ?? ThemeListStyles.defaults;
     final body2 = styles.styles['body2']?.size;
 
@@ -343,8 +359,10 @@ abstract final class TextParagraphs {
       final glyph = _marker(
         list,
         level,
-        block['listStyle'] as String?,
-        block['listStart'] as num?,
+        (block['listStyle'] ?? (fromDefaults ? defaults['listStyle'] : null))
+            as String?,
+        (block['listStart'] ?? (fromDefaults ? defaults['listStart'] : null))
+            as num?,
         listStyles,
         counters,
       );

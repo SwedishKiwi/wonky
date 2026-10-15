@@ -239,6 +239,13 @@ class PreviewTopBar extends StatelessWidget {
             if (usable)
               WonkyDropdownMenu(
                 entries: moreEntries,
+                // End-aligned: at narrow widths ⋮ is the last button and a
+                // start-aligned menu ran off the right edge (D-18).
+                anchor: const ShadAnchor(
+                  childAlignment: AlignmentDirectional.bottomEnd,
+                  overlayAlignment: AlignmentDirectional.topEnd,
+                  offset: Offset(0, 4),
+                ),
                 builder: (context, menu) => _iconButton(
                   key: moreKey,
                   icon: LucideIcons.ellipsisVertical,
@@ -275,9 +282,9 @@ class PreviewTopBar extends StatelessWidget {
   }
 }
 
-/// The viewer bar (Drive 04 §6): zoom/fit/rotate for images, page n/N and
-/// zoom for PDFs, wrap/language/*Copy all*/lines for text, *Table*/*Text*
-/// for CSV, and "3 of 12 in "Holiday"".
+/// The viewer bar (Drive 04 §6): zoom/fit/rotate for images,
+/// wrap/language/*Copy all*/lines for text, *Table*/*Text* for CSV, and
+/// "3 of 12 in "Holiday"".
 class PreviewViewerBar extends StatelessWidget {
   const PreviewViewerBar({
     super.key,
@@ -298,7 +305,6 @@ class PreviewViewerBar extends StatelessWidget {
   static const rotateKey = ValueKey<String>('drive.preview.rotate');
   static const wrapKey = ValueKey<String>('drive.preview.wrap');
   static const copyKey = ValueKey<String>('drive.preview.copyAll');
-  static const pageFieldKey = ValueKey<String>('drive.preview.pageField');
   static const positionKey = ValueKey<String>('drive.preview.position');
   static const tableKey = ValueKey<String>('drive.preview.csvTable');
   static const textKey = ValueKey<String>('drive.preview.csvText');
@@ -311,7 +317,7 @@ class PreviewViewerBar extends StatelessWidget {
     final muted = theme.textTheme.muted;
     final viewer = c.type!.viewer;
 
-    List<Widget> zoom({required bool fitWidth}) => [
+    List<Widget> zoom() => [
       _iconButton(
         key: zoomOutKey,
         icon: LucideIcons.minus,
@@ -335,8 +341,8 @@ class PreviewViewerBar extends StatelessWidget {
       ),
       _iconButton(
         key: fitKey,
-        icon: fitWidth ? LucideIcons.moveHorizontal : LucideIcons.minimize,
-        tooltip: fitWidth ? l.previewZoomFitWidth : l.previewZoomFit,
+        icon: LucideIcons.minimize,
+        tooltip: l.previewZoomFit,
         selected: c.zoom == null,
         onPressed: () => onInvoke('drive.preview.zoomFit'),
       ),
@@ -345,7 +351,7 @@ class PreviewViewerBar extends StatelessWidget {
     final tools = <Widget>[
       ...switch (viewer) {
         PreviewViewer.image => [
-          ...zoom(fitWidth: false),
+          ...zoom(),
           _iconButton(
             key: actualKey,
             icon: LucideIcons.scan,
@@ -369,15 +375,6 @@ class PreviewViewerBar extends StatelessWidget {
           if (!narrow && c.fromServerPreview) ...[
             const SizedBox(width: 8),
             Text(l.previewServerPreviewNote, style: muted),
-          ],
-        ],
-        PreviewViewer.pdf => [
-          _PageField(controller: c),
-          const SizedBox(width: 8),
-          ...zoom(fitWidth: true),
-          if (c.pdf?.truncated ?? false) ...[
-            const SizedBox(width: 8),
-            Text(l.previewPdfTruncated(c.pdf!.pageCount), style: muted),
           ],
         ],
         PreviewViewer.text => _textTools(context, l, muted),
@@ -471,73 +468,5 @@ class PreviewViewerBar extends StatelessWidget {
       const SizedBox(width: 12),
       Text(l.previewLines(c.text?.lineCount ?? 0), style: muted),
     ];
-  }
-}
-
-/// PDF "3 / 24" with an editable page number.
-class _PageField extends StatefulWidget {
-  const _PageField({required this.controller});
-
-  final FilePreviewController controller;
-
-  @override
-  State<_PageField> createState() => _PageFieldState();
-}
-
-class _PageFieldState extends State<_PageField> {
-  final _text = TextEditingController();
-  final _focus = FocusNode();
-
-  @override
-  void dispose() {
-    _text.dispose();
-    _focus.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    final n = int.tryParse(_text.text.trim());
-    if (n == null || !widget.controller.goToPage(n)) {
-      _text.text = '${widget.controller.pdfPage + 1}';
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = driveL10n(context);
-    final theme = ShadTheme.of(context);
-    final c = widget.controller;
-    final doc = c.pdf;
-    final count = doc?.pageCount ?? 0;
-    if (!_focus.hasFocus) _text.text = count == 0 ? '' : '${c.pdfPage + 1}';
-    return ShadTooltip(
-      builder: (_) => Text(l.previewPdfTooltip),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: 52,
-            child: Semantics(
-              label: l.previewPdfPageField,
-              child: ShadInput(
-                key: PreviewViewerBar.pageFieldKey,
-                controller: _text,
-                focusNode: _focus,
-                textAlign: TextAlign.center,
-                keyboardType: TextInputType.number,
-                onSubmitted: (_) => _submit(),
-              ),
-            ),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            doc != null && doc.scanning && count == 0
-                ? l.previewPdfLoadingPages
-                : l.previewPdfPageOf(count),
-            style: theme.textTheme.muted,
-          ),
-        ],
-      ),
-    );
   }
 }

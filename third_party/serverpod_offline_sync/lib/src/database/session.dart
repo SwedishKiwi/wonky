@@ -83,8 +83,13 @@ class OfflineSyncDatabaseSession implements DatabaseSession {
   /// [Database] or wrapping a non-client session. Those connections must be
   /// closed through their owner, such as the server.
   Future<void> close() => _closeFuture ??= switch (_wrappedSession) {
-    final ClientDatabaseSession session => session.close(),
-    final OfflineSyncDatabaseSession session => session.close(),
+    // OS-9: the background projection rebuild must not outlive the database.
+    final ClientDatabaseSession session => _db.stopProjectionRebuild().then(
+      (_) => session.close(),
+    ),
+    final OfflineSyncDatabaseSession session => _db.stopProjectionRebuild().then(
+      (_) => session.close(),
+    ),
     _ => Future<void>.error(
       UnsupportedError(
         'Only sync sessions wrapping a ClientDatabaseSession can be closed. '

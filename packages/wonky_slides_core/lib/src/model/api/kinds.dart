@@ -75,7 +75,12 @@ enum SlideBuildTrigger {
   withPrevious,
 
   /// After the previous build.
-  afterPrevious;
+  afterPrevious,
+
+  /// On click of another element (interactive decks, P2; schema S-2
+  /// reserves the value). The timeline skips such builds and the planner
+  /// refuses to write it.
+  onElementClick;
 
   /// The trigger named [name], or null.
   static SlideBuildTrigger? fromName(Object? name) {

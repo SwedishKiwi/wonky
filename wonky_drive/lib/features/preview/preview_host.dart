@@ -4,7 +4,6 @@ import 'package:wonky_client/wonky_client.dart';
 
 import 'file_downloader.dart';
 import 'file_preview_controller.dart';
-import 'pdf_rasterizer.dart';
 import 'preview_api.dart';
 import 'preview_cache.dart';
 
@@ -23,17 +22,10 @@ class FilePreviewHost {
   final ShellServices services;
 
   FilePreviewApi? _api;
-  PdfRasterizer? _rasterizer;
 
   /// Server access ([ServerFilePreviewApi] unless replaced).
   FilePreviewApi get api => _api ??= ServerFilePreviewApi(services);
   set api(FilePreviewApi v) => _api = v;
-
-  /// PDF rasterizer (`printing` + the self-hosted pdf.js in `web/pdfjs/`).
-  PdfRasterizer get rasterizer => _rasterizer ??= PrintingPdfRasterizer(
-    pdfJsBaseUrl: services.urls.urlFor(WonkyAppKind.drive, 'pdfjs/'),
-  );
-  set rasterizer(PdfRasterizer v) => _rasterizer = v;
 
   /// Starts downloads (hidden anchor on the web).
   FileDownloader downloader = const PlatformFileDownloader();

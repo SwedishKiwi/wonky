@@ -185,7 +185,7 @@ class _CommandPaletteBodyState extends State<_CommandPaletteBody> {
           id: 'doc.${d.uuid.uuid}',
           title: d.name,
           subtitle: l.paletteGoToFile,
-          leading: DriveKindIcon(d.kind, size: 18),
+          leading: DriveKindIcon.item(d, size: 18),
           section: l.paletteFiles,
           onSelected: () => s.openItem(d),
         ),

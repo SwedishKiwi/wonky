@@ -138,6 +138,8 @@ class _DriveItemsViewState extends State<DriveItemsView> {
     List<DriveItemView> items,
   ) {
     final theme = ShadTheme.of(context);
+    // Below `md` the list shows Name + ⋮ only (Drive 04 §11).
+    final compact = MediaQuery.sizeOf(context).width < 768;
     final rows = <Widget>[];
     RecentGroup? group;
     for (final item in items) {
@@ -173,6 +175,7 @@ class _DriveItemsViewState extends State<DriveItemsView> {
           onOpen: () => _open(item),
           onMenu: () => _prepareMenu(item),
           trash: c.location.isTrash,
+          compact: compact,
         ),
       );
     }
@@ -199,23 +202,25 @@ class _DriveItemsViewState extends State<DriveItemsView> {
                     controller: c,
                   ),
                 ),
-                Expanded(flex: 3, child: Text(l.columnOwner)),
-                Expanded(
-                  flex: 3,
-                  child: _HeaderCell(
-                    label: l.columnModified,
-                    field: DriveSortField.modifiedAt,
-                    controller: c,
+                if (!compact) ...[
+                  Expanded(flex: 3, child: Text(l.columnOwner)),
+                  Expanded(
+                    flex: 3,
+                    child: _HeaderCell(
+                      label: l.columnModified,
+                      field: DriveSortField.modifiedAt,
+                      controller: c,
+                    ),
                   ),
-                ),
-                SizedBox(
-                  width: 90,
-                  child: _HeaderCell(
-                    label: l.columnSize,
-                    field: DriveSortField.size,
-                    controller: c,
+                  SizedBox(
+                    width: 90,
+                    child: _HeaderCell(
+                      label: l.columnSize,
+                      field: DriveSortField.size,
+                      controller: c,
+                    ),
                   ),
-                ),
+                ],
                 const SizedBox(width: 36),
               ],
             ),
@@ -497,10 +502,14 @@ class _ItemRow extends StatelessWidget {
     required this.onOpen,
     required this.onMenu,
     required this.trash,
+    this.compact = false,
   });
 
   final DriveItemView item;
   final ShellServices services;
+
+  /// Name + ⋮ only (below `md`, Drive 04 §11).
+  final bool compact;
   final bool selected;
   final bool focused;
   final DriveDragData Function() dragData;
@@ -557,7 +566,7 @@ class _ItemRow extends StatelessWidget {
                   flex: 6,
                   child: Row(
                     children: [
-                      DriveKindIcon(item.kind, size: 20),
+                      DriveKindIcon.item(item, size: 20),
                       const SizedBox(width: 10),
                       Flexible(
                         child: Text(
@@ -590,44 +599,46 @@ class _ItemRow extends StatelessWidget {
                     ],
                   ),
                 ),
-                Expanded(
-                  flex: 3,
-                  child: Row(
-                    children: [
-                      WonkyAvatar(
-                        name: item.owner.displayName,
-                        color: parseHexColor(item.owner.avatarColor),
-                        imageUrl: item.owner.avatarUrl,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(
-                          ownerName,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.muted.copyWith(fontSize: 13),
+                if (!compact) ...[
+                  Expanded(
+                    flex: 3,
+                    child: Row(
+                      children: [
+                        WonkyAvatar(
+                          name: item.owner.displayName,
+                          color: parseHexColor(item.owner.avatarColor),
+                          imageUrl: item.owner.avatarUrl,
+                          size: 20,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            ownerName,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.muted.copyWith(fontSize: 13),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Expanded(
-                  flex: 3,
-                  child: Text(
-                    item.uploadState == FileUploadState.uploading
-                        ? l.driveItemUploading
-                        : relativeDate(l, item.modifiedAt),
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.muted.copyWith(fontSize: 13),
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      item.uploadState == FileUploadState.uploading
+                          ? l.driveItemUploading
+                          : relativeDate(l, item.modifiedAt),
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.muted.copyWith(fontSize: 13),
+                    ),
                   ),
-                ),
-                SizedBox(
-                  width: 90,
-                  child: Text(
-                    item.isFolder ? '—' : formatBytes(item.sizeBytes),
-                    style: theme.textTheme.muted.copyWith(fontSize: 13),
+                  SizedBox(
+                    width: 90,
+                    child: Text(
+                      item.isFolder ? '—' : formatBytes(item.sizeBytes),
+                      style: theme.textTheme.muted.copyWith(fontSize: 13),
+                    ),
                   ),
-                ),
+                ],
                 SizedBox(
                   width: 36,
                   child: WonkyDropdownMenu(
@@ -728,14 +739,14 @@ class _ItemCard extends StatelessWidget {
                       color: c.canvas,
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: Center(child: DriveKindIcon(item.kind, size: 48)),
+                    child: Center(child: DriveKindIcon.item(item, size: 48)),
                   ),
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(10, 0, 4, 8),
                   child: Row(
                     children: [
-                      DriveKindIcon(item.kind, size: 18),
+                      DriveKindIcon.item(item, size: 18),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(

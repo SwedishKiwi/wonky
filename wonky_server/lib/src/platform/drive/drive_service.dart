@@ -8,6 +8,7 @@ import 'package:wonky_write_core/wonky_write_core.dart' show Delta, DeltaUtils;
 import '../../sheets/spaces/space_copier.dart';
 import '../../slides/spaces/deck_copies.dart';
 import '../../slides/spaces/slides_decks.dart';
+import '../../slides/templates/slides_template_decks.dart';
 import '../spaces/space_service.dart';
 import '../../sheets/spaces/spreadsheet_factory.dart';
 import '../../sheets/spaces/sheets_create_defaults.dart';
@@ -2043,7 +2044,9 @@ abstract final class DriveService {
   /// (v2) The pre-check size of an item made from a built-in template
   /// (`TemplateView.sizeBytes`, Drive 03 §6.5).
   static int _builtinSize(BuiltinTemplate t) =>
-      _builtinSizes[t.key] ??= t.markdown != null
+      _builtinSizes[t.key] ??= t.slides != null
+      ? SlidesTemplateDecks.estimate(t.slides!)
+      : t.markdown != null
       ? DocumentSize.of(WriteContent.fromMarkdown(t.markdown!).delta)
       : StorageHooks.sheetsEstimate(t.sheets);
 

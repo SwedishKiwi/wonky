@@ -115,15 +115,21 @@ class FakeSheetsServer {
       'INSERT OR IGNORE INTO "offline_sync_spaces" ("uuidSpaceId") '
       "VALUES (x'${hexOf(space)}')",
     );
+    // Update in place, insert only when missing: a sync cycle running
+    // between a DELETE and an INSERT would see the membership gone (the real
+    // server's grant is an atomic upsert).
+    final spaceId =
+        "(SELECT \"id\" FROM \"offline_sync_spaces\" WHERE \"uuidSpaceId\" = "
+        "x'${hexOf(space)}')";
     await db.unsafeExecute(
-      'DELETE FROM "offline_sync_space_members" WHERE "userUuid" = '
-      "x'${hexOf(user)}' AND \"spaceId\" = (SELECT \"id\" FROM "
-      "\"offline_sync_spaces\" WHERE \"uuidSpaceId\" = x'${hexOf(space)}')",
+      'UPDATE "offline_sync_space_members" SET "role" = \'$role\' WHERE '
+      "\"userUuid\" = x'${hexOf(user)}' AND \"spaceId\" = $spaceId",
     );
     await db.unsafeExecute(
       'INSERT INTO "offline_sync_space_members" ("spaceId", "userUuid", "role") '
-      "SELECT \"id\", x'${hexOf(user)}', '$role' FROM "
-      "\"offline_sync_spaces\" WHERE \"uuidSpaceId\" = x'${hexOf(space)}'",
+      "SELECT $spaceId, x'${hexOf(user)}', '$role' WHERE NOT EXISTS ("
+      'SELECT 1 FROM "offline_sync_space_members" WHERE '
+      "\"userUuid\" = x'${hexOf(user)}' AND \"spaceId\" = $spaceId)",
     );
   }
 

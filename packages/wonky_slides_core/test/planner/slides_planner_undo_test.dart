@@ -249,6 +249,16 @@ List<(String, SlidesOperation)> _cases(PlannerFixture f, DeckModel m) {
       ),
     ),
     (
+      'replace an image keeping a cover crop',
+      ReplaceImage(
+        f.image,
+        src: 'wonky-file://00000000-0000-4000-8000-0000000000f3',
+        naturalWidth: 40,
+        naturalHeight: 20,
+        crop: const {'l': 0.25, 't': 0, 'r': 0.25, 'b': 0},
+      ),
+    ),
+    (
       'set element data',
       SetElementData(f.shape, '{"v":1,"geometry":"ellipse"}'),
     ),

@@ -581,12 +581,13 @@ abstract final class ServerSlidesWriter {
       skipChanged: true,
     );
     final revertId = write.changeId ?? const Uuid().v7obj();
-    await ServerChangeRecord.db.updateRow(
+    await ServerChangeRecord.db.updateWhere(
       session,
-      record.copyWith(
-        revertedAt: clock.now().toUtc(),
-        revertChangeId: revertId,
-      ),
+      columnValues: (t) => [
+        t.revertedAt(clock.now().toUtc()),
+        t.revertChangeId(revertId),
+      ],
+      where: (t) => t.id.equals(record.id!),
     );
     return RevertResult(
       changeId: revertId,

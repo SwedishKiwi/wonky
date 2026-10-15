@@ -7,7 +7,13 @@ import 'package:wonky_core/wonky_core.dart';
 import '../commands/commands.dart';
 import '../features/editor_screen/deck_editor_screen.dart';
 import '../features/editor_screen/route_placeholders.dart';
+import '../features/present/present_controller.dart' show PresentView;
+import '../features/present/present_screen.dart';
+import '../features/print/print_preview_screen.dart';
+import 'package:wonky_slides_core/interfaces.dart' show SlidesPdfLayout;
+import 'package:wonky_slides_core/templates.dart' show SlidesTemplates;
 import '../features/settings/slides_settings.dart';
+import '../features/templates/template_preview.dart';
 import '../features/sync/slides_data.dart'
     show NoReservedSpaceException, SlidesData;
 import '../l10n/slides_l10n.dart';
@@ -65,8 +71,8 @@ class SlidesAppConfig extends WonkyAppConfig {
 
   /// `/p/:uuid/present`, `/p/:uuid/print` and `/p/:uuid/history` (04 §1)
   /// under the editor route, so the deck session stays open underneath.
-  /// SL-19 (present), SL-20 (print) and SL-39 (history) replace the
-  /// placeholders.
+  /// SL-19 built present, SL-20 print; SL-39 replaces the history
+  /// placeholder.
   @override
   List<RouteBase> editorRoutes(ShellServices services) => [
     for (final route in DeckChildRoute.values)
@@ -74,17 +80,50 @@ class SlidesAppConfig extends WonkyAppConfig {
         path: route.name,
         pageBuilder: (c, st) => NoTransitionPage<void>(
           key: st.pageKey,
-          child: DeckRoutePlaceholder(
-            key: ValueKey<String>(
-              'slides.${route.name}.${st.pathParameters['uuid']}',
-            ),
-            services: services,
-            itemUuid: st.pathParameters['uuid']!,
-            route: route,
-          ),
+          child: route == DeckChildRoute.present
+              ? _presentScreen(services, st)
+              : route == DeckChildRoute.print
+              ? PrintPreviewScreen(
+                  key: ValueKey<String>(
+                    'slides.print.${st.pathParameters['uuid']}',
+                  ),
+                  services: services,
+                  itemUuid: st.pathParameters['uuid']!,
+                  initialLayout: SlidesPdfLayout.values
+                      .where((v) => v.name == st.uri.queryParameters['layout'])
+                      .firstOrNull,
+                )
+              : DeckRoutePlaceholder(
+                  key: ValueKey<String>(
+                    'slides.${route.name}.${st.pathParameters['uuid']}',
+                  ),
+                  services: services,
+                  itemUuid: st.pathParameters['uuid']!,
+                  route: route,
+                ),
         ),
       ),
   ];
+
+  /// The present route (Slides 10 §1.1; SL-19): `?view=presenter|audience`,
+  /// `slide`, `step`, `session`, `share=1`.
+  static Widget _presentScreen(ShellServices services, GoRouterState st) {
+    final q = st.uri.queryParameters;
+    final uuid = st.pathParameters['uuid']!;
+    final view = PresentView.fromName(q['view']);
+    return PresentScreen(
+      key: ValueKey<String>(
+        'slides.present.$uuid.${view.name}.${q['session'] ?? ''}',
+      ),
+      services: services,
+      itemUuid: uuid,
+      view: view,
+      startSlideId: q['slide'],
+      startStep: int.tryParse(q['step'] ?? '') ?? 0,
+      sessionId: q['session'],
+      share: q['share'] == '1',
+    );
+  }
 
   /// Every `slides.*` command (`commands/commands.dart`).
   @override
@@ -149,6 +188,21 @@ class SlidesAppConfig extends WonkyAppConfig {
       );
       return null;
     }
+  }
+
+  /// Built-in templates show their first slide (Slides 04 §15, SL-22);
+  /// other templates keep the shell's miniature.
+  @override
+  Widget? templatePreview(
+    BuildContext context,
+    TemplateView template, {
+    required double width,
+    required double height,
+  }) {
+    final t = template.builtin
+        ? SlidesTemplates.byUuid(template.uuid.uuid)
+        : null;
+    return t == null ? null : SlidesTemplatePreview(template: t, width: width);
   }
 
   @override

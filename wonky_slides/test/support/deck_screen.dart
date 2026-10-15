@@ -14,6 +14,7 @@ import 'package:wonky_slides_core/planner.dart' show SlidesPlanner;
 import 'package:wonky_slides_core/testing.dart';
 import 'package:wonky_sync_models/ids.dart' show SequentialIdGenerator;
 import 'package:wonky_ui/testing.dart';
+import 'package:wonky_ui/wonky_ui.dart' show WonkyThemeConfig;
 
 import 'slides_harness.dart';
 
@@ -91,8 +92,9 @@ Future<DeckScreenRig> pumpDeckScreen(
   DeckLoadState? scripted,
   DeckSessionFactory? factory,
   String? initialSlideId,
+  PresenceRepository? presence,
 }) async {
-  final h = slidesHarness();
+  final h = slidesHarness(presence: presence);
   final b = fixture ?? sampleDeck();
   final uuid = UuidValue.fromString(b.deckId);
   h.drive.seed(
@@ -124,25 +126,34 @@ Future<DeckScreenRig> pumpDeckScreen(
           role: sessionRole,
           initial: scripted,
         );
-  await pumpWonky(
-    tester,
-    ActiveDocumentHostScope(
-      host: h.services,
-      child: DeckEditorScreen(
-        services: h.services,
-        itemUuid: uuid.uuid,
-        initialSlideId: initialSlideId,
-        sessionFactory: factory ?? (services, item) async => session,
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+  // The services sit above the app so that dialogs (their own routes)
+  // register with them (`openDialogs`, MCP `ui.get_dialog`).
+  await tester.pumpWidget(
+    Provider<ShellServices>.value(
+      value: h.services,
+      child: WonkyTestApp(
+        brightness: brightness,
+        config: const WonkyThemeConfig(),
+        locale: const Locale('en'),
+        extraDelegates: [
+          WonkyAppLocalizations.delegate,
+          ...h.services.config.localizationsDelegates,
+        ],
+        child: ActiveDocumentHostScope(
+          host: h.services,
+          child: DeckEditorScreen(
+            services: h.services,
+            itemUuid: uuid.uuid,
+            initialSlideId: initialSlideId,
+            sessionFactory: factory ?? (services, item) async => session,
+          ),
+        ),
       ),
     ),
-    brightness: brightness,
-    size: size,
-    extraDelegates: [
-      WonkyAppLocalizations.delegate,
-      ...h.services.config.localizationsDelegates,
-    ],
-    wrap: (context, child) =>
-        Provider<ShellServices>.value(value: h.services, child: child!),
   );
   for (var i = 0; i < 6; i++) {
     await tester.runAsync(() => Future<void>.delayed(Duration.zero));

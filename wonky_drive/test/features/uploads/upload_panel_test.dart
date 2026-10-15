@@ -156,6 +156,27 @@ void main() {
     expect(find.byKey(UploadPanelKeys.panel), findsOneWidget);
   });
 
+  testWidgets('Given uploads waiting offline when the panel is collapsed '
+      'then the pill says they are waiting, not uploading', (tester) async {
+    // D-18: the pill said "Uploading 2 · 0 %" while offline.
+    await q.start();
+    h.services.connectivity.forceOffline(true);
+    await q.enqueue([textFile('a.txt'), textFile('b.txt')]);
+    host.showPanel();
+    await pump(tester);
+    expect(
+      q.tasks.map((t) => t.status),
+      everyElement(UploadStatus.waitingForNetwork),
+    );
+
+    await tester.tap(find.byKey(UploadPanelKeys.collapse));
+    await tester.pumpAndSettle();
+
+    final l = driveL10nEnglish;
+    expect(find.text(l.uploadPillWaiting(2)), findsOneWidget);
+    expect(find.textContaining('Uploading'), findsNothing);
+  });
+
   testWidgets('Given running uploads when the panel is closed then a '
       'confirm cancels them and hides the panel', (tester) async {
     await q.start();

@@ -273,6 +273,9 @@ const rules = <String, PackageRule>{
       'image',
       'vector_math',
       'crypto',
+      // Clipboard HTML: tables and rich text pasted from other apps
+      // (Slides 03 §12.5, SL-18).
+      'html',
     },
   ),
   'wonky_sheets_script': PackageRule(
@@ -411,7 +414,6 @@ const rules = <String, PackageRule>{
       'wonky_app',
       'wonky_ui',
       'wonky_code_flutter',
-      'printing',
       'file_picker',
       'file_saver',
       'http',
@@ -449,6 +451,9 @@ const rules = <String, PackageRule>{
       'serverpod_offline_sync_client':
           'offline-sync client: deck sync sessions (Slides 02 §9)',
       'serverpod_database': 'ORM types of the local replica (Slides 02 §9)',
+      'http': 'downloading uploaded images from signed URLs (Slides 03 §6.5)',
+      'flutter_svg': 'rasterizing SVG images on insert (Slides 03 §6.5.1)',
+      'qr': 'QR code of the presentation audience link (Slides 10 §5.2)',
     },
   ),
   'wonky_sheets': PackageRule(

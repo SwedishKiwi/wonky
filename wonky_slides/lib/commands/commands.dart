@@ -2,8 +2,21 @@ import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
 
 import '../features/settings/slides_settings.dart' show slidesSettingsCommands;
+import 'canvas_commands.dart';
 import 'chrome_commands.dart';
+import 'clipboard_commands.dart';
+import 'find_commands.dart';
+import 'collab_commands.dart';
+import 'image_commands.dart';
+import 'navigator_commands.dart';
+import 'object_commands.dart';
 import 'placeholder_commands.dart';
+import 'present_commands.dart';
+import 'print_commands.dart';
+import 'style_commands.dart';
+import 'table_commands.dart';
+import 'text_commands.dart';
+import 'theme_commands.dart';
 
 /// Every `slides.*` command — the registration index of Wonky Slides
 /// (Slides 04 §4 is the canonical id registry; Slides 12 §2: SL-11 owns
@@ -19,6 +32,19 @@ import 'placeholder_commands.dart';
 List<Command<CommandArgs>> slidesCommands(ShellServices s) {
   final real = <Command<CommandArgs>>[
     ...chromeCommands(s),
+    ...textCommands(s),
+    ...canvasCommands(s),
+    ...navigatorCommands(s),
+    ...objectCommands(s),
+    ...styleCommands(s),
+    ...imageCommands(s),
+    ...tableCommands(s),
+    ...printCommands(s),
+    ...presentCommands(s),
+    ...themeCommands(s),
+    ...clipboardCommands(s),
+    ...findCommands(s),
+    ...collabCommands(s),
     ...slidesSettingsCommands(s),
   ];
   final ids = {for (final c in real) c.id.value};

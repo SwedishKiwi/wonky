@@ -120,11 +120,14 @@ class _DeckInspectorState extends State<DeckInspector> {
               t == InspectorTab.animate ? const {} : {'tab': t.name},
               InvocationSource.ui,
             ),
-            child: Text(
-              label,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.small.copyWith(
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+            child: Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.small.copyWith(
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                ),
               ),
             ),
           ),
@@ -195,10 +198,14 @@ class _DeckInspectorState extends State<DeckInspector> {
                 size: 14,
                 color: theme.colorScheme.mutedForeground,
               ),
-              child: Text(
-                spec.title(l),
-                style: theme.textTheme.small.copyWith(
-                  fontWeight: FontWeight.w600,
+              child: Flexible(
+                child: Text(
+                  spec.title(l),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.small.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
@@ -277,14 +284,18 @@ class _DeckInspectorState extends State<DeckInspector> {
             enabled: st.enabled,
             leading: icon == null ? null : Icon(icon, size: 14),
             onPressed: () => ui.run(id, args, InvocationSource.ui),
-            child: Text(text),
+            child: Flexible(
+              child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis),
+            ),
           )
         : ShadButton.ghost(
             size: ShadButtonSize.sm,
             enabled: st.enabled,
             leading: icon == null ? null : Icon(icon, size: 14),
             onPressed: () => ui.run(id, args, InvocationSource.ui),
-            child: Text(text),
+            child: Flexible(
+              child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis),
+            ),
           );
     final reason = st.disabledReason;
     if (st.enabled || reason == null) return button;
@@ -308,7 +319,14 @@ class _DeckInspectorState extends State<DeckInspector> {
           backgroundColor: selected ? theme.colorScheme.muted : null,
           onPressed: () =>
               ui.run('slides.panel.animate', {'tab': tab}, InvocationSource.ui),
-          child: Text(label, style: theme.textTheme.small),
+          child: Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.small,
+            ),
+          ),
         ),
       );
     }

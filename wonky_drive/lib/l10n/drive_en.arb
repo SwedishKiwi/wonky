@@ -74,18 +74,6 @@
   "@previewImageBroken": {
     "description": "Preview error for an image that does not decode."
   },
-  "previewPdfBroken": "This PDF can't be displayed. The file may be damaged.",
-  "@previewPdfBroken": {
-    "description": "Preview error for a PDF that does not open."
-  },
-  "previewPdfPassword": "This PDF is password-protected. Download it to open it.",
-  "@previewPdfPassword": {
-    "description": "Preview state of an encrypted PDF (Drive 02 §6.3)."
-  },
-  "previewPdfUnavailable": "PDF previews aren't available here. Download the file to view it.",
-  "@previewPdfUnavailable": {
-    "description": "Preview state when the PDF renderer cannot be loaded."
-  },
   "previewNotText": "This file can't be shown as text. It contains binary data.",
   "@previewNotText": {
     "description": "Preview error for a text file whose bytes are binary."
@@ -226,10 +214,6 @@
   "@previewZoomFit": {
     "description": "Viewer bar button: fit the image to the window."
   },
-  "previewZoomFitWidth": "Fit width",
-  "@previewZoomFitWidth": {
-    "description": "Viewer bar button: fit the PDF page width."
-  },
   "previewZoomActual": "Actual size",
   "@previewZoomActual": {
     "description": "Viewer bar button: 100 %."
@@ -277,78 +261,6 @@
   "previewServerPreviewNote": "Showing a smaller preview",
   "@previewServerPreviewNote": {
     "description": "Viewer bar note when the server preview image is shown instead of the original."
-  },
-  "previewPdfPageOf": "/ {count}",
-  "@previewPdfPageOf": {
-    "description": "Suffix after the page number field of the PDF viewer bar (\"3 / 24\").",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "previewPdfPageSemantics": "Page {page} of {count}",
-  "@previewPdfPageSemantics": {
-    "description": "Accessibility label of a PDF page.",
-    "placeholders": {
-      "page": {
-        "type": "int"
-      },
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "previewPdfPageField": "Page number",
-  "@previewPdfPageField": {
-    "description": "Accessibility label of the page number field."
-  },
-  "previewPdfTruncated": "Showing the first {count} pages. Download the file to see all of them.",
-  "@previewPdfTruncated": {
-    "description": "Note when a PDF has more pages than the preview shows.",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "previewPdfLoadingPages": "Reading pages…",
-  "@previewPdfLoadingPages": {
-    "description": "PDF viewer bar while pages are being counted."
-  },
-  "previewPdfTooltip": "Pages are shown as images. Download the PDF to select or search its text.",
-  "@previewPdfTooltip": {
-    "description": "Tooltip on the PDF page indicator (accessibility note, Drive 04 §12)."
-  },
-  "previewGoToPageTitle": "Go to page",
-  "@previewGoToPageTitle": {
-    "description": "Title of the go-to-page dialog."
-  },
-  "previewGoToPageLabel": "Page (1–{count})",
-  "@previewGoToPageLabel": {
-    "description": "Label of the page field in the go-to-page dialog.",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "previewGoToPageInvalid": "Enter a page between 1 and {count}.",
-  "@previewGoToPageInvalid": {
-    "description": "Validation error of the go-to-page dialog.",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "previewGo": "Go",
-  "@previewGo": {
-    "description": "Confirm button of the go-to-page dialog."
-  },
-  "previewCancel": "Cancel",
-  "@previewCancel": {
-    "description": "Cancel button of dialogs."
   },
   "previewWrap": "Wrap lines",
   "@previewWrap": {
@@ -507,10 +419,6 @@
   "@cmdPreviewRotate": {
     "description": "Command drive.preview.rotate."
   },
-  "cmdPreviewGoToPage": "Go to page…",
-  "@cmdPreviewGoToPage": {
-    "description": "Command drive.preview.goToPage."
-  },
   "cmdPreviewToggleWrap": "Wrap lines",
   "@cmdPreviewToggleWrap": {
     "description": "Command drive.preview.toggleWrap."
@@ -629,6 +537,15 @@
         "type": "int"
       },
       "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "uploadPillWaiting": "{count} waiting",
+  "@uploadPillWaiting": {
+    "description": "Collapsed upload panel while every upload waits for the connection (offline).",
+    "placeholders": {
+      "count": {
         "type": "int"
       }
     }

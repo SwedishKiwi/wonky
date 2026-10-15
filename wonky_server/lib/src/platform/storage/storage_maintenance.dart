@@ -33,16 +33,29 @@ class StorageDrift {
 ///   images), then a reconcile that sets `reconciledAt`. Per-user commits
 ///   make it resumable; recomputing from the sources makes it idempotent.
 ///   Users over the quota afterwards get one `storage` notification.
-/// - **Reconcile** (nightly): expired reservations are deleted, then every
-///   user's counters are recomputed from `drive_item` and the open
-///   reservations; differences above 1 % or 64 KB are logged as
-///   `storage.drift`.
+/// - **Reconcile** (nightly): expired reservations are deleted, the
+///   [nightlyKinds] (spreadsheets) are re-estimated, then every user's
+///   counters are recomputed from `drive_item` and the open reservations;
+///   differences above 1 % or 64 KB are logged as `storage.drift`.
+///   Re-estimating spreadsheets nightly keeps their sizes on the current
+///   estimator (a changed estimator corrects every user by the next
+///   night, Drive 03 §11) and catches missed trailing refreshes.
 abstract final class StorageMaintenance {
   /// Users per batch of the backfill / reconcile scans.
   static const userBatch = 200;
 
   /// Items per batch of the backfill's size recompute.
   static const itemBatch = 100;
+
+  /// Kinds whose sizes the nightly reconcile re-estimates (the backfill
+  /// re-estimates documents, spreadsheets and presentations).
+  static Set<DriveItemKind> nightlyKinds = {DriveItemKind.spreadsheet};
+
+  static const _estimatedKinds = {
+    DriveItemKind.document,
+    DriveItemKind.spreadsheet,
+    DriveItemKind.presentation,
+  };
 
   /// Drift worth logging: more than 1 % or 64 KB.
   static bool significant(int before, int after) {
@@ -101,44 +114,18 @@ abstract final class StorageMaintenance {
     if (wasPending) await _noticeIfOver(session, userId);
   }
 
-  /// Recomputes `sizeBytes` of the owned documents, spreadsheets and
-  /// presentations and `attachmentBytes` of all owned items (raw writes:
-  /// the reconcile that follows recounts the counters).
-  static Future<void> recomputeItemSizes(Session session, int userId) async {
-    var after = 0;
-    while (true) {
-      final items = await DriveItem.db.find(
-        session,
-        where: (t) =>
-            t.ownerId.equals(userId) &
-            (t.id > after) &
-            t.kind.inSet({
-              DriveItemKind.document,
-              DriveItemKind.spreadsheet,
-              DriveItemKind.presentation,
-            }),
-        orderBy: (t) => t.id,
-        limit: itemBatch,
-      );
-      if (items.isEmpty) break;
-      for (final item in items) {
-        int? size;
-        try {
-          size = await ContentSizes.estimate(session, item);
-        } on Exception catch (e) {
-          session.log(
-            'storage.backfill: size of item ${item.id} failed: $e',
-            level: LogLevel.warning,
-          );
-        }
-        if (size == null || size == item.sizeBytes) continue;
-        await session.db.unsafeExecute(
-          'UPDATE drive_item SET "sizeBytes" = @n WHERE id = @id',
-          parameters: QueryParameters.named({'n': size, 'id': item.id}),
-        );
-      }
-      after = items.last.id!;
-    }
+  /// Recomputes `sizeBytes` of the owned items of [kinds] (default:
+  /// documents, spreadsheets and presentations) and, with [attachments],
+  /// `attachmentBytes` of all owned items (raw writes: the reconcile that
+  /// follows recounts the counters).
+  static Future<void> recomputeItemSizes(
+    Session session,
+    int userId, {
+    Set<DriveItemKind> kinds = _estimatedKinds,
+    bool attachments = true,
+  }) async {
+    if (kinds.isNotEmpty) await _recomputeContentSizes(session, userId, kinds);
+    if (!attachments) return;
     await session.db.unsafeExecute(
       r'''
       UPDATE drive_item d SET "attachmentBytes" = x.n
@@ -154,6 +141,41 @@ abstract final class StorageMaintenance {
       ''',
       parameters: QueryParameters.named({'u': userId}),
     );
+  }
+
+  static Future<void> _recomputeContentSizes(
+    Session session,
+    int userId,
+    Set<DriveItemKind> kinds,
+  ) async {
+    var after = 0;
+    while (true) {
+      final items = await DriveItem.db.find(
+        session,
+        where: (t) =>
+            t.ownerId.equals(userId) & (t.id > after) & t.kind.inSet(kinds),
+        orderBy: (t) => t.id,
+        limit: itemBatch,
+      );
+      if (items.isEmpty) break;
+      for (final item in items) {
+        int? size;
+        try {
+          size = await ContentSizes.estimate(session, item);
+        } on Exception catch (e) {
+          session.log(
+            'storage: size of item ${item.id} failed: $e',
+            level: LogLevel.warning,
+          );
+        }
+        if (size == null || size == item.sizeBytes) continue;
+        await session.db.unsafeExecute(
+          'UPDATE drive_item SET "sizeBytes" = @n WHERE id = @id',
+          parameters: QueryParameters.named({'n': size, 'id': item.id}),
+        );
+      }
+      after = items.last.id!;
+    }
   }
 
   static Future<void> _noticeIfOver(Session session, int userId) async {
@@ -284,6 +306,12 @@ abstract final class StorageMaintenance {
           for (final r in rows) {
             final userId = r[0] as int;
             if (r[1] as bool) {
+              await recomputeItemSizes(
+                session,
+                userId,
+                kinds: nightlyKinds,
+                attachments: false,
+              );
               final d = await reconcileUser(session, userId);
               if (d.isNotEmpty) drifted++;
             } else {

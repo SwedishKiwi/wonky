@@ -93,9 +93,12 @@ class FakeDriveRepository implements DriveRepository {
     UuidValue? uuid,
     FileCategory? fileCategory,
     int countedBytes = 0,
+    bool nonEditorsCanExport = true,
+    UuidValue? contentRef,
   }) {
     final now = clock.now();
     final v = DriveItemView(
+      contentRef: contentRef,
       countedBytes: countedBytes,
       fileCategory:
           fileCategory ??
@@ -114,7 +117,7 @@ class FakeDriveRepository implements DriveRepository {
       starred: starred,
       pinnedOffline: false,
       editorsCanShare: true,
-      nonEditorsCanExport: true,
+      nonEditorsCanExport: nonEditorsCanExport,
       viewersSeeComments: true,
     );
     _items[v.uuid] = v;

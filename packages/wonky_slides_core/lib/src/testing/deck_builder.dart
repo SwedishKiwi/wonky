@@ -388,6 +388,9 @@ final class DeckBuilder {
     String effect = 'fade',
     SlideBuildTrigger trigger = SlideBuildTrigger.onClick,
     int durationMs = 500,
+    int delayMs = 0,
+    String easing = 'easeOut',
+    String? optionsJson,
   }) {
     final id = ids.newId();
     _rows.add((
@@ -400,10 +403,10 @@ final class DeckBuilder {
         BuildCols.effect: effect,
         SlidesCols.sortKey: nextKey('build:$slideId'),
         BuildCols.trigger: trigger.name,
-        BuildCols.delayMs: 0,
+        BuildCols.delayMs: delayMs,
         BuildCols.durationMs: durationMs,
-        BuildCols.easing: 'easeOut',
-        BuildCols.optionsJson: null,
+        BuildCols.easing: easing,
+        BuildCols.optionsJson: optionsJson,
         SlidesCols.createdAt: now,
       },
     ));

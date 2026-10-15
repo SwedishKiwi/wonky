@@ -1,0 +1,7 @@
+### Server → client messages of a presentation session (sealed; Slides 10
+### §6.2). Every event carries the server time it was sent at (epoch ms),
+### for the follower's clock offset.
+class: PresentationEvent
+sealed: true
+fields:
+  serverTimeMs: int

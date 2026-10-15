@@ -317,7 +317,17 @@ class _Pill extends StatelessWidget {
     final theme = ShadTheme.of(context);
     final c = theme.colorScheme;
     final active = queue.activeCount;
-    final label = active > 0
+    // All waiting (offline): "2 waiting" with the cloud-off icon, not
+    // "Uploading 2 · 0 %" (D-18).
+    final waiting =
+        active > 0 &&
+        queue.tasks.every(
+          (t) =>
+              !t.status.isActive || t.status == UploadStatus.waitingForNetwork,
+        );
+    final label = waiting
+        ? l.uploadPillWaiting(active)
+        : active > 0
         ? l.uploadPill(active, (queue.batchProgress * 100).floor())
         : uploadPanelTitle(l, queue);
     return Align(
@@ -331,7 +341,9 @@ class _Pill extends StatelessWidget {
           key: UploadPanelKeys.pill,
           size: ShadButtonSize.sm,
           backgroundColor: c.popover,
-          leading: active > 0
+          leading: waiting
+              ? Icon(LucideIcons.cloudOff, size: 16, color: c.mutedForeground)
+              : active > 0
               ? ProgressRing(value: queue.batchProgress, size: 16)
               : Icon(
                   queue.failedCount > 0

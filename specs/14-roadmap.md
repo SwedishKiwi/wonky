@@ -53,6 +53,25 @@ presenting (03 §1); the site root `/` lands on **Wonky Write's home** (01 §2.4
 | **M10 · Slides motion & content** (SL-24…SL-36) | Builds and the animation pane, transitions incl. Magic Move, laser/pen, loop/kiosk; code blocks with line highlighting and type-in/morph (`wonky_code`); Write exports on the shared tokenizer; linked Sheets charts incl. 3D and camera animation with client-side auto-update (`wonky_charts`), native charts (P1); PDF builds as pages; outline view, Layers, accessibility checker; masters and theme editor; 10 templates | Journey 14 complete and J-S5…J-S7; timeline determinism (client ≡ server); 60 fps budgets of Slides 01 met in Chrome on the reference machine |
 | **M11 · Slides collaboration, MCP & AI** (SL-37…SL-45) | Live pointers and follow modes, comments on slides/elements, version history, activity; phone remote, rehearse, same-browser fast path (P1); `slides.*` headless and `ui.slides.*` tools; assistant in Slides (generate decks, notes, alt text, code walkthroughs) and in Drive (P1) | Journey 15 and J-S8…J-S10; MCP integration suite for `slides.*` green; a11y checklist; no open P0/P1 bugs |
 
+**M8 exit checklist** (checked by D-18 on 2026-10-15; evidence in
+[Drive STATUS](wonky_drive/STATUS.md)):
+
+- ☑ Journeys 11–13 and J-D1…J-D8 walked through in the web release builds (light and dark,
+  wide and narrow); J-D9 (MCP) and J-D10 (transfer to a nearly full user) green as server
+  tests (`drive_file_tools_test`, `storage_enforcement_test`). ◐ Not yet automated: the web
+  E2E runner and `integration_test` journeys (no chromedriver; steps in 15 §9, `TODO.md`).
+  Journey 13 covers Drive, Write and Sheets; Slides' settings and bug button come with M9.
+- ☑ Quota enforcement table (Drive 03 §7.2) fully tested (`storage_enforcement_test`,
+  `storage_service_test`, MCP `quota_exceeded`).
+- ◐ Backfill dry run: run on the development database (43 users, all reconciled at start,
+  numbers in Drive 03 §11); a production copy doesn't exist yet — repeat on one before the
+  first v2 deploy.
+- ☑ Write and Sheets suites and goldens unchanged after the extractions (D-2, D-3, D-6, D-7
+  rows of the Drive STATUS; golden masters are made on CI Linux).
+- ☑ A deck space never reaches the Sheets replica (`space_kinds_test`, D-4).
+- ☑ The Slides home lists presentations (SL-1 widget tests; `/slides/` release build opens on
+  the presentations-only home with the app-home left menu, D-18).
+
 M8 must land the shell changes (scope-aware homes, settings split, `WonkyAppKind` with four
 apps) before Slides UI work starts in M9, and every shared-package extraction plus OS-8 before
 the first Slides package that needs it (SL-2 needs D-6; SL-5 needs D-4; SL-26/SL-27 need D-2/D-3).

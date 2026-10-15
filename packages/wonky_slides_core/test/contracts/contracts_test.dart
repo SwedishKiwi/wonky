@@ -245,7 +245,10 @@ void main() {
         UngroupElements() ||
         ReplaceImage() ||
         SetElementData() => 'elements',
-        SetText() || FormatText() || SetTextBoxStyle() => 'text',
+        SetText() ||
+        FormatText() ||
+        SetTextBoxStyle() ||
+        ResetPlaceholders() => 'text',
         InsertTableAxes() ||
         DeleteTableAxes() ||
         MoveTableAxes() ||
@@ -307,6 +310,7 @@ void main() {
         const SetElementData('e', '{}'),
         const FormatText([ElementText('e')], {'bold': true}),
         const SetTextBoxStyle(['e'], {}),
+        const ResetPlaceholders(['e']),
         const InsertTableAxes('t', TableAxisDimension.row, 0),
         const DeleteTableAxes('t', []),
         const MoveTableAxes('t', [], 0),

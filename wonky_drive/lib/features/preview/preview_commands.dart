@@ -253,69 +253,6 @@ List<Command<CommandArgs>> previewCommands(ShellServices s) {
       },
     ),
     cmd(
-      'drive.preview.goToPage',
-      title: (l) => l.cmdPreviewGoToPage,
-      icon: LucideIcons.arrowDownToLine,
-      bindings: const [KeyBinding('G', mod: true)],
-      args: const JsonSchema.object(
-        properties: {
-          'page': JsonSchema.integer(description: '1-based page number.'),
-        },
-      ),
-      enabled: (ctx, a) =>
-          viewerIs(PreviewViewer.pdf) && (active()?.pdf?.pageCount ?? 0) > 0,
-      run: (ctx, a) async {
-        final c = active()!;
-        final count = c.pdf!.pageCount;
-        var page = a.integer('page');
-        if (page == null) {
-          final dc = ctx.dialogContext;
-          if (dc == null || !dc.mounted) {
-            return const CommandResult.cancelled();
-          }
-          final l = driveL10n(dc);
-          final r = await showWonkyFormDialog(
-            dc,
-            WonkyDialogSpec(
-              title: l.previewGoToPageTitle,
-              dialogKey: 'drive.preview.goToPage',
-              fields: [
-                TextFieldSpec(
-                  id: 'page',
-                  label: l.previewGoToPageLabel(count),
-                  initial: '${c.pdfPage + 1}',
-                  validator: (v) {
-                    final n = int.tryParse(v.trim());
-                    return n == null || n < 1 || n > count
-                        ? l.previewGoToPageInvalid(count)
-                        : null;
-                  },
-                ),
-              ],
-              buttons: [
-                DialogButtonSpec(
-                  id: 'cancel',
-                  label: l.previewCancel,
-                  validates: false,
-                ),
-                DialogButtonSpec(id: 'go', label: l.previewGo, primary: true),
-              ],
-            ),
-          );
-          if (r == null || r.buttonId != 'go') {
-            return const CommandResult.cancelled();
-          }
-          page = int.tryParse(r.text('page').trim());
-        }
-        if (page == null || !c.goToPage(page)) {
-          return CommandResult.failed(
-            driveL10nOf(s).previewGoToPageInvalid(count),
-          );
-        }
-        return _ok({'page': page});
-      },
-    ),
-    cmd(
       'drive.preview.toggleWrap',
       title: (l) => l.cmdPreviewToggleWrap,
       icon: LucideIcons.wrapText,
@@ -427,7 +364,8 @@ CommandResult _step(ShellServices s, FilePreviewController? c, int delta) {
 }
 
 /// Leaves the preview for the location it was opened from (skipping
-/// previews reached with prev/next), with the file selected (Drive 04 §6).
+/// previews reached with prev/next), with the file selected (Drive 04 §6);
+/// without such a location, the file's folder.
 void closePreview(ShellServices s, FilePreviewController? c) {
   final item = c?.item;
   if (item != null) s.driveSelection.value = [item];
@@ -440,5 +378,13 @@ void closePreview(ShellServices s, FilePreviewController? c) {
       return;
     }
   }
-  s.router.go('/');
+  // Opened by a link or after a reload: the file's folder, not the home.
+  final parent = item?.parentUuid;
+  s.router.go(
+    parent != null
+        ? '/f/${parent.uuid}'
+        : item != null && item.role == AccessRole.owner
+        ? '/my-drive'
+        : '/',
+  );
 }

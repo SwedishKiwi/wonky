@@ -1,0 +1,6 @@
+class: PresentationLaserEvent
+extends: PresentationEvent
+fields:
+  slideId: String?
+  x: double?
+  y: double?

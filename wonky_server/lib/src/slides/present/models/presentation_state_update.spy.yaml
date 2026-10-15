@@ -1,0 +1,4 @@
+class: PresentationStateUpdate
+extends: PresentationUpdate
+fields:
+  state: PresentationState

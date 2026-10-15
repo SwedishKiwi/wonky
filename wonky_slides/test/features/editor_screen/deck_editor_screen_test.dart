@@ -123,7 +123,19 @@ void main() {
     await tester.tap(key('slides.inspector.tab.slide'));
     await tester.pump();
     expect(r.editor.inspectorTab, InspectorTab.slide);
+    // The Slide tab scrolls (the layout gallery of SL-17 is tall).
+    final scrollable = find
+        .descendant(
+          of: key('slides.inspector'),
+          matching: find.byType(Scrollable),
+        )
+        .first;
     for (final id in ['layout', 'background', 'theme', 'visibility', 'info']) {
+      await tester.scrollUntilVisible(
+        key('slides.inspector.section.$id'),
+        100,
+        scrollable: scrollable,
+      );
       expect(key('slides.inspector.section.$id'), findsOneWidget, reason: id);
     }
     await settleTooltips(tester);
@@ -160,12 +172,14 @@ void main() {
       'context menu opens with its commands', (tester) async {
     final r = await pumpDeckScreen(tester);
 
-    await tester.tap(
-      key('slides.canvas'),
+    // An empty spot of the pasteboard (a hit element opens its own menu).
+    await tester.tapAt(
+      tester.getBottomLeft(key('slides.canvas')) + const Offset(8, -8),
       buttons: kSecondaryButton,
     );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 200));
+    for (var i = 0; i < 4; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
     expect(key('menu.context.slide.new'), findsOneWidget);
     expect(key('menu.context.slide.transition'), findsOneWidget);
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
@@ -302,7 +316,9 @@ void main() {
           await tester.tap(key('slides.navigator.open'));
           await tester.pump();
           expect(key('slides.navigator'), findsOneWidget);
-          await tester.tap(key('slides.navigator.scrim'), warnIfMissed: false);
+          // The scrim right of the drawer closes it.
+          final scrim = tester.getRect(key('slides.navigator.scrim'));
+          await tester.tapAt(scrim.centerRight - const Offset(8, 0));
           await tester.pump();
           expect(key('slides.navigator'), findsNothing);
         } else {
@@ -320,8 +336,9 @@ void main() {
     }
   }
 
-  testWidgets('Given ?slide= when the deck opens then that slide is current',
-      (tester) async {
+  testWidgets('Given ?slide= when the deck opens then that slide is current', (
+    tester,
+  ) async {
     final third = sampleDeck().build().indexes.order.entries[2].id;
 
     final r = await pumpDeckScreen(tester, initialSlideId: third);

@@ -489,6 +489,7 @@ List<Command<CommandArgs>> editCommands(ShellServices s) {
       category: (l) => l.categoryEdit,
       enabled: (ctx, a) => s.undo.canRedo.value,
       run: (ctx, a) async {
+        await ctx.document?.beforeRedo();
         final o = await s.undo.redo();
         _announceUndo(s, o);
         return o == null
@@ -524,6 +525,7 @@ List<Command<CommandArgs>> editCommands(ShellServices s) {
       ),
       enabled: (ctx, a) => s.undo.canUndo.value,
       run: (ctx, a) async {
+        await ctx.document?.beforeUndo();
         await s.undo.undoTo(a.requireString('stepId'));
         return const CommandResult.ok();
       },

@@ -185,6 +185,7 @@ void main() {
         'onClick',
         'withPrevious',
         'afterPrevious',
+        'onElementClick', // S-2: reserved (06 A-06-2)
       ]);
       expect(TableDimension.values.map((v) => v.name), ['row', 'column']);
       expect(DeckAppearance.values.map((v) => v.name), ['light', 'dark']);

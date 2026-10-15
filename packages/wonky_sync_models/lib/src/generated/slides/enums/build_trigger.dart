@@ -12,12 +12,15 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
 
-/// What starts an animation step (Slides 02 §3.11, 06 §4.1). Append-only;
-/// `onElementClick` is reserved for P2 (A-06-2).
+/// What starts an animation step (Slides 02 §3.11, 06 §4.1). Append-only.
+/// `onElementClick` (S-2, 06 A-06-2) is reserved for interactive decks (P2):
+/// clients of S-2 and later read it, the timeline skips such builds and the
+/// planner refuses to write it until the feature exists.
 enum BuildTrigger implements _iss.SerializableModel {
   onClick,
   withPrevious,
-  afterPrevious;
+  afterPrevious,
+  onElementClick;
 
   static BuildTrigger fromJson(String name) {
     switch (name) {
@@ -27,6 +30,8 @@ enum BuildTrigger implements _iss.SerializableModel {
         return BuildTrigger.withPrevious;
       case 'afterPrevious':
         return BuildTrigger.afterPrevious;
+      case 'onElementClick':
+        return BuildTrigger.onElementClick;
       default:
         throw ArgumentError(
           'Value "$name" cannot be converted to "BuildTrigger"',

@@ -243,11 +243,16 @@ final class TextNode extends SceneNode {
     required this.layout,
     this.originX = 0,
     this.originY = 0,
+    this.partId,
   });
 
   final TextLayoutResult layout;
   final double originX;
   final double originY;
+
+  /// Which body of the element this is when it has several (table cells:
+  /// `"<rowId>|<columnId>"`, SL-15), else null.
+  final String? partId;
 }
 
 /// A chart sub-scene (`wonky_charts`, 08) drawn into [dst].
@@ -407,10 +412,14 @@ abstract interface class ChartSceneSource {
   });
 }
 
-/// Lays out code elements (07): replaces the core's basic code layout
-/// (SL-26 `CodeElementModel`).
+/// Lays out code elements (07). The core's implementation is SL-26's
+/// `CodeElementLayout` (`CodeElementModel` + `CodeSceneComposer`).
 abstract interface class CodeSceneSource {
-  /// The code scene of [element] in [stateIndex] (null = per purpose).
+  /// The code scene of [element] in [stateIndex] (null = per purpose:
+  /// thumbnails and the print frame show the last state, otherwise the
+  /// first) with highlight [step] (0-based, null = none). [background] is
+  /// the effective slide background behind the element (ARGB; `auto`
+  /// palettes pick light or dark by it, 07 §2.5), null when unknown.
   CodeScene? codeScene(
     ResolvedElement element,
     DeckReader? deck,
@@ -419,6 +428,8 @@ abstract interface class CodeSceneSource {
     required double height,
     required ScenePurpose purpose,
     int? stateIndex,
+    int? step,
+    int? background,
   });
 }
 

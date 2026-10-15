@@ -80,6 +80,13 @@ class TemplateCard extends StatelessWidget {
     final t = template;
     final style = t?.previewStyle;
     final dark = theme.brightness == Brightness.dark;
+    // (v2) Presentation cards are slide-shaped (16:9) and a little wider.
+    final slide =
+        (t?.kind ?? kind ?? services.config.primaryKind) ==
+        DriveItemKind.presentation;
+    final width = slide ? this.width * 1.4 : this.width;
+    // The preview area inside the 1 px border is exactly 16:9.
+    final height = slide ? (width - 2) * 9 / 16 + 2 : width * 1.25;
     return SizedBox(
       width: width,
       child: Semantics(
@@ -96,7 +103,7 @@ class TemplateCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  height: width * 1.25,
+                  height: height,
                   width: width,
                   clipBehavior: Clip.antiAlias,
                   decoration: BoxDecoration(
@@ -114,8 +121,23 @@ class TemplateCard extends StatelessWidget {
                             color: services.config.brandColor,
                           ),
                         )
-                      // Clipped, not scrolled: a miniature never scrolls.
-                      : _TemplateThumbnail(text: t.previewText, style: style),
+                      : services.config.templatePreview(
+                              context,
+                              t,
+                              width: width - 2,
+                              height: height - 2,
+                            ) ??
+                            (slide
+                                ? _SlideThumbnail(
+                                    text: t.previewText,
+                                    style: style,
+                                  )
+                                // Clipped, not scrolled: a miniature never
+                                // scrolls.
+                                : _TemplateThumbnail(
+                                    text: t.previewText,
+                                    style: style,
+                                  )),
                 ),
                 const SizedBox(height: 6),
                 Text(
@@ -249,6 +271,79 @@ class _TemplateThumbnail extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// (v2) A miniature title slide of a presentation template without an
+/// app-provided preview (Wonky Drive's gallery): the first `# ` line as the
+/// title over an accent rule, the next line as the subtitle, in the colors
+/// of the template's Slides theme.
+class _SlideThumbnail extends StatelessWidget {
+  const _SlideThumbnail({required this.text, this.style});
+
+  final String text;
+  final TemplatePreviewStyle? style;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    final dark = theme.brightness == Brightness.dark;
+    final st = style;
+    final heading = st == null
+        ? theme.colorScheme.foreground
+        : _hex(dark ? st.darkHeading : st.heading);
+    final fg = st == null
+        ? theme.colorScheme.mutedForeground
+        : _hex(dark ? st.darkText : st.text);
+    final accent = st == null
+        ? theme.colorScheme.primary
+        : _hex(dark ? st.darkAccent : st.accent);
+    final family = switch (st?.fontCategory) {
+      'serif' => const ['EB Garamond', 'Georgia', 'serif'],
+      'mono' => const ['JetBrains Mono', 'Menlo', 'monospace'],
+      _ => null,
+    };
+    final lines = text.split('\n');
+    final title = lines.first.replaceFirst(RegExp(r'^# '), '');
+    final subtitle = lines.length > 1 ? lines[1] : '';
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Text(
+            title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 15,
+              height: 1.15,
+              fontWeight: FontWeight.w700,
+              color: heading,
+              fontFamilyFallback: family,
+            ),
+          ),
+          Container(
+            width: 22,
+            height: 2,
+            margin: const EdgeInsets.symmetric(vertical: 5),
+            color: accent,
+          ),
+          Text(
+            subtitle,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 7.5,
+              height: 1.3,
+              color: fg,
+              fontFamilyFallback: family,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

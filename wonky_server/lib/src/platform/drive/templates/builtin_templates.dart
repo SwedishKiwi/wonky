@@ -1,6 +1,9 @@
 import 'package:serverpod/serverpod.dart';
+import 'package:wonky_slides_core/templates.dart';
+import 'package:wonky_slides_core/themes.dart' show BuiltInThemes;
 import 'package:wonky_write_core/wonky_write_core.dart' as core;
 
+import '../../../slides/templates/slides_template_decks.dart';
 import '../../common/models.dart';
 
 /// A sheet of a built-in spreadsheet template. [rows] hold user input as
@@ -47,7 +50,25 @@ class BuiltinTemplate {
     this.centeredHeadings = false,
     this.uppercaseHeadings = false,
     this.accentHeadings = false,
-  });
+  }) : slides = null;
+
+  /// (SL-22) A built-in presentation template: the core's [SlidesTemplate]
+  /// (Slides 04 §15) with its key, name, category and Slides theme.
+  BuiltinTemplate.presentation(SlidesTemplate this.slides)
+    : key = slides.key,
+      kind = DriveItemKind.presentation,
+      name = slides.name,
+      description = slides.description,
+      category = TemplateCategory.values.byName(slides.category),
+      markdown = null,
+      sheets = const [],
+      inGallery = true,
+      themeKey = slides.themeKey,
+      accent = null,
+      banner = false,
+      centeredHeadings = false,
+      uppercaseHeadings = false,
+      accentHeadings = false;
 
   final String key;
   final DriveItemKind kind;
@@ -57,11 +78,16 @@ class BuiltinTemplate {
   final String? markdown;
   final List<TemplateSheet> sheets;
 
+  /// The deck of a presentation template (null for documents and
+  /// spreadsheets).
+  final SlidesTemplate? slides;
+
   /// Welcome content is created at sign-up but not listed in the gallery.
   final bool inGallery;
 
   /// The built-in Write theme documents from this template get (and the
-  /// colors of its card), e.g. `classic-serif`.
+  /// colors of its card), e.g. `classic-serif`; for presentations the
+  /// built-in Slides theme (`aurora`).
   final String? themeKey;
 
   /// Card accent of templates without a theme (spreadsheets), `#rrggbb`.
@@ -76,6 +102,8 @@ class BuiltinTemplate {
 
   /// The card's miniature page style (specs/05 §3.1).
   TemplatePreviewStyle? get previewStyle {
+    final deck = slides;
+    if (deck != null) return _slidesPreviewStyle(deck.themeKey);
     final key = themeKey;
     if (key != null) {
       final theme = core.BuiltinThemes.byKey(key);
@@ -134,10 +162,44 @@ class BuiltinTemplate {
     );
   }
 
+  /// The card colors of a presentation template: the Slides theme's
+  /// background, text and accent colors in both schemes; headings in the
+  /// accent color on dark decks' cards look like the decks' titles.
+  static TemplatePreviewStyle? _slidesPreviewStyle(String themeKey) {
+    final def = BuiltInThemes.byKey(themeKey);
+    if (def == null) return null;
+    // Scheme order: bg1, text1, bg2, text2, accent1…6, link (opaque).
+    String c(List<String> scheme, int i) =>
+        scheme[i].substring(0, 7).toLowerCase();
+    final category = core.FontRegistry.lookup(
+      def.fonts.heading.family,
+    )?.category;
+    return TemplatePreviewStyle(
+      paper: c(def.light, 0),
+      text: c(def.light, 3),
+      heading: c(def.light, 1),
+      accent: c(def.light, 4),
+      darkPaper: c(def.dark, 0),
+      darkText: c(def.dark, 3),
+      darkHeading: c(def.dark, 1),
+      darkAccent: c(def.dark, 4),
+      banner: false,
+      centeredHeadings: false,
+      uppercaseHeadings: false,
+      fontCategory: switch (category) {
+        core.FontCategory.serif => 'serif',
+        core.FontCategory.mono => 'mono',
+        _ => 'sans',
+      },
+    );
+  }
+
   UuidValue get uuid =>
       const Uuid().v5obj(Namespace.url.value, 'wonky-template:$key');
 
   String get previewText {
+    final deck = slides;
+    if (deck != null) return SlidesTemplateDecks.previewText(deck);
     if (markdown != null) {
       // One line per block (for the thumbnail): headings keep a leading
       // "#", list markers become "•", tables become spaced cells.
@@ -191,7 +253,13 @@ abstract final class BuiltinTemplates {
   static BuiltinTemplate byKey(String key) =>
       all.firstWhere((t) => t.key == key);
 
-  static const List<BuiltinTemplate> all = [
+  static final List<BuiltinTemplate> all = List.unmodifiable([
+    ..._documentsAndSpreadsheets,
+    // (SL-22) Presentations: the core's built-in Slides templates.
+    for (final t in SlidesTemplates.all) BuiltinTemplate.presentation(t),
+  ]);
+
+  static const List<BuiltinTemplate> _documentsAndSpreadsheets = [
     BuiltinTemplate(
       key: welcomeDocumentKey,
       kind: DriveItemKind.document,

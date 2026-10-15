@@ -15,7 +15,15 @@ const _groupColors = {
 
 extension _GroupPart on _Planner {
   String _groupTitle(String? raw) {
-    if (raw == null) return 'Group ${deck.count(SlidesTables.slideGroup) + 1}';
+    if (raw == null) {
+      // "Group n" with the lowest free n (04 §5.6).
+      final used = {for (final g in deck.groups) g.title};
+      var n = 1;
+      while (used.contains('Group $n')) {
+        n++;
+      }
+      return 'Group $n';
+    }
     final t = raw.trim();
     if (t.isEmpty || t.length > 100) {
       invalid('A group title has 1–100 characters');
@@ -38,22 +46,33 @@ extension _GroupPart on _Planner {
       for (final e in ix.order.entries)
         if (ids.contains(e.id)) e,
     ];
-    if (ordered.isEmpty) invalid('Select at least one slide');
+    final target = switch (op.target) {
+      InGroup(:final groupId) => TopLevel(afterId: groupId),
+      final t => t,
+    };
+    if (ordered.isEmpty && target == null) {
+      invalid('Select at least one slide');
+    }
     checkGroupLimit(1);
     final groupId = op.groupId ?? newId();
     if (deck.group(groupId) != null) invalid('Group $groupId already exists');
-    // The group takes the position of the first slide (its group's
-    // position when that slide is grouped).
-    final first = ordered.first;
-    final anchor = first.groupId ?? first.id;
-    final items = topLevelItems();
-    final i = items.indexWhere((t) => t.$2 == anchor);
-    final key = OrderKeys.at(
-      items,
-      i < 0 ? items.length : i,
-      1,
-      exclude: {...ids},
-    ).single;
+    final String key;
+    if (target != null) {
+      key = keysAt(target, 1, exclude: {...ids}).$2.single;
+    } else {
+      // The group takes the position of the first slide (its group's
+      // position when that slide is grouped).
+      final first = ordered.first;
+      final anchor = first.groupId ?? first.id;
+      final items = topLevelItems();
+      final i = items.indexWhere((t) => t.$2 == anchor);
+      key = OrderKeys.at(
+        items,
+        i < 0 ? items.length : i,
+        1,
+        exclude: {...ids},
+      ).single;
+    }
     b.insert(SlidesTables.slideGroup, {
       SlidesCols.id: groupId,
       SlidesCols.deckId: deck.deckId,

@@ -98,6 +98,11 @@ following (arrow keys show "Following Anna — press Esc to stop"). The presenta
 
 ## 2. Soft locks and live hints
 
+> SL-13 hook: text editing asks `textEditingOf(editor).locks` (`TextEditLocks`, app
+> `features/text_editing/text_editing_host.dart`) before editing a body (`request`, may show
+> the popover and complete later), announces `claim`/`release`, and format commands on whole
+> elements skip bodies `heldBy` names. SL-21 supplies the implementation.
+
 ### 2.1 Claims
 
 The `editing` field of the cursor (02 §4.4):
@@ -167,6 +172,57 @@ Receiver (`SlidesHintOverlay`):
 - **Structure**: a 1 s shimmer on the affected navigator rows.
 - Limits: ≤ 20 hint messages/s per session, ≤ 64 KB per message; the server drops hints from
   participants below Editor.
+
+### 2.5 As built (SL-21)
+
+`wonky_slides/lib/features/collab/`:
+
+- `slides_presence_cursor.dart` — `SlidesPresenceCursor` (the §1.1 JSON plus `"app":"slides"` so
+  other apps' cursors are ignored, and `following` for "Following you" in the followed user's
+  avatar tooltip), `EditingClaim` (§2.1; table cells also carry `rowId`/`columnId` next to the
+  `cellId` = `SlidesIds.tableCellId` the server's `DeckTextClaims` reads), `DeckViewport`
+  (`zoom` null = *Fit*), `PresentingState`.
+- `slides_presence_controller.dart` — `SlidesPresenceController`: publishes the cursor through
+  the shell's `PresenceSession` (deduplicated; the session throttles to 10/s; the viewport only
+  while `followerCount > 0`, ≤ 2/s), maps remote cursors (`cursorsOn`, `bySlide`, `presenters`),
+  flags (3 s, flash on jump), avatar details ("Editing slide 4 · Intro", "Viewing slide …",
+  "Presenting", "Editing layouts", "… · Following you"), `jumpTo`, `follow`/`unfollow` (stops on
+  a local slide, selection, zoom or view-mode change, a pan, Esc, *Stop*, or when they leave).
+- `soft_locks.dart` — `SlidesSoftLocks`, installed as `textEditingOf(editor).locks`: claims with
+  idle (60 s) and hidden-window (30 s) expiry (input claims again with a new `since`), the
+  soft-lock question (`SoftLockPrompt`), the race rule (`beats`: earlier `since`, tie → smaller
+  session id; the loser gets *Stop editing* / *Keep editing*), `heldBy` for formatting.
+  The text editing hook gained `TextLockTarget` (element, table cell, notes) and the `…Target`
+  methods, defaulting to the element methods (additive).
+- `slides_hints.dart` — `SlidesHints` (sender and `SlidesHintOverlay` receiver of §2.4):
+  `text` hints of element bodies while typing (≤ 4/s), `transform` hints while dragging
+  (≤ 10/s); `hintedScene` swaps the hinted elements' nodes into the stage scene (rebuilt with the
+  hinted body, same styles and auto-fit).
+- `collab_canvas_layer.dart` — `CollabCanvasLayer` (a `CanvasInteraction`): hinted scene,
+  remote selection outlines (2 px, rotated with the element) + name flags, soft-lock outlines
+  (dashed 1.5 px, offset 2 px per claimer) + "✎ Anna is editing" flags (hover: "… — double-click
+  to edit anyway"), live drag outlines, the soft-lock popover next to the box (`SoftLockPopover`,
+  Esc = no) and the follow banner.
+- `presence_widgets.dart` — `SlidePresenceDots` (navigator rows, collapsed group headers, grid
+  cells; click = jump), `NotesLockBanner` ("✎ Bo is editing the notes" and the notes question),
+  `PresenterPill` (status bar, "Anna is presenting — Follow").
+- `slides_collab.dart` — `SlidesCollab.attach/of(editor)` (attached by `DeckEditorScreen` when the
+  deck is ready; `DeckDocumentController.attachPresence/revealParticipant/followParticipant`
+  forward to it; `describeState` adds `collaborators`, `softLocks`, `following` to MCP
+  `ui.get_state`). Presenting is published from SL-19's `activePresentation` (the present screen
+  of this deck, not audience views).
+- Commands (`commands/collab_commands.dart`): `slides.presence.jumpTo|follow|unfollow|
+  followPresenter`, `slides.text.editAnyway {elementId?, rowId?, columnId?}`.
+
+Deviations: text hints carry the **full body** only (no `diff`/`baseHash`; bodies over 16 KB
+send no hint); a hint is cleared when the synced text **equals** it (change batches carry no HLC),
+when the sender's claim ended + 5 s (30 s without updates at most) or on a local edit; table
+cell and notes bodies get claims but no live hints; `structure` hints (navigator shimmer), live
+pointers (§1.4), the outline view's caret bars, the Present button's live dot and the 300 ms
+fade of released outlines are not built (`TODO.md`). *Follow presenter* joins the presenter's
+presentation session as an audience view (`slides.present.joinAsAudience`, SL-19's follower
+mode); without a session it follows the presented slide in the editor. The View toggle
+*Collaborator cursors* hides remote selection outlines and flags (soft locks stay).
 
 ---
 

@@ -69,6 +69,7 @@ final class SetDeckProps extends SlidesOperation {
     this.defaultsJson,
     this.guidesJson,
     this.presentJson,
+    this.resetSlideTransitions = false,
   });
 
   final String? title;
@@ -82,6 +83,11 @@ final class SetDeckProps extends SlidesOperation {
   final Patch<String?>? defaultsJson;
   final Patch<String?>? guidesJson;
   final Patch<String?>? presentJson;
+
+  /// Also resets every slide's own `transitionJson` to null (= the deck
+  /// default): *Apply transition to all slides* (06 §15) writes the
+  /// default in [defaultsJson] with this flag, one undo step.
+  final bool resetSlideTransitions;
 
   @override
   String get name => 'SetDeckProps';

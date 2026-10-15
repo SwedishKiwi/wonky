@@ -36,7 +36,10 @@ database:
   #requireSsl: true # defaults to false
   #isUnixSocket: true # defaults to false
   dataPath: .serverpod/development/pgdata
-  #maxConnectionCount: 10 # Defaults to 10, a negative or null value removes the limit
+  # Defaults to 10 (a negative or null value removes the limit). Raised for
+  # development: hot reloads restart the server while long sync and
+  # projection-rebuild transactions still hold connections (patch OS-9).
+  maxConnectionCount: 20
 
 # This is the setup for Redis.
 redis:

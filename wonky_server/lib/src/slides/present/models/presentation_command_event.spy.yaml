@@ -1,0 +1,7 @@
+### A command of an audience device or remote (presenter only).
+class: PresentationCommandEvent
+extends: PresentationEvent
+fields:
+  command: String
+  argsJson: String?
+  fromConnectionId: String

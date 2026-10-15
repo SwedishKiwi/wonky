@@ -415,7 +415,86 @@ void main() {
     });
   });
 
+  group('Given a folder opened from another home', () {
+    testWidgets('when the previous home is disposed after the folder loaded '
+        'then the current folder stays the opened one', (tester) async {
+      // D-18: offline (instant cached reload) the previous home's dispose
+      // at the end of the route transition reset `currentFolder`, and the
+      // uploads of the folder went to My Drive.
+      h = harness(scope: const HomeScope.all(), app: WonkyAppKind.drive);
+      final folder = h.drive.seed(name: 'Holiday', kind: DriveItemKind.folder);
+      Widget both({required bool previous}) => Stack(
+        children: [
+          if (previous)
+            KeyedSubtree(key: const ValueKey('previous'), child: home()),
+          KeyedSubtree(
+            key: const ValueKey('folder'),
+            child: home(DriveLocation.folder(folder.uuid.uuid)),
+          ),
+        ],
+      );
+      await pumpScreen(
+        tester,
+        h,
+        Stack(
+          children: [
+            KeyedSubtree(key: const ValueKey('previous'), child: home()),
+          ],
+        ),
+      );
+      expect(h.services.currentFolder.value, isNull);
+
+      // During the transition both homes are mounted …
+      await pumpScreen(tester, h, both(previous: true));
+      expect(h.services.currentFolder.value?.uuid, folder.uuid);
+      // … then the previous one is disposed.
+      await pumpScreen(tester, h, both(previous: false));
+
+      expect(h.services.currentFolder.value?.uuid, folder.uuid);
+      await settleTooltips(tester);
+    });
+  });
+
   group('Given a narrow window', () {
+    testWidgets('when the list shows then it has Name and ⋮ only, and the '
+        'wide list keeps every column', (tester) async {
+      // Drive 04 §11 (D-18: at 400 px the columns squeezed the names).
+      final l = lookupWonkyAppLocalizations(const Locale('en'));
+      h = harness(scope: const HomeScope.all(), app: WonkyAppKind.drive);
+      seed();
+      await pumpScreen(tester, h, home(), size: const Size(400, 800));
+      expect(find.text('Plan'), findsOneWidget);
+      expect(find.text(l.columnOwner), findsNothing);
+      expect(find.text(l.columnSize), findsNothing);
+      expect(find.text(l.ownerMe), findsNothing);
+      await settleTooltips(tester);
+
+      await pumpScreen(tester, h, home(), size: const Size(1280, 800));
+      expect(find.text(l.columnOwner), findsOneWidget);
+      expect(find.text(l.columnSize), findsOneWidget);
+      await settleTooltips(tester);
+    });
+
+    testWidgets('when New ▸ New folder is chosen in the drawer then the '
+        'drawer closes and the dialog shows', (tester) async {
+      // D-18: the drawer stayed open over the dialog and the upload panel.
+      h = harness(scope: const HomeScope.all(), app: WonkyAppKind.drive);
+      await pumpScreen(tester, h, home(), size: const Size(400, 800));
+      await tester.tap(key('shell.topBar.menu'));
+      await tester.pumpAndSettle();
+      await tester.tap(key('drive.new'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('New folder').last);
+      await tester.pumpAndSettle();
+
+      expect(key('home.drawer'), findsNothing);
+      expect(find.text('Folder name'), findsOneWidget);
+      await tester.tap(find.text('Cancel').last);
+      await tester.pumpAndSettle();
+      await settleTooltips(tester);
+    });
+
     testWidgets('when the menu button is pressed then the left menu opens '
         'as a drawer and closes on navigation', (tester) async {
       h = harness(scope: writeHome);

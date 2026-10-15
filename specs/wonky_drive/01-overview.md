@@ -30,8 +30,8 @@ limits and the document map.
    live `drive.watch` stream).
 2. **Uploaded files are first-class drive items** (`DriveItemKind.file`): they can be shared,
    starred, moved, trashed, searched and counted like any other item.
-3. **Previews never execute content.** Uploaded bytes are rendered by Flutter (pixels, PDF
-   raster pages, text) — never as HTML/SVG/JS in the browser; downloads are always attachments
+3. **Previews never execute content.** Uploaded bytes are rendered by Flutter (pixels,
+   text) — never as HTML/SVG/JS in the browser; downloads are always attachments
    (suite [13 §6](../13-security-and-operations.md)).
 4. **Storage is visible and fair.** The 50 MB quota is shown wherever bytes can be added; the
    server enforces it on every byte-adding path; editing existing content is never blocked
@@ -80,8 +80,8 @@ release, **P2** designed now, built later.
 | Offline upload queue (uploads start when back online) | P0 | 02 §4 |
 | Resumable uploads (chunked, resume after network loss without restarting) | P1 | 02 §4.3 |
 | Server MIME sniffing and safe content types | P0 | 02 §5 |
-| Previews: images (P0), PDF pages (P0), text and code with syntax highlighting (P0), CSV as a table (P1), audio (P2); other types: icon + metadata + Download | P0 | 02 §6 |
-| Thumbnails for images and PDFs in grid view | P1 | 02 §6.6 |
+| Previews: images (P0), ~~PDF pages~~ (none in v2, user decision — PDFs download, 02 §6.3), text and code with syntax highlighting (P0), CSV as a table (P1), audio (P2); other types: icon + metadata + Download | P0 | 02 §6 |
+| Thumbnails for images in grid view (no PDF thumbnails in v2) | P1 | 02 §6.6 |
 | *Open with* Wonky Sheets (CSV, TSV, XLSX, XLS, ODS) / Wonky Write (DOCX, ODT, RTF, MD, TXT, HTML) — creates a new item through the existing import pipelines | P0 | 02 §7 |
 | Setting "Convert uploads to Wonky formats" | P1 | 02 §7.3 |
 | Upload new version of a file, version list | P2 | 02 §9 |
@@ -125,7 +125,7 @@ release, **P2** designed now, built later.
 | Pending uploads per user (server reservations) | 100 or the quota, whichever is hit first | 03 §5 |
 | Text preview | first 1 MB of the file | 02 §6.4 |
 | Image preview | decodes ≤ 50 megapixels; server preview image ≤ 2048 px | 02 §6.2 |
-| PDF preview | first 300 pages rendered on demand | 02 §6.3 |
+| PDF preview | none in v2 (*Download* card) | 02 §6.3 |
 | ZIP download (P1) | 200 items, 200 MB uncompressed | 02 §8 |
 | Trash retention | 30 days (counts against the quota until purged) | 03 §2 |
 

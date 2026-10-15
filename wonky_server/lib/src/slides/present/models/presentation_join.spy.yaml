@@ -1,0 +1,13 @@
+### How a client joins a presentation session (Slides 10 §6.1).
+class: PresentationJoin
+fields:
+  ### The session to join; null for a presenter starting a new session.
+  sessionId: String?
+  role: PresentationRole
+  ### Pairing key of a phone remote of another account (P1, SL-41).
+  pairingKey: String?
+  ### "MacBook · Chrome" (shown to the presenter).
+  deviceLabel: String
+  ### A presenter rejoining a session whose presenter is still connected
+  ### elsewhere takes it over (after "Take over the presentation?").
+  takeOver: bool?

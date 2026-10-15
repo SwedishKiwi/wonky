@@ -68,6 +68,10 @@ import 'package:wonky_server/src/generated/sheets/scripts/models/script_executio
     as _isf59hoo;
 import 'package:wonky_server/src/generated/sheets/scripts/models/script_execution_status.dart'
     as _icum4fx3;
+import 'package:wonky_server/src/generated/slides/present/models/presentation_join.dart'
+    as _ieucpeca;
+import 'package:wonky_server/src/generated/slides/present/models/presentation_update.dart'
+    as _i0rcw8q1;
 import 'package:wonky_server/src/generated/write/messages/doc_client_message.dart'
     as _i64vpekp;
 import 'package:wonky_server/src/generated/write/models/document_meta_patch.dart'
@@ -98,6 +102,9 @@ import '../sheets/scripts/script_endpoint.dart' as _in9oll5w;
 import '../sheets/versions/sheets_version_endpoint.dart' as _izzz2y3b;
 import '../slides/endpoints/slides_endpoint.dart' as _i90mpuoj;
 import '../slides/endpoints/slides_sync_endpoint.dart' as _i7tlujv0;
+import '../slides/exports/slides_export_endpoint.dart' as _ipawej08;
+import '../slides/present/presentation_endpoint.dart' as _irtlljai;
+import '../slides/themes/slides_themes_endpoint.dart' as _ivwqk6th;
 import '../write/endpoints/document_endpoint.dart' as _iiabxp2u;
 import '../write/endpoints/write_export_endpoint.dart' as _ia4kadx2;
 import '../write/endpoints/write_history_endpoint.dart' as _izdjh3zj;
@@ -262,6 +269,24 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'slidesSync',
+          null,
+        ),
+      'slidesExport': _ipawej08.SlidesExportEndpoint()
+        ..initialize(
+          server,
+          'slidesExport',
+          null,
+        ),
+      'presentation': _irtlljai.PresentationEndpoint()
+        ..initialize(
+          server,
+          'presentation',
+          null,
+        ),
+      'slidesThemes': _ivwqk6th.SlidesThemesEndpoint()
+        ..initialize(
+          server,
+          'slidesThemes',
           null,
         ),
       'document': _iiabxp2u.DocumentEndpoint()
@@ -2425,6 +2450,31 @@ class Endpoints extends _is.EndpointDispatch {
                     params['sourceFileUuid'],
                     params['newFileUuid'],
                     params['targetItemUuid'],
+                  ),
+        ),
+        'fetchImage': _is.MethodConnector(
+          name: 'fetchImage',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'url': _is.ParameterDescription(
+              name: 'url',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['file'] as _iokth3bn.FileEndpoint).fetchImage(
+                    session,
+                    params['itemUuid'],
+                    params['url'],
                   ),
         ),
         'getUrls': _is.MethodConnector(
@@ -4763,6 +4813,178 @@ class Endpoints extends _is.EndpointDispatch {
                         .cast<_izehhkf5.OfflineSyncStreamEvent>(),
                     once: params['once'],
                   ),
+        ),
+      },
+    );
+    connectors['slidesExport'] = _is.EndpointConnector(
+      name: 'slidesExport',
+      endpoint: endpoints['slidesExport']!,
+      methodConnectors: {
+        'export': _is.MethodConnector(
+          name: 'export',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'format': _is.ParameterDescription(
+              name: 'format',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'optionsJson': _is.ParameterDescription(
+              name: 'optionsJson',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'revision': _is.ParameterDescription(
+              name: 'revision',
+              type: _is.getType<int?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['slidesExport'] as _ipawej08.SlidesExportEndpoint)
+                      .export(
+                        session,
+                        params['itemUuid'],
+                        params['format'],
+                        params['optionsJson'],
+                        params['revision'],
+                      ),
+        ),
+        'exportWithProgress': _is.MethodStreamConnector(
+          name: 'exportWithProgress',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'format': _is.ParameterDescription(
+              name: 'format',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'optionsJson': _is.ParameterDescription(
+              name: 'optionsJson',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'revision': _is.ParameterDescription(
+              name: 'revision',
+              type: _is.getType<int?>(),
+              nullable: true,
+            ),
+          },
+          streamParams: {},
+          returnType: _is.MethodStreamReturnType.streamType,
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+                Map<String, Stream> streamParams,
+              ) => (endpoints['slidesExport'] as _ipawej08.SlidesExportEndpoint)
+                  .exportWithProgress(
+                    session,
+                    params['itemUuid'],
+                    params['format'],
+                    params['optionsJson'],
+                    params['revision'],
+                  ),
+        ),
+      },
+    );
+    connectors['presentation'] = _is.EndpointConnector(
+      name: 'presentation',
+      endpoint: endpoints['presentation']!,
+      methodConnectors: {
+        'findSession': _is.MethodConnector(
+          name: 'findSession',
+          params: {
+            'deckUuid': _is.ParameterDescription(
+              name: 'deckUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['presentation'] as _irtlljai.PresentationEndpoint)
+                      .findSession(
+                        session,
+                        params['deckUuid'],
+                      ),
+        ),
+        'join': _is.MethodStreamConnector(
+          name: 'join',
+          params: {
+            'deckUuid': _is.ParameterDescription(
+              name: 'deckUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'join': _is.ParameterDescription(
+              name: 'join',
+              type: _is.getType<_ieucpeca.PresentationJoin>(),
+              nullable: false,
+            ),
+          },
+          streamParams: {
+            'updates':
+                _is.StreamParameterDescription<_i0rcw8q1.PresentationUpdate>(
+                  name: 'updates',
+                  nullable: false,
+                ),
+          },
+          returnType: _is.MethodStreamReturnType.streamType,
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+                Map<String, Stream> streamParams,
+              ) => (endpoints['presentation'] as _irtlljai.PresentationEndpoint)
+                  .join(
+                    session,
+                    params['deckUuid'],
+                    params['join'],
+                    streamParams['updates']!
+                        .cast<_i0rcw8q1.PresentationUpdate>(),
+                  ),
+        ),
+      },
+    );
+    connectors['slidesThemes'] = _is.EndpointConnector(
+      name: 'slidesThemes',
+      endpoint: endpoints['slidesThemes']!,
+      methodConnectors: {
+        'list': _is.MethodConnector(
+          name: 'list',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['slidesThemes'] as _ivwqk6th.SlidesThemesEndpoint)
+                      .list(
+                        session,
+                        params['itemUuid'],
+                      ),
         ),
       },
     );

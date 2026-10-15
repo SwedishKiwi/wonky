@@ -1,0 +1,5 @@
+### The devices joined to the session (presenter only).
+class: PresentationRosterEvent
+extends: PresentationEvent
+fields:
+  participants: List<PresentationParticipant>

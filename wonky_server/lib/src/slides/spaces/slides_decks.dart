@@ -14,8 +14,10 @@ import '../../platform/sharing/access_service.dart';
 import '../../platform/storage/storage_service.dart';
 import '../../platform/spaces/space_service.dart';
 import '../../platform/storage/content_sizes.dart';
+import '../../platform/storage/storage_hooks.dart';
 import '../../sheets/sync/sync_db.dart';
 import '../sync/slides_sync_service.dart';
+import '../templates/slides_template_decks.dart';
 import 'deck_copies.dart';
 import 'deck_factory.dart';
 
@@ -30,8 +32,9 @@ abstract final class SlidesDecks {
   /// and always allowed (Drive 03 §7.2); their size is estimated at once.
   /// With [templateUuid] (a presentation the caller can read, e.g. one
   /// marked as a template) the deck is a copy of it ([DeckCopies], SL-8;
-  /// the quota is checked first, reason `template`). Built-in presentation
-  /// templates arrive with SL-22.
+  /// the quota is checked first, reason `template`); a built-in
+  /// presentation template (`SlidesTemplates`, SL-22) is built into the new
+  /// space by the core's planner.
   static Future<DriveItemView> create(
     Session session,
     Actor actor, {
@@ -53,6 +56,32 @@ abstract final class SlidesDecks {
     if (BuiltInThemes.byKey(theme) == null) {
       throw Errors.invalid('Unknown theme "$theme".');
     }
+    return _createDeck(
+      session,
+      actor,
+      parentUuid: parentUuid,
+      name: name,
+      summary: {'theme': theme},
+      write: (space, title) => DeckFactory.write(
+        session,
+        actor: actor,
+        deckSpace: space,
+        title: title,
+        themeKey: theme,
+      ),
+    );
+  }
+
+  /// Creates a deck space, lets [write] fill it, then the drive item (uuid
+  /// = space), its size and the creation's change-log consumers.
+  static Future<DriveItemView> _createDeck(
+    Session session,
+    Actor actor, {
+    UuidValue? parentUuid,
+    required String name,
+    required Map<String, Object?> summary,
+    required Future<void> Function(UuidValue space, String title) write,
+  }) async {
     final cleanName = normalizeItemName(name);
     // Checks the folder before anything is created.
     await DriveService.parentFor(session, actor, parentUuid);
@@ -61,13 +90,7 @@ abstract final class SlidesDecks {
       actor,
       kind: SpaceKind.deck,
     );
-    await DeckFactory.write(
-      session,
-      actor: actor,
-      deckSpace: space,
-      title: cleanName,
-      themeKey: theme,
-    );
+    await write(space, cleanName);
     final item = await session.db.transaction((tx) async {
       final parent = await DriveService.parentFor(
         session,
@@ -93,12 +116,7 @@ abstract final class SlidesDecks {
       return item;
     });
     await ContentSizes.refresh(session, item);
-    await DriveService.afterCreate(
-      session,
-      actor,
-      item,
-      summary: {'theme': theme},
-    );
+    await DriveService.afterCreate(session, actor, item, summary: summary);
     // The creation's change-log row (search text, version state).
     await SlidesSyncService.afterRegistration(session, space);
     return DriveViews.one(session, actor.userId, item, role: Role.owner);
@@ -116,8 +134,28 @@ abstract final class SlidesDecks {
       if (builtin.kind != DriveItemKind.presentation) {
         throw Errors.invalid('This is not a presentation template.');
       }
-      throw Errors.unavailable(
-        'Built-in presentation templates are not available yet.',
+      // (SL-22) A built-in template: its deck is built by the core's
+      // planner into the new space; the quota is checked first.
+      final template = builtin.slides!;
+      await StorageHooks.checkCaller(
+        session,
+        actor,
+        SlidesTemplateDecks.estimate(template),
+        QuotaReason.template,
+      );
+      return _createDeck(
+        session,
+        actor,
+        parentUuid: parentUuid,
+        name: name,
+        summary: {'template': builtin.key},
+        write: (space, title) => SlidesTemplateDecks.write(
+          session,
+          actor: actor,
+          deckSpace: space,
+          template: template,
+          title: title,
+        ),
       );
     }
     final (template, role) = await AccessService.require(

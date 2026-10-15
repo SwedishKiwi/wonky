@@ -1,0 +1,10 @@
+### An ink change: add (strokeJson), remove (strokeId) or clear.
+class: PresentationInkUpdate
+extends: PresentationUpdate
+fields:
+  slideId: String
+  ### add, remove or clear.
+  op: String
+  strokeId: String?
+  ### `{id, tool, color, width, points}` (su, quantized 0.5).
+  strokeJson: String?

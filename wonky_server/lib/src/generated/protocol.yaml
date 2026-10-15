@@ -93,6 +93,7 @@ file:
   - completeUpload:
   - getUrl:
   - copyToItem:
+  - fetchImage:
   - getUrls:
 uiBridge:
   - connect:
@@ -203,6 +204,14 @@ slides:
   - reapplyChange:
 slidesSync:
   - sync:
+slidesExport:
+  - export:
+  - exportWithProgress:
+presentation:
+  - join:
+  - findSession:
+slidesThemes:
+  - list:
 document:
   - connect:
   - getInfo:

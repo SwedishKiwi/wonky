@@ -1,0 +1,5 @@
+### The presenter's connection dropped (grace period running) or is back.
+class: PresentationPresenterEvent
+extends: PresentationEvent
+fields:
+  connected: bool

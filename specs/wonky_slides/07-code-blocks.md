@@ -174,6 +174,47 @@ Plus `HighlightSteps.parse` (§4.1), `CodeEditScript.compute` (§5.2), `TypingSc
 - Write's editor uses `TextMateTokenizer` (not yet the facade) and its own class-keyed theme
   styling (Write 04 §15.5).
 
+**Status (M10, SL-26 — code core built).** Differences from the sketches in §2.3–§5:
+- `MonoFontMetrics {family, advanceEm, ascentEm, descentEm, lineGapEm}`: `forFamily` returns the
+  values measured from the bundled files (JetBrains Mono 0.6 / 1.02 / 0.3 em, Roboto Mono), 0.6
+  em for other monospace families; `fromTtf` reads `head`/`hhea`/`hmtx` (dominant advance).
+- `CodeLayout.layout(code, CodeLayoutOptions {fontSize, lineHeight, tabSize, wrapColumns,
+  metrics})` has visual rows (`CodeRow`, soft wrap after the last whitespace, else inside the
+  word) besides lines (`CodeLayoutLine`); `GridPos` is `(row, column)` of visual rows;
+  rectangles are `CodeRect` (pure Dart) relative to the code area: `rectsOfRange` (one per row),
+  `rectOfRange`, `rectOfLines`. Grapheme clusters come from `CodeColumns` (a dependency-free
+  segmentation covering CRLF, combining marks, variation selectors, emoji modifiers, ZWJ
+  sequences, regional-indicator pairs).
+- Box geometry and auto size are in `wonky_code` too (`CodeBoxOptions`, `CodeBoxGeometry`,
+  `CodeChrome`, `CodeAutoFit.fit`): the window bar is always drawn, a tab or caption only with a
+  title; with `fitAcrossStates` the title area is kept for every state so code never jumps.
+- `HighlightSteps.parse(input, {lineCount, startLine})` → `HighlightStepsResult {steps,
+  issues, normalized}` (`*` writes "show all" steps); `@` displayed numbers and `line:col-col`
+  are parsed; `validate` flags steps past the end.
+- `CodeEditScript.compute`: pairing similarity is `1 − Levenshtein / max(len)` over graphemes
+  (bounded, with cheap length/multiset pre-checks; a 24-line look-ahead per old line);
+  inserted whole lines are typed like an editor user — Enter at the end of the previous line,
+  then the lines (so auto-indent applies); `stats` gives the state strip's +/−.
+- `TypingScript` events are `caretShow`, `caretTo`, `select`, `delete`, `insert`, `paste`,
+  `end` (no `scroll`: the composer derives scroll-follow from the caret); `durationMs` includes
+  the 600 ms caret linger; the seed is `typingSeed(elementId, targetStateId)` (FNV-1a + 32-bit
+  Mulberry32, exact on VM and web, like the timeline, 06 §9.3); `stateAt(ms)` →
+  `TypingFrame {text, caret, caretFrom, caretGlide, caretOpacity, selection, fades}`.
+- `TokenMorphPlan.build` anchors on the line diff (equal lines match their lexemes, changed
+  hunks run `SequenceDiff` on lexeme texts, ≤ 800 lexemes per side), then matches identical
+  leftovers by nearest distance; `frameAt(ms)` → `MorphGlyph`s (su positions, opacity, color
+  mix for `oklabLerp`, font size).
+- `CachedCodeTokenizer` (LRU per language + text) serves repeated tokenizations (§14 cache);
+  `tokenizeLine`/`LineState` (§5.4) are not built — type-in frames re-tokenize the whole text.
+- TextMate engine patch SH-6 (`THIRD_PARTY.md`): next-match search and an own scanner, spans
+  unchanged; 1,000 lines of Dart ≈ 17–20 ms on the VM (was ≈ 56; the 15 ms target is open).
+- Slides core (`package:wonky_slides_core/code.dart`): `CodeElementData` (§3.1),
+  `CodeAnnotations` (§4.4), `CodeStateModel`/`CodeElementModel` (modes, cached typing scripts
+  and morph plans, derived durations), `CodeSceneComposer` (static scenes with step
+  transitions, focus scroll/zoom, callout anchors with `auto` side; type-in, morph and
+  instant frames) and `CodeElementLayout` (the scene builder's `CodeSceneSource`; `auto` picks
+  the palette by the element's box background, else the slide's effective background color).
+
 ### 2.4 Languages
 
 Picker order: *Plain text*, recently used (max 5, per user, shared with Write), then:

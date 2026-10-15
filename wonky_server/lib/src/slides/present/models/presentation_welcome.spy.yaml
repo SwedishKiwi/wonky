@@ -1,0 +1,15 @@
+### The first event after joining.
+class: PresentationWelcome
+extends: PresentationEvent
+fields:
+  sessionId: String
+  ### The caller's own connection.
+  connectionId: String
+  role: PresentationRole
+  presenterConnected: bool
+  ### The presenter's device ("MacBook · Chrome").
+  presenterDevice: String?
+  ### The latest state (null for a new session).
+  state: PresentationState?
+  ### When the state was sent (server epoch ms).
+  stateSentAtMs: int?

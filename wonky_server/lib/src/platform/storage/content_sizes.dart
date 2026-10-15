@@ -40,11 +40,13 @@ class DocumentSizeEstimator implements ContentSizeEstimator {
   }
 }
 
-/// Offline-first spaces (spreadsheets, decks): `sum(pg_column_size(row))`
-/// over the live rows of the space in each of [tables] (Drive 03 §2). Rows
-/// hidden by the sync engine (deleted, cascaded) don't count. Every synced
-/// row has its `crdt_data_rows` entry (written by the sync engine), which
-/// gives the visibility and an index by space.
+/// Offline-first spaces (spreadsheets, decks): the sum of [rowBytes] over
+/// the live rows of the space in each of [tables], plus [baseBytes]
+/// (Drive 03 §2). By default a row counts `pg_column_size(row)` (Slides);
+/// [SheetsSizeEstimator] counts content instead. Rows hidden by the sync
+/// engine (deleted, cascaded) don't count. Every synced row has its
+/// `crdt_data_rows` entry (written by the sync engine), which gives the
+/// visibility and an index by space.
 class SpaceSizeEstimator implements ContentSizeEstimator {
   const SpaceSizeEstimator(this.tables);
 
@@ -56,6 +58,13 @@ class SpaceSizeEstimator implements ContentSizeEstimator {
   static const _lastVisible = 2;
 
   static final _identifier = RegExp(r'^[a-z_][a-z0-9_]*$');
+
+  /// Bytes every space counts on top of its rows.
+  int get baseBytes => 0;
+
+  /// The SQL expression (over the row alias `t`) of the bytes one live row
+  /// of [table] counts.
+  String rowBytes(String table) => 'pg_column_size(t.*)';
 
   @override
   Future<int?> estimate(Session session, DriveItem item) async {
@@ -78,25 +87,44 @@ class SpaceSizeEstimator implements ContentSizeEstimator {
       // Driven by the engine's (spaceId, tblId, uuidRowId) index, so the
       // cost follows the space's size, not the table's (S-D3).
       parts.add('''
-        SELECT coalesce(sum(pg_column_size(t.*)), 0)::bigint AS n
+        SELECT coalesce(sum(${rowBytes(t)}), 0)::bigint AS n
         FROM crdt_data_rows r
         JOIN "$t" t ON t.id = r."uuidRowId" AND t."spaceId" = r."spaceId"
         WHERE r."spaceId" = @space
           AND r."tblId" = (SELECT id FROM crdt_schema_tables WHERE name = '$t')
           AND r.visibility <= $_lastVisible''');
     }
-    if (parts.isEmpty) return 0;
+    if (parts.isEmpty) return baseBytes;
     final rows = await session.db.unsafeQuery(
       'SELECT coalesce(sum(n), 0)::bigint FROM (${parts.join(' UNION ALL ')}) x',
       parameters: QueryParameters.named({'space': spaceId}),
     );
-    return rows.first[0] as int;
+    return baseBytes + (rows.first[0] as int);
   }
 }
 
-/// The Sheets estimator: every synced Sheets table except the change log
-/// (history, like Write's op log) and script builds (bytecode), which
-/// don't count (Drive 03 §2).
+/// The Sheets estimator (Drive 03 §2, §11): a compact estimate of the
+/// **content**, not of the stored rows (user decision after D-18: "an
+/// estimate is ok"). The engine stores 1,000 `sheet_row` and 26
+/// `sheet_column` rows for every new sheet; counting them made an empty
+/// spreadsheet cost ~80 KB.
+///
+/// - [base] per spreadsheet (its settings and theme) and [sheetBytes] per
+///   sheet;
+/// - cells, rows and columns ([propertyTables]): only those that carry
+///   something — the bytes of their non-null value/format columns
+///   ([valueBytes]: text by its UTF-8 length, numbers 8, small scalars
+///   1–4, `true` flags 1) plus [propertyRowBytes]; a cell with no value
+///   and no format, and a row or column with the default height/width,
+///   not hidden and without a format, count nothing;
+/// - script files: [objectBytes] + the UTF-8 length of their source;
+/// - everything else (charts, images, pivots, rules, ranges, filters,
+///   bandings, script projects/triggers/properties, macros): a fixed
+///   [objectBytes] per row (image bytes count as attachments, §2).
+///
+/// The change log (history, like Write's op log) and script builds
+/// (bytecode) don't count. `StorageHooks.sheetsEstimate` pre-estimates
+/// templates with the same constants.
 class SheetsSizeEstimator extends SpaceSizeEstimator {
   SheetsSizeEstimator()
     : super([
@@ -105,6 +133,64 @@ class SheetsSizeEstimator extends SpaceSizeEstimator {
       ]);
 
   static const excluded = {'change_log', 'script_build'};
+
+  /// Per spreadsheet (the `spreadsheet` row: settings, theme).
+  static const base = 2048;
+
+  /// Per sheet.
+  static const sheetBytes = 256;
+
+  /// Per non-empty cell and per row/column with non-default properties,
+  /// on top of their value bytes (position, row overhead).
+  static const propertyRowBytes = 16;
+
+  /// Per chart, image, pivot table, rule, range, filter, script object.
+  static const objectBytes = 256;
+
+  /// Tables whose rows count by their non-null values.
+  static const propertyTables = {'cell', 'sheet_row', 'sheet_column'};
+
+  /// Columns every row has (ids, order, timestamps): never content.
+  static const _structural = {'id', 'spaceId', 'sortKey', 'createdAt'};
+
+  @override
+  int get baseBytes => base;
+
+  @override
+  String rowBytes(String table) {
+    if (table == 'spreadsheet') return '0';
+    if (table == 'sheet') return '$sheetBytes';
+    if (table == 'script_file') {
+      return '$objectBytes + coalesce(octet_length(t."source"), 0)';
+    }
+    if (!propertyTables.contains(table)) return '$objectBytes';
+    final v = valueBytes(table);
+    return 'CASE WHEN $v > 0 THEN $propertyRowBytes + $v ELSE 0 END';
+  }
+
+  /// The SQL expression of the bytes of [table]'s non-null value and
+  /// format columns of row `t` (structural columns and references
+  /// excluded). Derived from the generated table, so new columns count.
+  static String valueBytes(String table) {
+    final parts = <String>[];
+    for (final c in SyncedTables.of(table).table.columns) {
+      final name = c.columnName;
+      if (_structural.contains(name)) continue;
+      final q = 't."$name"';
+      final part = switch (c) {
+        // References (`sheetId`, `rowId`, …) are position, not content.
+        ColumnUuid() => null,
+        ColumnString() => 'coalesce(octet_length($q), 0)',
+        ColumnBool() => 'CASE WHEN $q THEN 1 ELSE 0 END',
+        ColumnDouble() ||
+        ColumnDateTime() => 'CASE WHEN $q IS NULL THEN 0 ELSE 8 END',
+        ColumnInt() => 'CASE WHEN $q IS NULL THEN 0 ELSE 4 END',
+        _ => 'CASE WHEN $q IS NULL THEN 0 ELSE 1 END',
+      };
+      if (part != null) parts.add(part);
+    }
+    return parts.isEmpty ? '0' : '(${parts.join(' + ')})';
+  }
 }
 
 /// Content size estimation and its cadence (Drive 03 §2): documents with

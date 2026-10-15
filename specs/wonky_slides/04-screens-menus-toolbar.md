@@ -940,6 +940,16 @@ Files, Media, Nature, People, Shapes, Text, Travel, Weather…, from Lucide tags
 (theme colors), [Cancel] [Insert] (double-click inserts). Keyboard: arrows over the grid, Enter
 inserts.
 
+*As built (SL-14):* `showIconPicker` (`features/elements/icon/icon_picker.dart`) — up to
+720 × 520; categories *All*, *Recently used* (per user and device, newest 24) and 18 keyword
+categories derived from the icon names (Lucide's tag data isn't shipped with the font; search
+also matches aliases and common synonyms); color is a row of the theme colors plus *Theme
+default* (no custom colors in the picker — the inspector's color button has the full picker);
+below 560 px the sidebar becomes a category select. MCP-operable: fields `query`, `category`,
+`icon` (the first 200 matches with labels), `strokeWidth`, `color`; buttons `cancel`, `insert`.
+The *All shapes…* gallery dialog and the alt text dialog (13.7: a `WonkyDialogSpec` with the
+description and *Decorative*) are MCP-operable too.
+
 ### 13.7 Alt text
 
 `altText` (textarea, counter /1,000), `decorative` checkbox (disables the textarea), *Generate
@@ -971,7 +981,9 @@ claimed body.
 
 Floating chip after a cross-deck paste or a Sheets chart paste: *Use destination theme* ✓ / *Keep
 source formatting* / (charts) *Paste unlinked*. Not modal; disappears after 10 s or on the next
-edit (03 §12.3).
+edit (03 §12.3). *As built (SL-18):* a select in a small floating card (current mode ✓; charts:
+*Linked to the spreadsheet* / *Paste chart unlinked*) with a close button; not shown for
+cross-deck element pastes — 03 §12 "As built (SL-18)".
 
 ### 13.13 Quota exceeded
 
@@ -1027,6 +1039,13 @@ Built as the Slides app's settings sections (`WonkyAppConfig.settingsSections`),
   update, Portfolio, Workshop agenda — server-shipped presentations with `DriveItem.templateOf`
   (categories *Business*, *Education*, *Engineering*, *Personal*), each built on a built-in theme
   (05 §6).
+  *As built (SL-22, 5 of 10):* Pitch deck (Aurora), Project kickoff (Swiss), Weekly update
+  (Wonky), Lesson (Botanical) and Workshop agenda (Terminal) are core decks
+  (`SlidesTemplates`, planner operations — 12 §4 SL-22) the app creates offline like a blank
+  deck; the categories use the suite's `TemplateCategory` values (*Work*, *Project
+  management*, *Education*). Template cards of presentations are slide-shaped (16:9); Slides
+  renders the first slide of each built-in (`WonkyAppConfig.templatePreview`), other apps and
+  published templates show a title-slide miniature in the theme's colors.
 - **Thumbnails**: client-generated after an editing session (route exit or every 10 min of
   editing, editors only): the first non-skipped slide rendered by `SlideStage` at 320 × 180
   (aspect-fitted), light app theme irrelevant (deck appearance), uploaded via the files endpoint
@@ -1099,3 +1118,174 @@ Built as the Slides app's settings sections (`WonkyAppConfig.settingsSections`),
   allowed); "View only" badge shown.
 - AC-11: Light/dark: chrome follows the app theme; slides keep the deck appearance (goldens).
 - AC-12: At 360 px width nothing overflows; at < 768 px the navigator is a drawer.
+
+---
+
+## 19. As built (SL-11)
+
+The chrome of §2–§4, §6–§8, §11, §13.10, §13.16, §14 and §16 is built (Slides 12 SL-11);
+features of later work packages are wired as **disabled placeholder commands** ("Not available
+yet") so the menus, toolbar, context menus, palette and MCP show the complete product, and a
+work package only registers the real command.
+
+- **Folders.** `wonky_slides/lib/commands/` (`commands.dart` = the registration index:
+  real commands first, then every placeholder whose id has no real registration;
+  `slides_command.dart` = `SlidesCommand` (+ `.placeholder` with the owning WP),
+  `SlidesKeyScopes` (03 §1.2), `SlidesCategory`; `chrome_commands.dart`;
+  `placeholder_commands.dart`), `lib/config/menus/{slides_menu_spec,context_menu_specs}.dart`,
+  `lib/config/toolbar/slides_toolbar_spec.dart` (contextual section per selection kind),
+  `lib/config/panels/slides_panels.dart` (side panel registry, empty until SL-17/32/34),
+  `lib/features/editor_screen/` (`DeckEditorScreen`, `DeckDocumentController`,
+  `DeckEditorController`, body/regions, status bar, Present button, loading view, view-mode
+  shells, route placeholders, chrome prefs), `lib/features/inspector/` (section registry +
+  `DeckInspector`), `lib/features/toolbar/`, `lib/features/dialogs/` (Go to slide),
+  `lib/features/settings/`, `lib/theme/slides_tokens.dart` (A-04-6). There is no
+  `config/routes.dart`: the child routes are `SlidesAppConfig.editorRoutes`.
+- **Editor state.** `DeckEditorController` holds the current slide and the navigator
+  selection (slides + groups), a minimal element selection (ids + `selectionKind`, SL-12
+  extends it), the armed tool, the view mode, the panes (device prefs `slides.chrome`:
+  visibility, inspector tab, widths, notes height), zoom (*Fit* + fixed steps), the View ›
+  Show toggles, the focus nodes of the canvas/navigator/notes key scopes and **`apply(ctx,
+  op)`** — the write path of every Slides command (execute + one `slides.rows` undo entry).
+  `DeckDocumentController` is the shell document (title, role, `SlidesRowsUndoHandler`,
+  selection snapshots = current slide + elements, zoom, sync status, `describeState`).
+  `DeckHarness` (tests) now runs on both.
+- **Canvas and navigator are shells** until SL-10/SL-12/SL-16: a static `SlidePreview`
+  (background, frames, plain text in the theme styles, placeholder prompts) on the canvas and
+  as navigator thumbnails; the navigator lists group headers and slides (click =
+  `slides.nav.goToSlide`, right-click menus, `+ New slide`), the notes pane shows the notes
+  read-only, Grid and Outline views are read-only shells, Masters mode explains itself.
+- **Deviations from the tables above.**
+  - View › Mode uses `slides.mode.editing` / `slides.mode.viewing` (the shell has no
+    `shell.view.setMode`; same as Sheets). File › Open… is the shell's `shell.file.open`;
+    Tools › Accessibility settings is the shell's `shell.settings.open {section: appearance}`;
+    the shell's Tools › Explore item is removed.
+  - View › Panels: Layers, Themes, Accessibility (and *Linked charts*) are the commands
+    `slides.panel.layers|themes|accessibility|linkedObjects` (the owning WP opens its
+    `SidePanelSpec` with `shell.panels.open`); Comments and Assistant are the shell toggles.
+  - Format: *Fill…*, *Border…*, *Effects…* are single items (the pickers come with SL-14);
+    Code ▸ *Line numbers* = `slides.code.updateOptions {toggle: lineNumbers}`, *States…* =
+    `slides.inspector.open {tab: format, section: code}`; Insert › Shape ▸ is a gallery slot
+    (`insert.shape.gallery`) plus *All shapes…*; Insert › Table ▸ is the size picker slot.
+  - Context menus: Animate ▸ = `slides.animate.addBuild {kind: in|action|out}`,
+    `copyBuilds`, `pasteBuilds`, `deleteBuilds`; *Copy chart as image* =
+    `slides.chart.copyAsImage` (new id); *Edit text* = `slides.element.activate`; *Remove link*
+    = `slides.element.removeLink`; the element menu keeps only the kind additions of the
+    selected kind.
+  - Additional registered ids: `slides.slide.setBackground`, `slides.slide.applyBackgroundToAll`,
+    `slides.slide.setHideMasterElements`, `slides.deck.setAppearance` (Slide tab),
+    `slides.prefs.set` / `slides.presenter.set` (settings, MCP-operable),
+    `slides.nav.goToSlide {slideId? | index?}` (without arguments it opens §13.10's dialog).
+  - §13.10 is a `WonkyDialogSpec` with a select of all slides ("4 · Our mission — Intro"), not
+    a fuzzy-search list; the palette finds the command *Go to slide…* (the shell has no
+    palette providers). The shell's dialog description now carries `optionLabels`.
+  - §13.16 has **four sections**: *New presentations* (+ Charts), *Editing* (+ Spelling),
+    *Animations & code*, *Presenting* (`/settings/app/presentations|editing|animations|presenting`);
+    keys and defaults in `SlidesUserDefaults` (A-04-2 + `defaultTransitionMs`; presenter keys
+    `layout`, `notesSize`, `timerMode`, `timerTargetMinutes`, `laserColor`,
+    `startFullscreen`, `startWithPresenterView`, `showSkippedInPresenter`). The snapping and
+    *Collaborator cursors* View toggles change these synced settings. *This presentation*
+    (`Deck.presentJson`) is SL-19's.
+  - §16: the narrow navigator drawer opens from a button at the canvas' top-left (the title
+    row has no app slot on the left); the 1,200–1,440 px "inspector collapses to a tab strip
+    when a side panel opens" is not built (`TODO.md`). Below 600 px the status bar shows only
+    the position and zoom; below 400 px *Present* has no chevron (its items are in View ›
+    Present). Suite changes for 360 px: the menubar strip scrolls horizontally, and the title
+    row hides *Star*/*Move* below 480 px (both stay in File).
+- **Child routes** `/p/:uuid/present|print|history` show a *Coming soon* page with *Back to the
+  presentation* until SL-19/SL-20/SL-39.
+- **`mcpUiTools`** is empty (SL-42); the shared `ui.*` tools cover the chrome (menu tree,
+  commands, dialogs, `ui.get_state` with the editor's `describeState`).
+
+---
+
+## 19.1 As built (SL-15): images and tables
+
+- Insert › Image ▸ and Insert › Table ▸, Format › Image ▸ / Table ▸, the toolbar's Image and
+  Table sections, the image and `context.table` context menus and Inspector › Image / Table /
+  Cell are real (03 §6.12). Without values from the UI, `slides.image.adjust`,
+  `slides.table.setCellFill`, `setBorders`, `setCellAlign` and `setOptions` open the inspector
+  section; `slides.image.mask` opens a mask dialog (`dialog.slides.imageMask`, a select of the
+  basic shapes — not a gallery submenu); `slides.insert.image` without a source opens
+  `dialog.slides.imageSource`; *By URL* is `dialog.slides.imageUrl` (§13.2 without the preview);
+  *From Wonky Drive* is `dialog.slides.imageDrive` (recent image files and search, MCP-operable);
+  the palette's `slides.insert.table` asks rows/columns (`dialog.slides.insertTable`).
+- New command ids: `slides.image.cropApply` / `cropCancel` (Enter/Esc, `slidesCrop`),
+  `slides.image.retryUpload`, `slides.image.removeNotUploaded`, `slides.table.resizeAxes`,
+  `slides.table.setCellPadding` (03 §19), `slides.table.clearCells`, `slides.table.selectCells`,
+  `slides.table.select{Left,Right,Up,Down}`, `slides.table.extend{Left,Right,Up,Down}`,
+  `slides.table.nextCell` / `previousCell`, `slides.table.editCell`,
+  `slides.table.clearCellSelection` (the `slidesTable` scope). The menus' existing args are
+  kept: `slides.table.insertRow {below}`, `insertColumn {right}`.
+
+## 20. As built (SL-16)
+
+The navigator and slide groups of §5, the speaker notes pane of §8 and the grid view of §9 are
+built (Slides 12 SL-16).
+
+- **Folders.** `features/navigator/` (no separate `groups/` folder: group behavior is the
+  navigator's): `navigator_model.dart` (`buildNavRows` — group headers, slides, the empty
+  group's drop zone, collapsed groups folded; `NavSelection` — selected groups + loose slides;
+  `NavigatorOps` — moves of mixed selections as units in visible order (runs of adjacent
+  units become one `MoveSlides`/`MoveGroups`), no-op detection, the ⌘↑/⌘↓ rules of §5.7 and
+  the `to` vocabulary), `navigator_drop.dart` (`resolveNavDrop`, §5.10), `navigator_controller.dart`
+  (`navigatorOf(editor)`: collapse state, rows, focus row and Shift anchor, click/keyboard
+  selection, type-ahead, inline rename, insertion caret, live drag), `slide_navigator.dart`
+  (`SlideNavigator`), `nav_thumbnail.dart`, `navigator_clipboard.dart`, `navigator_dialogs.dart`
+  (§13.4 *Delete group*, *Add to group ▸ Choose a group…*), `deck_renderer.dart` (thumbnails
+  draw with the canvas' `SlideRenderer`, else a shared one); `features/grid_view/`
+  (`grid_layout.dart` pure geometry + drop resolution, `slide_grid_view.dart`);
+  `features/notes/` (`notes_pane.dart`, `notes_edit_controller.dart`, `notes_view.dart`);
+  `commands/navigator_commands.dart`. The SL-11 shells (`navigator_shell.dart` now only
+  re-exports `OpenContextMenu`, `notes_pane.dart`, `GridViewShell`) are gone.
+- **Commands.** Real: `slides.slide.new {layoutId?, after?, inGroup?, groupId?}` (insertion
+  point, else after the current slide in its group; selects the title placeholder),
+  `slides.slide.duplicate|delete|toggleSkip|move`, every `slides.group.*` of §5.13 plus
+  `slides.group.rename`, `slides.group.move`, `slides.group.toggleCollapsed`,
+  `slides.group.selectSlides`. Additions: `slides.slide.move` takes `groupIds` and
+  `copy: true` (the Alt-drop: a same-deck `PasteSlides` at the target) — one drop is one
+  command, so one undo step; `slides.nav.selectAllSlides` (⌘A in the navigator scope),
+  `slides.navigator.copy|cut|paste` (⌘C/⌘X/⌘V in the navigator scope; the shell's Edit menu
+  and context-menu `shell.edit.*` reach them through `DeckDocumentController` whenever the
+  navigator owns the clipboard: the navigator or grid has focus, or nothing is selected on the
+  canvas and no text/notes are edited); `slides.notes.zoom {percent}` (device pref
+  `slides.notes.zoom`). Navigator-scope bindings: Delete/Backspace, ⌘D, ⌘↑/⌘↓ (and ⌘←/⌘→ in
+  the grid), ⇧⌘↑/⇧⌘↓, ⌘G/⇧⌘G, F2; ↑/↓/Home/End/←/→/Enter/Esc and type-ahead are handled by
+  the navigator widget (not commands). Delete with selected groups opens §13.4 for UI
+  invocations; agents delete the groups with their slides (the slides count as selected) or
+  call `slides.group.delete {withSlides}` (default false). Without ids, commands act on the
+  navigator selection; group commands fall back to the current slide's group.
+- **Group creation.** New groups are placed at the first slide's position, or right after its
+  group when that slide is grouped (core: `CreateGroup.target`, which also makes the empty
+  *New group* of §11.7 possible). Title: the lowest free "Group n" (planner). Color: the cycle
+  color after the previous group's (blue when there is none) — never the previous group's.
+- **Collapse state** is `collapsedGroups` (+ `gridThumbSize`) of `LocalViewState` under
+  `slides.view.<deckId>` in the user store (merged with other keys), not synced, not
+  undoable. A current slide set from elsewhere expands its group; one restored inside a
+  collapsed group too.
+- **Drag and drop.** Pointer tracking on the list (4 px threshold, mouse); rows have fixed
+  heights (`itemExtentBuilder`), so indicators are computed from geometry; the ghost (stacked
+  first slide + "3 slides" / "Intro · 5 slides", "+" when Alt is held) follows the pointer
+  inside the navigator; dragged rows are dimmed (not collapsed). Auto-scroll within 32 px of
+  the edges; Esc cancels. A click on the 3 px gap between two rows sets the insertion caret.
+- **Speaker notes.** Read-only rich rendering of the notes subset; editors click (or Enter on
+  the focused pane) to edit with super_editor and SL-13's `SlidesDeltaMapper`; writes after
+  300 ms idle, on blur and on slide change as one coalesced `slides.rows` step per burst
+  (`recordTypingStep`, key `slides.notes:<slideId>`); Mod+Z/⇧Mod+Z go to the shell's stack
+  (pending typing written first); external changes are patched into the document. Mini toolbar
+  in the handle row while editing: bold, italic, underline, bulleted/numbered list, link
+  (`WonkyDialogSpec` `dialog.slides.notesLink`); Mod+B/I/U.
+- **Grid view.** Sections laid out by `GridLayout` (pure), virtualized by the scroll offset;
+  the size slider (120–480 px) is clamped to the view's width; ↑/↓ move to the nearest item of
+  the previous/next line, ←/→ along the order; double-click/Enter opens Normal view.
+- **Deviations.** No comment/presence/build badges yet (SL-38/SL-21/SL-30), no notes soft lock
+  (SL-21) — `TODO.md`. (File re-homing on cross-deck paste, the system clipboard and the
+  paste options chip: SL-18, 03 §12 "As built (SL-18)".)
+- **Text (SL-13).** The Format › Text, Text style, Align & indent, Line & paragraph spacing,
+  Bullets & numbering and Text fitting items, the contextual *Text* toolbar controls (04 §6.2:
+  style and font dropdowns, a size field, color and highlight split buttons with the color
+  picker, align/lists/line-spacing dropdowns) and Inspector › Text are real; new command ids
+  `slides.format.letterSpacing`, `slides.format.insets`, `slides.text.removeLink`. The link
+  popover of §13.5 is the `WonkyDialogSpec` `dialog.slides.link` (target select + address),
+  not a custom popover with tabs. *Restart numbering* (`slides.format.listStart`) asks for the
+  start number. Details: 03 §6.2.1.

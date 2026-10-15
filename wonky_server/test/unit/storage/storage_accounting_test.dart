@@ -67,6 +67,30 @@ void main() {
     });
   });
 
+  group('Given the Sheets estimator (Drive 03 §11)', () {
+    test('when a row counts then only its properties do, not its id, sheet, '
+        'order or creation time', () {
+      final sql = SheetsSizeEstimator.valueBytes('sheet_row');
+
+      expect(sql, contains('t."height"'));
+      expect(sql, contains('t."hidden"'));
+      expect(sql, contains('t."formatJson"'));
+      for (final c in ['id', 'spaceId', 'sheetId', 'sortKey', 'createdAt']) {
+        expect(sql, isNot(contains('t."$c"')));
+      }
+    });
+
+    test('when the change log, script builds or the spreadsheet row are '
+        'priced then they cost nothing beyond the base', () {
+      final e = SheetsSizeEstimator();
+
+      expect(e.tables, isNot(contains('change_log')));
+      expect(e.tables, isNot(contains('script_build')));
+      expect(e.rowBytes('spreadsheet'), '0');
+      expect(e.baseBytes, SheetsSizeEstimator.base);
+    });
+  });
+
   group('Given a spreadsheet pre-check estimate', () {
     test('when the sheets have more cells then the estimate is larger', () {
       const small = [
@@ -91,6 +115,35 @@ void main() {
         greaterThan(StorageHooks.sheetsEstimate(small)),
       );
       expect(StorageHooks.sheetsEstimate(const []), greaterThan(0));
+    });
+
+    test('when a sheet is empty then it costs the base and the sheet, like '
+        'the estimator', () {
+      expect(
+        StorageHooks.sheetsEstimate(const [TemplateSheet(name: 'A', rows: [])]),
+        SheetsSizeEstimator.base + SheetsSizeEstimator.sheetBytes,
+      );
+    });
+
+    test('when cells are filled then each costs its text, the content prefix '
+        'and the row overhead; empty cells and bold rows without text cost '
+        'nothing', () {
+      const sheet = TemplateSheet(
+        name: 'A',
+        boldRows: {},
+        rows: [
+          ['abc', null, ''],
+          ['é'],
+        ],
+      );
+
+      expect(
+        StorageHooks.sheetsEstimate(const [sheet]),
+        SheetsSizeEstimator.base +
+            SheetsSizeEstimator.sheetBytes +
+            (SheetsSizeEstimator.propertyRowBytes + 3 + 2) +
+            (SheetsSizeEstimator.propertyRowBytes + 2 + 2),
+      );
     });
   });
 

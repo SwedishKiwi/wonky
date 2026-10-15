@@ -3,6 +3,7 @@ import 'package:shad/shad.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
 
+import '../collab/presence_widgets.dart' show PresenterPill;
 import '../../l10n/slides_l10n.dart';
 import '../../theme/slides_tokens.dart';
 import '../toolbar/command_ui.dart';
@@ -28,18 +29,24 @@ class DeckStatusLeft extends StatelessWidget {
           ? null
           : editor.model.group(entry!.groupId!);
       final skipped = order.entries.where((e) => e.skipped).length;
+      // Below 600 px only the position shows (04 §16).
+      final narrow = MediaQuery.sizeOf(context).width < 600;
       return Row(
         key: const ValueKey<String>('slides.status.left'),
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            entry == null
-                ? l.statusNoSlides
-                : l.statusSlideOf(entry.index + 1, order.length),
-            key: const ValueKey<String>('slides.status.position'),
-            style: style,
+          Flexible(
+            child: Text(
+              entry == null
+                  ? l.statusNoSlides
+                  : l.statusSlideOf(entry.index + 1, order.length),
+              key: const ValueKey<String>('slides.status.position'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: style,
+            ),
           ),
-          if (group != null) ...[
+          if (group != null && !narrow) ...[
             Text('  ·  ', style: style),
             Container(
               width: 8,
@@ -60,14 +67,20 @@ class DeckStatusLeft extends StatelessWidget {
               ),
             ),
           ],
-          if (skipped > 0) ...[
+          if (skipped > 0 && !narrow) ...[
             Text('  ·  ', style: style),
-            Text(
-              l.statusSkipped(skipped),
-              key: const ValueKey<String>('slides.status.skipped'),
-              style: style.copyWith(color: theme.colorScheme.mutedForeground),
+            Flexible(
+              child: Text(
+                l.statusSkipped(skipped),
+                key: const ValueKey<String>('slides.status.skipped'),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: style.copyWith(color: theme.colorScheme.mutedForeground),
+              ),
             ),
           ],
+          // "Anna is presenting — Follow" (SL-21, 09 §1.6).
+          Flexible(child: PresenterPill(editor: editor)),
         ],
       );
     },
@@ -124,23 +137,26 @@ class DeckStatusRight extends StatelessWidget {
       final zoomLabel = editor.zoomFit
           ? l.zoomFit
           : l.zoomPercent((editor.zoom * 100).round());
+      // Below 600 px the view modes stay in the View menu (04 §16).
+      final narrow = MediaQuery.sizeOf(context).width < 600;
       return Row(
         key: const ValueKey<String>('slides.status.right'),
         mainAxisSize: MainAxisSize.min,
         children: [
-          for (final (mode, i, label) in [
-            (DeckViewMode.normal, LucideIcons.panelsTopLeft, l.viewNormal),
-            (DeckViewMode.grid, LucideIcons.layoutGrid, l.viewGrid),
-            (DeckViewMode.outline, LucideIcons.listTree, l.viewOutline),
-          ])
-            icon(
-              'mode.${mode.name}',
-              i,
-              label,
-              'slides.view.setMode',
-              args: {'mode': mode.name},
-              selected: editor.mode == mode,
-            ),
+          if (!narrow)
+            for (final (mode, i, label) in [
+              (DeckViewMode.normal, LucideIcons.panelsTopLeft, l.viewNormal),
+              (DeckViewMode.grid, LucideIcons.layoutGrid, l.viewGrid),
+              (DeckViewMode.outline, LucideIcons.listTree, l.viewOutline),
+            ])
+              icon(
+                'mode.${mode.name}',
+                i,
+                label,
+                'slides.view.setMode',
+                args: {'mode': mode.name},
+                selected: editor.mode == mode,
+              ),
           const SizedBox(width: 10),
           icon(
             'zoomOut',

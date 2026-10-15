@@ -49,13 +49,16 @@ final class UpdateBuilds extends SlidesOperation {
   String get name => 'UpdateBuilds';
 }
 
-/// Reorders builds of a slide.
+/// Reorders builds of a slide; [trigger] (optional) is written on the
+/// first moved build (dropping onto a step boundary makes it a new click,
+/// 06 §5.4).
 final class MoveBuilds extends SlidesOperation {
-  const MoveBuilds(this.buildIds, {this.beforeId, this.afterId});
+  const MoveBuilds(this.buildIds, {this.beforeId, this.afterId, this.trigger});
 
   final List<String> buildIds;
   final String? beforeId;
   final String? afterId;
+  final SlideBuildTrigger? trigger;
 
   @override
   String get name => 'MoveBuilds';

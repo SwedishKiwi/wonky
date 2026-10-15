@@ -239,8 +239,8 @@ class DriveController extends ChangeNotifier {
         if (gen != _generation) return;
         _folder = f;
         _path = p;
-        services.currentFolder.value = f;
-      } else {
+        if (_isActive) services.currentFolder.value = f;
+      } else if (_isActive) {
         services.currentFolder.value = null;
       }
       final page = await _fetch(null);
@@ -493,7 +493,18 @@ class DriveController extends ChangeNotifier {
     select(_items[i], range: extend);
   }
 
-  void _publishSelection() => services.driveSelection.value = selection;
+  void _publishSelection() {
+    if (_isActive) services.driveSelection.value = selection;
+  }
+
+  /// Whether this is the home on screen. Opening a folder builds a new home
+  /// whose controller registers itself; the previous one is disposed after
+  /// the route transition — which, offline (cached folder, instant reload),
+  /// came after the new folder was published and reset `currentFolder` to
+  /// null, so uploads went to My Drive (D-18). A controller that isn't the
+  /// active one leaves the shared state alone.
+  bool get _isActive =>
+      services.driveView.value == this || services.driveView.value == null;
 
   void _notify() {
     if (!_disposed) notifyListeners();
@@ -505,9 +516,11 @@ class DriveController extends ChangeNotifier {
     _sub?.cancel();
     services.driveRefresh.removeListener(reload);
     if (services.driveSelectAll == selectAll) services.driveSelectAll = null;
+    if (_isActive) {
+      services.driveSelection.value = const [];
+      services.currentFolder.value = null;
+    }
     if (services.driveView.value == this) services.driveView.value = null;
-    services.driveSelection.value = const [];
-    services.currentFolder.value = null;
     super.dispose();
   }
 }

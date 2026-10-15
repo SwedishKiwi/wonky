@@ -24,12 +24,6 @@ void main() {
       category: FileCategory.image,
       content: PreviewFixtures.png,
     ),
-    'pdf': () => t.api.addFile(
-      'report.pdf',
-      mimeType: 'application/pdf',
-      category: FileCategory.pdf,
-      content: PreviewFixtures.pdf(pages: 2),
-    ),
     'text': () => t.api.addFile(
       'main.dart',
       mimeType: 'text/x-dart',
@@ -49,10 +43,10 @@ void main() {
       sizeBytes: 13002342,
     ),
     'broken': () => t.api.addFile(
-      'broken.pdf',
-      mimeType: 'application/pdf',
-      category: FileCategory.pdf,
-      content: PreviewFixtures.brokenPdf,
+      'data.txt',
+      mimeType: 'text/plain',
+      category: FileCategory.text,
+      content: PreviewFixtures.binaryText,
     ),
   };
 

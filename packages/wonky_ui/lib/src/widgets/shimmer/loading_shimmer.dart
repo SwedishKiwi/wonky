@@ -104,26 +104,32 @@ class LoadingShimmer extends StatelessWidget {
 
   static Widget _documentPage(BuildContext context, bool animate) {
     final c = ShadTheme.of(context).colorScheme;
+    // Short windows (360 × 720 with the editor chrome) clip the page
+    // instead of overflowing.
     return Center(
-      child: Container(
-        width: 680,
-        padding: const EdgeInsets.fromLTRB(64, 72, 64, 72),
-        color: c.page,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _bar(320, 26, animate),
-            const SizedBox(height: 28),
-            for (var p = 0; p < 4; p++) ...[
-              for (var l = 0; l < 4; l++)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: _bar(l == 3 ? 300 : 552, 12, animate),
-                ),
-              const SizedBox(height: 14),
+      child: SingleChildScrollView(
+        primary: false,
+        physics: const NeverScrollableScrollPhysics(),
+        child: Container(
+          width: 680,
+          padding: const EdgeInsets.fromLTRB(64, 72, 64, 72),
+          color: c.page,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _bar(320, 26, animate),
+              const SizedBox(height: 28),
+              for (var p = 0; p < 4; p++) ...[
+                for (var l = 0; l < 4; l++)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: _bar(l == 3 ? 300 : 552, 12, animate),
+                  ),
+                const SizedBox(height: 14),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

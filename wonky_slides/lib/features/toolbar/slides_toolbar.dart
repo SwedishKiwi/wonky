@@ -8,6 +8,9 @@ import '../../config/menus/slides_menu_spec.dart';
 import '../../config/toolbar/slides_toolbar_spec.dart';
 import '../editor_screen/deck_editor_controller.dart';
 import '../editor_screen/slide_labels.dart';
+import '../text_editing/text_editing_host.dart' show textEditingOf;
+import '../elements/shape/shape_gallery.dart';
+import '../elements/shape/shape_tool.dart';
 import 'command_ui.dart';
 
 /// The Slides toolbar (Slides 04 §6): fixed items (history, paint format,
@@ -29,7 +32,12 @@ class SlidesToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
-    listenable: Listenable.merge([editor, services.registry, services.undo]),
+    listenable: Listenable.merge([
+      editor,
+      services.registry,
+      services.undo,
+      textEditingOf(editor),
+    ]),
     builder: (context, _) => _build(context),
   );
 
@@ -147,14 +155,30 @@ class SlidesToolbar extends StatelessWidget {
     final insert = ToolbarGroup([
       ui.toggle('slides.tool.select', priority: 2),
       ui.button('slides.insert.textBox', priority: 1),
-      ui.dropdown(
-        'shape',
+      ToolbarDropdownButton(
+        id: 'slides.toolbar.shape',
+        priority: 2,
         label: l.menuShape,
         icon: LucideIcons.square,
-        priority: 2,
         enabled: ui.state('slides.insert.shape').enabled,
-        items: () => [
-          MenuSpec.command('slides.insert.shape', label: l.menuShapeGallery),
+        entries: () => [
+          WonkyMenuCustom(
+            label: l.menuShape,
+            builder: (context, close) => ShapeGallery(
+              selected: ShapeInsert.geometryOf(ed.armedTool),
+              onSelected: (g) {
+                close();
+                ui.run('slides.insert.shape', {'geometry': g});
+              },
+            ),
+          ),
+          const WonkyMenuSeparator(),
+          ui.item(
+            'slides.insert.shape',
+            args: const {'pick': true},
+            label: l.menuShapeGallery,
+            keyName: 'toolbar.shape.all',
+          ),
         ],
       ),
       ui.dropdown(

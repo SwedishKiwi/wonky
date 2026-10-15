@@ -1,3 +1,5 @@
+import '../../features/elements/style/style_toolbar.dart'
+    show arrowItems, routingItems;
 import 'package:wonky_core/wonky_core.dart';
 
 import '../../features/editor_screen/deck_editor_controller.dart'
@@ -70,6 +72,9 @@ List<MenuSpec> contextMenuFor(
     'context.element.code' => kind == DeckSelectionKind.code,
     'context.element.chart' => kind == DeckSelectionKind.chart,
     'context.element.enterGroup' => kind == DeckSelectionKind.group,
+    'context.element.shape' => kind == DeckSelectionKind.shape,
+    'context.element.line' => kind == DeckSelectionKind.line,
+    'context.element.icon' => kind == DeckSelectionKind.icon,
     'context.element.editText' =>
       kind == DeckSelectionKind.text || kind == DeckSelectionKind.shape,
     _ => true,
@@ -161,6 +166,33 @@ List<MenuSpec> _element(SlidesLocalizations l) => [
     _c('slides.chart.copyAsImage', menuId: 'context.element.chart.copyImage'),
   ]),
   _c('slides.select.enterGroup', menuId: 'context.element.enterGroup'),
+  // Shapes, lines and icons (SL-14).
+  MenuSpec.submenu('context.element.shape', l.menuChangeShape, [
+    MenuSpec.custom(SlidesMenuIds.changeShapeGallery),
+    _c(
+      'slides.shape.change',
+      label: l.menuShapeGallery,
+      menuId: 'context.element.shape.all',
+    ),
+  ]),
+  MenuSpec.submenu('context.element.line', l.menuLine, [
+    MenuSpec.submenu(
+      'context.element.line.startArrow',
+      l.lineStartArrow,
+      arrowItems(l, 'start', 'context.element.line'),
+    ),
+    MenuSpec.submenu(
+      'context.element.line.endArrow',
+      l.lineEndArrow,
+      arrowItems(l, 'end', 'context.element.line'),
+    ),
+    MenuSpec.submenu(
+      'context.element.line.routing',
+      l.menuRouting,
+      routingItems(l, 'context.element.line'),
+    ),
+  ]),
+  _c('slides.icon.replace', menuId: 'context.element.icon'),
   MenuSpec.separator(),
   _c('shell.edit.cut', menuId: 'context.element.cut'),
   _c('shell.edit.copy', menuId: 'context.element.copy'),

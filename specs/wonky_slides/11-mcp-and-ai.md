@@ -76,6 +76,18 @@ build summaries.
 - **Maintenance**: before writing, the writer runs the deck's invariant checks (02 §10) and
   includes repairs in a separate maintenance plan (not part of the change record).
 
+*As built (SL-8):* `wonky_server/lib/src/slides/headless/` (not `mcp/`): `HeadlessDeckCache`
+(the cache above), `SlidesHeadlessProvider.open(HeadlessDeckContext(session, actor), deckId)` →
+`ServerHeadlessDeck` (`model`; `execute(op)`; `write(op, force:, actorKind:, label:)` →
+`{plan, changeId, syncVersion, repaired}`; Editor+ for writes) and `DeckTextClaims` (claims from
+the `editing` field of presence cursors; the first check sends a presence `probe` that joined
+sessions answer with `here`, then follows `hello`/`here`/`beat`/`update`/`bye`). `being_edited`
+is thrown as `WonkyException(conflict)` with `detailsJson {"code": "being_edited", "targets":
+[{kind, table, row_id, slide_id?, element_id?, user, user_uuid}]}`; SL-40 maps it to the MCP
+error. Box-level writes to a claimed element pass. Change records are Sheets'
+`ServerChangeRecord` rows (02 §8); `slides.revertChange`/`reapplyChange` apply them with the
+per-column skip rule, skipping a coupled column group (02 P4) as a whole.
+
 ### 2.2 Results
 
 Mutating tools return (`structuredContent`):

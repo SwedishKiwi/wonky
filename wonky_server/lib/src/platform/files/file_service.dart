@@ -458,9 +458,14 @@ abstract final class FileService {
       return _view(session, existing);
     }
     final source = await byUuid(session, sourceFileUuid);
-    if (source == null ||
-        source.kind != StoredFileKind.image ||
-        !await canRead(session, actor, source)) {
+    // Images of documents, and image files of Wonky Drive (*Insert image
+    // ▸ From Wonky Drive*, Slides 03 §6.5.1).
+    final copyable =
+        source != null &&
+        (source.kind == StoredFileKind.image ||
+            (source.kind == StoredFileKind.driveFile &&
+                imageMimeTypes.contains(source.mimeType)));
+    if (source == null || !copyable || !await canRead(session, actor, source)) {
       throw Errors.notFound('File');
     }
     if (source.status != StoredFileStatus.ready) {

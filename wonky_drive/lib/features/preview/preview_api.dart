@@ -46,9 +46,6 @@ abstract class FilePreviewApi {
 
   /// `drive.fileUploadStatus`.
   Future<FileUploadProgress> uploadStatus(UuidValue itemUuid);
-
-  /// `drive.updateFileMeta` (PDF page count, Editor+).
-  Future<DriveItemView> updateFileMeta(UuidValue itemUuid, String json);
 }
 
 /// [FilePreviewApi] on the generated client and the shell's repositories.
@@ -139,8 +136,4 @@ class ServerFilePreviewApi implements FilePreviewApi {
   @override
   Future<FileUploadProgress> uploadStatus(UuidValue itemUuid) =>
       _api.guard((c) => c.drive.fileUploadStatus(itemUuid));
-
-  @override
-  Future<DriveItemView> updateFileMeta(UuidValue itemUuid, String json) =>
-      _api.guard((c) => c.drive.updateFileMeta(itemUuid, json));
 }

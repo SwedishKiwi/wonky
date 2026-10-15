@@ -13,6 +13,7 @@ import '../schema/slides_schema.dart';
 import '../text/slides_delta.dart';
 import '../theme/model/common.dart';
 import 'slides_clipboard_codec.dart';
+import 'slides_html.dart';
 
 /// The result of a paste mapper: a Slides clipboard payload of kind
 /// `elements` (for `PasteElements`) and warning codes for the toast.
@@ -34,6 +35,10 @@ final class PasteMapResult {
   /// Images with `https://` sources: the client fetches them through the
   /// image proxy and replaces `src` (03 §6.5).
   static const remoteImages = 'remote_images';
+
+  /// Styling the Slides schema can't hold (fonts, sizes, other CSS) was
+  /// dropped from pasted HTML.
+  static const formattingDropped = 'formatting_dropped';
 
   /// The pasted top-level element rows.
   List<Map<String, Object?>> get elements =>
@@ -647,6 +652,66 @@ abstract final class SlidesPasteMappers {
       ),
       warnings: warnings.toList(),
     );
+  }
+
+  /// HTML from other apps (03 §12.5, P1): a single table (Sheets cells,
+  /// spreadsheets) → table element with the cells' formatting and merges
+  /// (02 §13 cut); anything else → [writeDelta] of `SlidesHtml.importHtml`
+  /// (text box with paragraphs, headings, lists and inline formatting,
+  /// images with `https://`/`wonky-file://` sources, tables, code).
+  /// Warnings add [PasteMapResult.formattingDropped] when styling (fonts,
+  /// sizes) was dropped.
+  static PasteMapResult html(
+    String html, {
+    required SuRect slide,
+    IdGenerator ids = const UuidV7IdGenerator(),
+    String? sourceItemUuid,
+  }) {
+    final table = SlidesHtml.tableOf(html);
+    if (table != null) return grid(table, slide: slide, ids: ids);
+    final imported = SlidesHtml.importHtml(html);
+    final r = writeDelta(
+      imported.delta,
+      slide: slide,
+      ids: ids,
+      sourceItemUuid: sourceItemUuid,
+    );
+    if (!imported.dropped) return r;
+    return PasteMapResult(
+      r.payload,
+      warnings: [...r.warnings, PasteMapResult.formattingDropped],
+    );
+  }
+
+  /// The text of Wonky Write rich text for pasting **into** a text body
+  /// (03 §12.4, "Paste into text editing"): inline attributes and lists
+  /// mapped, headings → `title`/`heading` styles, code blocks as plain
+  /// paragraphs, table rows as tab-separated lines; embeds dropped. A
+  /// Slides Delta (not normalized).
+  static Delta writeText(Delta write) {
+    final out = Delta();
+    for (final b in _writeBlocks(write)) {
+      switch (b) {
+        case _TextBlock(:final delta):
+          for (final op in delta.operations) {
+            out.push(op);
+          }
+        case _CodeBlock(:final code):
+          for (final line in code.split('\n')) {
+            if (line.isNotEmpty) out.insert(line);
+            out.insert('\n');
+          }
+        case _TableBlock(:final rows):
+          for (final r in rows) {
+            final t = [for (final c in r) InlineMarkdown.toPlainText(c)];
+            if (t.join().isNotEmpty) out.insert(t.join('\t'));
+            out.insert('\n');
+          }
+        case _ImageBlock():
+          break;
+      }
+    }
+    return out;
   }
 
   static Delta _runsDelta(List<InlineRun> runs) {

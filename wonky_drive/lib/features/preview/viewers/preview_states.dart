@@ -159,7 +159,7 @@ class UnsupportedFileView extends StatelessWidget {
 
   final FilePreviewController controller;
 
-  /// Overrides "No preview available" (e.g. "This PDF is password-protected").
+  /// Overrides "No preview available" (e.g. "This image can't be displayed").
   final String? title;
 
   /// A line under the title.
@@ -374,14 +374,9 @@ Widget previewStateBody(BuildContext context, FilePreviewController c) {
       return UnsupportedFileView(
         key: ValueKey<String>('drive.preview.state.${problem.name}'),
         controller: c,
-        icon: problem == PreviewProblem.pdfPassword
-            ? LucideIcons.fileLock
-            : LucideIcons.fileWarning,
+        icon: LucideIcons.fileWarning,
         title: switch (problem) {
           PreviewProblem.imageBroken => l.previewImageBroken,
-          PreviewProblem.pdfBroken => l.previewPdfBroken,
-          PreviewProblem.pdfPassword => l.previewPdfPassword,
-          PreviewProblem.pdfUnavailable => l.previewPdfUnavailable,
           PreviewProblem.notText => l.previewNotText,
           PreviewProblem.load => l.previewErrorTitle,
         },

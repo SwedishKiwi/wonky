@@ -36,6 +36,7 @@ export 'src/scene/hit/scene_hit_test.dart';
 
 export 'src/scene/nodes/code_scene.dart';
 export 'src/scene/nodes/scene_nodes.dart';
+export 'src/scene/nodes/table_grid.dart';
 export 'src/scene/nodes/text_layout.dart';
 export 'src/text_layout/slide_text_layout.dart';
 export 'src/text_layout/text_paragraphs.dart';

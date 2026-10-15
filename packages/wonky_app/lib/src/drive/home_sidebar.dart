@@ -327,7 +327,8 @@ class HomeNewButton extends StatelessWidget {
     final l = WonkyAppLocalizations.of(context);
     final theme = ShadTheme.of(context);
     return WonkyDropdownMenu(
-      entries: () => homeNewMenuEntries(context, services),
+      entries: () =>
+          _closingFirst(homeNewMenuEntries(context, services), onNavigate),
       builder: (context, c) => Padding(
         padding: const EdgeInsets.only(top: 4, bottom: 12),
         child: Align(
@@ -356,6 +357,40 @@ class HomeNewButton extends StatelessWidget {
       ),
     );
   }
+}
+
+/// [entries] whose items call [close] (the drawer's pop) before their own
+/// action, so a dialog or picker opened by the item (*File upload*, *New
+/// folder*) isn't left behind the drawer (D-18). Commands invoked from the
+/// closed drawer show their dialogs on the shell navigator.
+List<WonkyMenuEntry> _closingFirst(
+  List<WonkyMenuEntry> entries,
+  VoidCallback? close,
+) {
+  if (close == null) return entries;
+  return [
+    for (final e in entries)
+      if (e.runtimeType == WonkyMenuItem && (e as WonkyMenuItem).enabled)
+        WonkyMenuItem(
+          key: e.key,
+          label: e.label,
+          icon: e.icon,
+          leading: e.leading,
+          shortcut: e.shortcut,
+          disabledReason: e.disabledReason,
+          destructive: e.destructive,
+          semanticLabel: e.semanticLabel,
+          trailing: e.trailing,
+          onSelected: e.onSelected == null
+              ? null
+              : () {
+                  close();
+                  e.onSelected!();
+                },
+        )
+      else
+        e,
+  ];
 }
 
 /// The entries of the home's New menu (left menu *+ New*).

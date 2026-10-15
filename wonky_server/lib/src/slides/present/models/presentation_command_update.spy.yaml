@@ -1,0 +1,7 @@
+### A command for the presenter (next, previous, nextSlide, previousSlide,
+### goTo, blank, timer); the presenter applies it and broadcasts state.
+class: PresentationCommandUpdate
+extends: PresentationUpdate
+fields:
+  command: String
+  argsJson: String?

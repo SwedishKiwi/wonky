@@ -43,3 +43,16 @@ final class SetTextBoxStyle extends SlidesOperation {
   @override
   String get name => 'SetTextBoxStyle';
 }
+
+/// *Reset to layout* of placeholder instances (03 §6.2, 05 §5.3): their
+/// frame, rotation, box text properties, fill, stroke, effects and opacity
+/// go back to null, so they inherit from the layout placeholder again. The
+/// text stays.
+final class ResetPlaceholders extends SlidesOperation {
+  const ResetPlaceholders(this.elementIds);
+
+  final List<String> elementIds;
+
+  @override
+  String get name => 'ResetPlaceholders';
+}
