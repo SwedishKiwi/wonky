@@ -36,10 +36,10 @@ final Map<String, Object?> _proposal = {
         {
           'title': 'The API',
           'role': 'code',
-          'bullets': [],
+          'bullets': <String>[],
           'code': {'language': 'dart', 'code': 'final x = 1;'},
         },
-        {'title': '', 'role': 'bullets', 'bullets': []},
+        {'title': '', 'role': 'bullets', 'bullets': <String>[]},
         {
           'title': 'Thanks',
           'role': 'mystery',

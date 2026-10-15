@@ -1210,6 +1210,7 @@ and recorded here.
 | (before S-1) | Sheets tables of the first iteration | — | `1a5f0730-2976-5ef7-b870-dbdc1b965fa5:8faad583-3b96-5cb4-a39e-5b141d5f9b15` |
 | **S-1** (M9, SL-2) | + the 13 Slides tables of §3 (as built) and their 7 enums; additions A-03-1, A-08-2 (`sheetId`), A-10-1, A-10-2 | server + client `20261014234831373-slides-s1` (only `CREATE TABLE`/index/FK; no data change) | `b54df85b-b26f-5da7-aa12-d8761b0c27cc:588b3c43-b2f7-5c93-a691-bb5704e6ffe8` |
 | **S-2** (M10, SL-24) | + `BuildTrigger.onElementClick` (reserved for interactive decks, 06 A-06-2: S-2 clients decode it, the timeline skips such builds, the planner refuses to write it). The other 06 §20 additions are JSON schemas of existing columns (`optionsJson`, `transitionJson`, `defaultsJson` keys) — no table change. New guard: `SyncSchemaRelease.syncEnumsHash` | none (`create_migration`: no changes) | unchanged; enums hash `137e402a-d9fd-5f33-99f2-0c4ef7340b37:656de501-33c1-57fb-90bd-364b8be5aa08` |
+| **S-3** (M11, SL-37) — **not cut** | Nothing was queued: every synced addition of 03–11 shipped in S-1/S-2, and the M11 work packages add only ephemeral presence data (SL-37: pointer, surface), server-only tables (SL-39 `slides_snapshot_index`) or reuse existing ones (SL-43). `SyncSchemaRelease` stays **S-2** | none | unchanged (S-2) |
 
 **Enum values (S-2).** The engine's `syncTablesHash` covers table definitions (columns, types,
 nullability, FKs, unique indexes) but not the values of enum columns, which are stored by name —

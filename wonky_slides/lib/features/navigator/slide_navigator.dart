@@ -9,11 +9,13 @@ import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
-import '../collab/presence_widgets.dart' show SlidePresenceDots;
+import '../collab/presence_widgets.dart'
+    show SlidePresenceDots, StructureShimmer;
 import '../comments/comment_badge.dart';
 import '../../commands/navigator_commands.dart' show navMoveTo;
 import '../../commands/slides_command.dart' show SlidesKeyScopes;
 import '../../config/menus/context_menu_specs.dart';
+import '../../config/slides_features.dart';
 import '../../config/menus/slides_menu_spec.dart'
     show groupColorLabel, slideGroupColors;
 import '../../l10n/slides_l10n.dart';
@@ -228,10 +230,34 @@ class _SlideNavigatorState extends State<SlideNavigator> {
       d.globalPosition,
     ),
     child: Center(
-      child: Text(
-        l.navigatorEmpty,
-        key: const ValueKey<String>('slides.navigator.empty'),
-        style: theme.textTheme.muted,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 8,
+        children: [
+          Text(
+            l.navigatorEmpty,
+            key: const ValueKey<String>('slides.navigator.empty'),
+            style: theme.textTheme.muted,
+          ),
+          // *Generate with AI* (Slides 11 §6.4; SL-43).
+          if (SlidesFeatures.isOn(SlidesFeature.assistant) &&
+              widget.services.dispatcher
+                  .stateOf('slides.ai.generateDeck')
+                  .enabled)
+            ShadButton.ghost(
+              key: const ValueKey<String>('slides.navigator.generate'),
+              size: ShadButtonSize.sm,
+              leading: const Icon(LucideIcons.sparkles, size: 14),
+              onPressed: () => unawaited(
+                widget.services.dispatcher.invoke(
+                  'slides.ai.generateDeck',
+                  source: InvocationSource.ui,
+                  context: context,
+                ),
+              ),
+              child: Text(l.cmdAiGenerateDeck),
+            ),
+        ],
       ),
     ),
   );
@@ -359,6 +385,10 @@ class _SlideNavigatorState extends State<SlideNavigator> {
       overlay: Positioned.fill(
         child: Stack(
           children: [
+            // A collaborator's structure change (SL-37, 09 §2.4).
+            Positioned.fill(
+              child: StructureShimmer(editor: ed, id: e.id),
+            ),
             if (_compact) Positioned(left: 4, top: 2, child: number),
             // Collaborators on this slide (SL-21, 09 §1.2).
             Positioned(
@@ -619,7 +649,18 @@ class _SlideNavigatorState extends State<SlideNavigator> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(height: _headerHeight - 4, child: header),
+                  SizedBox(
+                    height: _headerHeight - 4,
+                    child: Stack(
+                      children: [
+                        // A collaborator's structure change (SL-37).
+                        Positioned.fill(
+                          child: StructureShimmer(editor: ed, id: g.id),
+                        ),
+                        Positioned.fill(child: header),
+                      ],
+                    ),
+                  ),
                   if (r.collapsed && firstSlide != null)
                     Padding(
                       padding: const EdgeInsets.only(left: 40, bottom: 6),

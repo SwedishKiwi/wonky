@@ -1,27 +1,35 @@
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
-import 'package:wonky_app/wonky_app.dart';
 
-/// Reads and operates the open side panel for `ui.sheets.describe_panel`,
-/// `ui.sheets.set_panel_field` and `ui.sheets.press_panel_button` (Sheets
-/// 12 §5, P1), like `ui.get_dialog` does for dialogs: the panel's widget
-/// tree is walked for text inputs, checkboxes, switches and buttons. Field
-/// and button ids are the widgets' `ValueKey<String>`s (else the nearest
-/// keyed ancestor's, else a positional id such as `text_2`), so they are
-/// the same keys the app's tests use.
+import '../shell/shell_services.dart';
+
+/// Reads and operates a panel for the MCP panel tools
+/// (`ui.sheets.describe_panel` / `set_panel_field` / `press_panel_button`,
+/// Sheets 12 §5; `ui.slides.*_panel`, Slides 11 §5), like `ui.get_dialog`
+/// does for dialogs: the panel's widget tree is walked for text inputs,
+/// checkboxes, switches and buttons. Field and button ids are the widgets'
+/// `ValueKey<String>`s (else the nearest keyed ancestor's, else a
+/// positional id such as `text_2`), so they are the same keys the apps'
+/// tests use.
+///
+/// (v2) Moved from Wonky Sheets to the shell so that Slides describes its
+/// side panels and the docked inspector the same way ([under]).
 class PanelDescriber {
   PanelDescriber._(this.panelId, this.root);
 
-  /// The open panel of [services] (or [panelId] when it is open), null when
-  /// no panel is open.
+  /// The open side panel of [services] (or [panelId] when it is open),
+  /// null when no panel is open.
   static PanelDescriber? of(ShellServices services, {String? panelId}) {
     final open = services.panels.activePanelId;
     if (open == null || (panelId != null && panelId != open)) return null;
-    final root = _find(
-      WidgetsBinding.instance.rootElement,
-      PageStorageKey<String>('panel-body-$open'),
-    );
-    return root == null ? null : PanelDescriber._(open, root);
+    return under(open, PageStorageKey<String>('panel-body-$open'));
+  }
+
+  /// The mounted widget keyed [key] (e.g. a docked inspector) described as
+  /// panel [panelId], or null when nothing with [key] is mounted.
+  static PanelDescriber? under(String panelId, Key key) {
+    final root = _find(WidgetsBinding.instance.rootElement, key);
+    return root == null ? null : PanelDescriber._(panelId, root);
   }
 
   final String panelId;

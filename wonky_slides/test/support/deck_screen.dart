@@ -93,8 +93,10 @@ Future<DeckScreenRig> pumpDeckScreen(
   DeckSessionFactory? factory,
   String? initialSlideId,
   PresenceRepository? presence,
+  void Function(CommandTestHarness h)? beforePump,
 }) async {
   final h = slidesHarness(presence: presence);
+  beforePump?.call(h);
   final b = fixture ?? sampleDeck();
   final uuid = UuidValue.fromString(b.deckId);
   h.drive.seed(

@@ -487,6 +487,36 @@ Implemented in `wonky_slides/lib/mcp/` (definitions in `wonky_core/lib/mcp/ui_sl
 Agent presence highlight: every `ui.slides.*` call targeting elements/slides flashes them (violet
 outline + agent tag, 2–5 s), like Sheets.
 
+**As built (SL-42).** The table above is implemented with these differences and additions:
+- `ui.slides.set_view {view_mode?, zoom?: 10–400 | "fit"}` (runs `slides.view.setMode` /
+  `slides.view.zoom` / `zoomFit`), `ui.slides.close_panel {panel?}`,
+  `ui.slides.open_dialog {command_id, args?}` and `ui.slides.get_context_menu {menu?}` are added.
+  Slides commands don't show dialogs for agents (they need their arguments instead), so
+  `open_dialog` runs the command as the user does (source `ui`) and returns once its dialog is open
+  with the `ui.get_dialog` description; `ui.fill_dialog` / `ui.press_dialog_button` complete it.
+  `get_context_menu` returns the 04 §11 menus (`context.slide`, `context.element`, …; default: the
+  one a right-click on the current selection opens) with command states, instead of a `menu`
+  argument on the shared `ui.get_menu_tree`.
+- `open_panel` also takes `inspector_theme` (masters mode) and `history`, and `section` for the
+  inspector; panels of features that are off answer `unsupported`. `describe_panel` without a
+  panel describes the open side panel, else the docked inspector (`PanelDescriber.under`).
+- `get_selection` returns `current_slide`/`selected_slides` as `{slide_id, position, number?,
+  skipped, group_id?}`, `selected_groups`, `selection_kind`, `role`; `editing` adds `cell` for table
+  cells. `get_view` adds `navigator`, `notes`, `mode` (editing/viewing), the open `dialog` and
+  `presenting` `{view, slide_id, position, slide_count, step, step_count, blank, end_screen, ended, shared}`.
+- `screenshot_slide`: `scale` is 0.5–2 px per slide unit; `"edit"` (default) renders the
+  thumbnail scene (identical to the in-app thumbnail, AC 12), `"final"` and step numbers the
+  present scene at that frame (`MotionScenes`).
+- `present_control` adds `unblank`; `black`/`white` don't toggle back when already blank.
+  `highlight_element` takes `slide` (outline the slide without `element_ids`).
+- The highlight is `SlidesAgentFlash` (`wonky_slides/lib/mcp/agent_flash.dart`), drawn by the
+  canvas layer `AgentFlashLayer`. Headless writes flash too (`SlidesAgentWrites`): when remote
+  batches arrive, new `DeckChangeLog` rows written by the server (`server:` sessions) with
+  `actorKind: mcp` — or `ai` of another user — flash their summary's elements (else slides) for
+  3 s with the agent participant's name; rows older than 2 min are skipped. The server's agent
+  participant (`DeckAgentPresence`) may show its selection outline next to it.
+- The soft-lock popover (04 §13.11) is an MCP dialog (`SoftLockDialog`: buttons `no`, `yes`).
+
 ---
 
 ## 6. AI features
@@ -695,6 +725,91 @@ Without AI, *Auto-animate* (P1) applies a deterministic preset per style.
 - *Shorten presentation* (P2): proposes slides to merge/skip with a preview.
 - *Summarize presentation* (P1): panel answer with *Insert as slide*.
 
+### 6.12 As built (SL-43)
+
+- **Server** `wonky_server/lib/src/slides/ai/`: `slides_prompts.dart` (frozen prompts: assistant,
+  outline, rewrite, notes, alt text, design ranking), `slides_context_builder.dart`
+  (`SlidesContextBuilder`: deck summary ≤ 4k tokens with one line per slide — id, title, layout
+  key, group, element kinds, text preview, `[notes]`; titles only above 150 slides — the current
+  slide as compact `slides.get_slide` JSON ≤ 6k tokens; everything in `<deck_content>` with
+  closing tags escaped; "Deck changed since the summary above: slides 3 edited; …" elements from
+  the per-slide lines), `slides_assistant_target.dart` (`SlidesAssistantTarget`, resolved by
+  `AssistantTarget.resolve` for presentations), `slides_shadow.dart` (`SlidesShadow`/
+  `SlidesShadows`, `SlidesAiPreviewStore`), `slides_ai_guard.dart` (§8.1 rules),
+  `slides_ai_service.dart` + `slides_ai_endpoint.dart` (`slidesAi`: `proposeOutline` (stream),
+  `buildDeck`, `rewrite` (stream), `writeNotes`, `describeElements`, `rankDesigns`, `getPreview`,
+  `applyPreview`, `discardPreview`), non-table models in `models/`. Additive platform changes:
+  `AssistantToolset.of(bindMode:, strip:)` (Slides' `mode` arguments are the tools' own; `force`
+  is stripped), `deck` is a bound key, `AssistantContextHints.slides{CurrentSlide,SelectedSlides,
+  SelectedElements}`, `assistant.revertChange` tries deck changes first.
+- **Assistant tools**: every `SlidesTools.all` tool except `drive.create_presentation`,
+  `slides.export_pdf`, `slides.render_slide` (unsupported) and `copy_slides_to_deck` (not built);
+  mutating tools only for Editors+; scopes `slides:read`, `slides:edit` (Editors), `sheets:read`
+  (linked charts). **Not yet**: `comments.list/create/reply` and `versions.list` (no headless
+  Slides comment anchors yet, SL-38/SL-40 leftover) and the `ui.slides.*` window tools (SL-42).
+  Chips' *Show*: `range` = the touched or created slide, `objectId` = the element (tool results
+  carry an additive `touched: {slide_ids, element_ids}`).
+- **Edit mode**: each call is one `DeckChangeLog` row "AI: <tool>" with `actorKind: ai` and
+  `DeckAgentPresence` (SL-40); at the end of the run the calls' records are combined into one
+  composite `ServerChangeRecord` "AI: <thread title>" (`SheetsChanges.composite` — deck records
+  share the table) and the panel pushes one `slides.serverChange` undo step
+  (`wonky_slides/lib/features/undo/server_change_undo.dart`: `SlidesServerChangeHandler`, undo =
+  `slides.revertChange`, redo = `slides.reapplyChange`; also registered on the shell stack for
+  SL-39's restores).
+- **Suggest mode**: `SlidesShadow` is a copy of the deck registered as a `DeckOverlay`
+  (`headless/headless_deck.dart`: `ServerHeadlessDeck.overlay`, `DeckOverlays` by run and
+  space; `SlidesMcp.openRef` attaches it from `ToolContext.groupId`): reads see it, `writeSteps`
+  plans against it and records the plan instead of writing. **Deviation:** no new
+  `SlidesAiPreviewRecord` table (A-11-1) — previews are stored in Sheets'
+  `sheets_ai_preview_record` (its `spreadsheetUuid` holds the deck space, like the shared
+  `ServerChangeRecord`; `previewJson` = `SlidesAiPreview`, `changesJson` = gzip+base64 row changes
+  per call), 30 min. `getPreview` returns each call's row changes (`changesJson`); the client
+  applies the checked calls to a copy of its deck for the **after** thumbnails (*before* = a copy
+  taken when the dialog opens). *Apply selected* composes the checked calls' changes and writes
+  them with `ServerSlidesWriter.applyRecorded(skipChanged: true)` (per-column skip rule) as one
+  change; the app pushes one `slides.serverChange` step "AI: Apply n suggestions". *Show
+  differences* (outlined changed elements) is not built.
+- **Confirmations** (§8.1, `SlidesAiGuard`, checked after planning, before writing, only with
+  `guardDestructive` and never in Suggest mode): `delete_slides` ≥ 3 or > 25 %, `delete_group`
+  that deletes slides, `apply_theme` without `slides` (all slides), `replace_text` > 50
+  replacements, `set_code_states` that deletes builds, `insert_linked_chart` with
+  `broader_audience`. *Create new presentation* is never a tool (the panel's quick prompt and
+  the empty navigator offer *Generate presentation…* instead).
+- **Generate presentation** (§6.4): the strict `propose_outline` answer is the core
+  `AiOutline` (`package:wonky_slides_core/ai.dart`; lenient parse, ≤ 100 slides). The build is
+  deterministic: `AiOutline.toDeckMarkdown` writes deck-outline Markdown (§3.3) with a `layout:`
+  directive per role (title→`title`, section→`section`, agenda→`agenda`, bullets→`titleBody`,
+  twoColumn→`twoColumns`, quote→`quote`, bigNumber→`bigNumber`, imageText→`imageRight`,
+  code→`code`, chartPlaceholder→`chart`, closing→`title`), `group:` directives, `Notes:` and
+  fences, escaping text that would read as outline syntax; the server runs it through
+  `drive.create_presentation` (new deck, with a title slide) or `slides.add_slides_from_markdown`
+  (insert after the current slide or at the end: one change → one undo step "AI: Generate
+  slides"). Deviations: the *Wonky Write document* source, *Theme* choice, Home *New ▸ Generate
+  with AI*, drag-reorder (up/down buttons instead) and the overflow split into "(cont.)" slides
+  are not built; `bigNumber`/`quote` layouts have no title placeholder, so their title becomes a
+  text box; *Design ideas* is not offered after generation.
+- **Rewrite** (§6.5): a dialog (`RewriteDialog`, MCP-operable) instead of the canvas preview
+  overlay: original and streamed suggestion, *Replace* (Enter), *Try again*, *Refine*,
+  *Discard* (Esc); when the text changed meanwhile, *Copy* instead of *Replace*. The whole body
+  is rewritten (no range rewrite yet); `capacityChars` comes from the scene's auto-fit scale
+  (only when the text is already shrunk); *Replace* = `SetText` with `keepFormatting`, one
+  `slides.rows` step "AI: <mode>". `Mod+J` while editing text = *Custom…*. The
+  `previewReplace/Retry/Refine/Discard` commands are the dialog's buttons.
+- **Speaker notes** (§6.7) and **alt text** (§6.8) return proposals; the review dialogs apply the
+  checked ones as one `slides.rows` step ("AI: Write speaker notes", "AI: Generate alt text").
+  Images are sent downscaled (≤ 1024 px JPEG `DataPart`); charts/code/icons/tables as data. The
+  Accessibility panel has *Generate with AI* per missing alt text and *Generate missing alt
+  text*.
+- **Design ideas** (§6.6): core `DesignIdeasEngine` offers the slide theme's other layouts scored
+  by simple content rules (layout changes only — the content arrangements of §6.6 step 1 are
+  not built); the panel (`slides.panel.designIdeas`) renders each idea from a copy of the deck,
+  ranks with `rankDesigns` (fast tier) when AI is available, applies with
+  `slides.ai.applyDesignIdea` (one step "Apply design idea"). No hover preview on the canvas, no
+  `text_tweaks`.
+- **Not built**: *Code walkthrough* (§6.9; hidden as feature `aiCodeWalkthrough`), *Animate this
+  slide* (§6.10), §6.11, the slide image for design tasks, the nightly eval suite, the Drive
+  assistant (suite 10 §3.1, P1). See `TODO.md`.
+
 ---
 
 ## 7. Commands (`wonky_slides/lib/features/ai/ai_commands.dart`)
@@ -829,7 +944,7 @@ endpoint with `SlidesAssistantTarget`.
 
 | # | Change | Reason |
 |---|--------|--------|
-| A-11-1 | Server table `SlidesAiPreviewRecord` (`previewId`, `deckUuid`, `userId`, `runId`, `callsJson` (gzip+base64 row changes + labels per call), `createdAt`, `expiresAt` = +30 min); purged on save of newer previews and daily. | §6.3 |
+| A-11-1 | Server table `SlidesAiPreviewRecord` (`previewId`, `deckUuid`, `userId`, `runId`, `callsJson` (gzip+base64 row changes + labels per call), `createdAt`, `expiresAt` = +30 min); purged on save of newer previews and daily. **As built (SL-43):** no own table — rows go into Sheets' `sheets_ai_preview_record` with the deck space (§6.12). | §6.3 |
 | A-11-2 | `ServerChangeRecord` (02 §8) shared with Sheets: generalize `spreadsheetUuid` → `itemUuid` + `itemKind`; composite records for AI runs (`childChangeIds`). | §1, §6.3 |
 | A-11-3 | `DeckChangeLog.actorKind` values `mcp`, `ai` used; `label` prefixes "MCP:" / "AI:". | §1 |
 | A-11-4 | Server in-memory `HeadlessDeckCache` and the bus channel `slides:merged:<spaceUuid>` published by the Slides sync endpoint's `onMergeSuccess`. | §2.1 |

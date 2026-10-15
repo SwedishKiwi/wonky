@@ -6,6 +6,8 @@ import 'package:wonky_ui/wonky_ui.dart';
 
 import '../../config/slides_features.dart';
 import '../../l10n/slides_l10n.dart';
+import '../collab/presence_widgets.dart'
+    show PresentLiveDot, followPresenterMenuItems;
 
 /// The **Present** split button of the title row (Slides 04 §3), before
 /// *Share*: the main part presents from the current slide
@@ -86,6 +88,8 @@ class PresentButton extends StatelessWidget {
           offset: Offset(0, 6),
         ),
         entries: () => [
+          // *Follow Anna's presentation* while someone presents (SL-37).
+          ...followPresenterMenuItems(context, services),
           ...MenuResolver(
             services,
           ).entries(context, SlidesFeatures.prune(_menu)),
@@ -123,7 +127,11 @@ class PresentButton extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           spacing: 1,
           // Below 400 px the options stay in View › Present (04 §16).
-          children: [main, if (width >= 400) chevron],
+          children: [
+            // The live dot while a collaborator presents (SL-37, 09 §1.6).
+            PresentLiveDot(services: services, child: main),
+            if (width >= 400) chevron,
+          ],
         ),
       );
     },

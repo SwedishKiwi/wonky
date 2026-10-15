@@ -939,6 +939,13 @@ All dialogs are `WonkyFormDialog`s from a `WonkyDialogSpec` (MCP-operable, suite
 marked *custom* (then `McpDescribableDialog`). Primary button right-most; Esc cancels; Enter =
 primary when valid.
 
+*As built (SL-42, AC-9 audit):* every Slides dialog is a `WonkyDialogSpec` or a custom
+`McpDescribableDialog`; the soft-lock popover (13.11) is registered as one (`SoftLockDialog`),
+*View data as table* is wrapped in an `McpDialogScope`, and the shell dialogs Slides opens —
+keyboard shortcuts (13.15), Check spelling, Personal dictionary, Special characters, the emoji
+picker — are describable. Commands open their dialogs for agents through
+`ui.slides.open_dialog` (11 §5).
+
 ### 13.1 Page setup (`slides.file.pageSetup`)
 
 Fields: `preset` (`ShadSelect`: Widescreen 16:9, Standard 4:3, Widescreen 16:10, Square 1:1,

@@ -224,6 +224,7 @@ slidesExport:
 presentation:
   - join:
   - findSession:
+  - resolvePairingCode:
 slidesThemes:
   - list:
 slidesVersion:

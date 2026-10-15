@@ -75,26 +75,89 @@ class CollabCanvasOverlay extends StatefulWidget {
   State<CollabCanvasOverlay> createState() => _CollabCanvasOverlayState();
 }
 
-class _CollabCanvasOverlayState extends State<CollabCanvasOverlay> {
+class _CollabCanvasOverlayState extends State<CollabCanvasOverlay>
+    with SingleTickerProviderStateMixin {
   String? _hover;
+
+  /// Soft-lock outlines of the last build, by claimer and element.
+  Map<String, _Outline> _locks = const {};
+  String? _locksSurface;
+
+  /// Released soft-lock outlines fading out (09 §2.3: 300 ms).
+  final Map<String, _Outline> _fading = {};
+  late final AnimationController _fade = AnimationController(
+    vsync: this,
+    duration: releaseFade,
+  )..addStatusListener(_onFade);
+  late final AppLifecycleListener _lifecycle = AppLifecycleListener(
+    onInactive: _pointerGone,
+    onHide: _pointerGone,
+  );
+
+  /// How long a released soft-lock outline fades.
+  static const releaseFade = Duration(milliseconds: 300);
 
   SlidesCollab get collab => widget.collab;
   SlideCanvasController get c => widget.canvas;
 
   @override
-  Widget build(BuildContext context) => ListenableBuilder(
-    listenable: collab.changes,
-    builder: (context, _) => _build(context),
+  void initState() {
+    super.initState();
+    _lifecycle;
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    _fade.dispose();
+    super.dispose();
+  }
+
+  void _onFade(AnimationStatus s) {
+    if (s == AnimationStatus.completed && mounted) {
+      setState(_fading.clear);
+    }
+  }
+
+  void _pointerGone() => collab.presence.pointer = null;
+
+  /// The local pointer at viewport point [px] (09 §1.4): sent while it is
+  /// over the slide and the window has focus.
+  void _pointerAt(Offset px) {
+    final focused =
+        WidgetsBinding.instance.lifecycleState == null ||
+        WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
+    final su = c.viewport.toSlide(px);
+    final size = c.viewport.slideSize;
+    final inside =
+        su.dx >= 0 && su.dy >= 0 && su.dx <= size.width && su.dy <= size.height;
+    collab.presence.pointer = focused && inside ? su : null;
+  }
+
+  @override
+  Widget build(BuildContext context) => MouseRegion(
+    opaque: false,
+    hitTestBehavior: HitTestBehavior.translucent,
+    onHover: (e) => _pointerAt(e.localPosition),
+    onExit: (_) => _pointerGone(),
+    child: Listener(
+      behavior: HitTestBehavior.translucent,
+      onPointerMove: (e) => _pointerAt(e.localPosition),
+      child: ListenableBuilder(
+        listenable: collab.changes,
+        builder: (context, _) => _build(context),
+      ),
+    ),
   );
 
   Widget _build(BuildContext context) {
     final ed = c.editor;
-    final slide = ed.currentSlideId;
+    final slide = ed.surfaceId;
     if (slide == null) return const SizedBox.shrink();
     final theme = ShadTheme.of(context);
     final l = slidesL10n(context);
     final presence = collab.presence;
-    final locks = collab.locks;
+    final lockState = collab.locks;
     final now = clock.now();
     final showRemote = ed.defaults.flag(
       SlidesUserDefaults.keyShowRemoteCursors,
@@ -117,29 +180,30 @@ class _CollabCanvasOverlayState extends State<CollabCanvasOverlay> {
       if (e.kind != 'text' && e.kind != 'tableCell') continue;
       claimed.putIfAbsent(id, () => []).add(h);
     }
+    final locks = <String, _Outline>{};
     for (final MapEntry(key: id, value: holders) in claimed.entries) {
       final f = c.frameOf(id);
       if (f == null) continue;
       for (final (i, h) in holders.indexed) {
         final grow = i * 2.0 / c.viewport.scale;
-        outlines.add(
-          _Outline(
-            ElementFrame(
-              f.x - grow,
-              f.y - grow,
-              f.width + 2 * grow,
-              f.height + 2 * grow,
-              rotation: f.rotation,
-            ),
-            colorOf(h.colorIndex),
-            dashed: true,
-            width: 1.5,
+        final o = _Outline(
+          ElementFrame(
+            f.x - grow,
+            f.y - grow,
+            f.width + 2 * grow,
+            f.height + 2 * grow,
+            rotation: f.rotation,
           ),
+          colorOf(h.colorIndex),
+          dashed: true,
+          width: 1.5,
         );
+        outlines.add(o);
+        locks['${h.sessionId}|$id'] = o;
       }
       final r = c.viewport.rectToViewport(f.bounds);
       hoverTargets[id] = r;
-      final names = locks.namesOf(holders);
+      final names = lockState.namesOf(holders);
       final label = _hover == id
           ? l.presenceEditingHover(names)
           : holders.length == 1
@@ -155,6 +219,30 @@ class _CollabCanvasOverlayState extends State<CollabCanvasOverlay> {
         ),
       );
     }
+
+    // Released claims fade over 300 ms (09 §2.3; instant with reduce
+    // motion).
+    if (_locksSurface != slide) {
+      // Another slide: nothing was released.
+      _locks = const {};
+      _fading.clear();
+      _locksSurface = slide;
+    }
+    if (!reduceMotion) {
+      var added = false;
+      for (final MapEntry(:key, :value) in _locks.entries) {
+        if (!locks.containsKey(key) && !_fading.containsKey(key)) {
+          _fading[key] = value;
+          added = true;
+        }
+      }
+      if (added) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _fade.forward(from: 0);
+        });
+      }
+    }
+    _locks = locks;
 
     // Remote selections (09 §1.2): 2 px outlines + a name flag above the
     // first selected element.
@@ -210,7 +298,33 @@ class _CollabCanvasOverlayState extends State<CollabCanvasOverlay> {
       }
     }
 
-    final prompt = locks.prompt.value;
+    // Live pointers (09 §1.4, P1): an arrow and a name label per person on
+    // this surface, moving with a short interpolation (none with reduce
+    // motion), hidden after 5 s idle.
+    final pointers = <Widget>[
+      if (showRemote)
+        for (final h in presence.pointersOn(slide, now))
+          if (h.cursor.pointer case final pt?)
+            AnimatedPositioned(
+              key: ValueKey<String>('slides.collab.pointer.${h.sessionId}'),
+              duration: reduceMotion
+                  ? Duration.zero
+                  : const Duration(milliseconds: 100),
+              left: c.viewport.toViewport(pt).dx,
+              top: c.viewport.toViewport(pt).dy,
+              child: IgnorePointer(
+                child: Semantics(
+                  label: l.pointerOnSlide(presence.labelOf(h.participant)),
+                  child: CollabPointer(
+                    label: presence.labelOf(h.participant),
+                    color: colorOf(h.colorIndex),
+                  ),
+                ),
+              ),
+            ),
+    ];
+
+    final prompt = lockState.prompt.value;
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -222,6 +336,30 @@ class _CollabCanvasOverlayState extends State<CollabCanvasOverlay> {
             ),
           ),
         ),
+        if (_fading.isNotEmpty)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: AnimatedBuilder(
+                animation: _fade,
+                builder: (context, _) {
+                  return CustomPaint(
+                    key: const ValueKey<String>('slides.collab.released'),
+                    painter: _OutlinePainter([
+                      for (final o in _fading.values)
+                        _Outline(
+                          o.frame,
+                          o.color.withValues(
+                            alpha: o.color.a * (1 - _fade.value),
+                          ),
+                          dashed: o.dashed,
+                          width: o.width,
+                        ),
+                    ], c),
+                  );
+                },
+              ),
+            ),
+          ),
         for (final MapEntry(key: id, value: r) in hoverTargets.entries)
           Positioned.fromRect(
             rect: r,
@@ -236,6 +374,7 @@ class _CollabCanvasOverlayState extends State<CollabCanvasOverlay> {
             ),
           ),
         ...flags,
+        ...pointers,
         if (prompt != null && prompt.target.kind != 'notes')
           ..._prompt(context, prompt),
         if (presence.followed case final f?)
@@ -243,12 +382,26 @@ class _CollabCanvasOverlayState extends State<CollabCanvasOverlay> {
             top: 8,
             right: 8,
             child: CanvasChrome(
-              child: _FollowBanner(
-                name: presence.labelOf(f.participant),
-                color: colorOf(f.colorIndex),
-                onStop: () => ed.services.dispatcher.invoke(
-                  'slides.presence.unfollow',
-                  source: InvocationSource.ui,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: math.max(160, c.viewport.viewport.width - 16),
+                ),
+                child: _FollowBanner(
+                  name: presence.labelOf(f.participant),
+                  color: colorOf(f.colorIndex),
+                  onStop: () => ed.services.dispatcher.invoke(
+                    'slides.presence.unfollow',
+                    source: InvocationSource.ui,
+                  ),
+                  // They present: watch the presentation instead (09 §1.6).
+                  onWatch: f.cursor.presenting == null
+                      ? null
+                      : () => ed.services.dispatcher.invoke(
+                          'slides.presence.followPresenter',
+                          args: {'sessionId': f.sessionId},
+                          source: InvocationSource.ui,
+                          context: context,
+                        ),
                 ),
               ),
             ),
@@ -310,6 +463,58 @@ class _CollabCanvasOverlayState extends State<CollabCanvasOverlay> {
       ),
     ];
   }
+}
+
+/// A collaborator's live pointer (09 §1.2, §1.4): a Figma-style arrow in
+/// their presence color with their name; its tip is the widget's origin.
+class CollabPointer extends StatelessWidget {
+  const CollabPointer({super.key, required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      CustomPaint(size: const Size(14, 18), painter: _ArrowPainter(color)),
+      Padding(
+        padding: const EdgeInsets.only(left: 10),
+        child: CollabFlag(label: label, color: color),
+      ),
+    ],
+  );
+}
+
+class _ArrowPainter extends CustomPainter {
+  _ArrowPainter(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path()
+      ..moveTo(0, 0)
+      ..lineTo(0, size.height * 0.85)
+      ..lineTo(size.width * 0.32, size.height * 0.62)
+      ..lineTo(size.width * 0.55, size.height)
+      ..lineTo(size.width * 0.72, size.height * 0.92)
+      ..lineTo(size.width * 0.5, size.height * 0.56)
+      ..lineTo(size.width, size.height * 0.56)
+      ..close();
+    canvas.drawPath(path, Paint()..color = color);
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = ShadColorScheme.contrastingForeground(color)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_ArrowPainter old) => old.color != color;
 }
 
 /// A presence-colored name pill ("Anna", "✎ Anna is editing").
@@ -446,11 +651,13 @@ class _FollowBanner extends StatelessWidget {
     required this.name,
     required this.color,
     required this.onStop,
+    this.onWatch,
   });
 
   final String name;
   final Color color;
   final VoidCallback onStop;
+  final VoidCallback? onWatch;
 
   @override
   Widget build(BuildContext context) {
@@ -472,13 +679,24 @@ class _FollowBanner extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              l.followBanner(name),
-              style: theme.textTheme.small.copyWith(
-                color: theme.colorScheme.popoverForeground,
+            Flexible(
+              child: Text(
+                l.followBanner(name),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.small.copyWith(
+                  color: theme.colorScheme.popoverForeground,
+                ),
               ),
             ),
             const SizedBox(width: 4),
+            if (onWatch case final watch?)
+              ShadButton.ghost(
+                key: const ValueKey<String>('slides.collab.followWatch'),
+                size: ShadButtonSize.sm,
+                onPressed: watch,
+                child: Text(l.followWatchPresentation),
+              ),
             ShadButton.ghost(
               key: const ValueKey<String>('slides.collab.followStop'),
               size: ShadButtonSize.sm,

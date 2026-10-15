@@ -15,6 +15,7 @@ import 'package:wonky_ui/wonky_ui.dart';
 import '../../commands/slides_command.dart'
     show SlidesKeyScopes, editorOfServices;
 import '../../l10n/slides_l10n.dart';
+import '../collab/follow_presenter.dart' show FollowerBar;
 import '../editor_screen/deck_editor_controller.dart';
 import '../navigator/deck_renderer.dart';
 import '../settings/slides_user_defaults.dart';
@@ -201,14 +202,17 @@ class _PresentScreenState extends State<PresentScreen>
     PresentationLink? link;
     if (widget.view != PresentView.present) {
       final transport = presentationTransportOf(s);
-      final audience = widget.view == PresentView.audience;
-      if (transport != null && (!audience || widget.sessionId != null)) {
+      final member = widget.view.isMember;
+      if (transport != null && (!member || widget.sessionId != null)) {
         link = PresentationLink(
           transport: transport,
           deckUuid: UuidValue.fromString(widget.itemUuid),
-          role: audience
-              ? PresentationRole.audience
-              : PresentationRole.presenter,
+          role: switch (widget.view) {
+            PresentView.audience => PresentationRole.audience,
+            // Collaborators following along (SL-37, 10 §6.3).
+            PresentView.follower => PresentationRole.follower,
+            _ => PresentationRole.presenter,
+          },
           deviceLabel: PresentPlatform.instance.deviceLabel,
           sessionId: widget.sessionId,
           nowMs: widget.nowMs,
@@ -403,10 +407,11 @@ class _PresentScreenState extends State<PresentScreen>
     _leaving = true;
     final c = _controller;
     if (c != null && !c.ended) c.end();
+
     unawaited(PresentPlatform.instance.exitFullscreen());
     final ed = _editor;
     final shown = c?.position?.slideId;
-    if (ed != null && shown != null && widget.view != PresentView.audience) {
+    if (ed != null && shown != null && !widget.view.isMember) {
       ed.setCurrentSlide(shown);
     }
     s.router.go(s.config.itemPath(widget.itemUuid));
@@ -558,7 +563,7 @@ class _PresentScreenState extends State<PresentScreen>
     final l = slidesL10n(context);
     final c = _controller;
     final r = _renderer;
-    if (widget.view == PresentView.audience &&
+    if (widget.view.isMember &&
         (widget.sessionId == null ||
             (c != null && _link == null) ||
             const {'notFound', 'noAccess'}.contains(_link?.endedReason))) {
@@ -670,7 +675,7 @@ class _PresentScreenState extends State<PresentScreen>
                     Positioned.fill(
                       child: Center(
                         child: Text(
-                          widget.view == PresentView.audience
+                          widget.view.isMember
                               ? l.presentWaitingForPresenter
                               : l.reasonNoSlides,
                           style: const TextStyle(
@@ -711,9 +716,17 @@ class _PresentScreenState extends State<PresentScreen>
                     child: Align(
                       alignment: Alignment.bottomLeft,
                       child: IgnorePointer(
-                        ignoring: !_toolbar || c.kiosk,
+                        ignoring:
+                            !_toolbar ||
+                            c.kiosk ||
+                            widget.view == PresentView.follower,
                         child: AnimatedOpacity(
-                          opacity: _toolbar && !c.kiosk ? 1 : 0,
+                          opacity:
+                              _toolbar &&
+                                  !c.kiosk &&
+                                  widget.view != PresentView.follower
+                              ? 1
+                              : 0,
                           duration: reduceMotion
                               ? Duration.zero
                               : const Duration(milliseconds: 150),
@@ -729,6 +742,25 @@ class _PresentScreenState extends State<PresentScreen>
                       ),
                     ),
                   ),
+                  // Following a collaborator's presentation (SL-37).
+                  if (widget.view == PresentView.follower)
+                    Positioned(
+                      left: 12,
+                      right: 12,
+                      bottom: 12,
+                      child: Center(
+                        child: FollowerBar(
+                          services: s,
+                          controller: c,
+                          sessionId: widget.sessionId,
+                          fullscreen: PresentPlatform.instance.isFullscreen,
+                          onFullscreen: () {
+                            unawaited(toggleFullscreen());
+                            _focus.requestFocus();
+                          },
+                        ),
+                      ),
+                    ),
                   if (widget.view == PresentView.audience &&
                       !_startCardDismissed &&
                       !PresentPlatform.instance.isFullscreen)

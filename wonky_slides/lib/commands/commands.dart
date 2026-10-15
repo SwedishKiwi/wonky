@@ -4,6 +4,7 @@ import 'package:wonky_core/wonky_core.dart';
 import '../config/slides_features.dart';
 import '../features/settings/slides_settings.dart' show slidesSettingsCommands;
 import 'accessibility_commands.dart';
+import 'ai_commands.dart';
 import 'animate_commands.dart';
 import 'canvas_commands.dart';
 import 'chart_commands.dart';
@@ -74,6 +75,7 @@ List<Command<CommandArgs>> slidesCommands(ShellServices s) {
     ...collabCommands(s),
     ...commentCommands(s),
     ...historyCommands(s),
+    ...aiCommands(s),
     ...slidesSettingsCommands(s),
   ];
   final ids = {for (final c in real) c.id.value};

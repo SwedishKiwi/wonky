@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 
 import '../core/l10n_or_english.dart';
+import '../shell/form_dialog.dart';
 
 /// The stable widget keys of the spelling dialogs of one app (specs/15
 /// §7): `<app>.dialog.spelling…` and `<app>.dialog.dictionary…`.
@@ -156,7 +157,8 @@ class SpellingDialog extends StatefulWidget {
   State<SpellingDialog> createState() => _SpellingDialogState();
 }
 
-class _SpellingDialogState extends State<SpellingDialog> {
+class _SpellingDialogState extends State<SpellingDialog>
+    with McpDialogRegistration<SpellingDialog> {
   SpellingIssue? _current;
   List<String> _suggestions = const [];
   int _chosen = 0;
@@ -235,6 +237,80 @@ class _SpellingDialogState extends State<SpellingDialog> {
     if (e == null) return;
     await widget.session.addToDictionary(e.word);
     if (mounted) _next();
+  }
+
+  // MCP (`ui.get_dialog`, suite 09 §6.2): the flagged word, the
+  // `suggestion` select and the dialog's buttons.
+
+  @override
+  Map<String, Object?> describe() {
+    final l = wonkyAppL10nOrEnglish(context);
+    final e = _current;
+    final canChange = e != null && _replacement != null;
+    return {
+      'title': l.spellingTitle,
+      'kind': 'spelling',
+      'word': e?.word,
+      if (e == null)
+        'message': widget.session.isAvailable
+            ? l.spellingNoErrors
+            : l.spellingUnavailable,
+      'fields': [
+        if (e != null)
+          {
+            'id': 'suggestion',
+            'label': l.spellingSuggestions,
+            'type': 'select',
+            'value': _replacement,
+            'options': _suggestions,
+          },
+      ],
+      'buttons': [
+        if (e != null) ...[
+          {'id': 'change', 'label': l.spellingChange, 'enabled': canChange},
+          {
+            'id': 'change_all',
+            'label': l.spellingChangeAll,
+            'enabled': canChange,
+          },
+          {'id': 'ignore', 'label': l.spellingIgnore},
+          {'id': 'ignore_all', 'label': l.spellingIgnoreAll},
+          {'id': 'add', 'label': l.spellingAddToDictionary},
+        ],
+        {'id': 'done', 'label': l.spellingDone},
+      ],
+    };
+  }
+
+  @override
+  bool setField(String id, Object? value) {
+    if (id != 'suggestion') return false;
+    final i = value is int ? value : _suggestions.indexOf('$value');
+    if (i < 0 || i >= _suggestions.length) return false;
+    setState(() => _chosen = i);
+    return true;
+  }
+
+  @override
+  bool press(String buttonId) {
+    final e = _current;
+    switch (buttonId) {
+      case 'done' || 'cancel' || 'close':
+        Navigator.of(context).pop();
+      case 'change' when e != null && _replacement != null:
+        _change();
+      case 'change_all' when e != null && _replacement != null:
+        _changeAll();
+      case 'ignore' when e != null:
+        _ignore();
+      case 'ignore_all' when e != null:
+        _ignoreAll();
+      case 'add' when e != null:
+        _add();
+      default:
+        return false;
+    }
+    return true;
   }
 
   @override
@@ -369,8 +445,67 @@ class _PersonalDictionaryDialog extends StatefulWidget {
       _PersonalDictionaryDialogState();
 }
 
-class _PersonalDictionaryDialogState extends State<_PersonalDictionaryDialog> {
+class _PersonalDictionaryDialogState extends State<_PersonalDictionaryDialog>
+    with McpDialogRegistration<_PersonalDictionaryDialog> {
   final _field = TextEditingController();
+
+  // MCP (`ui.get_dialog`): the `word` field, the words, `add`,
+  // `remove:<word>` and `done`.
+
+  @override
+  Map<String, Object?> describe() {
+    final l = wonkyAppL10nOrEnglish(context);
+    final words = [...widget.words()]
+      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    return {
+      'title': l.spellingPersonalDictionary,
+      'description': l.spellingPersonalDictionaryHint,
+      'kind': 'personalDictionary',
+      'fields': [
+        {
+          'id': 'word',
+          'label': l.spellingAddWord,
+          'type': 'text',
+          'value': _field.text,
+        },
+      ],
+      'words': words,
+      'buttons': [
+        {'id': 'add', 'label': l.spellingAdd},
+        for (final w in words)
+          {'id': 'remove:$w', 'label': l.spellingRemoveWord(w)},
+        {'id': 'done', 'label': l.spellingDone},
+      ],
+    };
+  }
+
+  @override
+  bool setField(String id, Object? value) {
+    if (id != 'word') return false;
+    _field.text = '${value ?? ''}'.replaceAll(RegExp(r'\s'), '');
+    return true;
+  }
+
+  @override
+  bool press(String buttonId) {
+    if (buttonId == 'done' || buttonId == 'cancel' || buttonId == 'close') {
+      Navigator.of(context).pop();
+      return true;
+    }
+    if (buttonId == 'add') {
+      _add();
+      return true;
+    }
+    if (buttonId.startsWith('remove:')) {
+      final w = buttonId.substring(7);
+      if (!widget.words().contains(w)) return false;
+      widget.onRemove(w).then((_) {
+        if (mounted) setState(() {});
+      });
+      return true;
+    }
+    return false;
+  }
 
   @override
   void dispose() {

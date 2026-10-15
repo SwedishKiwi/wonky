@@ -252,3 +252,10 @@ assistant lists candidates; it never deletes without confirmation).
   `shell.settings.open {section: ai-providers}` via `openAiProviderSettings`),
   `AssistantDocumentAdapter` for app specialization, `FakeAssistantApi` in
   `package:wonky_app/testing.dart`). Write: `wonky_write/lib/features/ai/`.
+- **Slides (v2, SL-43)**: `SlidesAssistantTarget` (`wonky_server/lib/src/slides/ai/`) for
+  presentations; `AssistantToolset.of(bindMode: false, strip: {'force'})` (Slides' `mode`
+  arguments are the tools' own), `deck` is a bound key; hints `slidesCurrentSlide`,
+  `slidesSelectedSlides`, `slidesSelectedElements`; chips' Show uses `range` = slide id and
+  `objectId` = element id. App adapter `wonky_slides/lib/features/ai/slides_assistant_adapter.dart`.
+  Details: [Slides 11 §6.12](wonky_slides/11-mcp-and-ai.md). The Drive assistant (§3.1, P1) is not
+  built yet (`TODO.md`).

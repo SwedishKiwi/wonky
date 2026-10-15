@@ -4,6 +4,7 @@ import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
+import '../../config/slides_features.dart';
 import '../../config/panels/slides_panels.dart';
 import '../../l10n/slides_l10n.dart';
 import '../editor_screen/deck_editor_controller.dart';
@@ -42,6 +43,15 @@ abstract final class AccessibilityPanelKeys {
       ValueKey<String>('slides.a11y.fix.${i.id}');
   static ValueKey<String> decorative(A11yIssue i) =>
       ValueKey<String>('slides.a11y.decorative.${i.id}');
+
+  /// *Generate with AI* of a missing alt text (SL-43, 11 §6.8).
+  static ValueKey<String> generateAlt(A11yIssue i) =>
+      ValueKey<String>('slides.a11y.generateAlt.${i.id}');
+
+  /// *Generate missing alt text* (all at once).
+  static const generateMissing = ValueKey<String>(
+    'slides.a11y.generateMissingAlt',
+  );
 }
 
 /// The Accessibility panel (03 §17.4): a summary (errors, warnings, tips)
@@ -92,6 +102,34 @@ class _AccessibilityPanelState extends State<AccessibilityPanel> {
         _summary(context, ui, l, report),
         const SizedBox(height: 8),
       ];
+      // *Generate missing alt text* (SL-43, 11 §6.8).
+      final ai = SlidesFeatures.isOn(SlidesFeature.assistant);
+      if (ai && report.issues.any((i) => i.rule == A11yRule.missingAltText)) {
+        children.add(
+          Align(
+            alignment: Alignment.centerLeft,
+            child: ShadButton.outline(
+              key: AccessibilityPanelKeys.generateMissing,
+              size: ShadButtonSize.sm,
+              enabled: ui.state('slides.ai.altText', const {
+                'all': true,
+              }).enabled,
+              leading: const Icon(LucideIcons.sparkles, size: 14),
+              onPressed: () => ui.run('slides.ai.altText', const {
+                'all': true,
+              }, InvocationSource.ui),
+              child: Flexible(
+                child: Text(
+                  l.a11yGenerateMissingAlt,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          ),
+        );
+        children.add(const SizedBox(height: 8));
+      }
       if (report.issues.isEmpty) {
         children.add(
           Padding(
@@ -312,6 +350,19 @@ class _AccessibilityPanelState extends State<AccessibilityPanel> {
                     () =>
                         ui.run('slides.a11y.fix', fixArgs, InvocationSource.ui),
                     canFix,
+                  ),
+                if (issue.rule == A11yRule.missingAltText &&
+                    issue.elementId != null &&
+                    SlidesFeatures.isOn(SlidesFeature.assistant))
+                  action(
+                    AccessibilityPanelKeys.generateAlt(issue),
+                    l.a11yGenerateAlt,
+                    () => ui.run('slides.ai.altText', {
+                      'elements': [issue.elementId!],
+                    }, InvocationSource.ui),
+                    ui.state('slides.ai.altText', {
+                      'elements': [issue.elementId!],
+                    }).enabled,
                   ),
                 if (issue.rule == A11yRule.missingAltText)
                   action(

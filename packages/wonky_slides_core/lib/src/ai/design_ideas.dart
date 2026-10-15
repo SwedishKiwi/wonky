@@ -95,9 +95,7 @@ final class SlideContentProfile {
       texts.addAll(ls);
     }
     final number =
-        texts.isNotEmpty &&
-        texts.length <= 2 &&
-        _number.hasMatch(texts.first);
+        texts.isNotEmpty && texts.length <= 2 && _number.hasMatch(texts.first);
     final quote =
         texts.isNotEmpty &&
         texts.length <= 3 &&

@@ -40,13 +40,23 @@ enum PresentView {
   presenter,
 
   /// The audience view of a session on another device or browser.
-  audience;
+  audience,
+
+  /// A collaborator following the presentation (`?view=follow`, 09 §1.6,
+  /// 10 §6.3; SL-37): joins as `follower`, can't control, may browse away
+  /// and return to the presenter.
+  follower;
 
   static PresentView fromName(String? name) => switch (name) {
     'presenter' => presenter,
-    'audience' || 'follow' => audience,
+    'audience' => audience,
+    'follow' => follower,
     _ => present,
   };
+
+  /// Whether this view follows a presenter of a session (audience or
+  /// follower).
+  bool get isMember => this == audience || this == follower;
 }
 
 /// Black or white screen (10 §4.4).
@@ -137,7 +147,7 @@ class PresentController extends ChangeNotifier {
       showSkipped: showSkipped,
     );
     player = SlidePlayer(timelineOf: sequence.timelineOf, planOf: _planOf);
-    if (view != PresentView.audience) {
+    if (!view.isMember) {
       final start = sequence.startAt(startSlideId);
       _position = start == null
           ? null
@@ -378,8 +388,42 @@ class PresentController extends ChangeNotifier {
   PresentPosition? _pendingRemote;
 
   /// Whether this view only mirrors the presenter (navigation becomes
-  /// commands to the presenter).
-  bool get mirrors => view == PresentView.audience;
+  /// commands to the presenter; a follower's navigation browses away).
+  bool get mirrors =>
+      view == PresentView.audience ||
+      (view == PresentView.follower && !_browsing);
+
+  // ---------------------------------------------- follower (SL-37, 09 §1.6)
+
+  bool _browsing = false;
+  (PresentationState, int?)? _latestRemote;
+
+  /// Whether a follower browsed away from the presenter's slide (10 §6.3:
+  /// *Return to presenter*).
+  bool get browsing => _browsing;
+
+  /// A follower's navigation leaves the presenter (locally only).
+  void _browse() {
+    if (view != PresentView.follower || _browsing) return;
+    _browsing = true;
+    _laser = null;
+    notifyListeners();
+  }
+
+  /// Back to the presenter's current slide and step (a follower that
+  /// browsed away).
+  void returnToPresenter() {
+    if (!_browsing) return;
+    _browsing = false;
+    _picker = false;
+    final latest = _latestRemote;
+    if (latest != null) {
+      _remoteRevision = -1;
+      applyState(latest.$1, sentAtMs: latest.$2);
+    } else {
+      notifyListeners();
+    }
+  }
 
   SlideOrderEntry? get currentEntry =>
       _position == null ? null : sequence.order.entry(_position!.slideId);
@@ -476,8 +520,7 @@ class PresentController extends ChangeNotifier {
   /// Self-running kiosk mode (`?kiosk=1` or `presentJson.mode`, 10 §9):
   /// every step and slide advances on its own, loops, and user navigation
   /// is off (exit with the Esc gesture).
-  bool get kiosk =>
-      view != PresentView.audience && (_kiosk || settings.mode == 'kiosk');
+  bool get kiosk => !view.isMember && (_kiosk || settings.mode == 'kiosk');
 
   /// Whether the deck continues with its first slide after the last.
   bool get loops => kiosk || settings.loops;
@@ -512,7 +555,11 @@ class PresentController extends ChangeNotifier {
   void _scheduleAuto() {
     _autoAt = null;
     final p = _position;
-    if (p != null && !mirrors && !_ended && !_endScreen) {
+    if (p != null &&
+        !mirrors &&
+        view != PresentView.follower &&
+        !_ended &&
+        !_endScreen) {
       final steps = timelineOf(p.slideId).stepCount;
       final last = p.step >= steps;
       final spec = TransitionSpec.effective(
@@ -627,6 +674,8 @@ class PresentController extends ChangeNotifier {
   }
 
   bool _command(String command, [Map<String, Object?>? args]) {
+    // Followers can't control the presentation (10 §6.3).
+    if (view == PresentView.follower) return false;
     link?.send(
       PresentationCommandUpdate(
         command: command,
@@ -639,6 +688,7 @@ class PresentController extends ChangeNotifier {
   /// Next step, then slide (→, Space, PageDown, click; 10 §2.1).
   bool next({bool user = true}) {
     if (!_accept(user)) return false;
+    _browse();
     if (mirrors) return _command('next');
     if (_unblank()) return true;
     if (_endScreen) {
@@ -688,6 +738,7 @@ class PresentController extends ChangeNotifier {
   /// The previous step's end state, or the previous slide's final frame.
   bool previous({bool user = true}) {
     if (!_accept(user)) return false;
+    _browse();
     if (mirrors) return _command('previous');
     if (_unblank()) return true;
     if (_endScreen) {
@@ -706,6 +757,7 @@ class PresentController extends ChangeNotifier {
   /// The next slide, skipping the remaining builds.
   bool nextSlide({bool user = true}) {
     if (!_accept(user)) return false;
+    _browse();
     if (mirrors) return _command('nextSlide');
     if (_unblank()) return true;
     final p = _position;
@@ -722,6 +774,7 @@ class PresentController extends ChangeNotifier {
   /// The previous slide at its start.
   bool previousSlide({bool user = true}) {
     if (!_accept(user)) return false;
+    _browse();
     if (mirrors) return _command('previousSlide');
     if (_unblank()) return true;
     if (_endScreen) return previous(user: false);
@@ -734,6 +787,7 @@ class PresentController extends ChangeNotifier {
   }
 
   bool first() {
+    _browse();
     if (mirrors) return _command('first');
     final f = sequence.first();
     if (f == null) return false;
@@ -742,6 +796,7 @@ class PresentController extends ChangeNotifier {
   }
 
   bool last() {
+    _browse();
     if (mirrors) return _command('last');
     final f = sequence.last();
     if (f == null) return false;
@@ -752,6 +807,7 @@ class PresentController extends ChangeNotifier {
   /// Shows [slideId] at [step] — skipped slides too (picker, *Go to
   /// slide*, the strip; 10 §2.2).
   bool goTo(String slideId, [int step = 0]) {
+    _browse();
     if (mirrors) return _command('goTo', {'slideId': slideId, 'step': step});
     final p = sequence.goTo(slideId, step);
     if (p == null) return false;
@@ -938,7 +994,7 @@ class PresentController extends ChangeNotifier {
   /// Pointer down on the slide at [su] with the current tool.
   void pointerDown(Offset su) {
     final p = _position;
-    if (p == null || mirrors) return;
+    if (p == null || mirrors || view == PresentView.follower) return;
     switch (_tool) {
       case PresentTool.pen || PresentTool.highlighter:
         final hl = _tool == PresentTool.highlighter;
@@ -962,7 +1018,7 @@ class PresentController extends ChangeNotifier {
 
   void pointerMove(Offset su) {
     final p = _position;
-    if (p == null || mirrors) return;
+    if (p == null || mirrors || view == PresentView.follower) return;
     final d = _drawing;
     if (d != null) {
       _drawing = d.extend(_filter!.filter(su, _now()));
@@ -1099,7 +1155,7 @@ class PresentController extends ChangeNotifier {
 
   bool get _publishes =>
       link != null &&
-      view != PresentView.audience &&
+      !view.isMember &&
       link!.role == PresentationRole.presenter;
 
   void _changed() {
@@ -1132,7 +1188,7 @@ class PresentController extends ChangeNotifier {
     if (_disposed) return;
     switch (e) {
       case PresentationWelcome():
-        if (view == PresentView.audience) {
+        if (view.isMember) {
           final s = e.state;
           if (s != null) applyState(s, sentAtMs: e.stateSentAtMs);
         } else {
@@ -1152,11 +1208,11 @@ class PresentController extends ChangeNotifier {
           }
         }
       case PresentationStateEvent():
-        if (view == PresentView.audience) {
+        if (view.isMember) {
           applyState(e.state, sentAtMs: e.serverTimeMs);
         }
       case PresentationLaserEvent():
-        if (view != PresentView.audience) return;
+        if (!view.isMember || _browsing) return;
         final x = e.x, y = e.y;
         _laser = x == null || y == null ? null : Offset(x, y);
         if (_laser != null) {
@@ -1167,7 +1223,7 @@ class PresentController extends ChangeNotifier {
         }
         notifyListeners();
       case PresentationInkEvent():
-        if (view != PresentView.audience) return;
+        if (!view.isMember) return;
         switch (e.op) {
           case 'add':
             final s = InkStroke.tryParse(e.strokeJson);
@@ -1179,7 +1235,7 @@ class PresentController extends ChangeNotifier {
         }
         notifyListeners();
       case PresentationCommandEvent():
-        if (view == PresentView.audience) return;
+        if (view.isMember) return;
         applyCommand(e.command, e.argsJson);
       default:
         break;
@@ -1227,6 +1283,11 @@ class PresentController extends ChangeNotifier {
   /// [sentAtMs]); a slide that hasn't synced yet waits ("Catching up…").
   void applyState(PresentationState s, {int? sentAtMs}) {
     if (s.revision <= _remoteRevision && s.revision != 0) return;
+    if (view == PresentView.follower) {
+      // A follower that browsed away catches up on *Return to presenter*.
+      _latestRemote = (s, sentAtMs);
+      if (_browsing) return;
+    }
     _remoteRevision = s.revision;
     final since = sentAtMs == null || link == null
         ? 0

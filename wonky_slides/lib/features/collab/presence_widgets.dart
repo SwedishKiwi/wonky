@@ -2,14 +2,17 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
+import 'package:wonky_app/wonky_app.dart' show ShellServices;
 import 'package:wonky_core/wonky_core.dart' show InvocationSource;
 import 'package:wonky_ui/wonky_ui.dart';
 
+import '../../commands/slides_command.dart' show editorOfServices;
 import '../../l10n/slides_l10n.dart';
 import '../editor_screen/deck_editor_controller.dart';
 import '../text_editing/text_editing_host.dart';
 import 'collab_canvas_layer.dart' show SoftLockPopover;
 import 'slides_collab.dart';
+import 'slides_hints.dart';
 import 'slides_presence_controller.dart';
 
 /// Presence dots of a navigator row or grid cell (Slides 09 §1.2): up to 3
@@ -105,6 +108,100 @@ class SlidePresenceDots extends StatelessWidget {
       if (editor.order.entry(key)?.groupId == g) out.addAll(value);
     }
     return out;
+  }
+}
+
+/// The 1 s navigator shimmer after a collaborator changed the deck's
+/// structure (09 §2.4 `structure` hints: slides inserted, moved or deleted,
+/// group operations) on the row of slide or group [id]; a static tint with
+/// reduce motion. Draws nothing otherwise (place it over the row).
+class StructureShimmer extends StatefulWidget {
+  const StructureShimmer({super.key, required this.editor, required this.id});
+
+  final DeckEditorController editor;
+
+  /// The slide or group id.
+  final String id;
+
+  @override
+  State<StructureShimmer> createState() => _StructureShimmerState();
+}
+
+class _StructureShimmerState extends State<StructureShimmer>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _a = AnimationController(
+    vsync: this,
+    duration: SlidesHints.structureShimmer,
+  );
+  SlidesHints? _hints;
+  DateTime? _started;
+
+  @override
+  void initState() {
+    super.initState();
+    _bind();
+  }
+
+  @override
+  void didUpdateWidget(StructureShimmer old) {
+    super.didUpdateWidget(old);
+    _bind();
+  }
+
+  void _bind() {
+    final h = SlidesCollab.of(widget.editor)?.hints;
+    if (identical(h, _hints)) return;
+    _hints?.removeListener(_check);
+    _hints = h;
+    h?.addListener(_check);
+    _check();
+  }
+
+  void _check() {
+    final at = _hints?.shimmerOf(widget.id);
+    if (at == null || at == _started || !mounted) return;
+    _started = at;
+    _a.forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _hints?.removeListener(_check);
+    _a.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = ShadTheme.of(context).colorScheme.primary;
+    final reduce = WonkyThemeScope.of(context).reduceMotion;
+    return IgnorePointer(
+      child: AnimatedBuilder(
+        animation: _a,
+        builder: (context, _) {
+          if (!_a.isAnimating) return const SizedBox.expand();
+          final t = _a.value;
+          return DecoratedBox(
+            key: ValueKey<String>('slides.navigator.shimmer.${widget.id}'),
+            decoration: BoxDecoration(
+              gradient: reduce
+                  ? null
+                  : LinearGradient(
+                      begin: Alignment(-1 + 3 * t - 1, 0),
+                      end: Alignment(-1 + 3 * t, 0),
+                      colors: [
+                        color.withValues(alpha: 0),
+                        color.withValues(alpha: 0.28),
+                        color.withValues(alpha: 0),
+                      ],
+                    ),
+              color: reduce ? color.withValues(alpha: 0.16) : null,
+            ),
+            child: const SizedBox.expand(),
+          );
+        },
+      ),
+    );
   }
 }
 
@@ -221,4 +318,100 @@ class PresenterPill extends StatelessWidget {
       },
     );
   }
+}
+
+/// The live dot on the **Present** button while a collaborator presents
+/// the deck (09 §1.6): a small dot in the presenter's presence color at
+/// the button's top-right corner, with "Anna is presenting" for screen
+/// readers. [child] is the button.
+class PresentLiveDot extends StatelessWidget {
+  const PresentLiveDot({
+    super.key,
+    required this.services,
+    required this.child,
+  });
+
+  final ShellServices services;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: services.activeDocument,
+    builder: (context, _) {
+      final ed = editorOfServices(services);
+      if (ed == null) return child;
+      return ListenableBuilder(
+        listenable: ed,
+        builder: (context, _) {
+          final collab = SlidesCollab.of(ed);
+          if (collab == null) return child;
+          return ListenableBuilder(
+            listenable: collab.presence,
+            builder: (context, _) {
+              final presenters = collab.presence.presenters;
+              if (presenters.isEmpty) return child;
+              final p = presenters.first;
+              final theme = ShadTheme.of(context);
+              final l = slidesL10n(context);
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  child,
+                  Positioned(
+                    top: -2,
+                    right: -2,
+                    child: Semantics(
+                      label: l.presenterLive(
+                        collab.presence.labelOf(p.participant),
+                      ),
+                      child: Container(
+                        key: const ValueKey<String>('slides.present.liveDot'),
+                        width: 9,
+                        height: 9,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.presence(p.colorIndex),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: theme.colorScheme.background,
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+    },
+  );
+}
+
+/// *Follow Anna's presentation* entries of the Present menu (04 §3, 09
+/// §1.6): one per collaborator presenting the deck, then a separator.
+List<WonkyMenuEntry> followPresenterMenuItems(
+  BuildContext context,
+  ShellServices services,
+) {
+  final ed = editorOfServices(services);
+  final collab = ed == null ? null : SlidesCollab.of(ed);
+  if (ed == null || collab == null) return const [];
+  final l = slidesL10n(context);
+  return [
+    for (final p in collab.presence.presenters)
+      WonkyMenuItem(
+        key: ValueKey<String>('menu.present.follow.${p.sessionId}'),
+        label: l.presentMenuFollow(collab.presence.labelOf(p.participant)),
+        icon: LucideIcons.presentation,
+        onSelected: () => services.dispatcher.invoke(
+          'slides.presence.followPresenter',
+          args: {'sessionId': p.sessionId},
+          source: InvocationSource.menu,
+          context: context,
+        ),
+      ),
+    if (collab.presence.presenters.isNotEmpty) const WonkyMenuSeparator(),
+  ];
 }

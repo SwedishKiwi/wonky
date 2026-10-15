@@ -1,0 +1,7 @@
+### The presenter asks for a phone-remote pairing key (Slides 10 §6.4,
+### SL-41): the answer is a [PresentationPairingEvent]. Earlier unused keys
+### are revoked; `revoke: true` only revokes them.
+class: PresentationPairingUpdate
+extends: PresentationUpdate
+fields:
+  revoke: bool?

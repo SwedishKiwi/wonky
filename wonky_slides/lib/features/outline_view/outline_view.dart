@@ -26,6 +26,8 @@ import '../navigator/navigator_controller.dart';
 import '../spellcheck/editor_spelling.dart' show spellingErrorColor;
 import '../spellcheck/slides_spelling.dart';
 import '../spellcheck/spelling_actions.dart' show spellingMenuEntriesWith;
+import '../text_editing/text_editing_host.dart'
+    show TextLockTarget, textEditingOf;
 import 'outline_body.dart';
 import 'outline_controller.dart';
 
@@ -669,6 +671,15 @@ class _OutlineSlideBlockState extends State<_OutlineSlideBlock>
     SlidesSpelling.maybeOf(ed)?.removeListener(_onSpelling);
     _timer?.cancel();
     _commitNow();
+    // The claim is released after the frame (the tree is locked now).
+    final claim = _claim;
+    final locks = textEditingOf(ed).locks;
+    final activity = _activity;
+    _claim = null;
+    scheduleMicrotask(() {
+      if (claim != null) locks.releaseTarget(claim);
+      activity.dispose();
+    });
     widget.outline.unregister(slideId, this);
     _title.dispose();
     for (final b in _bullets) {
@@ -794,6 +805,59 @@ class _OutlineSlideBlockState extends State<_OutlineSlideBlock>
     }
     _timer?.cancel();
     _timer = Timer(commitDelay, _commitNow);
+    _activity.value++;
+    _hint(i);
+  }
+
+  // ------------------------------------- soft locks and hints (SL-37)
+
+  /// The body this block claims while one of its lines has focus (09
+  /// §2.1): the title element or the body element.
+  TextLockTarget? _claim;
+
+  /// Input in any line of this block (keeps the claim from idling).
+  final _activity = ValueNotifier<int>(0);
+
+  /// The element whose body line [i] edits (null: no element yet).
+  String? _elementOf(int i) =>
+      i < 0 ? widget.parts.title?.id : widget.parts.body?.id;
+
+  /// Claims the body of line [line] (outline typing has no soft-lock
+  /// question: a body someone else edits is entered as with *Edit anyway*,
+  /// and outline claims never start a race prompt — they are forced).
+  void _claimFor(_Line line) {
+    if (!ed.canEdit) return;
+    final id = _elementOf(_indexOf(line));
+    final target = id == null ? null : TextLockTarget.element(id);
+    if (target == _claim) return;
+    _releaseClaim();
+    if (target == null) return;
+    final collab = SlidesCollab.of(ed);
+    if (collab == null) return;
+    _claim = target;
+    collab.locks.editAnyway(target);
+    collab.locks.claimTarget(
+      target,
+      activity: _activity,
+      stop: () => line.focus.unfocus(),
+    );
+  }
+
+  void _releaseClaim() {
+    final c = _claim;
+    _claim = null;
+    if (c != null) textEditingOf(ed).locks.releaseTarget(c);
+  }
+
+  /// Sends the typed body of line [i] as a live text hint (09 §2.4).
+  void _hint(int i) {
+    final hints = SlidesCollab.of(ed)?.hints;
+    final id = _elementOf(i);
+    if (hints == null || id == null) return;
+    final json = i < 0
+        ? widget.parts.titleBody.withText(0, _titlePara.text).toJson()
+        : _body.toJson();
+    hints.typing(id, slideId, json);
   }
 
   void _onFocus(_Line line) {
@@ -805,6 +869,7 @@ class _OutlineSlideBlockState extends State<_OutlineSlideBlock>
         l,
         caret: c.selection.isValid ? c.selection.extentOffset : c.text.length,
       );
+      _claimFor(line);
       if (ed.currentSlideId != slideId) {
         ed.setCurrentSlide(slideId);
       } else if (!ed.selectedSlideIds.contains(slideId)) {
@@ -813,6 +878,13 @@ class _OutlineSlideBlockState extends State<_OutlineSlideBlock>
     } else {
       widget.outline.clearFocus(l);
       _commitNow();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        // Moving between this block's lines keeps the claim.
+        if (!mounted) return;
+        if (!_title.focus.hasFocus && !_bullets.any((b) => b.focus.hasFocus)) {
+          _releaseClaim();
+        }
+      });
       if (i == 0 && _body.isBlank && _showEmptyBody) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;

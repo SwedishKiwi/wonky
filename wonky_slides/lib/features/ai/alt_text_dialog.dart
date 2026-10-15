@@ -213,6 +213,7 @@ class _AltTextGenerateDialogState extends State<AltTextGenerateDialog>
     final cs = theme.colorScheme;
     final items = _items;
     return ShadDialog(
+      constraints: const BoxConstraints(maxWidth: 600),
       key: AltTextDialogKeys.dialog,
       title: Text(l.aiAltTitle),
       actions: [

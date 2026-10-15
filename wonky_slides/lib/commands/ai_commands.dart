@@ -127,6 +127,12 @@ List<Command<CommandArgs>> aiCommands(ShellServices s) {
           'element': JsonSchema.string(description: 'Default: the selection'),
         },
       ),
+      // Mod+J while editing text: *Custom…* (11 §6.5, contextual; outside
+      // text it toggles the assistant panel, suite 10 §3).
+      argBindings: const [
+        ArgsKeyBinding(KeyBinding('J', mod: true), {'mode': 'custom'}),
+      ],
+      keyScope: SlidesKeyScopes.text,
       undoLabelOf: (l, a) => l.aiUndoLabel(_modeLabel(l, a.string('mode'))),
       enabled: (ed, a) =>
           available(ed) && ai(ed).textTarget(a.string('element')) != null,

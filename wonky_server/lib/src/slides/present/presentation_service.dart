@@ -26,8 +26,9 @@ import '../../platform/users/user_service.dart';
 /// - Audience, remote and follower joins say `hello` and wait for the
 ///   presenter's `here` (or, while the presenter reconnects, another
 ///   member's `meta`). `audience` and `remote` must be the presenter's own
-///   account (a remote of another account needs a pairing key, P1);
-///   `follower` needs ≥ viewer on the deck, which every join checks.
+///   account — or, for a `remote`, carry a pairing key the presenter issued
+///   (SL-41, 10 §6.4); `follower` needs ≥ viewer on the deck, which every
+///   join checks.
 /// - The presenter relays `state`, `laser`, `ink` and `end`; audiences and
 ///   remotes send `command`s (≤ [maxCommandsPerSecond]; access re-checked)
 ///   that only the presenter receives.
@@ -60,6 +61,93 @@ abstract final class PresentationService {
   static String deckChannel(String deckUuid) => 'present-deck:$deckUuid';
 
   static String _findChannel(String requestId) => 'present-find:$requestId';
+
+  // ---------------------------------------------- pairing (SL-41, 10 §6.4)
+
+  /// How long a phone-remote pairing key (and its code) is valid.
+  static Duration pairingTtl = const Duration(minutes: 10);
+
+  /// Typed codes a user may try per [_resolveWindow] (6-digit codes are
+  /// guessable otherwise).
+  static const maxResolvesPerWindow = 10;
+  static const _resolveWindow = Duration(minutes: 1);
+  static final Map<int, List<int>> _resolves = {};
+
+  /// Codes issued by presenters on this instance (avoids local repeats).
+  static final Set<String> _localCodes = {};
+
+  static String codeChannel(String code) => 'present-code:$code';
+
+  static final _codePattern = RegExp(r'^[0-9]{6}$');
+
+  /// A six-digit code not issued on this instance.
+  static String newCode() {
+    final r = Random.secure();
+    while (true) {
+      final c = r.nextInt(1000000).toString().padLeft(6, '0');
+      if (_localCodes.add(c)) return c;
+    }
+  }
+
+  static void releaseCode(String code) => _localCodes.remove(code);
+
+  /// The remote route a typed pairing [code] stands for (the presenter's
+  /// connection answers on `present-code:<code>`), or null. Needs ≥ viewer
+  /// on the deck; at most [maxResolvesPerWindow] tries a minute per user.
+  static Future<PresentationPairingTarget?> resolveCode(
+    Session session,
+    Actor actor,
+    String code,
+  ) async {
+    final now = _now();
+    final tries = _resolves.putIfAbsent(actor.userId, () => [])
+      ..removeWhere((t) => now - t > _resolveWindow.inMilliseconds);
+    if (tries.length >= maxResolvesPerWindow) {
+      throw Errors.limit('Too many pairing codes. Try again in a minute.');
+    }
+    tries.add(now);
+    final digits = code.replaceAll(RegExp(r'\s'), '');
+    if (!_codePattern.hasMatch(digits)) return null;
+    final requestId = const Uuid().v4();
+    PresentationBusMessage? answer;
+    void onReply(SerializableModel m) {
+      if (m is! PresentationBusMessage || m.type != 'resolved') return;
+      answer ??= m;
+    }
+
+    final ch = _findChannel(requestId);
+    session.messages.addListener(ch, onReply);
+    try {
+      await _post(
+        session,
+        codeChannel(digits),
+        PresentationBusMessage(
+          type: 'resolve',
+          connectionId: requestId,
+          sessionId: '',
+          deckUuid: '',
+          userId: actor.userId,
+          replyTo: requestId,
+        ),
+      );
+      final until = clockNow().add(probeTimeout);
+      while (answer == null && clockNow().isBefore(until)) {
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+      }
+    } finally {
+      session.messages.removeListener(ch, onReply);
+    }
+    final a = answer;
+    final key = a?.pairingKey;
+    if (a == null || key == null) return null;
+    final deck = UuidValue.fromString(a.deckUuid);
+    await AccessService.require(session, actor, deck, Role.viewer);
+    return PresentationPairingTarget(
+      deckUuid: deck,
+      sessionId: a.sessionId,
+      pairingKey: key,
+    );
+  }
 
   static final _idPattern = RegExp(r'^[0-9A-Za-z]{16,32}$');
 
@@ -245,6 +333,8 @@ class _Connection {
     String? command,
     String? argsJson,
     int? sentAtMs,
+    String? pairingKey,
+    bool? admitted,
   }) => PresentationBusMessage(
     type: type,
     connectionId: connectionId,
@@ -269,6 +359,8 @@ class _Connection {
     sentAtMs: sentAtMs,
     startedAtMs: isPresenter ? startedAtMs : null,
     replyTo: replyTo,
+    pairingKey: pairingKey,
+    admitted: admitted,
   );
 
   Future<void> _send(PresentationBusMessage m, {String? coalesceKey}) =>
@@ -291,10 +383,6 @@ class _Connection {
     } else {
       if (requested == null) {
         throw Errors.invalid('A presentation session is required.');
-      }
-      if (role == PresentationRole.remote && join.pairingKey != null) {
-        // Pairing keys of phone remotes come with SL-41 (P1).
-        throw Errors.forbidden('Pairing keys are not supported yet.');
       }
       await _startMember(requested);
     }
@@ -376,7 +464,13 @@ class _Connection {
   Future<void> _startMember(String requested) async {
     sessionId = requested;
     _listen();
-    await _send(_msg('hello'));
+    // A phone remote of another account shows its pairing key (SL-41).
+    await _send(
+      _msg(
+        'hello',
+        pairingKey: role == PresentationRole.remote ? join.pairingKey : null,
+      ),
+    );
     await _waitReplies(
       PresentationService.joinTimeout,
       (r) => r.role == PresentationRole.presenter,
@@ -395,7 +489,24 @@ class _Connection {
       return;
     }
     final owner = answer.presenterUserId!;
-    if (role != PresentationRole.follower && owner != actor.userId) {
+    if (role == PresentationRole.remote &&
+        owner != actor.userId &&
+        presenter?.admitted != true) {
+      // ---- SL-41: a remote of another account needs a valid pairing key
+      // (or an earlier pairing in this session) that the presenter admits.
+      _emit(
+        PresentationEndedEvent(
+          serverTimeMs: _now(),
+          reason: join.pairingKey == null ? 'noAccess' : 'pairingExpired',
+        ),
+      );
+      _quiet = true;
+      await _close();
+      return;
+    }
+    if (role != PresentationRole.follower &&
+        role != PresentationRole.remote &&
+        owner != actor.userId) {
       _unlisten();
       throw Errors.forbidden('Only the presenter can join this way.');
     }
@@ -468,6 +579,10 @@ class _Connection {
           _replies.add(m);
         } else if (isPresenter && m.role != PresentationRole.presenter) {
           _addToRoster(m);
+          // A rejoined presenter keeps the remotes paired before (SL-41).
+          if (m.role == PresentationRole.remote && m.userId != actor.userId) {
+            _paired.add(m.userId);
+          }
         }
       case 'who':
         if (!verified) return;
@@ -476,7 +591,7 @@ class _Connection {
         if (!verified) return;
         if (isPresenter) {
           if (m.role == PresentationRole.presenter) return;
-          _reply(m, 'here');
+          _reply(m, 'here', admitted: _admit(m));
         } else if (m.role == PresentationRole.presenter) {
           if (m.userId != presenterUserId) return;
           _grace?.cancel();
@@ -578,16 +693,18 @@ class _Connection {
       m.role == PresentationRole.presenter &&
       m.userId == presenterUserId;
 
-  void _reply(PresentationBusMessage to, String type) => unawaited(
-    _send(
-      _msg(
-        type,
-        replyTo: to.connectionId,
-        state: lastState,
-        stateSentAtMs: lastStateSentAt,
-      ),
-    ).catchError((Object _) {}),
-  );
+  void _reply(PresentationBusMessage to, String type, {bool? admitted}) =>
+      unawaited(
+        _send(
+          _msg(
+            type,
+            replyTo: to.connectionId,
+            state: lastState,
+            stateSentAtMs: lastStateSentAt,
+            admitted: admitted,
+          ),
+        ).catchError((Object _) {}),
+      );
 
   void _addToRoster(PresentationBusMessage m) {
     roster[m.connectionId] = PresentationParticipant(
@@ -663,6 +780,10 @@ class _Connection {
           await _send(_msg('end', sentAtMs: now));
           _quiet = true;
           await _close();
+        case PresentationPairingUpdate(:final revoke):
+          _revokePairings();
+          if (revoke == true) return;
+          _issuePairing();
         case PresentationCommandUpdate():
           return;
       }
@@ -693,6 +814,85 @@ class _Connection {
     );
   }
 
+  // ------------------------------------- pairing (SL-41, Slides 10 §6.4)
+
+  /// Open pairing keys of this presenter connection: key → (code, expiry,
+  /// the listener on the code's channel).
+  final Map<String, (String, int, void Function(SerializableModel))> _pairings =
+      {};
+
+  /// Accounts whose remote was admitted with a key (they rejoin without).
+  final Set<int> _paired = {};
+
+  void _issuePairing() {
+    final key = PresentationService.newSessionId();
+    final code = PresentationService.newCode();
+    final now = _now();
+    final expires = now + PresentationService.pairingTtl.inMilliseconds;
+    void onCode(SerializableModel m) => _onCode(m, key);
+    _pairings[key] = (code, expires, onCode);
+    session.messages.addListener(PresentationService.codeChannel(code), onCode);
+    _emit(
+      PresentationPairingEvent(
+        serverTimeMs: now,
+        pairingKey: key,
+        code: code,
+        expiresAtMs: expires,
+      ),
+    );
+  }
+
+  void _dropPairing(String key) {
+    final p = _pairings.remove(key);
+    if (p == null) return;
+    PresentationService.releaseCode(p.$1);
+    try {
+      session.messages.removeListener(
+        PresentationService.codeChannel(p.$1),
+        p.$3,
+      );
+    } on Object {
+      // The session is closing.
+    }
+  }
+
+  void _revokePairings() {
+    for (final k in [..._pairings.keys]) {
+      _dropPairing(k);
+    }
+  }
+
+  /// A typed code of pairing [key] asks for its session (`resolveCode`).
+  void _onCode(SerializableModel model, String key) {
+    if (model is! PresentationBusMessage || _closed || !verified) return;
+    final replyTo = model.replyTo;
+    if (model.type != 'resolve' || replyTo == null) return;
+    final p = _pairings[key];
+    if (p == null || p.$2 < _now()) return;
+    unawaited(
+      PresentationService._post(
+        session,
+        PresentationService._findChannel(replyTo),
+        _msg('resolved', replyTo: replyTo, pairingKey: key),
+      ).catchError((Object _) {}),
+    );
+  }
+
+  /// Whether the remote of [m] (another account) may join: a valid,
+  /// unexpired key (used up now), or an account paired before.
+  bool? _admit(PresentationBusMessage m) {
+    if (m.role != PresentationRole.remote || m.userId == actor.userId) {
+      return null;
+    }
+    if (_paired.contains(m.userId)) return true;
+    final key = m.pairingKey;
+    final p = key == null ? null : _pairings[key];
+    if (p == null || p.$2 < _now()) return false;
+    _dropPairing(key!);
+    _paired.add(m.userId);
+    return true;
+  }
+
   // ------------------------------------------------------------- closing
 
   Future<void> _leave() async {
@@ -700,6 +900,7 @@ class _Connection {
     _left = true;
     _closed = true;
     _grace?.cancel();
+    _revokePairings();
     final wasVerified = verified;
     try {
       _unlisten();

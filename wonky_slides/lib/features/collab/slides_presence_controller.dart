@@ -23,7 +23,8 @@ class RemoteDeckCursor {
     required this.participant,
     required this.cursor,
     required this.movedAt,
-  });
+    DateTime? pointerAt,
+  }) : pointerAt = pointerAt ?? movedAt;
 
   final Participant participant;
   final SlidesPresenceCursor cursor;
@@ -31,6 +32,9 @@ class RemoteDeckCursor {
   /// When their slide or selection last changed (the name flag shows for
   /// 3 s, 09 §1.2).
   final DateTime movedAt;
+
+  /// When their pointer last moved (pointers hide after 5 s idle, 09 §1.2).
+  final DateTime pointerAt;
 
   String get sessionId => participant.sessionId;
   int get colorIndex => participant.colorIndex;
@@ -44,6 +48,11 @@ class RemoteDeckCursor {
 
   /// The slide they are on (the presented slide while presenting).
   String? get slideId => cursor.presenting?.slideId ?? cursor.slideId;
+
+  /// The canvas surface they edit: the layout or master in masters mode,
+  /// else their slide.
+  String? get surfaceId =>
+      cursor.viewMode == 'masters' ? cursor.surfaceId : cursor.slideId;
 }
 
 /// Slides presence (Slides 09 §1): publishes the local editor state as the
@@ -69,6 +78,9 @@ class SlidesPresenceController extends ChangeNotifier {
   /// Viewport updates while followed (2/s, 09 §1.5).
   static const viewportInterval = Duration(milliseconds: 500);
 
+  /// A remote pointer hides after this long without moving (09 §1.2).
+  static const pointerIdle = Duration(seconds: 5);
+
   PresenceSession? _presence;
   String? _sent;
   final Map<String, RemoteDeckCursor> _cursors = {};
@@ -88,6 +100,7 @@ class SlidesPresenceController extends ChangeNotifier {
   bool _disposed = false;
   PresentingState? _presenting;
   bool _transform = false;
+  Offset? _pointer;
   CanvasController? _viewport;
   SlideCanvasController? _canvas;
 
@@ -124,10 +137,12 @@ class SlidesPresenceController extends ChangeNotifier {
       route: presenting != null ? 'present' : 'editor',
       viewMode: editor.mode.name,
       slideId: editor.currentSlideId,
+      surfaceId: editor.mode == DeckViewMode.masters ? editor.surfaceId : null,
       selection: editor.selectedElementIds,
       navSlides: [...editor.selectedSlideIds],
       navGroups: [...editor.selectedGroupIds],
       editing: claimOf(),
+      pointer: _pointer,
       transform: _transform,
       viewport: withViewport ? _localViewport() : null,
       presenting: presenting,
@@ -136,7 +151,7 @@ class SlidesPresenceController extends ChangeNotifier {
   }
 
   DeckViewport? _localViewport() {
-    final slide = editor.currentSlideId;
+    final slide = editor.surfaceId;
     final v = _viewport;
     if (slide == null) return null;
     if (v == null || v.viewport.isEmpty) {
@@ -173,6 +188,21 @@ class SlidesPresenceController extends ChangeNotifier {
 
   PresentingState? get presenting => _presenting;
 
+  /// The local mouse pointer on the canvas surface in slide units (09
+  /// §1.4), null when it left the slide or the window lost focus. Sent with
+  /// the cursor (the presence session throttles to 10/s); whole units, so
+  /// sub-unit moves send nothing.
+  set pointer(Offset? su) {
+    final next = su == null
+        ? null
+        : Offset(su.dx.roundToDouble(), su.dy.roundToDouble());
+    if (next == _pointer) return;
+    _pointer = next;
+    publish();
+  }
+
+  Offset? get pointer => _pointer;
+
   /// Whether a drag is live (09 §1.1 `transform`).
   set transforming(bool value) {
     if (value == _transform) return;
@@ -180,12 +210,27 @@ class SlidesPresenceController extends ChangeNotifier {
     publish();
   }
 
-  ({String? slide, List<String> selection, double zoom, bool fit, String mode})?
+  ({
+    String? slide,
+    String? surface,
+    List<String> selection,
+    double zoom,
+    bool fit,
+    String mode,
+  })?
   _last;
 
-  ({String? slide, List<String> selection, double zoom, bool fit, String mode})
+  ({
+    String? slide,
+    String? surface,
+    List<String> selection,
+    double zoom,
+    bool fit,
+    String mode,
+  })
   _snapshot() => (
     slide: editor.currentSlideId,
+    surface: editor.surfaceId,
     selection: editor.selectedElementIds,
     zoom: editor.zoom,
     fit: editor.zoomFit,
@@ -200,6 +245,7 @@ class SlidesPresenceController extends ChangeNotifier {
     if (!_applying && following.value != null && last != null) {
       // Local navigation, selection, zoom or view mode stops following.
       if (last.slide != now.slide ||
+          last.surface != now.surface ||
           !listEquals(last.selection, now.selection) ||
           last.fit != now.fit ||
           (!now.fit && last.zoom != now.zoom) ||
@@ -262,12 +308,16 @@ class SlidesPresenceController extends ChangeNotifier {
       final moved =
           before == null ||
           before.cursor.slideId != cursor.slideId ||
+          before.cursor.surfaceId != cursor.surfaceId ||
           !listEquals(before.cursor.selection, cursor.selection);
-      _cursors[part.sessionId] = RemoteDeckCursor(
+      final pointed = before == null || before.cursor.pointer != cursor.pointer;
+      final next = RemoteDeckCursor(
         participant: part,
         cursor: cursor,
         movedAt: moved ? now : before.movedAt,
+        pointerAt: pointed ? now : before.pointerAt,
       );
+      _cursors[part.sessionId] = next;
       if (part.sessionId == following.value) _applyFollow(cursor);
     }
     _cursors.removeWhere((k, _) => !seen.contains(k));
@@ -293,8 +343,13 @@ class SlidesPresenceController extends ChangeNotifier {
     final now = clock.now();
     Duration? next;
     for (final c in _cursors.values) {
-      final left = c.movedAt.add(flagDuration).difference(now);
-      if (left > Duration.zero && (next == null || left < next)) next = left;
+      for (final left in [
+        c.movedAt.add(flagDuration).difference(now),
+        if (c.cursor.pointer != null)
+          c.pointerAt.add(pointerIdle).difference(now),
+      ]) {
+        if (left > Duration.zero && (next == null || left < next)) next = left;
+      }
     }
     if (next != null) {
       _flagTimer = Timer(next + const Duration(milliseconds: 20), () {
@@ -303,13 +358,20 @@ class SlidesPresenceController extends ChangeNotifier {
     }
   }
 
-  /// The cursors drawn on the canvas of [slideId]: editing that slide,
-  /// not away, not presenting.
-  List<RemoteDeckCursor> cursorsOn(String slideId) => [
+  /// The cursors drawn on the canvas of [surfaceId] (a slide, or in
+  /// masters mode a layout or master): editing that surface, not away, not
+  /// presenting.
+  List<RemoteDeckCursor> cursorsOn(String surfaceId) => [
     for (final c in _list)
-      if (c.cursor.slideId == slideId &&
-          c.cursor.route == 'editor' &&
-          !c.isAway)
+      if (c.surfaceId == surfaceId && c.cursor.route == 'editor' && !c.isAway)
+        c,
+  ];
+
+  /// The live pointers on [surfaceId] at [now] (09 §1.4): people on that
+  /// surface whose pointer moved within [pointerIdle].
+  List<RemoteDeckCursor> pointersOn(String surfaceId, DateTime now) => [
+    for (final c in cursorsOn(surfaceId))
+      if (c.cursor.pointer != null && now.difference(c.pointerAt) < pointerIdle)
         c,
   ];
 
@@ -364,7 +426,12 @@ class SlidesPresenceController extends ChangeNotifier {
     if (c.isPresenting) {
       detail = l.presencePresenting;
     } else if (c.viewMode == 'masters') {
-      detail = l.presenceEditingLayouts;
+      final layout = c.surfaceId == null
+          ? null
+          : editor.model.layout(c.surfaceId!);
+      detail = layout == null
+          ? l.presenceEditingLayouts
+          : l.presenceEditingLayout(layout.name);
     } else {
       final id = c.slideId;
       final entry = id == null ? null : editor.order.entry(id);
@@ -404,10 +471,7 @@ class SlidesPresenceController extends ChangeNotifier {
       return false;
     }
     _apply(() {
-      final mode = DeckViewMode.fromName(c.cursor.viewMode);
-      if (mode == DeckViewMode.normal || mode == DeckViewMode.grid) {
-        editor.setMode(mode!);
-      }
+      _enterModeOf(c.cursor);
       if (editor.currentSlideId != slide) editor.setCurrentSlide(slide);
       final box = _boundsOf(c.cursor.selection);
       if (box != null) _viewport?.reveal(box);
@@ -495,6 +559,25 @@ class SlidesPresenceController extends ChangeNotifier {
     return false;
   }
 
+  /// Switches to the view mode of [c] (normal, grid, outline; masters
+  /// with their layout or master when this user may edit layouts — else
+  /// their slide in the normal view).
+  void _enterModeOf(SlidesPresenceCursor c) {
+    final mode = DeckViewMode.fromName(c.viewMode);
+    if (mode == null) return;
+    if (mode == DeckViewMode.masters) {
+      if (editor.roleCanEdit &&
+          !editor.viewMode &&
+          DeckEditorController.offersMode(mode)) {
+        editor.setMode(mode, masterTarget: c.surfaceId);
+      } else if (editor.mode == DeckViewMode.masters) {
+        editor.setMode(DeckViewMode.normal);
+      }
+      return;
+    }
+    if (DeckEditorController.offersMode(mode)) editor.setMode(mode);
+  }
+
   void _apply(void Function() f) {
     _applying = true;
     try {
@@ -507,10 +590,7 @@ class SlidesPresenceController extends ChangeNotifier {
 
   void _applyFollow(SlidesPresenceCursor c) {
     _apply(() {
-      final mode = DeckViewMode.fromName(c.viewMode);
-      if (mode == DeckViewMode.normal || mode == DeckViewMode.grid) {
-        editor.setMode(mode!);
-      }
+      _enterModeOf(c);
       final slide = c.presenting?.slideId ?? c.slideId;
       if (slide != null &&
           slide != editor.currentSlideId &&
@@ -519,7 +599,7 @@ class SlidesPresenceController extends ChangeNotifier {
       }
       final v = c.viewport;
       final vp = _viewport;
-      if (v != null && v.slideId == editor.currentSlideId) {
+      if (v != null && v.slideId == editor.surfaceId) {
         final z = v.zoom;
         if (z == null) {
           editor.setZoomFit();

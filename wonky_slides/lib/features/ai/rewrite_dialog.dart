@@ -323,6 +323,7 @@ class _RewriteDialogState extends State<RewriteDialog>
         const SingleActivator(LogicalKeyboardKey.escape): _discard,
       },
       child: ShadDialog(
+        constraints: const BoxConstraints(maxWidth: 600),
         key: RewriteKeys.dialog,
         title: Text(widget.title),
         actions: [

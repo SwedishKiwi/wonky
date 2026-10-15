@@ -120,7 +120,7 @@ time, agents never start the server. Slides-specific additions:
 | SL-38 | Comments on slides and elements | M11 · 1 | SL-12, SL-16 | |
 | SL-39 | Version history, overwritten-text review, activity | M11 · 1 | SL-8, SL-9 | |
 | SL-40 | MCP headless tools `slides.*` | M11 · 1 | SL-8, SL-20, SL-24…SL-27 | |
-| SL-41 | Phone remote, rehearse timings, same-browser fast path | M11 · 1 | SL-19, SL-29 | ✓ |
+| SL-41 | Phone remote, rehearse timings, same-browser fast path (on hold) | M11 · 1 | SL-19, SL-29 | ✓ |
 | SL-42 | UI bridge `ui.slides.*` | M11 · 2 | SL-11, SL-40 | |
 | SL-43 | AI in Slides (+ Drive assistant, P1) | M11 · 2 | SL-40 | |
 | SL-44 | Remaining P1: spelling, emoji, image adjustments, curved connectors | M11 · 2 | D-7, SL-13…SL-15 | ✓ |
@@ -1051,6 +1051,18 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
   transform hints.
 - Owns: `app/features/collab/**` (extends SL-21), S-3 model additions.
 - Acceptance: 09 AC 4–6.
+- As built: live pointers (cursor `pointer` in su, `CollabPointer`, 5 s idle, View toggle),
+  canvas *surfaces* (masters-mode `surfaceId`), follow/jump into every view mode, *Watch
+  presentation* in the follow banner, the follower view of a presentation session
+  (`PresentView.follower`, `?view=follow`, role `follower`; `FollowerBar`; browse away +
+  `slides.presence.returnToPresenter`), the Present button's live dot and *Follow Anna's
+  presentation* menu item, `structure` hints with the navigator `StructureShimmer`, the 300 ms
+  fade of released soft-lock outlines, outline-view claims and text hints, richer
+  `ui.get_state` collaborators (agent cursors and flashes: SL-40/SL-42). Server: none needed (the follower role and agent
+  presence existed). **S-3 not cut** — nothing synced was queued (02 §14.1); no migration.
+  Acceptance note: AC 4–6 of 09 are comments/history/offline scenarios (SL-38/SL-39); SL-37
+  was checked against 09 AC 1 and 3 (pointers, follow mode, following a presenter) with the
+  collab rig and the presentation fake hub. Details: 09 §2.6, [STATUS.md](STATUS.md).
 
 **SL-38 · Comments on slides and elements** (09 §3)
 - Owns: `app/features/comments/**`; `CommentAnchorKind` additions in `platform/comments`.
@@ -1073,6 +1085,24 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
 **SL-39 · Version history, overwritten-text review, activity** (09 §4–§6)
 - Owns: `app/features/history/**`, `core/{snapshot,diff}/**`, `server/versions/**`.
 - Acceptance: J-S9; restore is one undo step; `revertChange`/`reapplyChange` implemented.
+- As built: core `package:wonky_slides_core/history.dart` — `SlidesSnapshotCodec` (09 §4.1
+  format, gzip on `archive`, one codec for server and client), `SlidesVersionChanges` (who
+  changed what, latest author last, agent authors), `SnapshotSlideEntry` (slide list),
+  `DeckDiff` (slides/elements/groups/theme/deck, element kinds, roll-up, navigation stops),
+  `TextDiff` (word LCS), `SlidesRestoreChanges` (row diff of a restore). Server
+  `slides/versions/`: `SlidesVersionProvider` (registered in `server.dart`; capture → snapshot
+  file + `SlidesSnapshotIndex`, attribution from the change-log receipts of the capture
+  window; restore → `ServerSlidesWriter.applyRecorded`, 7-day record, `versionRestored`
+  notice), `SlidesVersionEndpoint` (`changes`, `makeCopy` on `DeckCopies.copy(sourceModel:)`),
+  `DeckChangeLogPruning` (30 days, daily job); migration `20261015115837413-slides-versions`.
+  App `features/history/`: `SlidesVersionRenderer` in the shell's history route (restore =
+  one `slides.serverChange` step through SL-43's handler), `SlidesVersionView` (navigator with
+  badges and ghost rows, read-only stage with outlines, change list with inline text diffs,
+  next/previous change, *Show removed*, PDF download, *Make a copy*; strip layout under
+  720 px), `SlidesConflicts` + review dialog; `commands/history_commands.dart`. Activity:
+  `slideIds` sets on edit events and a detail line in the shell feed. Feature
+  `versionHistory` ships. Deviations and leftovers: 09 §4.7 "As built (SL-39)",
+  [STATUS.md](STATUS.md), `TODO.md`.
 
 **SL-40 · MCP headless tools** (11 §2–§4)
 - Scope: `slides.*` tools, resources, prompts, `slides.export_pdf` with
@@ -1099,16 +1129,51 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
 **SL-41 · Phone remote, rehearse, same-browser fast path** (10 §5.2, §6.4, §10) — web-build token
 - Owns: `app/features/present/{remote,rehearse,broadcast}/**`, `server/present/**` (pairing).
 - Acceptance: 10 AC 9, 11; the fast path keeps a pair running through a 10 s connection drop.
+- **On hold (user decision 2026-10-15).** Built and tested so far: server pairing keys and
+  codes (`PresentationPairingUpdate`/`…Event`/`…Target`, `presentation.resolvePairingCode`,
+  10 §6.6 "As built (SL-41, partial)") and the same-browser channel
+  (`features/present/broadcast/`, not wired into `PresentationLink`). Not built: the phone
+  remote UI, rehearse, the fast-path wiring, *Freeze audience*; the feature
+  `remoteAndRehearse` stays off. What's left and how to resume: `TODO.md` (SL-41).
 
 ### 4.12 M11 wave 2 — UI bridge, AI, leftovers, exit
 
 **SL-42 · UI bridge `ui.slides.*`** (11 §5)
 - Owns: `wonky_core/lib/mcp/ui_slides_tools.dart`, `app/mcp/**`.
 - Acceptance: J-S10 UI-bridge part; every dialog describable (04 AC-9).
+- As built: 17 tools (`UiSlidesTools`, relayed by the server to `app: slides` windows;
+  handlers `UiSlidesToolHandlers` in `wonky_slides/lib/mcp/ui_slides_tools.dart`): the 11 §5 set
+  plus `set_view` (view mode, zoom), `close_panel`, `open_dialog` (runs a command as the user so it
+  shows its dialog — Slides commands skip dialogs for agents) and `get_context_menu` (the 04 §11
+  menus with command states, instead of a `menu` argument on the shared `ui.get_menu_tree`).
+  Actions run through the dispatcher (source `mcp`), so roles and `SlidesFeatures` apply. Agent
+  highlight: `SlidesAgentFlash` + `AgentFlashLayer` (violet outline + "✦ agent" tag, light/dark
+  violet), fed by the tools and by `SlidesAgentWrites` (headless MCP/AI writes from the replica's
+  `DeckChangeLog`, like Sheets' `ExternalAgentWrites`); `SlidesUiBridge` is attached by the editor
+  screen and also registers the soft-lock popover as an MCP dialog (`SoftLockDialog`).
+  `PanelDescriber` moved to `wonky_app` (Sheets re-uses it) with `under(key)` for the docked
+  inspector. Dialog audit: all Slides custom dialogs were describable; fixed the soft-lock popover,
+  the chart data table (`McpDialogScope`) and the shared shortcuts, spelling, personal dictionary,
+  special characters and emoji dialogs (`McpDialogRegistration`). Tests: 52 app, 5 server relay,
+  2 core, 2 `wonky_app` ([STATUS.md](STATUS.md)). Not built: flutter_driver runs against a live
+  app (11 §11 *UI bridge*).
 
 **SL-43 · AI in Slides** (11 §6–§8; Drive assistant P1)
 - Owns: `server/ai/**`, `app/features/{ai,assistant}/**`, `wonky_drive/lib/features/assistant/` (P1).
 - Acceptance: 11 §10 AI criteria with a fake provider; prompt-injection corpus (§7.8).
+- As built: server `wonky_server/lib/src/slides/ai/` (`SlidesAssistantTarget` — the `slides.*` tools
+  bound to the deck, `force` stripped, §8.1 confirmations via `SlidesAiGuard`, one composite change
+  per Edit-mode run, Suggest-mode `SlidesShadow` as a `DeckOverlay` of the headless deck —,
+  `SlidesContextBuilder`, `SlidesPrompts`, `SlidesAiService` + endpoint `slidesAi`), core
+  `package:wonky_slides_core/ai.dart` (`AiOutline` → deck-outline Markdown, `DesignIdeasEngine`), app
+  `wonky_slides/lib/features/{ai,assistant,undo}/` + `commands/ai_commands.dart` (assistant panel and
+  adapter, Generate presentation, Rewrite, speaker notes, alt text incl. the Accessibility panel's
+  *Generate with AI*, Design ideas, AI changes preview with before/after thumbnails; the shared
+  `slides.serverChange` undo handler). Deviations: previews in `sheets_ai_preview_record` (no
+  `SlidesAiPreviewRecord` table); rewrite in a dialog instead of a canvas overlay; design ideas are
+  theme layouts only; the Drive assistant (P1), code walkthrough, *Animate this slide* and §6.11 are
+  not built; the injection corpus is §8.4's (the plan's "§7.8"). Details: 11 §6.12; tests: server
+  18, core 10, app 34 ([STATUS.md](STATUS.md)).
 
 **SL-44 · Remaining P1** (03 §14, emoji, image adjustments, curved connectors)
 - Owns: `app/features/spellcheck/**`, additions in `app/features/elements/{image,line}/**`.

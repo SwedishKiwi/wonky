@@ -5296,6 +5296,26 @@ class Endpoints extends _is.EndpointDispatch {
                         params['deckUuid'],
                       ),
         ),
+        'resolvePairingCode': _is.MethodConnector(
+          name: 'resolvePairingCode',
+          params: {
+            'code': _is.ParameterDescription(
+              name: 'code',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['presentation'] as _irtlljai.PresentationEndpoint)
+                      .resolvePairingCode(
+                        session,
+                        params['code'],
+                      ),
+        ),
         'join': _is.MethodStreamConnector(
           name: 'join',
           params: {

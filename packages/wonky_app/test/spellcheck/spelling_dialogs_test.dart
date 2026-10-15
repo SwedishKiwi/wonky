@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_app/spellcheck.dart';
+import 'package:wonky_app/wonky_app.dart' show McpDescribableDialog;
 import 'package:wonky_ui/testing.dart';
 
 /// A [SpellingSession] over a list of flagged words that records the calls.
@@ -118,6 +119,25 @@ void main() {
   }
 
   group('Given the spelling dialog', () {
+    testWidgets('when MCP describes it, picks a suggestion and presses '
+        'change then the word is replaced (suite 09 §6.2)', (tester) async {
+      final session = _FakeSession([teh, borwn]);
+      await _pumpDialog(tester, session);
+      final dialog =
+          tester.state(find.byType(SpellingDialog)) as McpDescribableDialog;
+
+      final d = dialog.describe();
+      expect(d['word'], 'teh');
+      expect(((d['fields']! as List).single as Map)['options'], ['the', 'tea']);
+      expect(dialog.setField('suggestion', 'tea'), isTrue);
+      expect(dialog.setField('suggestion', 'tee'), isFalse);
+      expect(dialog.press('change'), isTrue);
+      await tester.pumpAndSettle();
+
+      expect(session.calls.first, 'change teh@0 → tea');
+      expect(dialog.describe()['word'], 'borwn');
+    });
+
     testWidgets('when the caret is after the first word then the walk starts '
         'at the caret', (tester) async {
       final session = _FakeSession([teh, borwn], startOffset: 5);

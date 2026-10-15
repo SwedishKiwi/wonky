@@ -9251,23 +9251,23 @@
       }
     }
   },
-  "aiQuickImproveSlide": "Improve this slide",
+  "aiQuickImproveSlide": "Improve slide",
   "@aiQuickImproveSlide": {
     "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
   },
-  "aiQuickNotes": "Write speaker notes",
+  "aiQuickNotes": "Speaker notes",
   "@aiQuickNotes": {
     "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
   },
-  "aiQuickSummarize": "Summarize the presentation",
+  "aiQuickSummarize": "Summarize deck",
   "@aiQuickSummarize": {
     "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
   },
-  "aiQuickAgenda": "Add an agenda slide",
+  "aiQuickAgenda": "Add agenda",
   "@aiQuickAgenda": {
     "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
   },
-  "aiQuickConsistency": "Check titles and wording",
+  "aiQuickConsistency": "Check wording",
   "@aiQuickConsistency": {
     "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
   },
@@ -9933,5 +9933,87 @@
   "reasonNoPreview": "No suggested changes to review",
   "@reasonNoPreview": {
     "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "presenceEditingLayout": "Editing layout · {name}",
+  "@presenceEditingLayout": {
+    "description": "Avatar tooltip of a collaborator editing a layout in the masters view (Slides 09 §1.2; SL-37).",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "followWatchPresentation": "Watch presentation",
+  "@followWatchPresentation": {
+    "description": "Follow banner button while the followed collaborator presents: follows their presentation (09 §1.6; SL-37)."
+  },
+  "presenterLive": "{name} is presenting",
+  "@presenterLive": {
+    "description": "Screen reader label of the live dot on the Present button while a collaborator presents (09 §1.6; SL-37).",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "presentMenuFollow": "Follow {name}'s presentation",
+  "@presentMenuFollow": {
+    "description": "Present menu item while a collaborator presents (04 §3, 09 §1.6; SL-37).",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "followerFollowing": "Following {name} — press Esc to stop",
+  "@followerFollowing": {
+    "description": "Bar of the follower view of a presentation (09 §1.6; SL-37).",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "followerFollowingUnknown": "Following the presenter — press Esc to stop",
+  "@followerFollowingUnknown": {
+    "description": "Bar of the follower view when the presenter's name is unknown (SL-37)."
+  },
+  "followerBrowsing": "You left {name}'s slide",
+  "@followerBrowsing": {
+    "description": "Follower bar after the follower navigated away from the presenter (10 §6.3; SL-37).",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "followerBrowsingUnknown": "You left the presenter's slide",
+  "@followerBrowsingUnknown": {
+    "description": "Follower bar after browsing away, presenter name unknown (SL-37)."
+  },
+  "followerReturn": "Return to presenter",
+  "@followerReturn": {
+    "description": "Follower bar button: back to the presenter's slide (10 §6.3; SL-37)."
+  },
+  "followerFullscreen": "Full screen",
+  "@followerFullscreen": {
+    "description": "Follower bar button: full screen (SL-37)."
+  },
+  "followerStop": "Stop following",
+  "@followerStop": {
+    "description": "Follower bar button: leaves the follower view (SL-37)."
+  },
+  "cmdPresenceReturnToPresenter": "Return to presenter",
+  "@cmdPresenceReturnToPresenter": {
+    "description": "Title of the command `slides.presence.returnToPresenter` (menus, palette, tooltips)."
+  },
+  "pointerOnSlide": "{name}'s pointer",
+  "@pointerOnSlide": {
+    "description": "Screen reader label of a collaborator's live pointer on the canvas (09 §1.4; SL-37).",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   }
 }

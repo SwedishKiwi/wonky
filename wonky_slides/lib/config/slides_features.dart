@@ -57,8 +57,14 @@ enum SlidesFeature {
   /// Version history (09 §4; SL-39).
   versionHistory('SL-39'),
 
-  /// The assistant and AI commands (11 §6–§8; SL-43).
+  /// The assistant and AI commands (11 §6–§8; SL-43): the assistant
+  /// panel, *Generate presentation*, *Rewrite text*, speaker notes, alt
+  /// text, Design ideas and the AI changes preview.
   assistant('SL-43'),
+
+  /// *Make a code walkthrough…* (11 §6.9; needs `UnifiedDiff` /
+  /// `WalkthroughBuilder`, 07 §10.2).
+  aiCodeWalkthrough('11 §6.9'),
 
   /// Phone remote and rehearse timings (10 §5.2, §10; SL-41).
   remoteAndRehearse('SL-41'),
@@ -93,7 +99,8 @@ abstract final class SlidesFeatures {
   /// accessibility checker, SL-34; PNG export and build stages in print,
   /// SL-33; builds, transitions and Magic Move, SL-29 + SL-30; M11:
   /// comments, SL-38; version history, SL-39; spelling, presentation
-  /// language and special characters, SL-44).
+  /// language and special characters, SL-44; the assistant and AI
+  /// commands, SL-43).
   static const Set<SlidesFeature> shipped = {
     SlidesFeature.animations,
     SlidesFeature.masters,
@@ -107,6 +114,7 @@ abstract final class SlidesFeatures {
     SlidesFeature.comments,
     SlidesFeature.versionHistory,
     SlidesFeature.spelling,
+    SlidesFeature.assistant,
   };
 
   /// The features that are on ([shipped]); tests may switch one on (and
@@ -245,7 +253,10 @@ abstract final class SlidesFeatures {
     ('slides.comments.', SlidesFeature.comments),
     ('slides.history.', SlidesFeature.versionHistory),
     ('slides.conflicts.', SlidesFeature.versionHistory),
+    // Before `slides.ai.`: the walkthrough isn't built (SL-43 leftover).
+    ('slides.ai.codeWalkthrough', SlidesFeature.aiCodeWalkthrough),
     ('slides.ai.', SlidesFeature.assistant),
+    ('slides.panel.designIdeas', SlidesFeature.assistant),
     ('slides.present.rehearse', SlidesFeature.remoteAndRehearse),
     ('slides.present.remote', SlidesFeature.remoteAndRehearse),
     ('slides.spelling.', SlidesFeature.spelling),

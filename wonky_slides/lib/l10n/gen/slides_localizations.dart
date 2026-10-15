@@ -11896,31 +11896,31 @@ abstract class SlidesLocalizations {
   /// Wonky Slides AI (Slides 11 §6; SL-43).
   ///
   /// In en, this message translates to:
-  /// **'Improve this slide'**
+  /// **'Improve slide'**
   String get aiQuickImproveSlide;
 
   /// Wonky Slides AI (Slides 11 §6; SL-43).
   ///
   /// In en, this message translates to:
-  /// **'Write speaker notes'**
+  /// **'Speaker notes'**
   String get aiQuickNotes;
 
   /// Wonky Slides AI (Slides 11 §6; SL-43).
   ///
   /// In en, this message translates to:
-  /// **'Summarize the presentation'**
+  /// **'Summarize deck'**
   String get aiQuickSummarize;
 
   /// Wonky Slides AI (Slides 11 §6; SL-43).
   ///
   /// In en, this message translates to:
-  /// **'Add an agenda slide'**
+  /// **'Add agenda'**
   String get aiQuickAgenda;
 
   /// Wonky Slides AI (Slides 11 §6; SL-43).
   ///
   /// In en, this message translates to:
-  /// **'Check titles and wording'**
+  /// **'Check wording'**
   String get aiQuickConsistency;
 
   /// Wonky Slides AI (Slides 11 §6; SL-43).
@@ -12852,6 +12852,84 @@ abstract class SlidesLocalizations {
   /// In en, this message translates to:
   /// **'No suggested changes to review'**
   String get reasonNoPreview;
+
+  /// Avatar tooltip of a collaborator editing a layout in the masters view (Slides 09 §1.2; SL-37).
+  ///
+  /// In en, this message translates to:
+  /// **'Editing layout · {name}'**
+  String presenceEditingLayout(String name);
+
+  /// Follow banner button while the followed collaborator presents: follows their presentation (09 §1.6; SL-37).
+  ///
+  /// In en, this message translates to:
+  /// **'Watch presentation'**
+  String get followWatchPresentation;
+
+  /// Screen reader label of the live dot on the Present button while a collaborator presents (09 §1.6; SL-37).
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is presenting'**
+  String presenterLive(String name);
+
+  /// Present menu item while a collaborator presents (04 §3, 09 §1.6; SL-37).
+  ///
+  /// In en, this message translates to:
+  /// **'Follow {name}\'s presentation'**
+  String presentMenuFollow(String name);
+
+  /// Bar of the follower view of a presentation (09 §1.6; SL-37).
+  ///
+  /// In en, this message translates to:
+  /// **'Following {name} — press Esc to stop'**
+  String followerFollowing(String name);
+
+  /// Bar of the follower view when the presenter's name is unknown (SL-37).
+  ///
+  /// In en, this message translates to:
+  /// **'Following the presenter — press Esc to stop'**
+  String get followerFollowingUnknown;
+
+  /// Follower bar after the follower navigated away from the presenter (10 §6.3; SL-37).
+  ///
+  /// In en, this message translates to:
+  /// **'You left {name}\'s slide'**
+  String followerBrowsing(String name);
+
+  /// Follower bar after browsing away, presenter name unknown (SL-37).
+  ///
+  /// In en, this message translates to:
+  /// **'You left the presenter\'s slide'**
+  String get followerBrowsingUnknown;
+
+  /// Follower bar button: back to the presenter's slide (10 §6.3; SL-37).
+  ///
+  /// In en, this message translates to:
+  /// **'Return to presenter'**
+  String get followerReturn;
+
+  /// Follower bar button: full screen (SL-37).
+  ///
+  /// In en, this message translates to:
+  /// **'Full screen'**
+  String get followerFullscreen;
+
+  /// Follower bar button: leaves the follower view (SL-37).
+  ///
+  /// In en, this message translates to:
+  /// **'Stop following'**
+  String get followerStop;
+
+  /// Title of the command `slides.presence.returnToPresenter` (menus, palette, tooltips).
+  ///
+  /// In en, this message translates to:
+  /// **'Return to presenter'**
+  String get cmdPresenceReturnToPresenter;
+
+  /// Screen reader label of a collaborator's live pointer on the canvas (09 §1.4; SL-37).
+  ///
+  /// In en, this message translates to:
+  /// **'{name}\'s pointer'**
+  String pointerOnSlide(String name);
 }
 
 class _SlidesLocalizationsDelegate

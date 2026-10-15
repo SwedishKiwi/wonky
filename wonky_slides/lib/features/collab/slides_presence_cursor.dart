@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'dart:ui' show Offset;
+
 import 'package:flutter/foundation.dart';
 
 import '../text_editing/text_editing_host.dart' show TextLockTarget;
@@ -237,10 +239,12 @@ class SlidesPresenceCursor {
     this.route = 'editor',
     this.viewMode = 'normal',
     this.slideId,
+    this.surfaceId,
     this.selection = const [],
     this.navSlides = const [],
     this.navGroups = const [],
     this.editing,
+    this.pointer,
     this.transform = false,
     this.viewport,
     this.presenting,
@@ -257,13 +261,21 @@ class SlidesPresenceCursor {
   final String viewMode;
   final String? slideId;
 
-  /// Selected element ids of [slideId].
+  /// In masters mode, the layout or master being edited (09 §1.1: the
+  /// canvas surface; [selection] and [pointer] are on it). Null otherwise.
+  final String? surfaceId;
+
+  /// Selected element ids of [slideId] (of [surfaceId] in masters mode).
   final List<String> selection;
 
   /// The navigator selection (slides and groups).
   final List<String> navSlides;
   final List<String> navGroups;
   final EditingClaim? editing;
+
+  /// The mouse pointer on [slideId] in slide units (09 §1.4, P1), or null
+  /// when the pointer is off the slide or the window is not focused.
+  final Offset? pointer;
 
   /// Whether a drag is live (frames travel as hints, 09 §2.4).
   final bool transform;
@@ -282,10 +294,13 @@ class SlidesPresenceCursor {
     'route': route,
     'viewMode': viewMode,
     'slideId': slideId,
+    if (surfaceId != null) 'surfaceId': surfaceId,
     'selection': selection.take(maxSelection).toList(),
     'navSelection': {'slides': navSlides, 'groups': navGroups},
     'editing': editing?.toJson(),
-    'pointer': null,
+    'pointer': pointer == null
+        ? null
+        : {'x': _whole(pointer!.dx), 'y': _whole(pointer!.dy)},
     'transform': transform ? true : null,
     'viewport': viewport?.toJson(),
     'presenting': presenting?.toJson(),
@@ -312,15 +327,23 @@ class SlidesPresenceCursor {
     final route = j['route'];
     final mode = j['viewMode'];
     final slide = j['slideId'];
+    final surface = j['surfaceId'];
     final following = j['following'];
+    final pointer = j['pointer'];
+    final px = pointer is Map ? pointer['x'] : null;
+    final py = pointer is Map ? pointer['y'] : null;
     return SlidesPresenceCursor(
       route: route is String ? route : 'editor',
       viewMode: mode is String ? mode : 'normal',
       slideId: slide is String ? slide : null,
+      surfaceId: surface is String ? surface : null,
       selection: ids(j['selection']),
       navSlides: nav is Map ? ids(nav['slides']) : const [],
       navGroups: nav is Map ? ids(nav['groups']) : const [],
       editing: EditingClaim.fromJson(j['editing']),
+      pointer: px is num && py is num
+          ? Offset(px.toDouble(), py.toDouble())
+          : null,
       transform: j['transform'] == true,
       viewport: DeckViewport.fromJson(j['viewport']),
       presenting: PresentingState.fromJson(j['presenting']),
@@ -337,3 +360,5 @@ class SlidesPresenceCursor {
 }
 
 double _round(double v) => (v * 10).roundToDouble() / 10;
+
+double _whole(double v) => v.roundToDouble();

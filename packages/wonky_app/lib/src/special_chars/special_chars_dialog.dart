@@ -7,6 +7,7 @@ import 'package:wonky_ui/wonky_ui.dart';
 
 import '../core/l10n_or_english.dart';
 import '../core/local_store.dart';
+import '../shell/form_dialog.dart';
 import 'special_chars_catalog.dart';
 
 /// The stable widget keys of the special characters dialog of one app
@@ -137,7 +138,8 @@ class SpecialCharactersDialog extends StatefulWidget {
       _SpecialCharactersDialogState();
 }
 
-class _SpecialCharactersDialogState extends State<SpecialCharactersDialog> {
+class _SpecialCharactersDialogState extends State<SpecialCharactersDialog>
+    with McpDialogRegistration<SpecialCharactersDialog> {
   final _query = TextEditingController();
   final _searchFocus = FocusNode(debugLabel: 'specialChars.search');
   final _gridFocus = FocusNode(debugLabel: 'specialChars.grid');
@@ -251,6 +253,117 @@ class _SpecialCharactersDialogState extends State<SpecialCharactersDialog> {
     if (_scroll.hasClients) _scroll.jumpTo(0);
   }
 
+  /// Bumped when MCP sets the category (the select shows its initial value).
+  int _categoryGeneration = 0;
+
+  // MCP (`ui.get_dialog`, suite 09 §6.2): `query`, `category` and the
+  // `character` of the listing (first 200), `insert` (the chosen one; the
+  // dialog stays open) and `close`.
+
+  @override
+  Map<String, Object?> describe() {
+    final l = wonkyAppL10nOrEnglish(context);
+    final catalog = _catalog;
+    final items = _items;
+    final shown = items.take(200).toList();
+    final active = items.isEmpty
+        ? null
+        : items[_active.clamp(0, items.length - 1)];
+    return {
+      'title': l.specialCharsTitle,
+      'kind': 'specialCharacters',
+      'loaded': catalog != null,
+      'fields': [
+        {
+          'id': 'query',
+          'label': l.specialCharsSearch,
+          'type': 'text',
+          'value': _query.text,
+        },
+        if (catalog != null)
+          {
+            'id': 'category',
+            'label': l.specialCharsTitle,
+            'type': 'select',
+            'value': catalog.categories[_category],
+            'options': catalog.categories,
+          },
+        {
+          'id': 'character',
+          'label': l.specialCharsSearchResults,
+          'type': 'select',
+          'value': active?.char,
+          'options': [for (final c in shown) c.char],
+          'optionLabels': {for (final c in shown) c.char: c.name},
+          if (items.length > shown.length) 'truncated': true,
+        },
+      ],
+      'recent': _recent,
+      'buttons': [
+        if (active != null) {'id': 'insert', 'label': active.name},
+        {'id': 'close', 'label': l.specialCharsClose},
+      ],
+    };
+  }
+
+  @override
+  bool setField(String id, Object? value) {
+    switch (id) {
+      case 'query':
+        setState(() {
+          _query.text = '${value ?? ''}';
+          _resetListing();
+        });
+        return true;
+      case 'category':
+        final c = _catalog;
+        if (c == null) return false;
+        final i = value is int ? value : c.categories.indexOf('$value');
+        if (i < 0 || i >= c.categories.length) return false;
+        setState(() {
+          _category = i;
+          _categoryGeneration++;
+          _query.clear();
+          _resetListing();
+        });
+        return true;
+      case 'character':
+        final items = _items;
+        var i = items.indexWhere((c) => c.char == '$value');
+        if (i < 0) {
+          // A character outside the listing: search for it.
+          final c = '$value'.runes.length == 1
+              ? _catalog?.byCodePoint('$value'.runes.first)
+              : null;
+          if (c == null) return false;
+          setState(() {
+            _query.text = c.name;
+            _resetListing();
+          });
+          i = _items.indexWhere((x) => x.char == c.char);
+          if (i < 0) return false;
+        }
+        setState(() => _active = i);
+        return true;
+    }
+    return false;
+  }
+
+  @override
+  bool press(String buttonId) {
+    switch (buttonId) {
+      case 'insert':
+        final items = _items;
+        if (items.isEmpty) return false;
+        _insert(items[_active.clamp(0, items.length - 1)]);
+        return true;
+      case 'close' || 'cancel':
+        Navigator.of(context).pop();
+        return true;
+    }
+    return false;
+  }
+
   KeyEventResult _onGridKey(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
@@ -348,28 +461,32 @@ class _SpecialCharactersDialogState extends State<SpecialCharactersDialog> {
               Row(
                 children: [
                   if (catalog != null)
-                    ShadSelect<int>(
-                      key: k.category,
-                      minWidth: 180,
-                      initialValue: _category,
-                      options: [
-                        for (var i = 0; i < catalog.categories.length; i++)
-                          ShadOption(
-                            key: k.categoryOption(i),
-                            value: i,
-                            child: Text(catalog.categories[i]),
-                          ),
-                      ],
-                      selectedOptionBuilder: (context, v) =>
-                          Text(catalog.categories[v]),
-                      onChanged: (v) {
-                        if (v == null) return;
-                        setState(() {
-                          _category = v;
-                          _query.clear();
-                          _resetListing();
-                        });
-                      },
+                    KeyedSubtree(
+                      // A category set over MCP rebuilds the select.
+                      key: ValueKey<int>(_categoryGeneration),
+                      child: ShadSelect<int>(
+                        key: k.category,
+                        minWidth: 180,
+                        initialValue: _category,
+                        options: [
+                          for (var i = 0; i < catalog.categories.length; i++)
+                            ShadOption(
+                              key: k.categoryOption(i),
+                              value: i,
+                              child: Text(catalog.categories[i]),
+                            ),
+                        ],
+                        selectedOptionBuilder: (context, v) =>
+                            Text(catalog.categories[v]),
+                        onChanged: (v) {
+                          if (v == null) return;
+                          setState(() {
+                            _category = v;
+                            _query.clear();
+                            _resetListing();
+                          });
+                        },
+                      ),
                     ),
                   const SizedBox(width: 8),
                   Expanded(

@@ -43,6 +43,8 @@ abstract class PresentationBusMessage
     this.sentAtMs,
     this.startedAtMs,
     this.replyTo,
+    this.pairingKey,
+    this.admitted,
   });
 
   factory PresentationBusMessage({
@@ -69,6 +71,8 @@ abstract class PresentationBusMessage
     int? sentAtMs,
     int? startedAtMs,
     String? replyTo,
+    String? pairingKey,
+    bool? admitted,
   }) = _PresentationBusMessageImpl;
 
   factory PresentationBusMessage.fromJson(
@@ -110,11 +114,15 @@ abstract class PresentationBusMessage
       sentAtMs: jsonSerialization['sentAtMs'] as int?,
       startedAtMs: jsonSerialization['startedAtMs'] as int?,
       replyTo: jsonSerialization['replyTo'] as String?,
+      pairingKey: jsonSerialization['pairingKey'] as String?,
+      admitted: jsonSerialization['admitted'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(jsonSerialization['admitted']),
     );
   }
 
   /// hello, here, who, meta, joined, bye, away, takeover, state, laser, ink,
-  /// command, end, find, found.
+  /// command, end, find, found, resolve, resolved.
   String type;
 
   /// The sending connection.
@@ -164,6 +172,13 @@ abstract class PresentationBusMessage
   /// here/meta/found: the connection (or find request) answered.
   String? replyTo;
 
+  /// Phone remote pairing (SL-41): the key of a remote's hello, of a
+  /// resolved code (resolved).
+  String? pairingKey;
+
+  /// here: whether the presenter admits the remote of another account.
+  bool? admitted;
+
   /// Returns a shallow copy of this [PresentationBusMessage]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
@@ -192,6 +207,8 @@ abstract class PresentationBusMessage
     int? sentAtMs,
     int? startedAtMs,
     String? replyTo,
+    String? pairingKey,
+    bool? admitted,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -220,6 +237,8 @@ abstract class PresentationBusMessage
       if (sentAtMs != null) 'sentAtMs': sentAtMs,
       if (startedAtMs != null) 'startedAtMs': startedAtMs,
       if (replyTo != null) 'replyTo': replyTo,
+      if (pairingKey != null) 'pairingKey': pairingKey,
+      if (admitted != null) 'admitted': admitted,
     };
   }
 
@@ -266,6 +285,8 @@ class _PresentationBusMessageImpl extends PresentationBusMessage {
     int? sentAtMs,
     int? startedAtMs,
     String? replyTo,
+    String? pairingKey,
+    bool? admitted,
   }) : super._(
          type: type,
          connectionId: connectionId,
@@ -290,6 +311,8 @@ class _PresentationBusMessageImpl extends PresentationBusMessage {
          sentAtMs: sentAtMs,
          startedAtMs: startedAtMs,
          replyTo: replyTo,
+         pairingKey: pairingKey,
+         admitted: admitted,
        );
 
   /// Returns a shallow copy of this [PresentationBusMessage]
@@ -321,6 +344,8 @@ class _PresentationBusMessageImpl extends PresentationBusMessage {
     Object? sentAtMs = _Undefined,
     Object? startedAtMs = _Undefined,
     Object? replyTo = _Undefined,
+    Object? pairingKey = _Undefined,
+    Object? admitted = _Undefined,
   }) {
     return PresentationBusMessage(
       type: type ?? this.type,
@@ -350,6 +375,8 @@ class _PresentationBusMessageImpl extends PresentationBusMessage {
       sentAtMs: sentAtMs is int? ? sentAtMs : this.sentAtMs,
       startedAtMs: startedAtMs is int? ? startedAtMs : this.startedAtMs,
       replyTo: replyTo is String? ? replyTo : this.replyTo,
+      pairingKey: pairingKey is String? ? pairingKey : this.pairingKey,
+      admitted: admitted is bool? ? admitted : this.admitted,
     );
   }
 }

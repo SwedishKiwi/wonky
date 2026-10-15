@@ -254,9 +254,8 @@ class AiOutline {
 
   String encode() => jsonEncode(toJson());
 
-  AiOutline copy() => fromJson(
-    (jsonDecode(encode()) as Map).cast<String, Object?>(),
-  );
+  AiOutline copy() =>
+      fromJson((jsonDecode(encode()) as Map).cast<String, Object?>());
 
   /// The deck outline Markdown (11 §3.3) of this outline: one slide per
   /// outline slide with a `layout:` directive from its role, `group:`

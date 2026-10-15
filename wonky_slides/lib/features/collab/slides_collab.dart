@@ -5,7 +5,6 @@ import 'package:wonky_app/wonky_app.dart';
 
 import '../editor_screen/deck_editor_controller.dart';
 import '../present/active_presentation.dart';
-import '../present/present_controller.dart' show PresentView;
 import '../text_editing/text_editing_host.dart';
 import 'slides_hints.dart';
 import 'slides_presence_controller.dart';
@@ -132,7 +131,7 @@ class SlidesCollab {
         h != null &&
         c != null &&
         !c.ended &&
-        h.view != PresentView.audience &&
+        !h.view.isMember &&
         identical(c.model, editor.model);
     presence.presenting = presenting && p != null
         ? PresentingState(
@@ -153,12 +152,16 @@ class SlidesCollab {
           'state': c.participant.state.name,
           'slideId': c.slideId,
           'selection': c.cursor.selection,
+          'viewMode': c.cursor.viewMode,
+          'surfaceId': ?c.cursor.surfaceId,
+          if (c.cursor.pointer case final p?) 'pointer': {'x': p.dx, 'y': p.dy},
           if (c.cursor.presenting != null) 'presenting': true,
           if (c.cursor.editing case final e?) 'editing': e.toJson(),
         },
     ],
     'softLocks': [for (final e in locks.localClaims) e.toJson()],
     'following': presence.following.value,
+    'presenters': [for (final p in presence.presenters) p.sessionId],
   };
 
   void dispose() {

@@ -7,11 +7,7 @@ import 'package:shad/shad.dart' show LucideIcons;
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_charts/wonky_charts.dart';
 import 'package:wonky_charts_flutter/wonky_charts_flutter.dart'
-    show
-        ChartDataTableStrings,
-        chartDataJson,
-        chartSceneToPng,
-        showChartDataTableDialog;
+    show ChartDataTableStrings, chartDataJson, chartSceneToPng;
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_slides_core/charts.dart';
 import 'package:wonky_slides_core/model.dart' hide SlidesText;
@@ -37,6 +33,7 @@ import '../features/elements/element_activation.dart';
 import '../features/elements/image/image_clipboard.dart';
 import '../features/settings/slides_user_defaults.dart';
 import '../l10n/slides_l10n.dart';
+import '../mcp/dialog_adapters.dart' show showDescribableChartDataDialog;
 import 'canvas_commands.dart' show mergeRowChanges;
 import 'slides_command.dart';
 
@@ -697,7 +694,7 @@ List<Command<CommandArgs>> chartCommands(ShellServices s) {
         final title = snap.spec.title.hasText
             ? snap.spec.title.text
             : snap.dataSnapshot.source.chartTitle;
-        await showChartDataTableDialog(
+        await showDescribableChartDataDialog(
           dc,
           data: snap.data,
           locale: locale,

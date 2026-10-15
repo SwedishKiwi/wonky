@@ -33,4 +33,16 @@ class PresentationEndpoint extends Endpoint {
     await UserService.actorOf(session),
     deckUuid,
   );
+
+  /// The remote route of a typed six-digit pairing [code] (Slides 10 §6.4,
+  /// SL-41), or null when no presenter issued it (or it expired). Needs ≥
+  /// viewer on the deck; rate-limited per user.
+  Future<PresentationPairingTarget?> resolvePairingCode(
+    Session session,
+    String code,
+  ) async => PresentationService.resolveCode(
+    session,
+    await UserService.actorOf(session),
+    code,
+  );
 }

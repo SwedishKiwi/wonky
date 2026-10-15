@@ -70,6 +70,7 @@ export 'src/l10n/wonky_app_localizations.dart';
 export 'src/mcp_bridge/mcp_bridge_client.dart';
 export 'src/mcp_bridge/mcp_bridge_scope.dart' show McpBridgeScope, mcpBridgeOf;
 export 'src/mcp_bridge/mcp_control.dart';
+export 'src/mcp_bridge/panel_describer.dart';
 export 'src/mcp_bridge/shared_ui_tools.dart';
 export 'src/mcp_bridge/ui_tool.dart';
 export 'src/menus/menu_resolver.dart';

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:shad/shad.dart' show LucideIcons;
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
@@ -5,6 +7,8 @@ import 'package:wonky_core/wonky_core.dart';
 import '../features/canvas/canvas_interactions.dart';
 import '../features/collab/collab_canvas_layer.dart';
 import '../features/collab/slides_collab.dart';
+import '../features/present/active_presentation.dart';
+import '../features/present/platform/present_platform.dart';
 import '../features/text_editing/text_editing_host.dart';
 import '../l10n/slides_l10n.dart';
 import 'slides_command.dart';
@@ -83,16 +87,42 @@ List<Command<CommandArgs>> collabCommands(ShellServices s) {
         }
         final session = presenting.presentationId;
         if (session != null) {
-          // Follower mode: the audience view of their presentation session
-          // tracks slides and build steps (SL-19, 10 §6).
-          return ed.invokeCommand('slides.present.joinAsAudience', {
-            'sessionId': session,
-          });
+          if (activePresentation.value != null) {
+            return const CommandResult.failed('Already presenting');
+          }
+          // Follower mode (SL-37, 09 §1.6, 10 §6.3): joins their
+          // presentation session as a follower; slides and build steps
+          // track the presenter, navigation browses away locally.
+          c.presence.unfollow();
+          unawaited(PresentPlatform.instance.requestFullscreen());
+          s.router.go(
+            '${s.config.itemPath(ed.session.itemUuid.uuid)}/present'
+            '?view=follow&session=$session',
+          );
+          return ok();
         }
         // Presenting without a session: follow their slide in the editor.
         return c.presence.follow(id)
             ? ok()
             : const CommandResult.failed('Participant not found');
+      },
+    ),
+    SlidesCommand(
+      'slides.presence.returnToPresenter',
+      label: (l) => l.cmdPresenceReturnToPresenter,
+      icon: LucideIcons.undo2,
+      categoryOf: SlidesCategory.present,
+      keyScope: SlidesKeyScopes.present,
+      defaultBindings: const [KeyBinding('R', shift: true)],
+      enabled: (ed, a) =>
+          activePresentation.value?.controller?.browsing ?? false,
+      run: (ctx, ed, a) {
+        final c = activePresentation.value?.controller;
+        if (c == null || !c.browsing) {
+          return const CommandResult.failed('Not browsing away');
+        }
+        c.returnToPresenter();
+        return ok();
       },
     ),
     SlidesCommand(

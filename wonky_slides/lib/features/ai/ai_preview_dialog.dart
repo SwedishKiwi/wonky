@@ -313,6 +313,7 @@ class _AiPreviewDialogState extends State<AiPreviewDialog>
     final theme = ShadTheme.of(context);
     final p = _preview;
     return ShadDialog(
+      constraints: const BoxConstraints(maxWidth: 900),
       key: AiPreviewKeys.dialog,
       title: Text(l.aiPreviewTitle),
       description: Text(l.aiPreviewDescription),

@@ -7305,19 +7305,19 @@ class SlidesLocalizationsEn extends SlidesLocalizations {
   }
 
   @override
-  String get aiQuickImproveSlide => 'Improve this slide';
+  String get aiQuickImproveSlide => 'Improve slide';
 
   @override
-  String get aiQuickNotes => 'Write speaker notes';
+  String get aiQuickNotes => 'Speaker notes';
 
   @override
-  String get aiQuickSummarize => 'Summarize the presentation';
+  String get aiQuickSummarize => 'Summarize deck';
 
   @override
-  String get aiQuickAgenda => 'Add an agenda slide';
+  String get aiQuickAgenda => 'Add agenda';
 
   @override
-  String get aiQuickConsistency => 'Check titles and wording';
+  String get aiQuickConsistency => 'Check wording';
 
   @override
   String get aiQuickNewDeck => 'Generate a presentation…';
@@ -7824,6 +7824,58 @@ class SlidesLocalizationsEn extends SlidesLocalizations {
 
   @override
   String get reasonNoPreview => 'No suggested changes to review';
+
+  @override
+  String presenceEditingLayout(String name) {
+    return 'Editing layout · $name';
+  }
+
+  @override
+  String get followWatchPresentation => 'Watch presentation';
+
+  @override
+  String presenterLive(String name) {
+    return '$name is presenting';
+  }
+
+  @override
+  String presentMenuFollow(String name) {
+    return 'Follow $name\'s presentation';
+  }
+
+  @override
+  String followerFollowing(String name) {
+    return 'Following $name — press Esc to stop';
+  }
+
+  @override
+  String get followerFollowingUnknown =>
+      'Following the presenter — press Esc to stop';
+
+  @override
+  String followerBrowsing(String name) {
+    return 'You left $name\'s slide';
+  }
+
+  @override
+  String get followerBrowsingUnknown => 'You left the presenter\'s slide';
+
+  @override
+  String get followerReturn => 'Return to presenter';
+
+  @override
+  String get followerFullscreen => 'Full screen';
+
+  @override
+  String get followerStop => 'Stop following';
+
+  @override
+  String get cmdPresenceReturnToPresenter => 'Return to presenter';
+
+  @override
+  String pointerOnSlide(String name) {
+    return '$name\'s pointer';
+  }
 }
 
 /// The translations for English (`en_XA`).
@@ -15235,19 +15287,19 @@ class SlidesLocalizationsEnXa extends SlidesLocalizationsEn {
   }
 
   @override
-  String get aiQuickImproveSlide => '[Îɱþŕöṽé ţĥîš šļîðé one tw]';
+  String get aiQuickImproveSlide => '[Îɱþŕöṽé šļîðé one t]';
 
   @override
-  String get aiQuickNotes => '[Ŵŕîţé šþéåķéŕ ñöţéš one tw]';
+  String get aiQuickNotes => '[Šþéåķéŕ ñöţéš one t]';
 
   @override
-  String get aiQuickSummarize => '[Šûɱɱåŕîžé ţĥé þŕéšéñţåţîöñ one two t]';
+  String get aiQuickSummarize => '[Šûɱɱåŕîžé ðéçķ one t]';
 
   @override
-  String get aiQuickAgenda => '[Åðð åñ åĝéñðå šļîðé one tw]';
+  String get aiQuickAgenda => '[Åðð åĝéñðå one]';
 
   @override
-  String get aiQuickConsistency => '[Çĥéçķ ţîţļéš åñð ŵöŕðîñĝ one two]';
+  String get aiQuickConsistency => '[Çĥéçķ ŵöŕðîñĝ one t]';
 
   @override
   String get aiQuickNewDeck => '[Ĝéñéŕåţé å þŕéšéñţåţîöñ… one two]';
@@ -15760,4 +15812,57 @@ class SlidesLocalizationsEnXa extends SlidesLocalizationsEn {
 
   @override
   String get reasonNoPreview => '[Ñö šûĝĝéšţéð çĥåñĝéš ţö ŕéṽîéŵ one two th]';
+
+  @override
+  String presenceEditingLayout(String name) {
+    return '[Éðîţîñĝ ļåýöûţ · $name one t]';
+  }
+
+  @override
+  String get followWatchPresentation => '[Ŵåţçĥ þŕéšéñţåţîöñ one tw]';
+
+  @override
+  String presenterLive(String name) {
+    return '[$name îš þŕéšéñţîñĝ one t]';
+  }
+
+  @override
+  String presentMenuFollow(String name) {
+    return '[Ƒöļļöŵ $name\'š þŕéšéñţåţîöñ one two]';
+  }
+
+  @override
+  String followerFollowing(String name) {
+    return '[Ƒöļļöŵîñĝ $name — þŕéšš Éšç ţö šţöþ one two t]';
+  }
+
+  @override
+  String get followerFollowingUnknown =>
+      '[Ƒöļļöŵîñĝ ţĥé þŕéšéñţéŕ — þŕéšš Éšç ţö šţöþ one two three]';
+
+  @override
+  String followerBrowsing(String name) {
+    return '[Ýöû ļéƒţ $name\'š šļîðé one t]';
+  }
+
+  @override
+  String get followerBrowsingUnknown =>
+      '[Ýöû ļéƒţ ţĥé þŕéšéñţéŕ\'š šļîðé one two th]';
+
+  @override
+  String get followerReturn => '[Ŕéţûŕñ ţö þŕéšéñţéŕ one tw]';
+
+  @override
+  String get followerFullscreen => '[Ƒûļļ šçŕééñ one]';
+
+  @override
+  String get followerStop => '[Šţöþ ƒöļļöŵîñĝ one t]';
+
+  @override
+  String get cmdPresenceReturnToPresenter => '[Ŕéţûŕñ ţö þŕéšéñţéŕ one tw]';
+
+  @override
+  String pointerOnSlide(String name) {
+    return '[$name\'š þöîñţéŕ one]';
+  }
 }

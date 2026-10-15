@@ -217,12 +217,70 @@ Receiver (`SlidesHintOverlay`):
 Deviations: text hints carry the **full body** only (no `diff`/`baseHash`; bodies over 16 KB
 send no hint); a hint is cleared when the synced text **equals** it (change batches carry no HLC),
 when the sender's claim ended + 5 s (30 s without updates at most) or on a local edit; table
-cell and notes bodies get claims but no live hints; `structure` hints (navigator shimmer), live
-pointers (§1.4), the outline view's caret bars, the Present button's live dot and the 300 ms
-fade of released outlines are not built (`TODO.md`). *Follow presenter* joins the presenter's
-presentation session as an audience view (`slides.present.joinAsAudience`, SL-19's follower
-mode); without a session it follows the presented slide in the editor. The View toggle
-*Collaborator cursors* hides remote selection outlines and flags (soft locks stay).
+cell and notes bodies get claims but no live hints. (Built since by SL-37, §2.6: `structure`
+hints and the navigator shimmer, live pointers, the Present button's live dot, the 300 ms fade
+of released outlines, *Follow presenter* as a `follower` of the presentation session — SL-21
+joined as an audience view, which the server refuses for other accounts.) Without a session
+*Follow presenter* follows the presented slide in the editor. The View toggle *Collaborator
+cursors* hides remote selection outlines, flags and pointers (soft locks stay).
+
+### 2.6 As built (SL-37)
+
+`wonky_slides/lib/features/collab/` (extends §2.5):
+
+- **Live pointers (§1.4).** `SlidesPresenceCursor.pointer` (`{x, y}` in whole su of the canvas
+  surface) is set by `CollabCanvasOverlay` from mouse hover/move while the pointer is over the
+  slide and the window is resumed (cleared on exit, hide, inactive) and published with the cursor
+  (`SlidesPresenceController.pointer`). Receivers draw `CollabPointer` (arrow + name pill in the
+  presence color, `slides.collab.pointer.<sessionId>`, semantics "Anna's pointer") for people on
+  the same surface (`pointersOn`), moving with a 100 ms `AnimatedPositioned` (none with reduce
+  motion), hidden 5 s after the pointer last moved (`RemoteDeckCursor.pointerAt`) and with the
+  *Collaborator cursors* toggle off. Deviation: pointers ride the presence session's cursor
+  throttle (10/s, not 20/s); there is no separate a11y setting "Reduce collaborator cursors" (the
+  Slides default `showRemoteCursors` is the switch).
+- **Surfaces.** In masters mode the cursor carries `surfaceId` (the edited layout/master);
+  remote outlines, flags, pointers, drag hints and the followed viewport compare *surfaces*
+  (`RemoteDeckCursor.surfaceId`, `cursorsOn(surfaceId)`), so selections on a layout show only to
+  people editing that layout. The avatar tooltip names the layout ("Editing layout · Title and
+  body").
+- **Follow mode refinements (§1.3, §1.5).** Jump and follow switch to the participant's view
+  mode incl. the outline and masters (their layout, when this user may edit layouts; else their
+  slide in the normal view); a local change of the masters target also stops following. While
+  the followed participant presents, the follow banner offers *Watch presentation*
+  (`slides.presence.followPresenter`). The banner is width-constrained (360 px).
+- **Following a presenter (§1.6, 10 §6.3).** `slides.presence.followPresenter` with a
+  presentation session opens `…/present?view=follow&session=<id>` (`PresentView.follower`,
+  role `follower`: ≥ viewer, any account; the server drops followers' commands). The follower
+  view tracks slides and build steps like the audience view, never sends commands, has no
+  toolbar, ink or kiosk/auto-advance, and shows `FollowerBar` ("Following Anna — press Esc to
+  stop", *Full screen*, *Stop following* = `slides.present.end`/Esc). Navigation keys **browse
+  away** locally (10 §6.3 — this replaces §1.6's "arrow keys only show a hint"): the bar then
+  says "You left Anna's slide" with *Return to presenter* (`slides.presence.returnToPresenter`,
+  Shift+R, keymap scope `present`), which jumps to the presenter's latest state.
+  `SlidesCollab` doesn't publish `presenting` for audience or follower views. The Present
+  split button shows a live dot in the presenter's color while someone presents
+  (`PresentLiveDot`, `slides.present.liveDot`) and its menu starts with *Follow Anna's
+  presentation*.
+- **Structure hints (§2.4).** A local batch with `OrderChanged` sends `{t: structure, slideIds,
+  groupIds, hlcMillis}` (≤ 200 ids each). Receivers start a 1 s shimmer of the navigator row of
+  known slides/groups at once, and of ids not synced yet when their rows arrive (within 10 s)
+  — `SlidesHints.shimmerOf`, `StructureShimmer` (sweeping primary-color gradient; a static tint
+  with reduce motion) on navigator slide rows and group headers.
+- **Released soft locks (§2.3)** fade over 300 ms (instant with reduce motion;
+  `slides.collab.released`).
+- **Outline view (SL-34 leftover).** Focusing a title or bullet line claims its element (a
+  forced claim: the outline has no soft-lock question, so it enters claimed bodies as with *Edit
+  anyway* and never starts a race prompt; released when no line of the slide has focus), and
+  typing sends `text` hints of the whole body (`SlidesHints.typing`).
+- **Agents.** Headless MCP/AI writes show the agent as a participant for 5 s (server
+  `DeckAgentPresence`, SL-40) and open editors flash the touched elements (`SlidesAgentFlash`,
+  SL-42) — the "server-side agent cursors" and "client-side agent flash" leftovers are done
+  there. MCP `ui.get_state` collaborators gain `viewMode`, `surfaceId`, `pointer`, and the
+  state lists `presenters`.
+
+Not built (`TODO.md`): text hints for notes and table cells and the Delta `diff`/`baseHash`
+form for large bodies; the outline view doesn't show others' live hints in its lines; a
+follower count in the presenter view.
 
 ---
 
@@ -450,6 +508,53 @@ result for decks > 20 MB snapshot size, P2):
 *Name current version* (`slides.history.nameCurrentVersion {name}`) and rename/delete names via
 the suite `versions.*` endpoints (not undoable; metadata).
 
+### 4.7 As built (SL-39)
+
+- **Core** (`package:wonky_slides_core/history.dart`): `SlidesSnapshotCodec` writes the §4.1
+  format (gzip on `archive`, abbreviated column keys per table, null columns omitted, `$d`
+  dates, elements parents first) and is used by the server (capture) and the client (viewing);
+  the header's `engineHlc`/`syncTablesHash` are left empty by the server. `DeckDiff` follows
+  §4.3 with these choices: the first version is diffed against an empty deck (everything new,
+  as Sheets); a changed child whose group did not change keeps its own entry and outlines its
+  top-level ancestor (the canvas outlines top-level frames); builds add an `animation` kind;
+  table cells, axes, code states and chart links fold into their element. `TextDiff` is a
+  word-level LCS (not `DeltaDiff`, which is Write's). `SlidesRestoreChanges` is the restore row
+  diff (deletes children first, inserts parents first).
+- **Index**: `SlidesSnapshotIndex(itemVersionId, slidesJson, changesJson, authorIds)` with
+  `changesJson = {v, slides: {id: [userIds]}, elements, groups, theme, deck, agents, approx}`
+  (latest author last; `agents` = authors who edited through MCP/AI in the window, shown as
+  "Claude via MCP (Anna)") — no `structure` list. Attribution uses the change-log rows whose
+  receipts were processed in the capture window (offline edits belong to the version that
+  consumed them). `slidesVersion.changes` returns it (computed on the fly for versions without
+  an index). The deck change log is pruned after 30 days (`DeckChangeLogPruning`, daily job);
+  captured versions keep their attribution in the index.
+- **Viewing**: the shell's history route (`/p/:uuid/history`, `?version=<id>` selects a
+  version — added to the shell) with `SlidesVersionRenderer`: navigator (group headers with
+  *New*/*Renamed*/*Moved* tags, slide thumbnails with *New*, *↕ Moved* and the author dot,
+  ghost rows of deleted slides that open the previous version's slide), the read-only stage
+  with 2 px outlines in the author's color, a "+" tag on added objects and dashed ghosts of
+  removed ones (*Show removed objects*), and *Changes on this slide* with deck-level rows on
+  top (theme, settings, groups). Text changes show their diff **inline** in the list (not on
+  hover); clicking a row highlights the object. Below 720 px the navigator is a strip above the
+  stage and the list goes below it; below 480 px the bar's actions are icons. Not built:
+  *Side by side* (P1), the read-only master view of a theme change and the faint outlines of
+  inherited changes.
+- **Restore** as §4.4 through `VersionEndpoint.restore` → `SlidesVersionProvider.restore`
+  (`ServerSlidesWriter.applyRecorded`, record kept 7 days); the shell command records SL-43's
+  `SlidesServerChangeEntry` (undo = `slides.revertChange`, redo = `slides.reapplyChange`).
+  Collaborators get "Anna restored a previous version" (presence notice, shown by
+  `SlidesConflicts`).
+- **Copies and downloads**: *Make a copy* runs on the **server**
+  (`slidesVersion.makeCopy(itemUuid, versionId, name, folderUuid?, copyComments, copySharing)`
+  → `DeckCopies.copy(sourceModel:)` with re-homed images and the caller's quota, comments
+  with remapped anchors, sharing) instead of a client `DeckCopier` + `copyExtras` — version
+  history is online-only anyway and the server already has the copy pipeline. Editors+ (suite
+  07 §5). *Download* is the version's PDF with the user's last-used export options
+  (`SlidesClientExport`).
+- **Commands** (§7): `slides.history.*` run without an open editor (they act on the shown
+  version); `toggleSideBySide` is not registered. ⌥⌘↓/⌥⌘↑ step through the stops: each changed
+  slide, then its changed objects top-to-bottom, left-to-right.
+
 ---
 
 ## 5. Activity
@@ -462,6 +567,11 @@ The `DeckChangeLog` consumer (exactly-once receipts, `DeckChangeLogReceipt`) pro
   "Bo added the group Demo", "Anna changed the theme to Midnight", "Claude via MCP (Anna) added 6
   slides" — shown in the Drive details panel feed (suite 05 §5).
 - No per-edit notifications (P2: change notification rules like Sheets 10 §8).
+- As built (SL-39): the `activity` plugin aggregates through `ActivityService.logEdit` with
+  counters (`changes`, `slides`, `slidesDeleted`, `themes`) and the new id set `slideIds`
+  (distinct slides of the 10-minute event); the shell feed adds a detail line "3 slides ·
+  1 slide deleted · theme changed · with Claude" under "Anna edited". Slide numbers and group
+  names ("slides 3–5 in Intro") are not shown (the feed has no deck model).
 
 ---
 
@@ -507,6 +617,12 @@ The `DeckChangeLog` consumer (exactly-once receipts, `DeckChangeLogReceipt`) pro
   *Current* with a diff) with checkboxes; **Restore mine** writes the selected texts back
   (`slides.conflicts.restoreMine {conflictIds}`, one undo step); *Copy mine* puts the text on the
   clipboard; *Dismiss all*. Conflicts expire after 7 days.
+- As built (SL-39): `SlidesConflicts` (`features/history/local_conflicts.dart`) tracks element
+  text, table cell text and speaker notes (not code states) written offline or under a forced
+  soft lock; the check runs once the sync after reconnecting wrote our changes and merged
+  (`SyncSessionHost.merges`, ≤ 90 s). The winner is the latest replica `DeckChangeLog` row
+  that touched the body (or deleted it) from another user. The dialog's buttons are *Dismiss
+  all*, *Copy* and *Restore* (short labels so three fit the dialog).
 
 ### 6.4 Offline collaboration scenarios
 
@@ -555,6 +671,7 @@ case in the multi-client sync harness ([12 §7.3](12-implementation-plan.md)).
 | `slides.presence.jumpTo` | `{sessionId}` | — | Viewer+ |
 | `slides.presence.follow` / `unfollow` | `{sessionId}` | — | Viewer+ |
 | `slides.presence.followPresenter` | `{sessionId}` | — | Viewer+ |
+| `slides.presence.returnToPresenter` (SL-37) | — | — | Viewer+ (follower view, after browsing away) |
 | `slides.view.toggleRemoteCursors` / `toggleCommentPins` | — | — | Viewer+ |
 | `slides.text.editAnyway` | `{target}` | — | Editor |
 | `shell.comments.create` (Slides anchors) | `{anchor?: {slideId, elementId?, point?}, body, mentions, assigneeId?}` | ✓ (`comments`) | Commenter+ |

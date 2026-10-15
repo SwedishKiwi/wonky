@@ -199,6 +199,21 @@ void main() {
       for (final c in items)
         if (c.commandId == 'slides.view.setMode') c.args['mode'],
     ], contains('masters'));
+    // SL-43 shipped the assistant and the AI commands; the code
+    // walkthrough stays hidden.
+    expect(SlidesFeatures.isOn(SlidesFeature.assistant), isTrue);
+    expect(
+      ids,
+      containsAll([
+        'slides.ai.generateDeck',
+        'slides.ai.rewrite',
+        'slides.ai.speakerNotes',
+        'slides.ai.altText',
+        'slides.ai.suggestLayouts',
+        'shell.ai.togglePanel',
+      ]),
+    );
+    expect(ids, isNot(contains('slides.ai.codeWalkthrough')));
     expect({
       for (final c in items)
         if (!SlidesFeatures.offers(c.commandId, c.args) ||

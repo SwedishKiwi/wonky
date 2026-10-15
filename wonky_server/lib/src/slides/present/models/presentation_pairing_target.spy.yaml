@@ -1,0 +1,7 @@
+### What a typed pairing code resolves to (`presentation.resolvePairingCode`,
+### Slides 10 §6.4): the remote route of the session.
+class: PresentationPairingTarget
+fields:
+  deckUuid: UuidValue
+  sessionId: String
+  pairingKey: String

@@ -334,6 +334,7 @@ class _NotesDialogState extends State<NotesDialog>
     final la = WonkyAppLocalizations.of(context);
     final notes = _notes;
     return ShadDialog(
+      constraints: const BoxConstraints(maxWidth: 680),
       key: NotesDialogKeys.dialog,
       title: Text(notes == null ? l.aiNotesTitle : l.aiNotesReviewTitle),
       actions: [

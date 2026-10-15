@@ -206,6 +206,8 @@ import 'package:wonky_server/src/generated/slides/present/models/presentation_ev
     as _ieyo7nqv;
 import 'package:wonky_server/src/generated/slides/present/models/presentation_join.dart'
     as _ieucpeca;
+import 'package:wonky_server/src/generated/slides/present/models/presentation_pairing_target.dart'
+    as _ienppxeb;
 import 'package:wonky_server/src/generated/slides/present/models/presentation_session_info.dart'
     as _i3wfcxhm;
 import 'package:wonky_server/src/generated/slides/present/models/presentation_update.dart'
@@ -7618,6 +7620,37 @@ class _PresentationEndpoint {
                   _localCallContext.arguments,
                 )
                 as _ida.Future<_i3wfcxhm.PresentationSessionInfo?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ienppxeb.PresentationPairingTarget?> resolvePairingCode(
+    _ist.TestSessionBuilder sessionBuilder,
+    String code,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'presentation',
+            method: 'resolvePairingCode',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'presentation',
+          methodName: 'resolvePairingCode',
+          parameters: _ist.testObjectToJson({'code': code}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ienppxeb.PresentationPairingTarget?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

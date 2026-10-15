@@ -19,6 +19,7 @@ import '../features/undo/server_change_undo.dart';
 import '../features/sync/slides_data.dart'
     show NoReservedSpaceException, SlidesData;
 import '../l10n/slides_l10n.dart';
+import '../mcp/ui_slides_tools.dart';
 import 'menus/slides_menu_spec.dart';
 import 'slides_features.dart';
 
@@ -166,11 +167,12 @@ class SlidesAppConfig extends WonkyAppConfig {
   List<SettingsSectionSpec> appSettingsSections(ShellServices services) =>
       slidesSettingsSections(services);
 
-  /// `ui.slides.*` MCP UI-bridge tools come with SL-42 (Slides 11); the
-  /// shared `ui.*` tools (menu tree, commands, dialogs, state with the
-  /// editor's `describeState`) already cover the chrome.
+  /// The `ui.slides.*` MCP UI-bridge tools (Slides 11 §5; SL-42), next to
+  /// the shared `ui.*` tools (menu tree, commands, dialogs, state with the
+  /// editor's `describeState`).
   @override
-  Map<String, UiToolHandler> mcpUiTools(ShellServices services) => const {};
+  Map<String, UiToolHandler> mcpUiTools(ShellServices services) =>
+      UiSlidesToolHandlers.all(services);
 
   /// The Slides data layer follows the signed-in user (Slides 02 §9): the
   /// replica `slides_<userId>.db` and its sync controller (SL-9).
@@ -181,10 +183,15 @@ class SlidesAppConfig extends WonkyAppConfig {
     // Server-side changes (AI runs, restores from the history route on
     // the shell stack) undo through the server (02 §12.2).
     services.undo.registerHandler(SlidesServerChangeHandler(services));
+    // The AI assistant (suite 10, Slides 11 §6; SL-43).
+    if (SlidesFeatures.isOn(SlidesFeature.assistant)) {
+      ShellAssistant.install(services);
+    }
   }
 
   @override
   Future<void> onSigningOut(ShellServices services) async {
+    ShellAssistant.uninstall(services);
     await SlidesData.uninstall(services);
     await super.onSigningOut(services);
   }

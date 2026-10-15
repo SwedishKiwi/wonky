@@ -713,6 +713,7 @@ class _GenerateDeckDialogState extends State<GenerateDeckDialog>
     final busy = _step == _Step.planning || _step == _Step.building;
     final o = _outline;
     return ShadDialog(
+      constraints: const BoxConstraints(maxWidth: 760),
       key: GenerateDeckKeys.dialog,
       title: Text(
         _step == _Step.outline ? l.aiGenerateOutlineTitle : l.aiGenerateTitle,
@@ -1017,7 +1018,7 @@ class _GenerateDeckDialogState extends State<GenerateDeckDialog>
                 id: 'dialog.slides.generateDeck.slide.$i.role',
                 value: s.role,
                 values: AiSlideRole.values,
-                minWidth: 120,
+                minWidth: 150,
                 text: _roleText,
                 onChanged: (r) => _setRole(i, r),
               ),

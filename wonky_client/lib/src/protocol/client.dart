@@ -199,6 +199,8 @@ import 'package:wonky_client/src/protocol/slides/present/models/presentation_eve
     as _i693xhmf;
 import 'package:wonky_client/src/protocol/slides/present/models/presentation_join.dart'
     as _ia63nl87;
+import 'package:wonky_client/src/protocol/slides/present/models/presentation_pairing_target.dart'
+    as _i6lgd3j7;
 import 'package:wonky_client/src/protocol/slides/present/models/presentation_session_info.dart'
     as _iwz86pi3;
 import 'package:wonky_client/src/protocol/slides/present/models/presentation_update.dart'
@@ -3049,6 +3051,17 @@ class EndpointPresentation extends _isc.EndpointRef {
     'presentation',
     'findSession',
     {'deckUuid': deckUuid},
+  );
+
+  /// The remote route of a typed six-digit pairing [code] (Slides 10 §6.4,
+  /// SL-41), or null when no presenter issued it (or it expired). Needs ≥
+  /// viewer on the deck; rate-limited per user.
+  _ida.Future<_i6lgd3j7.PresentationPairingTarget?> resolvePairingCode(
+    String code,
+  ) => caller.callServerEndpoint<_i6lgd3j7.PresentationPairingTarget?>(
+    'presentation',
+    'resolvePairingCode',
+    {'code': code},
   );
 }
 

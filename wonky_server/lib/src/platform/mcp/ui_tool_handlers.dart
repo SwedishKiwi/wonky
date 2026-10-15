@@ -1,11 +1,18 @@
 import 'package:wonky_core/wonky_core.dart'
-    show McpToolDefinition, UiDriveTools, UiSheetsTools, UiTools, UiWriteTools;
+    show
+        McpToolDefinition,
+        UiDriveTools,
+        UiSheetsTools,
+        UiSlidesTools,
+        UiTools,
+        UiWriteTools;
 
 import 'tool_executor.dart';
 import 'tool_support.dart';
 import 'ui_bridge/ui_bridge_hub.dart';
 
-/// UI-bridge tools (suite 09 §6, Write 09 §3, Sheets 12 §5):
+/// UI-bridge tools (suite 09 §6, Write 09 §3, Sheets 12 §5, Drive 04 §13,
+/// Slides 11 §5):
 /// `ui.list_sessions` is answered by the hub; every other `ui.*` tool is
 /// relayed to a live window of the token's user, which executes it
 /// (commands run through its `CommandDispatcher` with source `mcp`).
@@ -18,6 +25,8 @@ abstract final class UiToolHandlers {
     for (final d in UiSheetsTools.all) _relay(d, app: 'sheets'),
     // (v2, P1) Implemented by Wonky Drive windows (Drive 04 §13).
     for (final d in UiDriveTools.all) _relay(d, app: 'drive'),
+    // (v2) Implemented by Wonky Slides windows (Slides 11 §5, SL-42).
+    for (final d in UiSlidesTools.all) _relay(d, app: 'slides'),
   ];
 
   static Future<ToolResult> listSessions(ToolContext ctx, ToolArgs a) async {
@@ -31,7 +40,7 @@ abstract final class UiToolHandlers {
       },
       text: windows.isEmpty
           ? 'No window allows MCP control. Open a Wonky Work app (Write, '
-                'Sheets, Drive) and enable '
+                'Sheets, Slides, Drive) and enable '
                 'Settings › Developer › "Allow MCP to control this window".'
           : [
               for (final w in windows)

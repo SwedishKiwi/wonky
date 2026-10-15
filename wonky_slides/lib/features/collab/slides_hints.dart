@@ -91,6 +91,16 @@ class SlidesHints extends ChangeNotifier {
   /// A transform hint without updates is dropped after this.
   static const transformLifetime = Duration(seconds: 2);
 
+  /// The navigator shimmer of a structure hint (09 §2.4).
+  static const structureShimmer = Duration(seconds: 1);
+
+  /// Hinted slides and groups not synced yet shimmer when their rows
+  /// arrive within this time.
+  static const structureWait = Duration(seconds: 10);
+
+  /// Ids sent per structure hint.
+  static const maxStructureIds = 200;
+
   PresenceSession? _session;
   StreamSubscription<PresenceHints>? _sub;
   bool _disposed = false;
@@ -100,6 +110,13 @@ class SlidesHints extends ChangeNotifier {
 
   /// Transform hints by session id.
   final Map<String, TransformHint> transforms = {};
+
+  /// When a structure hint (or the arrival of its hinted rows) started the
+  /// shimmer of a slide or group, by id.
+  final Map<String, DateTime> structure = {};
+
+  /// Hinted ids whose rows haven't arrived yet, with the hint time.
+  final Map<String, DateTime> _structurePending = {};
 
   /// When a sender's claim on an element was last seen (linger).
   final Map<String, DateTime> _claimSeen = {};
@@ -126,6 +143,11 @@ class SlidesHints extends ChangeNotifier {
   Timer? _textTimer;
   String? _textSent;
 
+  /// Typing outside the canvas text editor (the outline view, 04 §10):
+  /// the element, its slide and the body's Delta JSON, sent with the next
+  /// text hint.
+  ({String elementId, String? slideId, String json})? _typed;
+
   void _onHost() {
     if (_disposed) return;
     final c = _host.active;
@@ -139,6 +161,23 @@ class SlidesHints extends ChangeNotifier {
         !c.hasPendingEdits) {
       return;
     }
+    _typed = null;
+    _scheduleText();
+  }
+
+  /// Hints typing into [elementId]'s body outside the canvas text editor
+  /// (the outline view): [json] is the whole body as it would be written.
+  void typing(String elementId, String? slideId, String json) {
+    if (_disposed || _session == null || !editor.roleCanEdit) return;
+    if (text.remove(elementId) != null) {
+      _textChanged();
+      notifyListeners();
+    }
+    _typed = (elementId: elementId, slideId: slideId, json: json);
+    _scheduleText();
+  }
+
+  void _scheduleText() {
     if (_textTimer?.isActive ?? false) return;
     _sendText();
     _textTimer = Timer(textInterval, _sendText);
@@ -146,10 +185,22 @@ class SlidesHints extends ChangeNotifier {
 
   void _sendText() {
     final p = _session;
+    if (_disposed || p == null) return;
     final c = _host.active;
-    if (_disposed || p == null || c == null || c.isCell) return;
-    final json = c.json;
-    final key = '${c.elementId}|$json';
+    final typed = _typed;
+    final String elementId;
+    final String? slideId;
+    final String json;
+    if (typed != null) {
+      (:elementId, :slideId, :json) = typed;
+    } else if (c != null && !c.isCell) {
+      elementId = c.elementId;
+      slideId = c.slideId;
+      json = c.json;
+    } else {
+      return;
+    }
+    final key = '$elementId|$json';
     if (key == _textSent) return;
     _textSent = key;
     Object? delta;
@@ -160,11 +211,7 @@ class SlidesHints extends ChangeNotifier {
     }
     final hint = jsonEncode({
       't': 'text',
-      'target': {
-        'kind': 'text',
-        'elementId': c.elementId,
-        'slideId': c.slideId,
-      },
+      'target': {'kind': 'text', 'elementId': elementId, 'slideId': slideId},
       'delta': delta,
       'diff': null,
       'hlcMillis': clock.now().millisecondsSinceEpoch,
@@ -201,7 +248,7 @@ class SlidesHints extends ChangeNotifier {
   void _sendTransform() {
     final p = _session;
     final t = _canvas?.transform;
-    final slide = editor.currentSlideId;
+    final slide = editor.surfaceId;
     if (_disposed || p == null || t == null || !t.changed || slide == null) {
       return;
     }
@@ -244,6 +291,8 @@ class SlidesHints extends ChangeNotifier {
           changed = _receiveText(e.sessionId, h) || changed;
         case 'transform':
           changed = _receiveTransform(e.sessionId, h) || changed;
+        case 'structure':
+          changed = _receiveStructure(h) || changed;
       }
     }
     if (changed) {
@@ -303,6 +352,55 @@ class SlidesHints extends ChangeNotifier {
     return true;
   }
 
+  bool _receiveStructure(Map<Object?, Object?> h) {
+    final now = clock.now();
+    var changed = false;
+    for (final key in const ['slideIds', 'groupIds']) {
+      final ids = h[key];
+      if (ids is! List) continue;
+      for (final id in ids.take(maxStructureIds)) {
+        if (id is! String) continue;
+        final known = key == 'slideIds'
+            ? editor.model.slide(id) != null
+            : editor.model.group(id) != null;
+        if (known) {
+          structure[id] = now;
+          changed = true;
+        } else {
+          _structurePending[id] = now;
+          _scheduleExpiry();
+        }
+      }
+    }
+    return changed;
+  }
+
+  /// When the shimmer of slide or group [id] started (null: none running).
+  DateTime? shimmerOf(String id) {
+    final at = structure[id];
+    if (at == null || clock.now().difference(at) >= structureShimmer) {
+      return null;
+    }
+    return at;
+  }
+
+  void _sendStructure(OrderChanged ev) {
+    final p = _session;
+    if (p == null || !editor.roleCanEdit) return;
+    final slides = ev.slideIds.take(maxStructureIds).toList();
+    final groups = ev.groupIds.take(maxStructureIds).toList();
+    if (slides.isEmpty && groups.isEmpty) return;
+    sent++;
+    p.sendHints([
+      jsonEncode({
+        't': 'structure',
+        'slideIds': slides,
+        'groupIds': groups,
+        'hlcMillis': clock.now().millisecondsSinceEpoch,
+      }),
+    ]);
+  }
+
   bool _textChanged() {
     _textVersion++;
     SlideCanvasController.of(editor)?.refresh();
@@ -341,9 +439,31 @@ class SlidesHints extends ChangeNotifier {
 
   void _onBatch(DeckChangeBatch batch) {
     if (_disposed) return;
-    final ev = batch.event<ElementsChanged>();
-    if (ev == null) return;
+    final order = batch.event<OrderChanged>();
     var changed = false;
+    if (order != null) {
+      if (batch.origin == DeckChangeOrigin.local) _sendStructure(order);
+      if (batch.isRemote && _structurePending.isNotEmpty) {
+        // Hinted rows arrived: their shimmer starts now.
+        final now = clock.now();
+        for (final id in [
+          ...order.slideIds,
+          ...order.groupIds,
+          ...?batch.event<SlidesChanged>()?.added,
+        ]) {
+          if (_structurePending.remove(id) != null) {
+            structure[id] = now;
+            changed = true;
+          }
+        }
+        if (changed) _scheduleExpiry();
+      }
+    }
+    final ev = batch.event<ElementsChanged>();
+    if (ev == null) {
+      if (changed) notifyListeners();
+      return;
+    }
     for (final id in ev.elementIds) {
       final h = text[id];
       if (h == null) continue;
@@ -403,7 +523,18 @@ class SlidesHints extends ChangeNotifier {
       if (gone) changed = true;
       return gone;
     });
-    if (text.isEmpty && transforms.isEmpty) {
+    structure.removeWhere((_, at) {
+      final gone = now.difference(at) >= structureShimmer;
+      if (gone) changed = true;
+      return gone;
+    });
+    _structurePending.removeWhere(
+      (_, at) => now.difference(at) > structureWait,
+    );
+    if (text.isEmpty &&
+        transforms.isEmpty &&
+        structure.isEmpty &&
+        _structurePending.isEmpty) {
       _expiry?.cancel();
       _expiry = null;
     }

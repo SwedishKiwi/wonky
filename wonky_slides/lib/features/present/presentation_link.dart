@@ -15,6 +15,10 @@ abstract interface class PresentationTransport {
   );
 
   Future<PresentationSessionInfo?> findSession(UuidValue deckUuid);
+
+  /// The phone-remote route of a typed six-digit pairing code (SL-41, 10
+  /// §6.4; server side built, client UI on hold), or null.
+  Future<PresentationPairingTarget?> resolvePairingCode(String code);
 }
 
 /// [PresentationTransport] on `client.presentation`.
@@ -33,6 +37,10 @@ class ClientPresentationTransport implements PresentationTransport {
   @override
   Future<PresentationSessionInfo?> findSession(UuidValue deckUuid) =>
       client.presentation.findSession(deckUuid);
+
+  @override
+  Future<PresentationPairingTarget?> resolvePairingCode(String code) =>
+      client.presentation.resolvePairingCode(code);
 }
 
 /// The transport of [s] (null without a server, e.g. widget tests).
@@ -178,6 +186,9 @@ class PresentationLink extends ChangeNotifier {
     _set(
       _attempt == 0
           ? PresentationLinkStatus.connecting
+          // A presenter that never joined stays offline while it retries.
+          : sessionId == null
+          ? PresentationLinkStatus.offline
           : PresentationLinkStatus.reconnecting,
     );
     final Stream<PresentationEvent> stream;
@@ -234,7 +245,7 @@ class PresentationLink extends ChangeNotifier {
   void _scheduleRetry() {
     if (_disposed || _ending) return;
     _set(
-      _attempt == 0 && sessionId == null
+      sessionId == null
           ? PresentationLinkStatus.offline
           : PresentationLinkStatus.reconnecting,
     );

@@ -74,6 +74,24 @@ void main() {
   }
 
   group('Given the emoji picker', () {
+    testWidgets('when MCP searches, picks an emoji and chooses it then it is '
+        'selected (suite 09 §6.2)', (tester) async {
+      final (picked, _, _) = await _pumpPicker(tester);
+      final dialog =
+          tester.state(find.byType(WonkyEmojiPicker)) as McpDescribableDialog;
+
+      expect(dialog.setField('query', 'wave'), isTrue);
+      await tester.pump();
+      final field = (dialog.describe()['fields']! as List)[1] as Map;
+      expect(field['options'], contains('👋'));
+      expect(dialog.setField('emoji', '👋'), isTrue);
+      expect(dialog.press('choose'), isTrue);
+      expect(dialog.press('close'), isTrue);
+
+      expect(picked.values, ['👋']);
+      expect(picked.closed, 1);
+    });
+
     testWidgets('when browsing then every category has a tab and a section', (
       tester,
     ) async {

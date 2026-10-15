@@ -393,8 +393,8 @@ content (only positions and ink). Rate limit: 20 commands/s per remote.
   members only) / `who` (presenter rejoin probe) / `takeover` / `away` (presenter stream closed;
   members end after the 30 s grace) / `bye` / `state` / `laser` / `ink` / `command` / `end`;
   discovery on `present-deck:<deckUuid>` (`find` → `found`).
-- **Roles:** `audience` and `remote` need the presenter's own account (pairing keys are refused
-  until SL-41); `follower` needs ≥ viewer; every join checks the deck ACL, commands re-check it
+- **Roles:** `audience` and `remote` need the presenter's own account (a `remote` of
+  another account with a pairing key since SL-41, §6.7); `follower` needs ≥ viewer; every join checks the deck ACL, commands re-check it
   every 5 s. Audience devices may send commands too (a clicker plugged into the projector
   machine); followers can't. A presenter join with the id of a live session ends with
   `presenterActive` until it is repeated with `takeOver` ("Take over the presentation from
@@ -409,6 +409,24 @@ content (only positions and ink). Rate limit: 20 commands/s per remote.
   waits for unsynced slides ("Catching up…") and returns to the editor when the presentation
   ends. Keys: the `present` keymap scope of §2.1 (`?` is handled by the screen next to `/`;
   digits + `Enter` and `Esc` precedence too).
+
+### 6.7 As built (SL-41, partial — on hold)
+
+- **Pairing (server, built):** the presenter sends `PresentationPairingUpdate` and gets a
+  `PresentationPairingEvent {pairingKey (128-bit base-62), code (6 digits), expiresAtMs}`;
+  keys are single use and valid 10 min, a new request revokes the unused ones (`revoke: true`
+  only revokes). A `remote` join of another account carries the key in its bus `hello`; the
+  presenter's connection answers `here` with `admitted` and remembers the account, so the
+  remote reconnects without a key (also after the presenter rejoined: members' `here` rebuild
+  it). Refusals end the join with `noAccess` (no key) or `pairingExpired`. A typed code
+  resolves through `presentation.resolvePairingCode(code) → PresentationPairingTarget
+  {deckUuid, sessionId, pairingKey}?` (bus `present-code:<code>`, ≥ viewer, 10 tries a
+  minute per user). Deviation from §6.4: codes are looked up on the bus, not stored.
+- **Same-browser channel (client core, built, not wired):** `PresentFastPath` over
+  `BroadcastChannel('wonky-present-<sessionId>')` carries `state`/`laser`/`ink`/`end` from the
+  presenter and `command`s from members as JSON with local times (mapped to server time with
+  the link's `ClockOffset`), plus 2 s pings for liveness.
+- Not built yet: the remote UI, rehearse, the fast-path wiring and *Freeze audience* (TODO).
 
 ---
 

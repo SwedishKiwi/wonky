@@ -20,6 +20,7 @@ part 'presentation_command_event.dart';
 part 'presentation_ended_event.dart';
 part 'presentation_ink_event.dart';
 part 'presentation_laser_event.dart';
+part 'presentation_pairing_event.dart';
 part 'presentation_presenter_event.dart';
 part 'presentation_roster_event.dart';
 part 'presentation_state_event.dart';

@@ -391,7 +391,7 @@ aren't commands.
 `app: 'sheets'`). Handlers: `UiSheetsToolHandlers` (`wonky_sheets/lib/mcp/ui_sheets_tools.dart`,
 registered through `SheetsAppConfig.mcpUiTools`). All tools are implemented, including the P1
 `highlight_range` and `describe_panel` / `set_panel_field` plus `ui.sheets.press_panel_button`
-(`PanelDescriber`, `wonky_sheets/lib/mcp/panel_describer.dart`: the open panel's widget tree is
+(`PanelDescriber`, `wonky_app/lib/src/mcp_bridge/panel_describer.dart` since v2: the open panel's widget tree is
 walked for text inputs, checkboxes, switches and buttons; ids are the widgets' `ValueKey<String>`s,
 else the nearest keyed ancestor's, else positional `text_2`; text is set as typed so the panel's
 `onChanged` runs); `open_panel` also accepts `explore` and opens a panel through its command

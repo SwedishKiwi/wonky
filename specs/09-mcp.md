@@ -240,13 +240,20 @@ UiBridgeEndpoint.connect(Stream<UiBridgeMessage> fromApp) → Stream<UiBridgeMes
 
 Dialogs are made MCP-operable by building them with a `WonkyDialogSpec` (declarative fields +
 buttons) rendered by a shared `WonkyFormDialog`; custom dialogs must implement
-`McpDescribableDialog` (`describe()`, `setField()`, `press()`).
+`McpDescribableDialog` (`describe()`, `setField()`, `press()`). (v2) A custom dialog's `State`
+mixes in `McpDialogRegistration` to register with the window while mounted; a dialog widget that
+can't implement the interface (another package's) is shown inside an `McpDialogScope` with an
+adapter. The shell's shortcuts help, spelling, personal dictionary, special characters and emoji
+dialogs are describable. Side panels are read and operated with `PanelDescriber`
+(`wonky_app`, used by `ui.sheets.*_panel` and `ui.slides.*_panel`).
 
 App-specific `ui.*` tools (e.g. `ui.write.get_selection`, `ui.write.select_text`,
 `ui.sheets.select_range`, `ui.sheets.get_visible_range`, (v2) `ui.slides.*` in Slides 11,
 `ui.drive.*` in [Drive 04 §13](wonky_drive/04-screens-menus.md)) are listed in each app's MCP
 spec. (v2: the `ui.drive.*` definitions are `UiDriveTools` in `wonky_core/lib/mcp/ui_drive_tools.dart`,
-relayed by the server to windows with `app: drive`; the Drive window implements them in D-17.) `UiBridgeHello.app` takes `drive`, `write`, `sheets`, `slides`.
+relayed by the server to windows with `app: drive`; the Drive window implements them in D-17. The
+`ui.slides.*` definitions are `UiSlidesTools` in `wonky_core/lib/mcp/ui_slides_tools.dart`, relayed
+to windows with `app: slides` and implemented by Slides in SL-42.) `UiBridgeHello.app` takes `drive`, `write`, `sheets`, `slides`.
 
 ## 7. Conventions for tool implementations
 

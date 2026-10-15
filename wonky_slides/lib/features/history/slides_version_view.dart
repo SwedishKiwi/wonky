@@ -713,8 +713,9 @@ class _VersionNavigatorState extends State<_VersionNavigator> {
   }
 
   KeyEventResult _onKey(FocusNode node, KeyEvent e) {
-    if (e is! KeyDownEvent && e is! KeyRepeatEvent)
+    if (e is! KeyDownEvent && e is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
+    }
     final back = widget.horizontal
         ? LogicalKeyboardKey.arrowLeft
         : LogicalKeyboardKey.arrowUp;

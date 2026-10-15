@@ -1,0 +1,10 @@
+### A pairing key for a phone remote (presenter only; Slides 10 §6.4): the
+### QR link carries `pairingKey`, the phone may type `code` instead. Single
+### use, valid until `expiresAtMs` (server epoch ms, 10 min).
+class: PresentationPairingEvent
+extends: PresentationEvent
+fields:
+  pairingKey: String
+  ### Six digits.
+  code: String
+  expiresAtMs: int

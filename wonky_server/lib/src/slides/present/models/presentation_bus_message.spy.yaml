@@ -4,7 +4,7 @@ class: PresentationBusMessage
 serverOnly: true
 fields:
   ### hello, here, who, meta, joined, bye, away, takeover, state, laser, ink,
-  ### command, end, find, found.
+  ### command, end, find, found, resolve, resolved.
   type: String
   ### The sending connection.
   connectionId: String
@@ -31,3 +31,8 @@ fields:
   startedAtMs: int?
   ### here/meta/found: the connection (or find request) answered.
   replyTo: String?
+  ### Phone remote pairing (SL-41): the key of a remote's hello, of a
+  ### resolved code (resolved).
+  pairingKey: String?
+  ### here: whether the presenter admits the remote of another account.
+  admitted: bool?

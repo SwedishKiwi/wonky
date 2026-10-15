@@ -21,6 +21,12 @@ class FakePresentationHub {
   /// Events a [seed]ed presenter received (commands, roster).
   final List<PresentationEvent> seededPresenterEvents = [];
 
+  /// Pairing codes issued (SL-41): code → (session id, key).
+  final Map<String, (String, String)> pairings = {};
+
+  /// The deck typed codes resolve to (tests set it).
+  UuidValue? deckUuid;
+
   /// A live session whose presenter is "on another device" (it only
   /// records what it receives); returns the session id.
   String seed(PresentationState state, {String device = 'Laptop'}) {
@@ -93,6 +99,18 @@ class _FakeTransport implements PresentationTransport {
       }
     }
     return null;
+  }
+
+  @override
+  Future<PresentationPairingTarget?> resolvePairingCode(String code) async {
+    final p = hub.pairings[code];
+    return p == null
+        ? null
+        : PresentationPairingTarget(
+            deckUuid: hub.deckUuid ?? UuidValue.fromString(Uuid().v4()),
+            sessionId: p.$1,
+            pairingKey: p.$2,
+          );
   }
 
   @override
@@ -204,6 +222,20 @@ class _FakeTransport implements PresentationTransport {
                 hub.sessions.remove(sid);
               case PresentationCommandUpdate():
                 break;
+              case PresentationPairingUpdate(:final revoke):
+                if (revoke == true) break;
+                final n = hub._ids++;
+                final key = 'Pairing${n}AbCdEfGhIjKlMn';
+                final code = '${100000 + n}';
+                hub.pairings[code] = (sid, key);
+                conn.add(
+                  PresentationPairingEvent(
+                    serverTimeMs: now(),
+                    pairingKey: key,
+                    code: code,
+                    expiresAtMs: now() + 600000,
+                  ),
+                );
             }
           });
           return;

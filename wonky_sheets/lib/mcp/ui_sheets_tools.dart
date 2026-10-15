@@ -32,7 +32,6 @@ import '../features/sheet_editor/sheet_editor_controller.dart';
 import '../features/sheet_editor/sheets_document_controller.dart';
 import '../features/status/selection_stats.dart';
 import '../theme/sheets_tokens.dart';
-import 'panel_describer.dart';
 
 /// Wonky Sheets' UI-bridge tools (`ui.sheets.*`, Sheets 12 §5), executed in
 /// the live window on the open spreadsheet. Writes go through commands

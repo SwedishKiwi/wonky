@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 
 import '../shell/anchored_popover.dart';
+import '../shell/form_dialog.dart';
 import '../core/l10n_or_english.dart';
 import 'emoji_catalog.dart';
 import 'emoji_prefs.dart';
@@ -218,7 +219,8 @@ class _Row {
   double get extent => isHeader ? _headerExtent : _cellExtent;
 }
 
-class _WonkyEmojiPickerState extends State<WonkyEmojiPicker> {
+class _WonkyEmojiPickerState extends State<WonkyEmojiPicker>
+    with McpDialogRegistration<WonkyEmojiPicker> {
   late final TextEditingController _query = TextEditingController(
     text: widget.initialQuery,
   );
@@ -406,6 +408,88 @@ class _WonkyEmojiPickerState extends State<WonkyEmojiPicker> {
       _section = section;
       if (firstCell >= 0) _active = firstCell;
     });
+  }
+
+  // ------------------------------------------------------------------- MCP
+  //
+  // `ui.get_dialog` (suite 09 §6.2): `query`, the `emoji` of the listing
+  // (first 200, recents first), `choose` (the highlighted one) and `close`.
+
+  @override
+  Map<String, Object?> describe() {
+    final l = wonkyAppL10nOrEnglish(context);
+    _layout(_columns);
+    final shown = _cells.take(200).toList();
+    final active = _cells.isEmpty
+        ? null
+        : _cells[_active.clamp(0, _cells.length - 1)];
+    return {
+      'title': l.emojiDialogLabel,
+      'kind': 'emoji',
+      'loaded': _catalog != null,
+      'fields': [
+        {
+          'id': 'query',
+          'label': l.emojiSearch,
+          'type': 'text',
+          'value': _query.text,
+        },
+        {
+          'id': 'emoji',
+          'label': l.emojiSearchResults,
+          'type': 'select',
+          'value': active?.text,
+          'options': [for (final c in shown) c.text],
+          'optionLabels': {for (final c in shown) c.text: c.name},
+          if (_cells.length > shown.length) 'truncated': true,
+        },
+      ],
+      'buttons': [
+        if (active != null) {'id': 'choose', 'label': active.name},
+        if (widget.onClose != null)
+          {'id': 'close', 'label': l.emojiPickerClose},
+      ],
+    };
+  }
+
+  @override
+  bool setField(String id, Object? value) {
+    switch (id) {
+      case 'query':
+        setState(() {
+          _query.text = '${value ?? ''}';
+          _layoutKey = null;
+          _active = 0;
+        });
+        _layout(_columns);
+        return true;
+      case 'emoji':
+        _layout(_columns);
+        final i = _cells.indexWhere(
+          (c) => c.text == '$value' || c.emoji?.char == '$value',
+        );
+        if (i < 0) return false;
+        setState(() => _active = i);
+        return true;
+    }
+    return false;
+  }
+
+  @override
+  bool press(String buttonId) {
+    switch (buttonId) {
+      case 'choose':
+        _layout(_columns);
+        if (_cells.isEmpty) return false;
+        _chooseActive();
+        return true;
+      case 'close' || 'cancel':
+        final close = widget.onClose;
+        if (close == null) return false;
+        close();
+        return true;
+    }
+    return false;
   }
 
   // -------------------------------------------------------------- keyboard

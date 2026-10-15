@@ -10,6 +10,8 @@ import 'package:wonky_client/wonky_client.dart' show UuidValue;
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
+import '../ai/design_ideas_panel.dart' show DesignIdeasController;
+import '../ai/slides_ai_controller.dart';
 import '../elements/shape/shape_gallery.dart';
 import '../elements/shape/shape_tool.dart';
 import '../../config/menus/context_menu_specs.dart';
@@ -21,6 +23,7 @@ import '../canvas/slide_canvas_controller.dart';
 import '../collab/slides_collab.dart';
 import '../comments/slides_comments.dart';
 import '../history/local_conflicts.dart';
+import '../../mcp/slides_ui_bridge.dart';
 import '../model/deck_session.dart';
 import '../sync/slides_data.dart' show openDeckSession;
 import '../layouts/layout_gallery.dart' show galleryLayouts;
@@ -151,6 +154,9 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
               };
         };
       }
+      // MCP UI bridge: agent highlights, headless-write flashes, the
+      // soft-lock popover as a dialog (SL-42, 11 §5).
+      SlidesUiBridge.attach(editor);
       final thread = widget.initialCommentId;
       if (thread != null) comments.openDeepLink(thread);
     }
@@ -170,6 +176,9 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
     if (editor != null) SlidesCollab.of(editor)?.dispose();
     if (editor != null) SlidesComments.of(editor)?.dispose();
     if (editor != null) SlidesConflicts.of(editor)?.dispose();
+    if (editor != null) SlidesUiBridge.of(editor)?.dispose();
+    if (editor != null) SlidesAiController.maybeOf(editor)?.dispose();
+    if (editor != null) DesignIdeasController.maybeOf(editor)?.dispose();
     // The shell deactivates the document after this frame; dispose after.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       canvas?.dispose();

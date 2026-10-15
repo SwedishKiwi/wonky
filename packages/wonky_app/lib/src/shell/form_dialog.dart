@@ -17,6 +17,87 @@ abstract class McpDescribableDialog {
   bool press(String buttonId);
 }
 
+/// (v2) Registers a custom dialog's [State] with the shell's open dialogs
+/// (`ShellServices.openDialogs`, read by `ui.get_dialog`) while it is
+/// mounted, so a custom dialog only implements [McpDescribableDialog]'s
+/// three methods.
+mixin McpDialogRegistration<T extends StatefulWidget> on State<T>
+    implements McpDescribableDialog {
+  ShellServices? _mcpRegisteredIn;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final s = ShellScope.maybeOf(context);
+    if (identical(s, _mcpRegisteredIn)) return;
+    _mcpRegisteredIn?.openDialogs.remove(this);
+    _mcpRegisteredIn = s;
+    if (s != null && !s.openDialogs.contains(this)) s.openDialogs.add(this);
+  }
+
+  @override
+  void dispose() {
+    _mcpRegisteredIn?.openDialogs.remove(this);
+    _mcpRegisteredIn = null;
+    super.dispose();
+  }
+}
+
+/// (v2) Registers [dialog] with the shell's open dialogs while [child] is
+/// mounted: makes a dialog widget that can't implement
+/// [McpDescribableDialog] itself (another package's, a stateless one)
+/// MCP-operable from where it is shown.
+class McpDialogScope extends StatefulWidget {
+  const McpDialogScope({super.key, required this.dialog, required this.child});
+
+  final McpDescribableDialog dialog;
+  final Widget child;
+
+  @override
+  State<McpDialogScope> createState() => _McpDialogScopeState();
+}
+
+class _McpDialogScopeState extends State<McpDialogScope> {
+  ShellServices? _services;
+  McpDescribableDialog? _registered;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _register();
+  }
+
+  @override
+  void didUpdateWidget(McpDialogScope old) {
+    super.didUpdateWidget(old);
+    if (!identical(old.dialog, widget.dialog)) _register();
+  }
+
+  void _register() {
+    final s = ShellScope.maybeOf(context);
+    if (identical(s, _services) && identical(_registered, widget.dialog)) {
+      return;
+    }
+    final old = _registered;
+    if (old != null) _services?.openDialogs.remove(old);
+    _services = s;
+    _registered = widget.dialog;
+    if (s != null && !s.openDialogs.contains(widget.dialog)) {
+      s.openDialogs.add(widget.dialog);
+    }
+  }
+
+  @override
+  void dispose() {
+    final d = _registered;
+    if (d != null) _services?.openDialogs.remove(d);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
+
 /// A field of a [WonkyDialogSpec].
 sealed class DialogFieldSpec {
   const DialogFieldSpec({required this.id, required this.label});

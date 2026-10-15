@@ -18,6 +18,7 @@ part 'presentation_command_update.dart';
 part 'presentation_end_update.dart';
 part 'presentation_ink_update.dart';
 part 'presentation_laser_update.dart';
+part 'presentation_pairing_update.dart';
 part 'presentation_state_update.dart';
 
 /// Client → server messages of a presentation session (Slides 10 §6.2).

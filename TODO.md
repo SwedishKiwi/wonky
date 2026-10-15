@@ -457,8 +457,7 @@ not routed while hidden), schema S-1/S-2 with every Slides table.
 - **SL-34 · Outline view, Layers panel, accessibility checker — done, features
   `outlineView`, `layers`, `accessibilityChecker` on** (04 §10, 03 §8.1, §17.4 "As built
   (SL-34)"). Leftovers:
-  - Outline: typing in the outline doesn't claim a soft lock or send text hints (others see
-    the result after each 500 ms write; caret bars show *their* claims); empty slide groups
+  - Outline: (typing claims a soft lock and sends text hints since SL-37); empty slide groups
     aren't listed; no selection across lines (each line is a field), so copy across lines is the
     *Copy outline as Markdown* button only; ⌘B/⌘I don't format in outline lines (formatting is
     shown and kept); *Download ▸ Outline as Markdown* (P2).
@@ -466,7 +465,7 @@ not routed while hidden), schema S-1/S-2 with every Slides table.
     their automatic order inside the group); a drag of a multi-selection across parents lands
     under one parent; rotated or flipped groups aren't refitted after a child moves in or out.
   - Checker: contrast of table cells, code and chart text isn't checked, nor text over images
-    (only flagged, no sampled average); *Generate with AI* in the alt text fix is SL-43's; move
+    (only flagged, no sampled average); move
     `AccessibilityChecker` (pure Dart, `features/accessibility/`) to `wonky_slides_core` when
     SL-40 adds a headless `slides.check_accessibility` tool.
   - Not verified in a browser (no web build in SL-34): the outline's keyboard on the web IME
@@ -489,8 +488,8 @@ not routed while hidden), schema S-1/S-2 with every Slides table.
   far (velocity inertia from a single move event — check with a real mouse); the type-in of
   the Tech talk deletes most of the old code before typing (the edit script replaces the whole
   function — consider `morph` or smaller diffs per line, 07 §5.2).
-- **SL-37 · Live collaboration + schema S-3** (09 §1–§2; dep SL-21 ✓) — live pointers, follow
-  mode, follow presenter, transform hints (see "Collaboration leftovers").
+- **SL-37 · Live collaboration — done; schema S-3 not cut** (09 §2.6 "As built (SL-37)"; nothing
+  synced was queued, 02 §14.1). Leftovers in "Collaboration leftovers" below.
 - **SL-38 · Comments on slides and elements — done, feature `comments` on** (09 §3, §3.7 "As
   built (SL-38)"). Leftovers: headless `comments.*` MCP tools with Slides anchors
   (`{"slide": 4, "element": …}`, results with `slideNumber`/`elementLabel`/`orphaned`, 09 §8)
@@ -501,8 +500,21 @@ not routed while hidden), schema S-1/S-2 with every Slides table.
   the composer's IME and the light/dark look with the next release build; the scripted
   scenario 30 of §6.4 (offline comment on an element another user deletes) needs the
   multi-client harness (12 §7.3).
-- **SL-39 · Version history, overwritten-text review, activity** (09 §4–§6; deps SL-8 ✓,
-  SL-9 ✓) — File › Version history, the `history` route and panel. Feature `versionHistory`.
+- **SL-39 · Version history, overwritten-text review, activity — done, feature
+  `versionHistory` on** (09 §4.7 "As built (SL-39)", §5, §6.3). Leftovers: *Side by side*
+  (`slides.history.toggleSideBySide`, P1); the read-only master/layout view of a theme change
+  and the faint outlines of inherited changes (09 §4.2 table); text diffs show inline in the
+  change list, not as a hover popover; activity shows "3 slides · 1 slide deleted · theme
+  changed · with Claude", not slide numbers and group names ("slides 3–5 in Intro"); MCP
+  `versions.get(format: "outline" | "diff")` for decks (09 §8 — SL-40's tools; the core
+  `DeckDiff`/`SnapshotSlideEntry` and `slidesVersion.changes` are ready); the server diff cache
+  for decks > 20 MB (`SlidesVersionEndpoint.diff`, P2); files referenced only by retained
+  versions are not protected from Drive's garbage collection yet (09 A-09-6 — a version copy
+  whose image is gone keeps the reference, as deck copies); the overwritten-text review does
+  not track code states; the scripted conflict scenarios of 09 §6.4 still need the multi-client
+  harness (12 §7.3); not checked in a browser (no web build in SL-39) — the history route's
+  layout, thumbnails with uploaded images, PDF download and keyboard (Tab into the navigator,
+  arrows, ⌥⌘↓/↑) with the next release build.
 - **SL-40 · MCP headless tools `slides.*` — done** (11 §2.1/§3/§4 "As built (SL-40)"; 47 tools,
   resources, prompts, `drive.create_presentation`, `drive.export` pdf/md of decks). Leftovers:
   P1 tools `slides.update_theme`, `slides.copy_slides_to_deck`, `slides.insert_native_chart`,
@@ -512,16 +524,108 @@ not routed while hidden), schema S-1/S-2 with every Slides table.
   anchors (see SL-38) and `versions.get` returning the outline (SL-39); a `slides.check_accessibility`
   tool (see SL-34); tool/command row-parity tests (11 AC 2); `text_overflow` uses the core's
   approximate metrics (load a `TtfFaceSet` like the PDF export); `https` image URLs through the
-  image proxy (11 §3.8); `==highlight==` Markdown (P1); suggest-mode shadow decks and AI apply modes
-  are SL-43's; the client-side agent flash on touched elements is SL-37/SL-42's (the server shows the
-  agent as a participant with a selection for 5 s); the conditional server-side chart auto-update
+  image proxy (11 §3.8); `==highlight==` Markdown (P1); (client-side agent flash on touched elements: done, SL-42); the conditional server-side chart auto-update
   index (08 §5.5).
-- **SL-41 · Phone remote, rehearse, same-browser fast path** (10 §5.2, §6.4, §10; deps
-  SL-19 ✓, SL-29). Feature `remoteAndRehearse` (*Rehearse*, *Use phone as remote*).
-- **SL-42 · UI bridge `ui.slides.*`** (11 §5; deps SL-11 ✓, SL-40) — `mcpUiTools` is empty;
-  context-menu trees for `ui.get_menu_tree`.
-- **SL-43 · AI in Slides (+ Drive assistant, P1)** (11 §6–§8; dep SL-40). Feature `assistant`
-  (Extensions › AI, the shell assistant panel).
+- **SL-41 · Phone remote, rehearse, same-browser fast path — On hold (user decision
+  2026-10-15)** (10 §5.2, §6.4, §10; deps SL-19 ✓, SL-29 ✓). Feature `remoteAndRehearse`
+  stays **off** (not in `SlidesFeatures.shipped`; *Rehearse* and *Use phone as remote* are
+  hidden, their placeholders in `placeholder_commands.dart` remain).
+  - **In place (tested):** server pairing in `wonky_server/lib/src/slides/present/` —
+    non-table models `PresentationPairingUpdate {revoke?}` (presenter asks for a key),
+    `PresentationPairingEvent {pairingKey, code, expiresAtMs}`, `PresentationPairingTarget
+    {deckUuid, sessionId, pairingKey}`, bus fields `pairingKey`/`admitted`; the presenter
+    connection issues single-use 128-bit keys + six-digit codes (10 min,
+    `PresentationService.pairingTtl`; a new request revokes unused ones), admits a `remote`
+    of another account (≥ viewer) whose `hello` carries a valid key, and re-admits paired
+    accounts on reconnect (also after a presenter rejoin); refusals end with `noAccess` (no
+    key) or `pairingExpired`; `presentation.resolvePairingCode(code)` (answered on
+    `present-code:<code>`, ≥ viewer, 10 tries/min per user). Tests:
+    `wonky_server/test/integration/slides/presentation_pairing_test.dart` (8). Client:
+    `PresentationTransport.resolvePairingCode` (+ the fake hub issues pairings); the
+    same-browser channel `wonky_slides/lib/features/present/broadcast/`
+    (`PresentChannel` — `BroadcastChannel` on the web, `MemoryPresentChannel` elsewhere —
+    and `PresentFastPath`: presenter posts state/laser/ink/end, members post commands,
+    pings for liveness, local times mapped to server time), tested in
+    `test/features/present/present_fast_path_test.dart` (5) but **not wired** into
+    `PresentationLink` yet. (Also fixed: a presenter that never joined stays `offline`
+    while it retries, instead of flickering to `reconnecting`.)
+  - **Left:** (1) fast path wiring in `PresentationLink`: open `PresentFastPath` after the
+    first welcome, post every `send` over it too, tag commands with an `_id` in `argsJson`
+    and drop duplicates on the presenter, drop the server's laser/ink echoes while the local
+    presenter is live, `fastPathLive`/`canSend` for the UI (the audience's "Connecting…"
+    pill), no `end` after `takenOver`; a test hook that drops the stream while
+    `ConnectivityService.forcedOffline` (plus a `slides.offline.simulate` developer command
+    for browser checks); acceptance: a pair keeps running through a 10 s drop. A first
+    wiring was written and backed out (unverified). (2) Phone remote UI: the `remote` editor
+    child route (`/p/:uuid/remote?session=&key=`, `RemoteController` over the link with
+    role `remote` — state, timer, sequence, next preview — and a 360 px `RemoteScreen`: top
+    bar with elapsed/slide n of N/connection dot, current slide at its step, next preview,
+    notes with A−/A+, 96 px Previous/Next, swipes, long-press laser (a new `laser` command
+    in `PresentController.applyCommand`, ≤ 12 Hz), black screen, `navigator.vibrate`,
+    Screen Wake Lock, "Reconnecting…" disables the buttons, ended/expired/no-access
+    states); the presenter's *Use your phone as a remote* dialog (QR of the remote link,
+    the code, expiry countdown, *New code*, paired devices from the roster, MCP-describable)
+    from the presenter view header, the Present menu (`slides.present.remote`, from the
+    editor via `?remote=1`); a `/remote` app route to type the code
+    (`resolvePairingCode`); `slides.remote.*` commands. (3) Rehearse: `?rehearse=1`, a
+    recorder of per-step times (completed slides only), the HUD (top-left / bar above the
+    presenter view), `PresentController` rehearsing mode (no auto-advance, loop, kiosk or
+    exit end behavior), the "Keep the new timings?" dialog (`WonkyDialogSpec` with *Advance
+    automatically with these timings*), `slides.present.saveTimings` (one undo step "Record
+    timings", `SetSlideProps.timingsJson` per slide + `presentJson.useRehearsedTimings`),
+    `slides.slide.clearTimings` (Slide menu). (4) *Freeze audience* (`PresentController`:
+    publish nothing while frozen, resend state + ink on unfreeze; presenter view control
+    and command). (5) ARB strings, widget tests (360 px, light/dark, keyboard), browser
+    checks (phone tab at 375 px, 10 s drop), 10 AC 9 and 11. Then turn the feature on,
+    drop the two placeholders and update `menu_registry_test` / the hidden-feature tests.
+  - **Resume:** re-read 10 §5.2/§6.4/§6.6/§10 and the pairing tests; SL-37 added
+    `PresentView.follower` to the present controller/screen (keep edits in separate blocks).
+- **SL-42 · UI bridge `ui.slides.*` — done** (11 §5 "As built (SL-42)"; 17 tools, agent flash
+  incl. headless writes, dialog audit). Leftovers:
+  - flutter_driver + MCP checks of every `ui.slides.*` tool against a running app (11 §11 *UI
+    bridge*; covered by widget tests and the server relay test so far) and a browser look at the
+    agent flash and screenshots in a release build.
+  - `ui.slides.describe_panel` / `set_panel_field` read and set only text inputs, checkboxes,
+    switches and buttons (like Sheets): inspector selects, color buttons, sliders and segmented
+    controls need the `slides.*` commands.
+  - Shell dialogs that are still not MCP-describable (suite, Write/Sheets/Drive alike): the share
+    dialog, the command palette / quick switcher, undo history, *Report a bug*, *What's new*, the
+    session-expired dialog.
+  - The server's agent participant (`DeckAgentPresence`) and the client flash may both outline the
+    same elements after a headless write (like Sheets' item 11); a flash for the user's own
+    assistant runs is SL-43's (the AI preview shows them).
+  - Agent steps through `ui.invoke_command` are labelled "AI: …" on the undo stack (shared
+    dispatcher label for every agent source).
+- **SL-43 · AI in Slides — done, feature `assistant` on** (11 §6.12 "As built (SL-43)").
+  Leftovers:
+  - Assistant: `comments.list/create/reply` and `versions.list` in the tool set (need headless
+    `comments.*` with Slides anchors, SL-38/SL-40 leftover); the `ui.slides.*` window tools
+    (`get_selection`, `select`, `highlight_element`, `screenshot_slide`, built by SL-42);
+    *Show differences* (outlined changed elements) in the AI changes preview; the client-side
+    flash on elements the user's own assistant run touched (SL-42 flashes MCP writes and other
+    users' AI runs).
+  - Generate presentation: the *Wonky Write document* source (Drive picker + `write.get_document`,
+    notes citing sections), the *Theme* choice, Home *New ▸ Generate with AI*, drag-reorder in the
+    outline (up/down buttons now), the overflow split into "(cont.)" slides, *Design ideas*
+    after generation; `bigNumber`/`quote` slides get their title as a text box (those layouts
+    have no title placeholder).
+  - Rewrite: the canvas preview overlay with ghosted original and *Show changes* (word diff)
+    (a dialog now), rewriting a selected range, *Translate ▸* submenu with languages (`translate`
+    mode exists, no menu), word-diff keeping of inline styles (`keepFormatting` keeps the first
+    run's style and paragraph attributes).
+  - Design ideas: content arrangements (cards grid, timeline, image left/right/full-bleed with
+    overlay, quote emphasis) — only theme layouts now; hover = live preview on the canvas;
+    `text_tweaks`; the toolbar *Layout ▾* footer "Design ideas…".
+  - Not built: *Code walkthrough* (11 §6.9, hidden as `aiCodeWalkthrough`; needs `UnifiedDiff` /
+    `WalkthroughBuilder`), *Animate this slide* (11 §6.10), §6.11 (proofread, translate,
+    shorten, summarize presentation), the slide image (P1) for design tasks, the nightly eval
+    suite (rewrite fit rate, generation rubric, animation validity).
+  - **Drive assistant (suite 10 §3.1, P1)** — not built: drive-scoped threads
+    (`AssistantThread.itemId = null`), a `DriveAssistantTarget` with the `drive.*` tool set
+    (trash with confirmation, never delete forever/empty trash/sharing), the ✨ button in the
+    Drive top bar + `Mod+J` + palette, one undo step per run on the shell stack (needs server
+    change records for drive ops), quick prompts, *Ask the assistant about this file*.
+  - Not verified in a browser (no web build in SL-43).
 - (SL-44 · Remaining P1 — spelling, presentation language, special characters, emoji in text,
   image adjustment preview, connector route handles: done, feature `spelling` on; leftovers in
   "Spelling, special characters, route handles leftovers (SL-44)" below.)
@@ -576,11 +680,16 @@ Status per work package: [specs/wonky_slides/STATUS.md](specs/wonky_slides/STATU
   P1: Bebas Neue, DM Serif Display) into `packages/wonky_fonts/fonts/` (+ manifest, licenses,
   mirror in `wonky_server/web/fonts/`, `SlidesFonts` categories), then move the built-ins to the
   designed fonts with a version bump (`builtin:<key>@2`).
-- **Collaboration leftovers (SL-21, 09 §2.5):** `structure` hints (1 s navigator shimmer after
-  slide/group changes) and live pointers (09 §1.4, P1, with SL-37); text hints send the full body
-  only (no Delta `diff` + `baseHash` for bodies over 4 KB; over 16 KB nothing is sent) and only
-  for element bodies (table cells and notes are claimed but not hinted); the Present button's
-  live dot while someone presents; the 300 ms fade of released soft-lock outlines; server `SlidesAgentCursors` for headless writes (09 §1.1).
+- **Collaboration leftovers (SL-21/SL-37, 09 §2.5–§2.6):** text hints send the full body only
+  (no Delta `diff` + `baseHash` for bodies over 4 KB; over 16 KB nothing is sent) and only for
+  element bodies (table cells and notes are claimed but not hinted); the outline view's lines
+  don't show others' live text hints (they update after the sync); live pointers ride the
+  presence cursor throttle (10/s instead of 20/s) and have no a11y setting of their own ("Reduce
+  collaborator cursors" — the View toggle is the switch); the presenter view doesn't count
+  followers (the server's roster has them; the device list filters them out); outline claims are
+  always forced (no soft-lock question or race prompt in the outline); not checked in a browser
+  (no web build in SL-37): pointer smoothness with real mouse input, the follower view full
+  screen, the shimmer and the live dot in light/dark.
 - **Date placeholder (P2, 05 §4):** the built-in masters have no `date` placeholder yet.
 - **Built-in prompts are English** (`Click to add title`, …) and stored in the copied layout
   rows; localize them when a built-in is copied into a deck (planner `ThemeCopy`), or render prompts of built-in
@@ -599,8 +708,7 @@ Status per work package: [specs/wonky_slides/STATUS.md](specs/wonky_slides/STATU
     panel is open; the narrow navigator drawer should open from the title row (needs a left
     app slot in `EditorScaffold`).
   - Keyboard: menu mnemonics (Alt+letter, 04 §4.11) come from the shell menubar.
-  - `mcpUiTools` is empty and `ui.get_menu_tree {menu: 'context.<id>'}` isn't supported yet
-    (`slidesContextMenus` is ready for it) — SL-42.
+  - (MCP UI tools and context menus over MCP: done, SL-42 — `ui.slides.get_context_menu`.)
   - The browser check of SL-11 stopped at the home: the running dev server had no `slides`
     endpoint (stale `serverpod start`); open a deck from the home in the next release check.
 - **Navigator, groups, grid, notes leftovers (SL-16, Slides 04 §5, §8, §9):**
@@ -665,12 +773,12 @@ Status per work package: [specs/wonky_slides/STATUS.md](specs/wonky_slides/STATU
   and convergence runs use an in-process sync peer (no OS-8 filter, no change-log consumer) —
   the full multi-client harness with `serverpod_test` and isolates (12 §7.3) remains for the
   scripted scenarios of 09 §6.4.
-- **Server deck sync leftovers (SL-5):** `DeckChangeLog` rows are never pruned (Sheets prunes
-  `ChangeLog` after 30 days in a daily job; add `DeckChangeLogProcessor.pruneOld` + receipts
-  cleanup to the maintenance jobs with SL-39, which reads the log for versions);
+- **Server deck sync leftovers (SL-5):** (`DeckChangeLog` pruning after 30 days with the
+  receipts: done, SL-39's `DeckChangeLogPruning` in the daily job);
   (SL-8 built `slides.revertChange`/`reapplyChange`, deck copies and templates from
   presentation items, and the headless cache listening on `slides:merged:<space>`); consumer
-  plugins still to add: version snapshots index (SL-39) (agent presence: done in the MCP write path,
+  plugins: (version snapshots index: done at capture by SL-39's `SlidesVersionProvider`, not
+  as a plugin) (agent presence: done in the MCP write path,
   SL-40's `DeckAgentPresence`; comment
   orphaning: done, SL-38's `comments` plugin); `slidesSync` merges reuse the `SheetsMergedSignal` model on the
   `slides:merged:<space>` channel.
@@ -701,7 +809,7 @@ Status per work package: [specs/wonky_slides/STATUS.md](specs/wonky_slides/STATU
   and glued connectors follow only on drop (draw connector routes live from the preview
   frames). Duplicating (Edit › Duplicate, Alt-drag) is limited to top-level elements (pasting
   children of scaled groups needs child-space-aware `PasteElements`). Scrollbars are
-  indicators, not draggable. Remote transform hints (09 §2.4, SL-37). The canvas shows the
+  indicators, not draggable. (Remote transform hints: SL-21.) The canvas shows the
   slide in the editor's zoom steps (SL-11: 25…400 %; 03 §2.2 also lists 10/33/67 %).
   Check pointer gestures, pinch zoom and cursors by hand in Chrome and Safari (web build).
 - **Text editing leftovers (SL-13, Slides 03 §6.2.1):** check IME composition, dead keys,
@@ -719,11 +827,11 @@ Status per work package: [specs/wonky_slides/STATUS.md](specs/wonky_slides/STATU
   `listStyle: none`.
 - **Copier, clipboard, headless deck leftovers (SL-8):** (MCP `being_edited`/`force`: done, SL-40);
   (the clipboard UI and HTML paste: done, SL-18); (*Make a copy* with comments remaps slide and
-  element anchors through the copier's id map: checked by SL-38's server test); version copies use
-  `DeckCopies`/`DeckCopier` (SL-39); a deck copy whose image copy fails (file gone or
+  element anchors through the copier's id map: checked by SL-38's server test); (version copies on
+  `DeckCopies.copy(sourceModel:)`: done, SL-39); a deck copy whose image copy fails (file gone or
   unreadable) keeps the new reference (missing image) and logs a warning; deck change records
   reuse Sheets' `ServerChangeRecord` table (rename `spreadsheetUuid` → `spaceUuid` when a
-  migration touches it anyway); `DeckChangeLog` pruning (30 days, as Sheets) belongs to SL-39.
+  migration touches it anyway); (`DeckChangeLog` pruning: done, SL-39).
 - **PDF export and print preview leftovers (SL-20, Slides 10 §11–§13):** (builds as pages,
   code callouts/caret and charts per build stage: done, SL-33); element shadows print as offset silhouettes (no rasterized soft shadow,
   P1); text shadows, emoji bitmaps (P1) and Lucide icons (the PDF warns `icon_unavailable`)
@@ -827,11 +935,12 @@ Status per work package: [specs/wonky_slides/STATUS.md](specs/wonky_slides/STATU
   - Presence shows "Editing layouts" (SL-21) but not *which* layout; remote selections and
     soft locks on layout elements show only for collaborators editing the same layout.
   - Find & replace doesn't search master/layout text (see the SL-18 leftovers).
-- **Synced additions after S-2 (SL-37):** S-2 (SL-24) shipped only `BuildTrigger.onElementClick`
-  (reserved; no table change). Queue new synced fields/tables in Slides 02 §14 and ship them in
-  S-3; each bumps `SyncSchemaRelease` (`wonky_sync_models`) and the record in 02 §14.1 — the
-  server and Sheets guard tests (tables) and `wonky_sync_models` `test/tables/
-  sync_schema_release_test.dart` (enum values) fail until both are updated.
+- **Synced additions after S-2:** S-2 (SL-24) shipped only `BuildTrigger.onElementClick`
+  (reserved; no table change); S-3 was not cut in SL-37 (nothing queued, 02 §14.1). Queue new
+  synced fields/tables in Slides 02 §14 and ship them as the next release (S-3); each bumps
+  `SyncSchemaRelease` (`wonky_sync_models`) and the record in 02 §14.1 — the server and Sheets
+  guard tests (tables) and `wonky_sync_models` `test/tables/sync_schema_release_test.dart` (enum
+  values) fail until both are updated.
 - **Timeline leftovers (SL-24, Slides 06 §9.8):** (present mode compiles with
   `SlideMotionInput.fromDeck(scene:, chartShapeOf:)` and the stage renders every frame field
   since SL-29.) Code durations are estimates until SL-26's `TypingScript`
@@ -882,7 +991,8 @@ Status per work package: [specs/wonky_slides/STATUS.md](specs/wonky_slides/STATU
   - Presence state `presenting` ("Anna is presenting", A-10-7) needs a `PresenceState` value
     (shared model) — SL-21. Followers (`?view=follow`, P1) are accepted by the server but have
     no UI; phone remote and pairing keys, rehearse timings, same-browser `BroadcastChannel`
-    fast path, *Freeze audience* — SL-41 (P1). Captions P2.
+    fast path, *Freeze audience* — SL-41 (P1, on hold; server pairing and the channel are
+    built, see the SL-41 entry above). Captions P2.
   - *This presentation* settings UI (10 §3) on the Presenting settings page — the command
     `slides.deck.setPresentSettings {patch}` exists (undoable); the page section doesn't.
   - Screen readers: the presented slide is one labeled image; exposing its content in reading

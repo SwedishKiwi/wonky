@@ -27,10 +27,7 @@ void main() {
       expect(keys(ideas), isNot(contains('blank')));
       expect(keys(ideas), isNot(contains('code')));
       // Deterministic: the same order every time.
-      expect(
-        keys(DesignIdeasEngine.candidates(b.build(), s)),
-        keys(ideas),
-      );
+      expect(keys(DesignIdeasEngine.candidates(b.build(), s)), keys(ideas));
     });
 
     test('when a slide holds one number then the big-number layout comes '
