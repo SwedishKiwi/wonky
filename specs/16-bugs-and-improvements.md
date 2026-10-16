@@ -465,7 +465,7 @@ task.
     `shell.board.release`; §8); admins also get *Link pull request…*;
   - for the claimant: the **claim code** (`7Q4F-K2M9`) with *Copy*, and the time left.
 - **Linked posts**: one row per post with its score and its screenshots.
-- **How to build it** (always shown, not collapsible):
+- **How to build it** (always shown, not collapsible; the claimant and admins see every step, others see an outline while the task is up for grabs — the setup link, "Give your coding agent the prompt (claim the task to get the prompt)." and "Open a pull request" without instructions — and nothing once someone else claimed it):
   1. A single link, *Set up your development environment* (`board.task.setup`), that opens
      *How to contribute* (`/improvements/contribute`, §10.3) in the same tab, under the board's
      breadcrumb (Back returns to the task). The setup commands are only there.

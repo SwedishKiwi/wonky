@@ -4098,6 +4098,10 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get boardStepPr => '3. Open a pull request';
 
   @override
+  String get boardStepPromptLocked =>
+      '2. Give your coding agent the prompt (claim the task to get the prompt).';
+
+  @override
   String get boardPrRules =>
       'One task per pull request, against main. Put these two lines in its description:';
 
@@ -8674,6 +8678,10 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get boardStepPr => '[3. Öþéñ å þûļļ ŕéǫûéšţ one two]';
+
+  @override
+  String get boardStepPromptLocked =>
+      '[2. Ĝîṽé ýöûŕ çöðîñĝ åĝéñţ ţĥé þŕöɱþţ (çļåîɱ ţĥé ţåšķ ţö ĝéţ ţĥé þŕöɱþţ). one two three four fi]';
 
   @override
   String get boardPrRules =>

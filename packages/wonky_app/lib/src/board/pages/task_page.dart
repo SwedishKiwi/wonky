@@ -372,7 +372,13 @@ class _BoardTaskPageState extends State<BoardTaskPage> {
     final prompt = (t.isMine || hub.isAdmin) && t.prompt.isNotEmpty
         ? t.prompt
         : null;
-    final claimable = t.status == BoardTaskStatus.published;
+    // The claimant and admins see every step; others see a short outline
+    // while the task is up for grabs, and nothing once someone claimed it
+    // (or it is in review, done or cancelled).
+    final full = t.isMine || hub.isAdmin;
+    if (!full && t.status != BoardTaskStatus.published) {
+      return const SizedBox.shrink();
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -407,69 +413,59 @@ class _BoardTaskPageState extends State<BoardTaskPage> {
                 ),
               ],
             ),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(l.boardStepPrompt, style: theme.textTheme.small),
-                ),
-                if (prompt != null)
-                  ShadButton.outline(
-                    key: const ValueKey<String>('board.task.copyPrompt'),
-                    size: ShadButtonSize.sm,
-                    leading: const Icon(LucideIcons.copy, size: 14),
-                    onPressed: () => _invoke('shell.board.copyPrompt'),
-                    child: Text(l.cmdBoardCopyPrompt),
-                  ),
-              ],
-            ),
-            if (prompt != null)
-              // The code block style of BoardCopyLine and the Markdown
-              // code blocks.
-              Container(
-                key: const ValueKey<String>('board.task.prompt'),
-                padding: const EdgeInsets.all(10),
-                constraints: const BoxConstraints(maxHeight: 420),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.muted,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: SingleChildScrollView(
-                  child: Text(prompt, style: boardCodeStyle(theme)),
-                ),
-              )
-            else
-              // Not claimed by the viewer: no prompt yet.
-              Wrap(
+            if (!full) ...[
+              // Not claimed by the viewer: the outline only (the Claim button
+              // is in the header).
+              Text(
+                l.boardStepPromptLocked,
                 key: const ValueKey<String>('board.task.promptLocked'),
-                spacing: 10,
-                runSpacing: 6,
-                crossAxisAlignment: WrapCrossAlignment.center,
+                style: theme.textTheme.small,
+              ),
+              Text(l.boardStepPr, style: theme.textTheme.small),
+            ] else ...[
+              Row(
                 children: [
-                  Text(l.boardClaimForPrompt, style: theme.textTheme.muted),
-                  if (claimable && s.auth.isSignedIn)
+                  Expanded(
+                    child: Text(
+                      l.boardStepPrompt,
+                      style: theme.textTheme.small,
+                    ),
+                  ),
+                  if (prompt != null)
                     ShadButton.outline(
-                      key: const ValueKey<String>('board.task.promptClaim'),
+                      key: const ValueKey<String>('board.task.copyPrompt'),
                       size: ShadButtonSize.sm,
-                      leading: const Icon(LucideIcons.hand, size: 14),
-                      enabled: hub.canWrite,
-                      onPressed: () => _invoke('shell.board.claim'),
-                      child: Text(l.boardClaimTask),
-                    )
-                  else if (claimable)
-                    ShadButton.outline(
-                      key: const ValueKey<String>('board.task.promptSignIn'),
-                      size: ShadButtonSize.sm,
-                      onPressed: () => boardSignIn(s),
-                      child: Text(l.boardSignInToClaim),
+                      leading: const Icon(LucideIcons.copy, size: 14),
+                      onPressed: () => _invoke('shell.board.copyPrompt'),
+                      child: Text(l.cmdBoardCopyPrompt),
                     ),
                 ],
               ),
-            Text(l.boardStepPr, style: theme.textTheme.small),
-            Text(l.boardPrRules, style: theme.textTheme.muted),
-            BoardCopyLine(
-              text: boardPrLines(t.number, code ?? l.boardClaimCodePlaceholder),
-              copyKey: 'board.task.prLines',
-            ),
+              if (prompt != null)
+                // The code block style of BoardCopyLine and the Markdown
+                // code blocks.
+                Container(
+                  key: const ValueKey<String>('board.task.prompt'),
+                  padding: const EdgeInsets.all(10),
+                  constraints: const BoxConstraints(maxHeight: 420),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.muted,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: SingleChildScrollView(
+                    child: Text(prompt, style: boardCodeStyle(theme)),
+                  ),
+                ),
+              Text(l.boardStepPr, style: theme.textTheme.small),
+              Text(l.boardPrRules, style: theme.textTheme.muted),
+              BoardCopyLine(
+                text: boardPrLines(
+                  t.number,
+                  code ?? l.boardClaimCodePlaceholder,
+                ),
+                copyKey: 'board.task.prLines',
+              ),
+            ],
           ],
         ),
       ],

@@ -1173,6 +1173,7 @@
   "boardInstallGuide": "[Šéŕṽéŕþöð îñšţåļļåţîöñ ĝûîðé one two th]",
   "boardStepPrompt": "[2. Ĝîṽé ýöûŕ çöðîñĝ åĝéñţ ţĥé þŕöɱþţ one two thr]",
   "boardStepPr": "[3. Öþéñ å þûļļ ŕéǫûéšţ one two]",
+  "boardStepPromptLocked": "[2. Ĝîṽé ýöûŕ çöðîñĝ åĝéñţ ţĥé þŕöɱþţ (çļåîɱ ţĥé ţåšķ ţö ĝéţ ţĥé þŕöɱþţ). one two three four fi]",
   "boardPrRules": "[Öñé ţåšķ þéŕ þûļļ ŕéǫûéšţ, åĝåîñšţ ɱåîñ. Þûţ ţĥéšé ţŵö ļîñéš îñ îţš ðéšçŕîþţîöñ: one two three four five]",
   "boardPullRequest": "[Þûļļ ŕéǫûéšţ one]",
   "boardPrNumber": "[Þûļļ ŕéǫûéšţ #{number} one t]",

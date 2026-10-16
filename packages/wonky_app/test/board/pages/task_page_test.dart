@@ -54,14 +54,21 @@ void main() {
       findsOneWidget,
     );
     expect(byKey('board.task.claimCode'), findsNothing);
+    // Before claiming, How to build it is the outline: the setup link, a
+    // one-line prompt step, and the PR step without its instructions.
+    expect(byKey('board.task.setup'), findsOneWidget);
     expect(
-      find.text('Wonky-Task: T-1\nWonky-Claim: <your claim code>'),
+      find.text(
+        '2. Give your coding agent the prompt (claim the task to get the '
+        'prompt).',
+      ),
       findsOneWidget,
     );
-    // No prompt before claiming.
+    expect(find.text('3. Open a pull request'), findsOneWidget);
+    expect(byKey('board.task.prLines'), findsNothing);
+    expect(find.textContaining('Wonky-Task: T-1'), findsNothing);
     expect(byKey('board.task.prompt'), findsNothing);
     expect(byKey('board.task.copyPrompt'), findsNothing);
-    expect(find.text('Claim this task to get the prompt.'), findsOneWidget);
     expect(find.textContaining('Keep styles when pasting.'), findsNothing);
 
     await tester.tap(byKey('board.task.claim'));
@@ -102,8 +109,9 @@ void main() {
     expect(byKey('board.task.claim'), findsNothing);
     expect(byKey('board.task.release'), findsNothing);
     expect(byKey('board.task.prompt'), findsNothing);
-    expect(byKey('board.task.promptLocked'), findsOneWidget);
-    expect(byKey('board.task.promptClaim'), findsNothing, reason: 'claimed');
+    // Someone else's claim: no How to build it at all.
+    expect(byKey('board.task.howTo'), findsNothing);
+    expect(byKey('board.task.promptLocked'), findsNothing);
     await settleTooltips(tester);
   });
 
@@ -119,19 +127,18 @@ void main() {
     expect(byKey('board.task.signInToClaim'), findsOneWidget);
     expect(byKey('board.task.prompt'), findsNothing);
     expect(byKey('board.task.promptLocked'), findsOneWidget);
-    expect(byKey('board.task.promptSignIn'), findsOneWidget);
+    expect(byKey('board.task.prLines'), findsNothing);
     await settleTooltips(tester);
   });
 
-  testWidgets('Given an unclaimed task when Claim is pressed next to the '
-      'locked prompt then the claim gives the prompt, and Copy prompt puts '
-      'the wrapped prompt with my claim code on the clipboard', (tester) async {
+  testWidgets('Given an unclaimed task when it is claimed then the prompt '
+      'shows, and Copy prompt puts the wrapped prompt with my claim code on '
+      'the clipboard', (tester) async {
     final copied = recordClipboard(tester);
     final b = withTask();
     current = await pumpBoard(tester, '/improvements/t/1', board: b);
 
-    await tester.ensureVisible(byKey('board.task.promptClaim'));
-    await tester.tap(byKey('board.task.promptClaim'));
+    await tester.tap(byKey('board.task.claim'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(byKey('board.task.copyPrompt'));
     await tester.tap(byKey('board.task.copyPrompt'));

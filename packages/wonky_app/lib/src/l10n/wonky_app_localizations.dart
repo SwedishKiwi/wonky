@@ -7132,6 +7132,12 @@ abstract class WonkyAppLocalizations {
   /// **'3. Open a pull request'**
   String get boardStepPr;
 
+  /// No description provided for @boardStepPromptLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'2. Give your coding agent the prompt (claim the task to get the prompt).'**
+  String get boardStepPromptLocked;
+
   /// No description provided for @boardPrRules.
   ///
   /// In en, this message translates to:

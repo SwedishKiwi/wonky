@@ -2739,6 +2739,7 @@
   "boardInstallGuide": "Serverpod installation guide",
   "boardStepPrompt": "2. Give your coding agent the prompt",
   "boardStepPr": "3. Open a pull request",
+  "boardStepPromptLocked": "2. Give your coding agent the prompt (claim the task to get the prompt).",
   "boardPrRules": "One task per pull request, against main. Put these two lines in its description:",
   "boardPullRequest": "Pull request",
   "boardPrNumber": "Pull request #{number}",
