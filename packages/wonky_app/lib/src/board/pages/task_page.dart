@@ -266,40 +266,23 @@ class _BoardTaskPageState extends State<BoardTaskPage> {
       spacing: 10,
       children: [
         Row(
+          key: const ValueKey<String>('board.task.header'),
           crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 8,
           children: [
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 8,
-                children: [
-                  Text('T-${t.number}', style: theme.textTheme.muted),
-                  Semantics(
-                    header: true,
-                    child: Text(
-                      t.title,
-                      key: const ValueKey<String>('board.task.title'),
-                      style: theme.textTheme.h3,
-                    ),
+              child: Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Semantics(
+                  header: true,
+                  child: BoardNumberedTitle(
+                    key: const ValueKey<String>('board.task.title'),
+                    number: 'T-${t.number}',
+                    title: t.title,
+                    style: theme.textTheme.h3,
+                    maxLines: null,
                   ),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      ...boardLabelChips(l, area: t.area, size: t.size),
-                      BoardStatusBadge(
-                        status: t.status,
-                        label: l.boardTaskStatusName(t.status),
-                      ),
-                      Text(
-                        boardClaimState(l, t),
-                        key: const ValueKey<String>('board.task.claimState'),
-                        style: theme.textTheme.small,
-                      ),
-                    ],
-                  ),
-                ],
+                ),
               ),
             ),
             if (admin)
@@ -316,6 +299,23 @@ class _BoardTaskPageState extends State<BoardTaskPage> {
                   onPressed: ctl.toggle,
                 ),
               ),
+          ],
+        ),
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            ...boardLabelChips(l, area: t.area, size: t.size),
+            BoardStatusBadge(
+              status: t.status,
+              label: l.boardTaskStatusName(t.status),
+            ),
+            Text(
+              boardClaimState(l, t),
+              key: const ValueKey<String>('board.task.claimState'),
+              style: theme.textTheme.small,
+            ),
           ],
         ),
         Wrap(

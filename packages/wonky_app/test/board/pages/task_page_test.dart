@@ -462,7 +462,10 @@ void main() {
     b.emitTask(3);
     await tester.pumpAndSettle();
 
-    expect(find.text('Fresh task'), findsOneWidget);
+    expect(
+      find.textContaining('Fresh task', findRichText: true),
+      findsOneWidget,
+    );
     await settleTooltips(tester);
   });
 

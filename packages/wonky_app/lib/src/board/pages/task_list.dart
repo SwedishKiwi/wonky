@@ -224,23 +224,7 @@ class BoardTaskRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: 6,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 6,
-            children: [
-              Text('T-${t.number}', style: theme.textTheme.muted),
-              Expanded(
-                child: Text(
-                  t.title,
-                  style: theme.textTheme.small.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
+          BoardNumberedTitle(number: 'T-${t.number}', title: t.title),
           Wrap(
             spacing: 8,
             runSpacing: 4,

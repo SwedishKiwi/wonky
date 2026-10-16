@@ -1032,22 +1032,10 @@ class _BoardPostRowState extends State<BoardPostRow> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 spacing: 6,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 6,
-                    children: [
-                      Text('#${item.number}', style: theme.textTheme.muted),
-                      Expanded(
-                        child: Text(
-                          item.title,
-                          style: theme.textTheme.small.copyWith(
-                            fontWeight: FontWeight.w500,
-                          ),
-                          maxLines: widget.narrow ? 3 : 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
+                  BoardNumberedTitle(
+                    number: '#${item.number}',
+                    title: item.title,
+                    maxLines: widget.narrow ? 3 : 2,
                   ),
                   Wrap(
                     spacing: 8,

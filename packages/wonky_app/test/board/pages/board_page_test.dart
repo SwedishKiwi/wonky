@@ -238,7 +238,11 @@ void main() {
     final b = seeded();
     current = await pumpBoard(tester, '/improvements', board: b);
 
-    Focus.of(tester.element(find.text('Dark mode for slides'))).requestFocus();
+    Focus.of(
+      tester.element(
+        find.textContaining('Dark mode for slides', findRichText: true),
+      ),
+    ).requestFocus();
     await tester.pump();
     await tester.sendKeyEvent(LogicalKeyboardKey.numpadAdd);
     await tester.pumpAndSettle();
@@ -285,7 +289,10 @@ void main() {
     });
     await tester.pumpAndSettle();
 
-    expect(find.text('Charts in dark mode'), findsOneWidget);
+    expect(
+      find.textContaining('Charts in dark mode', findRichText: true),
+      findsOneWidget,
+    );
     await t().h.undo();
     await tester.pumpAndSettle();
     expect(find.text('Charts in dark mode'), findsNothing);
@@ -338,7 +345,13 @@ void main() {
 
     expect(
       tester.getTopLeft(byKey('board.vote.1.up')).dx,
-      lessThan(tester.getTopLeft(find.text('Dark mode for slides')).dx),
+      lessThan(
+        tester
+            .getTopLeft(
+              find.textContaining('Dark mode for slides', findRichText: true),
+            )
+            .dx,
+      ),
     );
     expect(tester.takeException(), isNull);
     await settleTooltips(tester);

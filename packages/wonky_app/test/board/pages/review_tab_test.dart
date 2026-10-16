@@ -202,7 +202,10 @@ void main() {
 
     expect(byKey('board.review'), findsNothing);
     expect(byKey('board.tab.review'), findsNothing);
-    expect(find.text('Public idea'), findsOneWidget);
+    expect(
+      find.textContaining('Public idea', findRichText: true),
+      findsOneWidget,
+    );
     expect(b.calls.where((c) => c.startsWith('review')), isEmpty);
     await settleTooltips(tester);
   });

@@ -50,7 +50,13 @@ void main() {
     );
 
     expect(t().location, '/improvements/t/1');
-    expect(find.text('Open task'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: byKey('board.task.title'),
+        matching: find.textContaining('Open task', findRichText: true),
+      ),
+      findsOneWidget,
+    );
     await settleTooltips(tester);
   });
 

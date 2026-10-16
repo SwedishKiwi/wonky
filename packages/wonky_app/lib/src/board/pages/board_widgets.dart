@@ -809,3 +809,50 @@ List<Widget> boardLabelChips(
   if (area != null) BoardChip(label: l.boardAreaName(area), ai: ai),
   if (size != null) BoardChip(label: l.boardSizeName(size), ai: ai),
 ];
+
+/// A post or task number (`#5`, `T-1`) and its title as one text: the
+/// number grayed out, the title in bold, on one baseline, wrapping together
+/// (board rows, the task header; specs/16 §4.4).
+class BoardNumberedTitle extends StatelessWidget {
+  const BoardNumberedTitle({
+    super.key,
+    required this.number,
+    required this.title,
+    this.style,
+    this.maxLines = 2,
+  });
+
+  final String number;
+  final String title;
+
+  /// The base style (default: `small`); the title is bold, the number keeps
+  /// the regular weight in the muted color.
+  final TextStyle? style;
+  final int? maxLines;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    final base = style ?? theme.textTheme.small;
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: '$number ',
+            style: TextStyle(
+              color: theme.colorScheme.mutedForeground,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+          TextSpan(
+            text: title,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+        ],
+      ),
+      style: base,
+      maxLines: maxLines,
+      overflow: maxLines == null ? null : TextOverflow.ellipsis,
+    );
+  }
+}
