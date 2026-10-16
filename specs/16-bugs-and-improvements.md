@@ -465,7 +465,7 @@ task.
     `shell.board.release`; §8); admins also get *Link pull request…*;
   - for the claimant: the **claim code** (`7Q4F-K2M9`) with *Copy*, and the time left.
 - **Linked posts**: one row per post with its score and its screenshots.
-- **How to build it** (collapsible, open by default on the first visit):
+- **How to build it** (always shown, not collapsible):
   1. A single link, *Set up your development environment* (`board.task.setup`), that opens
      *How to contribute* (`/improvements/contribute`, §10.3) in the same tab, under the board's
      breadcrumb (Back returns to the task). The setup commands are only there.
