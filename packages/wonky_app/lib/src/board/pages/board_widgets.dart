@@ -32,6 +32,38 @@ String boardBackTarget(ShellServices s) {
   return '/';
 }
 
+/// Whether [location] is a board page below a list (a post, a task, the
+/// contribute page) rather than one of the board's lists.
+bool isBoardDetailLocation(String location) =>
+    location.startsWith('/improvements/p/') ||
+    location.startsWith('/improvements/t/') ||
+    location.startsWith('/improvements/contribute');
+
+/// The back button of the board (specs/16 §4.3): from a post, task or the
+/// contribute page back to the board page it was opened from (the shell's
+/// history, so the tab is kept), else to its list; from a list out of the
+/// board ([boardBackTarget]).
+void boardBack(ShellServices s) {
+  final here = s.router.state.uri.toString();
+  if (!isBoardDetailLocation(here)) {
+    s.router.go(boardBackTarget(s));
+    return;
+  }
+  final i = s.navIndex;
+  if (s.canGoBack && i - 1 < s.navHistory.length) {
+    final previous = s.navHistory[i - 1];
+    if (isBoardLocation(previous) && previous != here) {
+      s.goBack();
+      return;
+    }
+  }
+  s.router.go(
+    here.startsWith('/improvements/t/')
+        ? '/improvements/tasks'
+        : '/improvements',
+  );
+}
+
 /// Sends a signed-out visitor to sign-in, coming back to the current page.
 void boardSignIn(ShellServices s) {
   final here = s.router.state.uri.toString();
@@ -60,7 +92,8 @@ Future<CommandResult?> boardInvoke(
 }
 
 /// The board's page chrome (specs/16 §4.3): the settings-like
-/// [ShellPageFrame] — back (to the last non-board route), the app logo, the
+/// [ShellPageFrame] — back ([boardBack]: to the list, then out of the
+/// board), the app logo, the
 /// title, [actions], and the account menu or, signed out, *Sign in*.
 class BoardFrame extends StatelessWidget {
   const BoardFrame({
@@ -84,7 +117,7 @@ class BoardFrame extends StatelessWidget {
       services: s,
       title: title,
       actions: actions,
-      onBack: () => s.router.go(boardBackTarget(s)),
+      onBack: () => boardBack(s),
       signedOutAction: ShadButton.outline(
         key: const ValueKey<String>('board.signIn'),
         size: ShadButtonSize.sm,

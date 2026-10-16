@@ -112,20 +112,48 @@ void main() {
     await settleTooltips(tester);
   });
 
-  testWidgets('Given a page visited before the board when Back is pressed '
-      'on a post then the last non-board route opens', (tester) async {
+  testWidgets('Given a post opened from the Bugs tab when Back is pressed '
+      'then the Bugs tab opens, and Back there leaves the board', (
+    tester,
+  ) async {
     final board = FakeBoardRepository()..seedPost();
     current = await pumpBoard(tester, '/recent', board: board);
-    for (final l in ['/recent', '/improvements', '/improvements/p/1']) {
+    for (final l in ['/recent', '/improvements/bugs', '/improvements/p/1']) {
       t().s.recordLocation(l);
     }
     await t().go(tester, '/improvements/p/1');
 
     await tester.tap(byKey('shell.page.back'));
     await tester.pumpAndSettle();
+    expect(t().location, '/improvements/bugs');
 
+    await tester.tap(byKey('shell.page.back'));
+    await tester.pumpAndSettle();
     expect(t().location, '/recent');
     await settleTooltips(tester);
+  });
+
+  testWidgets('Given a task opened from a link when Back is pressed then Up '
+      'for grabs opens', (tester) async {
+    final board = FakeBoardRepository()..seedPost();
+    current = await pumpBoard(tester, '/recent', board: board);
+    for (final l in ['/recent', '/improvements/t/1']) {
+      t().s.recordLocation(l);
+    }
+    await t().go(tester, '/improvements/t/1');
+
+    await tester.tap(byKey('shell.page.back'));
+    await tester.pumpAndSettle();
+    expect(t().location, '/improvements/tasks');
+    await settleTooltips(tester);
+  });
+
+  test('isBoardDetailLocation matches posts, tasks and contribute only', () {
+    expect(isBoardDetailLocation('/improvements/p/3'), isTrue);
+    expect(isBoardDetailLocation('/improvements/t/2'), isTrue);
+    expect(isBoardDetailLocation('/improvements/contribute'), isTrue);
+    expect(isBoardDetailLocation('/improvements/bugs'), isFalse);
+    expect(isBoardDetailLocation('/improvements'), isFalse);
   });
 
   test('isBoardLocation matches the board routes only', () {

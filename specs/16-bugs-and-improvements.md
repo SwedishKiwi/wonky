@@ -275,7 +275,10 @@ The board routes are added to every app by `buildShellRouter`, next to `settings
 | `/improvements/t/:number` | Task page |
 | `/improvements/contribute` | How to contribute: renders the repo's `CONTRIBUTING.md` summary (§10.3) |
 
-- Back from the board returns to the last non-board route, like `settingsBackTarget`.
+- Back from a post, task or the contribute page returns to the board page it was opened from
+  (the shell's history, so the tab is kept), else to its list (*Improvements* for posts, *Up for
+  grabs* for tasks); back from a list leaves the board to the last non-board route, like
+  `settingsBackTarget` (`boardBack`).
 - **Page frame (as built):** every board page (board, post, task, contribute) uses the settings
   page frame, `ShellPageFrame` (`shell/page_frame.dart`): the 56 px bar with back
   (`shell.page.back`, to `boardBackTarget`), the app logo, the title in `large`, the page's
