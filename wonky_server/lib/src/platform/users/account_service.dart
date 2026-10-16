@@ -135,7 +135,7 @@ abstract final class AccountService {
     for (final item in rest) {
       await DriveService.purge(session, item);
     }
-    // Bugs & Improvements (specs/16 §11): posts outside tasks, screenshots
+    // Bugs & improvements (specs/16 §11): posts outside tasks, screenshots
     // and votes go; comments and posts in tasks stay as "Deleted user".
     await BoardSweep.deleteUserData(session, actor.userId);
     await OfflineSyncSpaceMember.db.deleteWhere(
@@ -168,7 +168,7 @@ abstract final class AccountService {
     'slides:edit',
     'scripts:run',
     'ui:control',
-    // Bugs & Improvements (specs/16 §14).
+    // Bugs & improvements (specs/16 §14).
     'board',
   };
   static const maxTokensPerUser = 50;

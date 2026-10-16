@@ -17,7 +17,7 @@ abstract final class McpScope {
   /// (v2) Edit presentations (Slides 11 §2.4).
   static const slidesEdit = 'slides:edit';
 
-  /// Bugs & Improvements (specs/16 §14): read the board, post, vote,
+  /// Bugs & improvements (specs/16 §14): read the board, post, vote,
   /// comment, claim tasks.
   static const board = 'board';
 

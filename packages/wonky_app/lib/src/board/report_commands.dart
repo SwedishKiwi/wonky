@@ -27,7 +27,7 @@ const boardTabs = [
   'contribute',
 ];
 
-/// The report entry commands of Bugs & Improvements (specs/16 §4.1, §14):
+/// The report entry commands of Bugs & improvements (specs/16 §4.1, §14):
 /// `shell.board.report {kind?}` opens the report dialog (screenshot
 /// captured first), `shell.board.open {tab?}` the board page, and the old
 /// ids `shell.help.reportBug` (kind Bug) and `shell.help.feedback` (the
@@ -36,7 +36,7 @@ List<Command<CommandArgs>> boardReportCommands(ShellServices s) => [
   shellCommand(
     'shell.board.report',
     title: (l) => l.cmdBoardReport,
-    icon: LucideIcons.messageSquarePlus,
+    icon: LucideIcons.bug,
     category: (l) => l.categoryHelp,
     args: const JsonSchema.object(
       properties: {

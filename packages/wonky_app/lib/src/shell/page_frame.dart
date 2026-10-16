@@ -25,7 +25,7 @@ double shellPageInset(double width) =>
     math.max(shellPagePadding(width), (width - shellPageMaxWidth) / 2);
 
 /// A full-screen in-app page with a back affordance (settings, help,
-/// templates, history, Bugs & Improvements): never a new window (suite 03
+/// templates, history, Bugs & improvements): never a new window (suite 03
 /// §1).
 ///
 /// The bar is 56 px: back, the app logo (home), the title (`large`),

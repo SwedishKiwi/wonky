@@ -112,7 +112,7 @@ class AuthLayout extends StatelessWidget {
                       const SizedBox(height: 16),
                       footer!,
                     ],
-                    // Bugs & Improvements (specs/16 §4.1): the board page,
+                    // Bugs & improvements (specs/16 §4.1): the board page,
                     // readable signed out (*Report* asks to sign in).
                     const SizedBox(height: 8),
                     Center(
@@ -120,10 +120,7 @@ class AuthLayout extends StatelessWidget {
                         key: const ValueKey<String>('auth.board'),
                         size: ShadButtonSize.sm,
                         foregroundColor: theme.colorScheme.mutedForeground,
-                        leading: const Icon(
-                          LucideIcons.messageSquarePlus,
-                          size: 14,
-                        ),
+                        leading: const Icon(LucideIcons.bug, size: 14),
                         onPressed: () => services.router.go('/improvements'),
                         child: Text(l.boardReportName),
                       ),

@@ -391,7 +391,7 @@ class FakeBoardRepository implements BoardRepository {
     if (blocked) {
       throw _err(
         WonkyErrorCode.forbidden,
-        "You can't post on Bugs & Improvements",
+        "You can't post on Bugs & improvements",
       );
     }
   }

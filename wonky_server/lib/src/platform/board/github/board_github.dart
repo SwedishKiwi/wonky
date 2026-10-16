@@ -59,7 +59,7 @@ class GithubPrEvent {
   final String? mergeCommitSha;
 }
 
-/// The GitHub integration of Bugs & Improvements (specs/16 §13): the
+/// The GitHub integration of Bugs & improvements (specs/16 §13): the
 /// handler of stored webhook deliveries, the API client, scheduling, and
 /// the sweep part (auto-close, postponed reviews, delivery purge).
 abstract final class BoardGithub {

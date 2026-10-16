@@ -85,7 +85,7 @@ final sheetsMenuSpec = MenuSpec.root([
 
 - Rows 1–3 follow suite 03 §3.1. Title row: app icon (Sheets product icon, → Home), `DocumentTitleField`
   (rename = `shell.drive.rename`, 1 step on the shell stack), star, move, `SyncStatusIndicator`,
-  `PresenceAvatarStack`, (M12) *Bugs & Improvements* icon button (`shell.board.report`, suite 03
+  `PresenceAvatarStack`, (M12) *Bugs & improvements* icon button (`shell.board.report`, suite 03
   §3.1/§3.4; replaced *Report a bug*), comments button (badge = open threads, toggles Comments panel), **Share**,
   account menu. No history or ✨ Assistant buttons: those are reached through the side panel
   host's icon rail (suite 03 §3.1) and their commands (`sheets.history.open`,
@@ -379,8 +379,8 @@ shortcuts use `Alt+Shift+<digit>` (no Ctrl).
 | Function list | `sheets.help.functionList` | — | — |
 | Script API reference | `sheets.help.scriptApiReference` | — | — |
 | — | | | |
-| Bugs & Improvements… (M12; replaces *Report a bug*, suite 03 §3.2) | `shell.board.report` | — | — |
-| Browse Bugs & Improvements (M12) | `shell.board.open` | — | — |
+| Bugs & improvements… (M12; replaces *Report a bug*, suite 03 §3.2) | `shell.board.report` | — | — |
+| Browse Bugs & improvements (M12) | `shell.board.open` | — | — |
 | What's new | `shell.help.whatsNew` | — | — |
 | About | `shell.help.about` | — | — |
 
@@ -887,7 +887,7 @@ Drive picker dialog (shell `DrivePickerDialog`, filtered to spreadsheets where u
 - (v2) The Sheets home lists **only spreadsheets** (no type filter) and the folders that contain
   spreadsheets (suite 05 §3.2); the left menu (suite 03 §3.3) has the four app links, Recent /
   My files / Shared with me / Starred / Offline / Trash, then *Sheets settings*, *Wonky Work
-  settings*, *Bugs & Improvements* (was *Report a bug*) and the storage meter; folder management and other kinds are in
+  settings*, *Bugs & improvements* (was *Report a bug*) and the storage meter; folder management and other kinds are in
   Wonky Drive (*Open in Wonky Drive*). Search is filtered to spreadsheets ("Search all of Wonky
   Drive" row).
 - `SheetsAppConfig.homeScope = HomeScope.kind(spreadsheet)` (D-16); `+ New` = *Spreadsheet*

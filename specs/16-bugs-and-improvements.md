@@ -1,6 +1,6 @@
-# 16 · Bugs & Improvements
+# 16 · Bugs & improvements
 
-**Bugs & Improvements** replaces *Report a bug* (the GitHub new-issue link, [03 §3.4](03-app-shell-and-navigation.md))
+**Bugs & improvements** replaces *Report a bug* (the GitHub new-issue link, [03 §3.4](03-app-shell-and-navigation.md))
 and *Report a problem* (`shell.help.feedback`) with a public board inside Wonky Work. Users can:
 
 - report bugs and suggest improvements, optionally with an annotated screenshot of the app;
@@ -21,7 +21,7 @@ PR gets an AI review against its task (§13). The integration is built and enabl
 
 ## 1. Goals and principles
 
-- **One obvious place**: a single button in every app, *Bugs & Improvements*, opens the report
+- **One obvious place**: a single button in every app, *Bugs & improvements*, opens the report
   dialog. The board is one click away from it.
 - **Votes concentrate**: the report dialog shows similar posts while the user types and offers
   *Vote for this instead*. Duplicates are merged and their votes move to the remaining post.
@@ -135,7 +135,7 @@ draft ──► published ──► claimed ──► inReview ──► done �
 ## 4. UI
 
 All UI is in `packages/wonky_app/lib/src/board/`, available in all four apps. Strings are in
-`wonky_app_en.arb`; the user-visible name is **Bugs & Improvements** everywhere.
+`wonky_app_en.arb`; the user-visible name is **Bugs & improvements** everywhere.
 
 ### 4.1 Entry points
 
@@ -144,9 +144,9 @@ through `shell.board.report`:
 
 | Where | Today | New |
 |-------|-------|-----|
-| Help menu ([03 §3.2](03-app-shell-and-navigation.md)) | *Report a bug* | *Bugs & Improvements…* (`shell.board.report`) and *Browse Bugs & Improvements* (`shell.board.open`) |
-| Home left menu footer (`HomeSidebar`, key `home.footer.reportBug` → `home.footer.board`) | *Report a bug* | *Bugs & Improvements* |
-| Editor title row (`EditorScaffold`, key `editor.reportBug` → `editor.board`, width ≥ 640) | bug icon | `LucideIcons.messageSquarePlus` icon with the tooltip *Bugs & Improvements* |
+| Help menu ([03 §3.2](03-app-shell-and-navigation.md)) | *Report a bug* | *Bugs & improvements…* (`shell.board.report`) and *Browse Bugs & improvements* (`shell.board.open`) |
+| Home left menu footer (`HomeSidebar`, key `home.footer.reportBug` → `home.footer.board`) | *Report a bug* | *Bugs & improvements* (Lucide `bug`), plus *Contribute* (`home.footer.contribute`, `shell.board.open`) |
+| Editor title row (`EditorScaffold`, key `editor.reportBug` → `editor.board`, width ≥ 640) | bug icon | Ghost button with the `bug` icon and the label *Bugs & improvements* (icon only with a tooltip between 640 and 900 px) |
 | Sign-in screens (`auth_layout.dart`, key `auth.reportBug` → `auth.board`) | link | link that opens the **board page** (§4.4), not the dialog. Signed-out users read; *Report* asks them to sign in |
 | Settings › About (`settings.about.reportBug` → `settings.about.board`) | link | button |
 | Error card (`ErrorCard`, [03](03-app-shell-and-navigation.md)) | *Copy error details*, *Reload* | adds *Report this bug*: opens the dialog with kind Bug and the error attached (§4.2.4) |
@@ -164,7 +164,7 @@ GitHub link (`BugReportLink`, kept for that case).
 user saw it.
 
 ```
-┌ Bugs & Improvements ───────────────────────────── [See all posts →] ✕ ┐
+┌ Bugs & improvements ───────────────────────────────────────────────────┐
 │ (•) Report a bug     ( ) Suggest an improvement                        │
 │                                                                        │
 │ Title  [ Pasting into a merged cell loses the formatting            ]  │
@@ -199,8 +199,8 @@ user saw it.
 - **Area** is not asked. Triage sets it, and the current app is a hint (`appHint`).
 - Body limit: 10,000 chars (the same as comments, [07 §2](07-collaboration.md)).
 - **Draft**: the dialog keeps its state in the user's local store while open, keyed by the app.
-  Closing it with content asks *Discard draft?*. Navigating to the board (*See all posts*) keeps
-  the draft, and the board's *Report* button reopens it.
+  Closing it (*Cancel* or `Esc`; the header has no close button) with content asks *Discard
+  draft?*; *Keep draft* keeps it, and the next *Report* reopens it.
 - Signed out: the dialog is not offered. `shell.board.report` opens the board page with a
   *Sign in to post* banner.
 
@@ -292,7 +292,7 @@ The board routes are added to every app by `buildShellRouter`, next to `settings
 ### 4.4 Board page
 
 - **Header**:
-  - *Bugs & Improvements*;
+  - *Bugs & improvements*;
   - *Report a bug* and *Suggest an improvement* buttons (the latter opens the dialog with kind
     Improvement);
   - a search field (`board.list` with `query`);
@@ -652,7 +652,7 @@ flattened screenshot) to catch readable emails, names or document text the autho
 | Claim a published task | | ✓ (max 2 active claims, not blocked) | ✓ | ✓ |
 
 Users blocked from the board (§9.2) can read but not write. Their writing endpoints answer
-`forbidden` with *You can't post on Bugs & Improvements*.
+`forbidden` with *You can't post on Bugs & improvements*.
 
 ### 7.2 Votes
 

@@ -8,7 +8,7 @@ import 'board_posts.dart';
 import 'board_tasks.dart';
 import 'board_votes.dart';
 
-/// Facade of Bugs & Improvements (specs/16): the endpoint delegates here;
+/// Facade of Bugs & improvements (specs/16): the endpoint delegates here;
 /// the work is split by area (posts, votes, comments and flags,
 /// moderation, tasks and claims, live streams).
 abstract final class BoardService {

@@ -53,7 +53,7 @@ and is configured by the app (`WonkyAppConfig.homeNav`, suite 03 §3.3). Drive v
 │ ──────────────────────────── │
 │ ⚙  Drive settings            │  → /settings/app            (shell.settings.openApp)
 │ [▣] Wonky Work settings     │  → /settings/account        (shell.settings.open)
-│ 💬 Bugs & Improvements       │  → report dialog            (shell.board.report)
+│ 💬 Bugs & improvements       │  → report dialog            (shell.board.report)
 │ ▬▬▬▬▬▬▬▬▬▬░░░░               │
 │ 12.3 MB of 50 MB used        │  ← StorageMeter (Drive 03 §6.1) → /drive/storage
 └──────────────────────────────┘
@@ -71,7 +71,7 @@ and is configured by the app (`WonkyAppConfig.homeNav`, suite 03 §3.3). Drive v
   Storage. App homes use their own list (suite 03 §3.3).
 - **Bottom section** (pinned to the bottom, scrolls with the menu when the window is short):
   *Drive settings* (`settings` icon; app homes: *Write settings*, *Sheets settings*, *Slides
-  settings*), *Wonky Work settings* (Work product icon), *Bugs & Improvements* (M12, Lucide
+  settings*), *Wonky Work settings* (Work product icon), *Bugs & improvements* (M12, Lucide
   `messageSquarePlus`; opens the report dialog, suite 16 §4.2; replaced *Report a bug*), then the `StorageMeter`.
 - Drop targets: *My Drive* (and tree nodes) accept dragged items (move) and OS files (upload
   into that folder); *Trash* accepts dragged items (P1, trash; undoable).
@@ -445,7 +445,7 @@ fields), as today.
   overlay text "Upload to Designs"; the upload panel shows progress and completion.
 - **AC-D4.5** `Space` on a PDF opens its preview (the *Download* card); `→` goes to the next file; `Esc` returns with
   the PDF still selected and focused.
-- **AC-D4.6** *Bugs & Improvements* in the left menu opens the report dialog (with `board: false`:
+- **AC-D4.6** *Bugs & improvements* in the left menu opens the report dialog (with `board: false`:
   the external-link confirm popover for github.com, suite 03 §3.4).
 - **AC-D4.7** Every screen of this spec passes the golden matrix in light and dark and the
   360 px overflow check.

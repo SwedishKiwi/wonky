@@ -596,7 +596,7 @@ abstract final class GithubGate {
         : 'Open [T-$n](${taskUrl(taskNumber)}) (or pick another task on '
               '[Up for grabs]($upForGrabsUrl))';
     return '''
-Every pull request to this repository implements one claimed task from [Bugs & Improvements]($boardUrl). To link this one:
+Every pull request to this repository implements one claimed task from [Bugs & improvements]($boardUrl). To link this one:
 
 1. $pick and press **Claim this task**. A claim lasts ${BoardConfig.current.claimHours} hours and shows your claim code.
 2. Put these two lines in the description of this pull request, with your values:

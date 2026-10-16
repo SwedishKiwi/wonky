@@ -113,7 +113,7 @@ Editors+ can delete any thread. Viewers see comments only if the owner allows it
   `CommentThreadBody` works through a `CommentThreadActions` interface (reply, edit, delete,
   react, per-comment permissions) and `CommentThreadBody.custom(services, actions, comments)`
   renders `ThreadComment`s. Document comments use `DocumentCommentThreadActions` (the
-  `shell.comments.*` commands, no behavior change); the Bugs & Improvements board uses its own
+  `shell.comments.*` commands, no behavior change); the Bugs & improvements board uses its own
   implementation (`shell.board.comment.*`, [16 §7.3](16-bugs-and-improvements.md)).
 - **New comment**: `Mod+Alt+M` with selection → composer card with mention autocomplete (`@`),
   *Assign to* checkbox when a mention exists, *Comment*/*Cancel*.

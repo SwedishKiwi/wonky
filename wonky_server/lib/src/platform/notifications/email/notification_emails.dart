@@ -17,7 +17,7 @@ class NotificationEmails {
   /// A link to the item of [n], or the Drive home (the landing app) when it
   /// has no item.
   Uri linkFor(NotificationView n) {
-    // Bugs & Improvements (specs/16 §12): posts and tasks on Drive's board.
+    // Bugs & improvements (specs/16 §12): posts and tasks on Drive's board.
     final board = boardPathOf(n.payload);
     if (board != null) return webOrigin.replace(path: '/drive$board');
     final uuid = n.itemUuid?.uuid;
@@ -101,7 +101,7 @@ class NotificationEmails {
       NotificationKind.boardStatus || NotificationKind.boardClaim =>
         p['line'] is String
             ? '${p['line']}'
-            : 'Update on “${p['title'] ?? 'Bugs & Improvements'}”',
+            : 'Update on “${p['title'] ?? 'Bugs & improvements'}”',
     };
   }
 

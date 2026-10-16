@@ -1,5 +1,5 @@
 <!--
-Every PR implements one claimed task from Bugs & Improvements
+Every PR implements one claimed task from Bugs & improvements
 (https://wonky.work/improvements/tasks). Fill in both lines below with the
 values from the task page. PRs without a valid task are closed after 7 days.
 See CONTRIBUTING.md.

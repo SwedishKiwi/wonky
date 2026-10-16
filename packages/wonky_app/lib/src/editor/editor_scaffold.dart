@@ -631,9 +631,18 @@ class _EditorScaffoldState extends State<EditorScaffold> {
               ),
             ),
             const SizedBox(width: 8),
-            // *Bugs & Improvements* (specs/16 §4.1): hidden below `sm`
+            // *Bugs & improvements* (specs/16 §4.1): hidden below `sm`
             // (still in Help).
-            if (MediaQuery.sizeOf(context).width >= 640)
+            if (MediaQuery.sizeOf(context).width >= 900)
+              ShadButton.ghost(
+                key: const ValueKey<String>('editor.board'),
+                height: 32,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                leading: const Icon(LucideIcons.bug, size: 18),
+                onPressed: () => _invoke('shell.board.report'),
+                child: Text(l.boardReportName),
+              )
+            else if (MediaQuery.sizeOf(context).width >= 640)
               ShadTooltip(
                 builder: (_) => Text(l.boardReportName),
                 child: ShadIconButton.ghost(
@@ -643,7 +652,7 @@ class _EditorScaffoldState extends State<EditorScaffold> {
                   iconSize: 18,
                   semanticLabel: l.boardReportName,
                   icon: Icon(
-                    LucideIcons.messageSquarePlus,
+                    LucideIcons.bug,
                     color: theme.colorScheme.mutedForeground,
                   ),
                   onPressed: () => _invoke('shell.board.report'),

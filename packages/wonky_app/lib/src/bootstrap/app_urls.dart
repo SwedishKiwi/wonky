@@ -143,7 +143,7 @@ class AppUrls {
   static const defaultBugReportUrl =
       'https://github.com/serverpod/wonky/issues';
 
-  /// Whether the server runs Bugs & Improvements (`board`, specs/16 §4.1;
+  /// Whether the server runs Bugs & improvements (`board`, specs/16 §4.1;
   /// true when absent). False: `shell.board.report` falls back to the
   /// GitHub link of [bugReportUrl].
   final bool board;

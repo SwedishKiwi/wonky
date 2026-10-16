@@ -11,7 +11,7 @@ import 'package:wonky_client/wonky_client.dart';
 
 import 'support/report_fakes.dart';
 
-/// The entry points of Bugs & Improvements that replaced *Report a bug*
+/// The entry points of Bugs & improvements that replaced *Report a bug*
 /// (specs/16 §4.1). The Help menu is covered in
 /// `commands/shell_commands/shell_v2_commands_test.dart`, the left menu in
 /// `drive/scoped_home_test.dart`.
@@ -28,7 +28,7 @@ void main() {
   BoardReportDialogState dialog(WidgetTester tester) =>
       tester.state<BoardReportDialogState>(find.byType(BoardReportDialog));
 
-  testWidgets('Given the sign-in screen when the Bugs & Improvements link is '
+  testWidgets('Given the sign-in screen when the Bugs & improvements link is '
       'used then the board page opens (no dialog)', (tester) async {
     await h.dispose();
     h = reportHarness(board: board, auth: FakeAuthRepository(signedIn: false));
@@ -43,7 +43,7 @@ void main() {
     expect(key(BoardReportKeys.dialog), findsNothing);
   });
 
-  testWidgets('Given Settings › About when Bugs & Improvements is pressed '
+  testWidgets('Given Settings › About when Bugs & improvements is pressed '
       'then the report dialog opens', (tester) async {
     await pumpReportShell(tester, h, AboutSection(services: h.services));
 

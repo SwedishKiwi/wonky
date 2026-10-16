@@ -83,7 +83,7 @@ class ShellRepositories {
   final ActivityRepository? _activity;
   final BoardRepository? _board;
 
-  /// Bugs & Improvements (specs/16); throws when the shell was built
+  /// Bugs & improvements (specs/16); throws when the shell was built
   /// without one.
   BoardRepository get board =>
       _board ?? (throw StateError('No BoardRepository installed.'));

@@ -2,7 +2,7 @@ blank_issues_enabled: false
 contact_links:
   - name: Report a bug or suggest an improvement
     url: https://wonky.work/improvements
-    about: Wonky Work's Bugs & Improvements board, where reports are voted on and turned into tasks.
+    about: Wonky Work's Bugs & improvements board, where reports are voted on and turned into tasks.
   - name: Report a security issue
     url: https://github.com/serverpod/wonky/blob/main/SECURITY.md
     about: Please email security@serverpod.dev instead of opening an issue.

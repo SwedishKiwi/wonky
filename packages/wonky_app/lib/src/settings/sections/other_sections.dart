@@ -345,10 +345,10 @@ class AboutSection extends StatelessWidget {
                 ),
                 child: Text(l.aboutLicenses),
               ),
-              // Bugs & Improvements from About (specs/16 §4.1).
+              // Bugs & improvements from About (specs/16 §4.1).
               ShadButton.outline(
                 key: const ValueKey<String>('settings.about.board'),
-                leading: const Icon(LucideIcons.messageSquarePlus, size: 16),
+                leading: const Icon(LucideIcons.bug, size: 16),
                 onPressed: () => services.dispatcher.invoke(
                   'shell.board.report',
                   context: context,

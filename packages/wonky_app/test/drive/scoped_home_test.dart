@@ -148,8 +148,13 @@ void main() {
       expect(key('drive.nav.storage'), findsNothing);
       expect(key('drive.nav.tree'), findsNothing);
       expect(find.text('Write settings'), findsNothing);
-      expect(find.text('Test settings'), findsOneWidget);
-      expect(find.text('Wonky Work settings'), findsOneWidget);
+      // The app's settings are just "Settings"; Wonky Work settings are
+      // reached from there.
+      expect(find.text('Test settings'), findsNothing);
+      expect(find.text('Settings'), findsOneWidget);
+      expect(find.text('Wonky Work settings'), findsNothing);
+      expect(key('home.footer.workSettings'), findsNothing);
+      expect(key('home.footer.contribute'), findsOneWidget);
       expect(key('home.footer.board'), findsOneWidget);
       // The current app is highlighted and not a button.
       expect(
@@ -401,7 +406,7 @@ void main() {
       await settleTooltips(tester);
     });
 
-    testWidgets('when opening Bugs & Improvements then the report dialog '
+    testWidgets('when opening Bugs & improvements then the report dialog '
         'shows', (tester) async {
       h = harness(scope: writeHome);
       await pumpScreen(tester, h, home());
@@ -410,22 +415,32 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(key('dialog.board.report'), findsOneWidget);
-      expect(find.text('Bugs & Improvements'), findsWidgets);
+      expect(find.text('Bugs & improvements'), findsWidgets);
       expect(h.crossApp.external, isEmpty);
       await settleTooltips(tester);
     });
 
-    testWidgets('when opening the settings entries then app and suite '
-        'settings show', (tester) async {
+    testWidgets('when opening Settings then the app settings show', (
+      tester,
+    ) async {
       h = harness(scope: writeHome);
       await pumpScreen(tester, h, home());
 
       await tester.tap(key('home.footer.appSettings'));
       await tester.pumpAndSettle();
       expect(routerPath(), '/settings/app');
-      await tester.tap(key('home.footer.workSettings'));
+      await settleTooltips(tester);
+    });
+
+    testWidgets('when pressing Contribute then the board opens', (
+      tester,
+    ) async {
+      h = harness(scope: writeHome);
+      await pumpScreen(tester, h, home());
+
+      await tester.tap(key('home.footer.contribute'));
       await tester.pumpAndSettle();
-      expect(routerPath(), '/settings/account');
+      expect(routerPath(), '/improvements');
       await settleTooltips(tester);
     });
   });
@@ -530,7 +545,7 @@ void main() {
       await settleTooltips(tester);
     });
 
-    testWidgets('when opening Bugs & Improvements from the drawer then the '
+    testWidgets('when opening Bugs & improvements from the drawer then the '
         'drawer closes and the report dialog shows', (tester) async {
       h = harness(scope: writeHome);
       await pumpScreen(tester, h, home(), size: const Size(600, 800));

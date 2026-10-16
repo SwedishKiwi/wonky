@@ -26,8 +26,6 @@ import 'similar_posts.dart';
 /// Stable keys of the report dialog (specs/16 §4.2).
 abstract final class BoardReportKeys {
   static const dialog = 'dialog.board.report';
-  static const close = '$dialog.close';
-  static const seeAll = '$dialog.seeAll';
   static const kindBug = '$dialog.kind.bug';
   static const kindIdea = '$dialog.kind.idea';
   static const addScreenshot = '$dialog.screenshot.add';
@@ -61,9 +59,6 @@ enum BoardReportOutcome {
 
   /// *Vote instead* on a similar post; the draft is kept.
   voted,
-
-  /// *See all posts*: the board opens; the draft is kept.
-  browsed,
 
   /// Closed and the draft kept (*Keep draft*).
   kept,
@@ -125,9 +120,6 @@ Future<BoardReportResult?> showBoardReportDialog(
       screenshotFailed: screenshotFailed || screenshot == null,
     ),
   );
-  if (result?.outcome == BoardReportOutcome.browsed) {
-    s.router.go('/improvements');
-  }
   return result;
 }
 
@@ -318,17 +310,6 @@ class BoardReportDialogState extends State<BoardReportDialog>
             context,
           ).pop(const BoardReportResult(BoardReportOutcome.kept));
         }
-    }
-  }
-
-  /// *See all posts →*: keeps the draft and opens the board.
-  Future<void> seeAll() async {
-    if (_posting) return;
-    await widget.store.save(draft);
-    if (mounted) {
-      Navigator.of(
-        context,
-      ).pop(const BoardReportResult(BoardReportOutcome.browsed));
     }
   }
 
@@ -539,7 +520,6 @@ class BoardReportDialogState extends State<BoardReportDialog>
       'error': ?_error,
       'buttons': [
         {'id': 'cancel', 'label': l.actionCancel},
-        {'id': 'seeAll', 'label': l.boardReportSeeAll},
         {'id': 'post', 'label': _postLabel(l)},
       ],
     };
@@ -572,8 +552,6 @@ class BoardReportDialogState extends State<BoardReportDialog>
         post();
       case 'cancel' || 'close':
         requestClose();
-      case 'seeAll':
-        seeAll();
       default:
         return false;
     }
@@ -682,7 +660,7 @@ class BoardReportDialogState extends State<BoardReportDialog>
   }
 
   Widget _header(WonkyAppLocalizations l, ShadThemeData theme) => Padding(
-    padding: const EdgeInsets.fromLTRB(24, 16, 12, 8),
+    padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
     child: Row(
       children: [
         Expanded(
@@ -694,25 +672,6 @@ class BoardReportDialogState extends State<BoardReportDialog>
                   theme.primaryDialogTheme.titleStyle ?? theme.textTheme.large,
               overflow: TextOverflow.ellipsis,
             ),
-          ),
-        ),
-        ShadButton.link(
-          key: const ValueKey<String>(BoardReportKeys.seeAll),
-          size: ShadButtonSize.sm,
-          onPressed: _posting ? null : seeAll,
-          trailing: const Icon(LucideIcons.arrowRight, size: 14),
-          child: Text(l.boardReportSeeAll),
-        ),
-        ShadTooltip(
-          builder: (_) => Text(l.actionClose),
-          child: ShadIconButton.ghost(
-            key: const ValueKey<String>(BoardReportKeys.close),
-            width: 32,
-            height: 32,
-            iconSize: 16,
-            semanticLabel: l.actionClose,
-            icon: const Icon(LucideIcons.x),
-            onPressed: _posting ? null : requestClose,
           ),
         ),
       ],

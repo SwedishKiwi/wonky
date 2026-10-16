@@ -172,11 +172,11 @@ M8 must land the shell changes (scope-aware homes, settings split, `WonkyAppKind
 apps) before Slides UI work starts in M9, and every shared-package extraction plus OS-8 before
 the first Slides package that needs it (SL-2 needs D-6; SL-5 needs D-4; SL-26/SL-27 need D-2/D-3).
 
-### 2.1a Bugs & Improvements (M12, built)
+### 2.1a Bugs & improvements (M12, built)
 
 | Milestone | Goal | Exit criteria |
 |-----------|------|---------------|
-| **M12 · Bugs & Improvements** ([16](16-bugs-and-improvements.md), BI-1…BI-9; P1 BI-10; GitHub step 2 BI-11, BI-12) | Replace *Report a bug* and *Report a problem* with a public in-app board: report dialog with similar posts and an annotated screenshot, votes, Markdown comments (shared with document comments), triage and moderation by Jev and writing by Gemini (internal keys, separate from the in-app AI), admins by email domain, tasks (single posts or bundles) with AI-written, admin-reviewed contributor prompts, 48-hour claims with claim codes, `CONTRIBUTING.md`, `SECURITY.md` and PR template; step 2: a GitHub App gate (only PRs with a claimed task), an advisory AI review against the task, merged → done, deployed → shipped | J-B1 green; board access matrix tested; document comment suites green; light/dark goldens; signed-out board loads in the release build; `CONTRIBUTING.md` verified by a fresh-clone dry run |
+| **M12 · Bugs & improvements** ([16](16-bugs-and-improvements.md), BI-1…BI-9; P1 BI-10; GitHub step 2 BI-11, BI-12) | Replace *Report a bug* and *Report a problem* with a public in-app board: report dialog with similar posts and an annotated screenshot, votes, Markdown comments (shared with document comments), triage and moderation by Jev and writing by Gemini (internal keys, separate from the in-app AI), admins by email domain, tasks (single posts or bundles) with AI-written, admin-reviewed contributor prompts, 48-hour claims with claim codes, `CONTRIBUTING.md`, `SECURITY.md` and PR template; step 2: a GitHub App gate (only PRs with a claimed task), an advisory AI review against the task, merged → done, deployed → shipped | J-B1 green; board access matrix tested; document comment suites green; light/dark goldens; signed-out board loads in the release build; `CONTRIBUTING.md` verified by a fresh-clone dry run |
 
 **Delivered** (BI-1…BI-9 and BI-11, BI-12; BI-10 (P1) not built, open items in
 [16 §17](16-bugs-and-improvements.md)).

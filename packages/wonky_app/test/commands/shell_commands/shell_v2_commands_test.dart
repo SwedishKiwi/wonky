@@ -152,7 +152,7 @@ void main() {
   group('Given the shared Help menu', () {
     setUp(() => h = harness());
 
-    test('then Bugs & Improvements replaces Report a bug, and the old ids '
+    test('then Bugs & improvements replaces Report a bug, and the old ids '
         'stay registered', () async {
       final l = await WonkyAppLocalizations.delegate.load(const Locale('en'));
       final help = MenuRoot([ShellMenus(l).help]);
@@ -166,8 +166,8 @@ void main() {
       expect(ids, isNot(contains('shell.help.feedback')));
       expect(h.services.registry.byId('shell.help.reportBug'), isNotNull);
       expect(h.services.registry.byId('shell.help.feedback'), isNotNull);
-      expect(l.cmdBoardReport, 'Bugs & Improvements…');
-      expect(l.cmdBoardOpen, 'Browse Bugs & Improvements');
+      expect(l.cmdBoardReport, 'Bugs & improvements…');
+      expect(l.cmdBoardOpen, 'Browse Bugs & improvements');
     });
   });
 

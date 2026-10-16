@@ -75,7 +75,7 @@ class _NotificationsButtonState extends State<NotificationsButton> {
   Future<void> _open(NotificationView n) async {
     _popover.hide();
     unawaited(_ctl.markRead(n));
-    // Bugs & Improvements (specs/16 §12): posts and tasks on the board.
+    // Bugs & improvements (specs/16 §12): posts and tasks on the board.
     final board = _boardPathOf(n);
     if (board != null) {
       await s.openPath(board);
@@ -494,7 +494,7 @@ IconData _kindIcon(NotificationKind k) => switch (k) {
   NotificationKind.scriptFailure => LucideIcons.triangleAlert,
   NotificationKind.storage => LucideIcons.hardDrive,
   NotificationKind.boardReply => LucideIcons.messageSquareReply,
-  NotificationKind.boardStatus => LucideIcons.messageSquarePlus,
+  NotificationKind.boardStatus => LucideIcons.bug,
   NotificationKind.boardClaim => LucideIcons.hand,
 };
 

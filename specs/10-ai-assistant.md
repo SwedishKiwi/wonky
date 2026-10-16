@@ -7,7 +7,7 @@ never reach clients). The assistant acts on documents through the **same tool la
 ([09-mcp.md](09-mcp.md)), so anything it does is permission-checked, attributed
 (`actorKind: ai`) and undoable as one step.
 
-> **Bugs & Improvements has its own AI** (M12): Jev (decisions: vetting, labels, duplicates) and
+> **Bugs & improvements has its own AI** (M12): Jev (decisions: vetting, labels, duplicates) and
 > Gemini (writing: titles, summaries, bundles, contributor prompts, PR reviews) run on the
 > internal keys `internalJevApiKey` and `internalGeminiApiKey`, with their own usage table
 > (`board_ai_usage`) and daily budgets. It never uses the keys, budgets or opt-out of the

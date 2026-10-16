@@ -2,7 +2,7 @@ import 'package:wonky_client/wonky_client.dart';
 
 import '../data/api.dart';
 
-/// Bugs & Improvements (specs/16 §12): the `board` endpoint. Read methods
+/// Bugs & improvements (specs/16 §12): the `board` endpoint. Read methods
 /// work signed out.
 abstract class BoardRepository {
   Future<BoardMe> me();

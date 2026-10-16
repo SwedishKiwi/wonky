@@ -90,7 +90,7 @@ abstract final class BoardAccess {
     final c = await caller(session);
     if (!c.signedIn) throw Errors.forbidden('You need to sign in.');
     if (c.blocked) {
-      throw Errors.forbidden("You can't post on Bugs & Improvements.");
+      throw Errors.forbidden("You can't post on Bugs & improvements.");
     }
     return c;
   }

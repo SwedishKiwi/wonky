@@ -9,7 +9,7 @@ import 'package:wonky_ui/testing.dart';
 import '../report/support/report_fakes.dart' as report;
 import 'support/board_pump.dart';
 
-/// The layout of Bugs & Improvements matches the rest of the suite
+/// The layout of Bugs & improvements matches the rest of the suite
 /// (specs/16 §4.3–4.7): the settings page frame and content column, the
 /// drive's filter bar and selection bar, and the shared dialog surface.
 void main() {

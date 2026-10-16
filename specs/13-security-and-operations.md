@@ -28,7 +28,7 @@
 
 ## 2. Privacy
 - Data minimization in logs (no document content in logs; ids only).
-- (M12) **Bugs & Improvements**: posts, comments, task text and screenshots are **public** (readable
+- (M12) **Bugs & improvements**: posts, comments, task text and screenshots are **public** (readable
   signed out). They are checked by Jev (TypeSafe) and written about by Gemini (Google, paid-tier
   key) on internal keys; the dialog names both. The per-user AI opt-out below does **not** apply
   to board content, because it is public anyway. Details: [16 §6.1, §11](16-bugs-and-improvements.md).
@@ -156,7 +156,7 @@ reviewed before publishing; material changes update the effective date and are a
 (v2) The M8 release updates both: uploaded files of any type, the 50 MB storage limit and what
 happens over it (Drive 03), acceptable use of uploads (no illegal content, no malware), and the
 public nature of bug reports on GitHub (03 §3.4). (M12) The privacy policy also names the public
-Bugs & Improvements board and the AI checks of its posts ([16](16-bugs-and-improvements.md)).
+Bugs & improvements board and the AI checks of its posts ([16](16-bugs-and-improvements.md)).
 
 ## 6. Arbitrary uploads (v2)
 

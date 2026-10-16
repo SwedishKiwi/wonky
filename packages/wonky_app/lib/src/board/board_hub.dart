@@ -25,7 +25,7 @@ class BoardChange {
   bool touchesTask(int n) => post == null && task == null || task == n;
 }
 
-/// Client state of Bugs & Improvements for one [ShellServices]
+/// Client state of Bugs & improvements for one [ShellServices]
 /// (specs/16 §4): the caller's [BoardMe] (admin UI, blocked state), a
 /// change feed for open board pages, and small caches the commands use to
 /// record undo inverses without an extra round trip (votes, comment

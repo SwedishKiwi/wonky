@@ -26,7 +26,7 @@ enum NotificationKind implements _isc.SerializableModel {
   /// (v2) Storage notice, e.g. over quota after the backfill (Drive 03 §9).
   storage,
 
-  /// Bugs & Improvements (specs/16 §12): a comment on my post or one I
+  /// Bugs & improvements (specs/16 §12): a comment on my post or one I
   /// commented on.
   boardReply,
 

@@ -2,7 +2,7 @@
 
 ## Reporting a vulnerability
 
-Email **security@serverpod.dev**. Please do not report security issues on the Bugs & Improvements
+Email **security@serverpod.dev**. Please do not report security issues on the Bugs & improvements
 board, in GitHub issues or in pull requests: they are public.
 
 Include:

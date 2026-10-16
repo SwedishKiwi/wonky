@@ -11,7 +11,7 @@ import 'package:wonky_client/wonky_client.dart' hide BoardPostPage;
 import '../../board/pages/support/board_pump.dart';
 import '../../board/report/support/report_fakes.dart';
 
-/// Goldens of Bugs & Improvements in light and dark (specs/16 §4.7, §15):
+/// Goldens of Bugs & improvements in light and dark (specs/16 §4.7, §15):
 /// the board page (list), the post page and the report dialog. Masters are
 /// made and compared on CI Linux only (specs/15 §7): run locally with
 /// `-x golden`.

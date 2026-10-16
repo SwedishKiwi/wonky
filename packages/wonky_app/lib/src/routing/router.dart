@@ -43,7 +43,7 @@ GoRouter buildShellRouter(ShellServices s) {
         return null; // dialog over the screen
       }
       if (status == AuthStatus.signedOut) {
-        // Bugs & Improvements is public (specs/16 §4.3).
+        // Bugs & improvements is public (specs/16 §4.3).
         if (isAuth || isBoardLocation(path)) return null;
         final next = state.uri.toString();
         return next == '/'
@@ -164,7 +164,7 @@ GoRouter buildShellRouter(ShellServices s) {
         ),
       // Settings: app settings + Wonky Work settings (suite 04 §4).
       ...settingsRoutes(s, page),
-      // Bugs & Improvements (specs/16 §4.3).
+      // Bugs & improvements (specs/16 §4.3).
       ...boardRoutes(s, page),
       GoRoute(
         path: '/invite/:token',

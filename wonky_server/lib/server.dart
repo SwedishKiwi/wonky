@@ -149,14 +149,14 @@ void _configureWebServer(Serverpod pod) {
     );
   }
   pod.webServer.addRoute(InviteRoute(), '/invite/:token');
-  // Bugs & Improvements links (specs/16 §4.3): `/improvements/**` opens
+  // Bugs & improvements links (specs/16 §4.3): `/improvements/**` opens
   // in Drive; `/improvements/p/<n>/screenshot` is the screenshot link.
   for (final path in const ['/improvements', '/improvements/**']) {
     pod.webServer.addRoute(ImprovementsRedirectRoute(), path);
   }
   // The MCP endpoint (specs/09-mcp.md §1): Streamable HTTP, bearer tokens.
   pod.webServer.addRoute(McpRoute(), '/mcp');
-  // Webhooks of the Bugs & Improvements GitHub App (specs/16 §13.3, README
+  // Webhooks of the Bugs & improvements GitHub App (specs/16 §13.3, README
   // in lib/src/platform/board/github/).
   pod.webServer.addRoute(GithubWebhookRoute(), '/api/github/webhook');
   // Wonky Drive file bytes (Drive 02 §3.3, §8; suite 13 §6): token-bound
@@ -221,7 +221,7 @@ final _jobs = <String, (String, Future<void> Function(dynamic recurring))>{
   // Sheets scripts (Sheets 09 §8.7.3, §13.1).
   'wonky.scriptsTick': ('* * * * *', (r) => r.scriptScheduler.tick()),
   'wonky.scriptsPrune': ('37 3 * * *', (r) => r.scriptScheduler.prune()),
-  // Bugs & Improvements: claims, unchecked posts, retention (specs/16 §8.2).
+  // Bugs & improvements: claims, unchecked posts, retention (specs/16 §8.2).
   'wonky.boardSweep': ('*/10 * * * *', (r) => r.board.sweep()),
 };
 

@@ -3,7 +3,7 @@ import 'package:serverpod/serverpod.dart';
 import '../common/models.dart';
 import 'board_service.dart';
 
-/// Bugs & Improvements (specs/16 §12). Read methods work signed out; write
+/// Bugs & improvements (specs/16 §12). Read methods work signed out; write
 /// methods need a signed-in user who is not blocked; admin methods need an
 /// admin (specs/16 §9.1). Posts and tasks are addressed by their public
 /// number (the row id), for example #123 and T-12.

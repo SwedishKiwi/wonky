@@ -4675,7 +4675,7 @@ abstract class WonkyAppLocalizations {
   /// No description provided for @mcpScopeBoard.
   ///
   /// In en, this message translates to:
-  /// **'Bugs & Improvements: read, post, vote, claim tasks'**
+  /// **'Bugs & improvements: read, post, vote, claim tasks'**
   String get mcpScopeBoard;
 
   /// No description provided for @tokenCreateHint.
@@ -5401,26 +5401,26 @@ abstract class WonkyAppLocalizations {
   /// Help menu and palette: opens the report dialog (specs/16 §4.1).
   ///
   /// In en, this message translates to:
-  /// **'Bugs & Improvements…'**
+  /// **'Bugs & improvements…'**
   String get cmdBoardReport;
 
-  /// Help menu and palette: opens the Bugs & Improvements board page.
+  /// Help menu and palette: opens the Bugs & improvements board page.
   ///
   /// In en, this message translates to:
-  /// **'Browse Bugs & Improvements'**
+  /// **'Browse Bugs & improvements'**
   String get cmdBoardOpen;
 
   /// The product name of the public bug and idea board; title of the report dialog and the entry points.
   ///
   /// In en, this message translates to:
-  /// **'Bugs & Improvements'**
+  /// **'Bugs & improvements'**
   String get boardReportName;
 
-  /// Report dialog header link to the board page (keeps the draft).
+  /// Home left menu: opens the Bugs & improvements board, where people vote on posts and pick up tasks.
   ///
   /// In en, this message translates to:
-  /// **'See all posts'**
-  String get boardReportSeeAll;
+  /// **'Contribute'**
+  String get boardContributeNav;
 
   /// No description provided for @boardReportKindLabel.
   ///
@@ -5731,13 +5731,13 @@ abstract class WonkyAppLocalizations {
   /// No description provided for @boardReportBlocked.
   ///
   /// In en, this message translates to:
-  /// **'You can’t post on Bugs & Improvements.'**
+  /// **'You can’t post on Bugs & improvements.'**
   String get boardReportBlocked;
 
   /// No description provided for @boardReportBlockedReason.
   ///
   /// In en, this message translates to:
-  /// **'You can’t post on Bugs & Improvements: {reason}'**
+  /// **'You can’t post on Bugs & improvements: {reason}'**
   String boardReportBlockedReason(String reason);
 
   /// No description provided for @boardReportPostFailed.
@@ -5899,7 +5899,7 @@ abstract class WonkyAppLocalizations {
   /// Name of the board (specs/16), page title and command category.
   ///
   /// In en, this message translates to:
-  /// **'Bugs & Improvements'**
+  /// **'Bugs & improvements'**
   String get boardTitle;
 
   /// No description provided for @boardReportBug.
@@ -5947,7 +5947,7 @@ abstract class WonkyAppLocalizations {
   /// No description provided for @boardBlocked.
   ///
   /// In en, this message translates to:
-  /// **'You can\'t post on Bugs & Improvements.'**
+  /// **'You can\'t post on Bugs & improvements.'**
   String get boardBlocked;
 
   /// No description provided for @boardContributeLink.
@@ -6295,7 +6295,7 @@ abstract class WonkyAppLocalizations {
   /// No description provided for @boardLoadFailed.
   ///
   /// In en, this message translates to:
-  /// **'Couldn\'t load Bugs & Improvements'**
+  /// **'Couldn\'t load Bugs & improvements'**
   String get boardLoadFailed;
 
   /// No description provided for @boardEmptyIdeas.
@@ -6475,7 +6475,7 @@ abstract class WonkyAppLocalizations {
   /// No description provided for @boardBackToBoard.
   ///
   /// In en, this message translates to:
-  /// **'Back to Bugs & Improvements'**
+  /// **'Back to Bugs & improvements'**
   String get boardBackToBoard;
 
   /// Heading of the admin entries in the post's actions menu.
@@ -7621,7 +7621,7 @@ abstract class WonkyAppLocalizations {
   /// Notification settings: replies, status changes and claims on the board.
   ///
   /// In en, this message translates to:
-  /// **'Bugs & Improvements'**
+  /// **'Bugs & improvements'**
   String get notifyBoard;
 
   /// No description provided for @notifyBoardHint.

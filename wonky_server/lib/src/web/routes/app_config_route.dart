@@ -9,7 +9,7 @@ import '../web_apps.dart';
 /// links; all four apps, also before one is built), whether the API
 /// accepts cookie auth (specs/01 §2.5) and, when Google sign-in is
 /// configured, `{clientId, redirectUri}` for the web OAuth flow (specs/04
-/// §1.6), and `board: false` when Bugs & Improvements is turned off
+/// §1.6), and `board: false` when Bugs & improvements is turned off
 /// (`board.enabled`, specs/16 §4.1; the apps then link to GitHub issues).
 class AppConfigWidget extends JsonWidget {
   AppConfigWidget({

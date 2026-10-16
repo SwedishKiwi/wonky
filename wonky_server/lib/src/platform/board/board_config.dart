@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:serverpod/serverpod.dart';
 import 'package:yaml/yaml.dart';
 
-/// Settings of Bugs & Improvements from the `wonky: board:` section of
+/// Settings of Bugs & improvements from the `wonky: board:` section of
 /// `config/<runMode>.yaml` (specs/16 §12). The defaults are the production
 /// values: Serverpod Cloud does not upload `config/*.yaml`.
 ///

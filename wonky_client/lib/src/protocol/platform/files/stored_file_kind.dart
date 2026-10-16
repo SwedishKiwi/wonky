@@ -36,7 +36,7 @@ enum StoredFileKind implements _isc.SerializableModel {
   /// counted, deleted with the item.
   preview,
 
-  /// Screenshot of a Bugs & Improvements post (specs/16 §5.3); public with
+  /// Screenshot of a Bugs & improvements post (specs/16 §5.3); public with
   /// the post through signed URLs, not counted, no item. Expires after a day
   /// until a post attaches it.
   boardScreenshot;

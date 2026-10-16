@@ -31,7 +31,7 @@ every control is a `CommandButton`/`CommandMenuItem` bound to a command id (suit
 
 | Screen | Route | Owner spec | Notes |
 |--------|-------|-----------|-------|
-| Home / Drive views | `/`, `/f/:uuid` (v2; `/drive/:uuid` redirects), `/my-files`, `/shared`, `/starred`, `/recent`, `/offline`, `/trash`, `/search` | suite 05 §3, suite 03 §3.3 | (v2) **Only documents** (and folders that contain documents); left menu with the four apps, *Write settings*, *Wonky Work settings*, *Bugs & Improvements* (was *Report a bug*), storage meter; *Open in Wonky Drive*; Write template strip; *Import file…* for `.md/.txt/.html/.docx/.odt/.rtf` |
+| Home / Drive views | `/`, `/f/:uuid` (v2; `/drive/:uuid` redirects), `/my-files`, `/shared`, `/starred`, `/recent`, `/offline`, `/trash`, `/search` | suite 05 §3, suite 03 §3.3 | (v2) **Only documents** (and folders that contain documents); left menu with the four apps, *Write settings*, *Wonky Work settings*, *Bugs & improvements* (was *Report a bug*), storage meter; *Open in Wonky Drive*; Write template strip; *Import file…* for `.md/.txt/.html/.docx/.odt/.rtf` |
 | New / import (v2) | `/new?folder=&template=`, `/import?file=<fileItemUuid>` | suite 03 §2, Drive 02 §7.2 | Creates a document (offline-capable) or imports a Drive file (07), then opens the editor. As built (D-16): `/import` runs `drive.convertFile` on the stored file (Write has no import options dialog; the import banner shows the warnings when the document opens); Cancel / *Out of storage* go back to Drive (`history.back`), errors stay in Write with a toast (`features/import/import_route.dart`) |
 | Template gallery | `/templates` | suite 05 §3.1 | Built-in document templates, each with its own Write theme: Meeting notes, Project brief, Letter, Weekly report, Lecture notes, To-do list, Recipe, Story draft (plus Blank) |
 | **Document editor** | `/d/:uuid` (`?heading=`, `?comment=`, `?suggestion=`, `?version=`) | **this spec §3–§19** | Main screen |
@@ -86,7 +86,7 @@ Overlays (dialogs, palette, toasts, offline banner, MCP pill) per suite 03 §3.
 | Sync status | `SyncStatusIndicator` | Saved / Saving… / Offline (tooltip and details: "Offline — changes saved on this device") / Sync error (click → details) |
 | — spacer — | | |
 | Presence | `PresenceAvatarStack` | Click avatar → `write.nav.goToCollaborator`; ⋮ → Follow (`write.nav.follow`) |
-| Bugs & Improvements (M12) | `ShadIconButton.ghost` (Lucide `messageSquarePlus`, tooltip "Bugs & Improvements"; replaces *Report a bug*) | `shell.board.report` — report dialog, suite 16 §4.2; hidden below 640 px (still in Help) |
+| Bugs & improvements (M12) | `ShadIconButton.ghost` (Lucide `messageSquarePlus`, tooltip "Bugs & improvements"; replaces *Report a bug*) | `shell.board.report` — report dialog, suite 16 §4.2; hidden below 640 px (still in Help) |
 | Share | `ShadButton` primary (lock / globe / users icon by link state) | `shell.sharing.open` |
 | Account | `ShadAvatar` menu | suite 04; (v2) *Write settings*, *Wonky Work settings*, *Open ▸* the four apps, *Sign out* |
 
@@ -425,7 +425,7 @@ Preferences*, spelling underlines in *Tools › Spelling*.
 
 ### 7.7 Help *(shell + Write items)*
 Keyboard shortcuts (⌘/ / Ctrl+/) · **Markdown guide** (`write.help.markdownGuide`, dialog) · ─ ·
-(M12) **Bugs & Improvements…** (`shell.board.report`) · **Browse Bugs & Improvements**
+(M12) **Bugs & improvements…** (`shell.board.report`) · **Browse Bugs & improvements**
 (`shell.board.open`; replace *Report a bug*, suite 03 §3.2, suite 16 §4.1) · What's new (`shell.help.whatsNew`) · About
 (`shell.help.about`). (No help center, no menu search; the Markdown guide is only in Help.)
 

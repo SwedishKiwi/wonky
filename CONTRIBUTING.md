@@ -2,7 +2,7 @@
 
 Wonky Work is built in the open, and most of it is built together with AI coding agents. The
 easiest way to help is to pick a **task** from
-[Bugs & Improvements](https://wonky.work/improvements/tasks) ("Up for grabs"), claim it, and let
+[Bugs & improvements](https://wonky.work/improvements/tasks) ("Up for grabs"), claim it, and let
 your agent build it with the task's prompt.
 
 ## How it works

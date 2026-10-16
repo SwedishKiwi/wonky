@@ -15,7 +15,7 @@ import 'package:wonky_client/wonky_client.dart';
 
 import 'support/report_fakes.dart';
 
-/// The report dialog of Bugs & Improvements (specs/16 §4.2) through
+/// The report dialog of Bugs & improvements (specs/16 §4.2) through
 /// `shell.board.report` and its aliases.
 void main() {
   late CommandTestHarness h;
@@ -394,7 +394,7 @@ void main() {
         WonkyErrorCode.limitExceeded,
         'You’ve posted a lot recently. Please try again later.',
       ),
-      (WonkyErrorCode.forbidden, 'You can’t post on Bugs & Improvements.'),
+      (WonkyErrorCode.forbidden, 'You can’t post on Bugs & improvements.'),
       (WonkyErrorCode.invalidArgument, 'Couldn’t post: Bad title.'),
     ]) {
       testWidgets('when the server answers ${code.name} then it shows in the '
@@ -427,7 +427,7 @@ void main() {
       await openReport(tester);
 
       expect(
-        find.text('You can’t post on Bugs & Improvements: Spam'),
+        find.text('You can’t post on Bugs & improvements: Spam'),
         findsOneWidget,
       );
       await tester.tap(key(BoardReportKeys.post), warnIfMissed: false);
@@ -529,7 +529,7 @@ void main() {
       await openReport(tester);
       await enterField(tester, field(BoardReportField.title), 'Half written');
 
-      await tester.tap(key(BoardReportKeys.close));
+      await tester.tap(key(BoardReportKeys.cancel));
       await tester.pumpAndSettle();
       expect(key('dialog.board.discardDraft'), findsOneWidget);
       await tester.tap(find.text('Keep draft'));
@@ -581,30 +581,10 @@ void main() {
       tester,
     ) async {
       await openReport(tester);
-      await tester.tap(key(BoardReportKeys.close));
+      await tester.tap(key(BoardReportKeys.cancel));
       await tester.pumpAndSettle();
       expect(key('dialog.board.discardDraft'), findsNothing);
       expect(key(BoardReportKeys.dialog), findsNothing);
-    });
-
-    testWidgets('when seeing all posts then the board opens and the draft is '
-        'kept', (tester) async {
-      await openReport(tester);
-      await enterField(tester, field(BoardReportField.title), 'Half written');
-
-      await tester.ensureVisible(key(BoardReportKeys.seeAll));
-      await tester.pumpAndSettle();
-      await tester.tap(key(BoardReportKeys.seeAll));
-      await tester.pumpAndSettle();
-
-      expect(key(BoardReportKeys.dialog), findsNothing);
-      expect(routerPath(h), '/improvements');
-      final saved = await BoardReportDraftStore(
-        h.services.userStore,
-        WonkyAppKind.write,
-      ).load();
-      expect(saved![BoardReportField.title], 'Half written');
-      await settle(tester);
     });
 
     testWidgets('when posted then the draft is cleared', (tester) async {

@@ -2624,7 +2624,7 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
 
   @override
   String get mcpScopeBoard =>
-      'Bugs & Improvements: read, post, vote, claim tasks';
+      'Bugs & improvements: read, post, vote, claim tasks';
 
   @override
   String get tokenCreateHint =>
@@ -3059,16 +3059,16 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get lightboxFit => 'Fit to screen';
 
   @override
-  String get cmdBoardReport => 'Bugs & Improvements…';
+  String get cmdBoardReport => 'Bugs & improvements…';
 
   @override
-  String get cmdBoardOpen => 'Browse Bugs & Improvements';
+  String get cmdBoardOpen => 'Browse Bugs & improvements';
 
   @override
-  String get boardReportName => 'Bugs & Improvements';
+  String get boardReportName => 'Bugs & improvements';
 
   @override
-  String get boardReportSeeAll => 'See all posts';
+  String get boardContributeNav => 'Contribute';
 
   @override
   String get boardReportKindLabel => 'Kind';
@@ -3269,11 +3269,11 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
       'You’ve posted a lot recently. Please try again later.';
 
   @override
-  String get boardReportBlocked => 'You can’t post on Bugs & Improvements.';
+  String get boardReportBlocked => 'You can’t post on Bugs & improvements.';
 
   @override
   String boardReportBlockedReason(String reason) {
-    return 'You can’t post on Bugs & Improvements: $reason';
+    return 'You can’t post on Bugs & improvements: $reason';
   }
 
   @override
@@ -3365,7 +3365,7 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   }
 
   @override
-  String get boardTitle => 'Bugs & Improvements';
+  String get boardTitle => 'Bugs & improvements';
 
   @override
   String get boardReportBug => 'Report a bug';
@@ -3389,7 +3389,7 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get boardSignInToClaim => 'Sign in to claim this task';
 
   @override
-  String get boardBlocked => 'You can\'t post on Bugs & Improvements.';
+  String get boardBlocked => 'You can\'t post on Bugs & improvements.';
 
   @override
   String get boardContributeLink => 'How to contribute';
@@ -3576,7 +3576,7 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   }
 
   @override
-  String get boardLoadFailed => 'Couldn\'t load Bugs & Improvements';
+  String get boardLoadFailed => 'Couldn\'t load Bugs & improvements';
 
   @override
   String get boardEmptyIdeas => 'No improvements here yet';
@@ -3693,7 +3693,7 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   }
 
   @override
-  String get boardBackToBoard => 'Back to Bugs & Improvements';
+  String get boardBackToBoard => 'Back to Bugs & improvements';
 
   @override
   String get boardAdminActions => 'Admin';
@@ -4372,7 +4372,7 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get cmdBoardDismissSuggestion => 'Dismiss suggestion';
 
   @override
-  String get notifyBoard => 'Bugs & Improvements';
+  String get notifyBoard => 'Bugs & improvements';
 
   @override
   String get notifyBoardHint =>
@@ -7109,7 +7109,7 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get mcpScopeBoard =>
-      '[Ɓûĝš & Îɱþŕöṽéɱéñţš: ŕéåð, þöšţ, ṽöţé, çļåîɱ ţåšķš one two three fo]';
+      '[Ɓûĝš & îɱþŕöṽéɱéñţš: ŕéåð, þöšţ, ṽöţé, çļåîɱ ţåšķš one two three fo]';
 
   @override
   String get tokenCreateHint =>
@@ -7548,16 +7548,16 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String get lightboxFit => '[Ƒîţ ţö šçŕééñ one]';
 
   @override
-  String get cmdBoardReport => '[Ɓûĝš & Îɱþŕöṽéɱéñţš… one two]';
+  String get cmdBoardReport => '[Ɓûĝš & îɱþŕöṽéɱéñţš… one two]';
 
   @override
-  String get cmdBoardOpen => '[Ɓŕöŵšé Ɓûĝš & Îɱþŕöṽéɱéñţš one two t]';
+  String get cmdBoardOpen => '[Ɓŕöŵšé Ɓûĝš & îɱþŕöṽéɱéñţš one two t]';
 
   @override
-  String get boardReportName => '[Ɓûĝš & Îɱþŕöṽéɱéñţš one tw]';
+  String get boardReportName => '[Ɓûĝš & îɱþŕöṽéɱéñţš one tw]';
 
   @override
-  String get boardReportSeeAll => '[Šéé åļļ þöšţš one]';
+  String get boardContributeNav => '[Çöñţŕîƀûţé one]';
 
   @override
   String get boardReportKindLabel => '[Ķîñð on]';
@@ -7762,11 +7762,11 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get boardReportBlocked =>
-      '[Ýöû çåñ’ţ þöšţ öñ Ɓûĝš & Îɱþŕöṽéɱéñţš. one two thre]';
+      '[Ýöû çåñ’ţ þöšţ öñ Ɓûĝš & îɱþŕöṽéɱéñţš. one two thre]';
 
   @override
   String boardReportBlockedReason(String reason) {
-    return '[Ýöû çåñ’ţ þöšţ öñ Ɓûĝš & Îɱþŕöṽéɱéñţš: $reason one two thre]';
+    return '[Ýöû çåñ’ţ þöšţ öñ Ɓûĝš & îɱþŕöṽéɱéñţš: $reason one two thre]';
   }
 
   @override
@@ -7859,7 +7859,7 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   }
 
   @override
-  String get boardTitle => '[Ɓûĝš & Îɱþŕöṽéɱéñţš one tw]';
+  String get boardTitle => '[Ɓûĝš & îɱþŕöṽéɱéñţš one tw]';
 
   @override
   String get boardReportBug => '[Ŕéþöŕţ å ƀûĝ one]';
@@ -7884,7 +7884,7 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get boardBlocked =>
-      '[Ýöû çåñ\'ţ þöšţ öñ Ɓûĝš & Îɱþŕöṽéɱéñţš. one two thre]';
+      '[Ýöû çåñ\'ţ þöšţ öñ Ɓûĝš & îɱþŕöṽéɱéñţš. one two thre]';
 
   @override
   String get boardContributeLink => '[Ĥöŵ ţö çöñţŕîƀûţé one tw]';
@@ -8073,7 +8073,7 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get boardLoadFailed =>
-      '[Çöûļðñ\'ţ ļöåð Ɓûĝš & Îɱþŕöṽéɱéñţš one two thr]';
+      '[Çöûļðñ\'ţ ļöåð Ɓûĝš & îɱþŕöṽéɱéñţš one two thr]';
 
   @override
   String get boardEmptyIdeas => '[Ñö îɱþŕöṽéɱéñţš ĥéŕé ýéţ one two]';
@@ -8192,7 +8192,7 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   }
 
   @override
-  String get boardBackToBoard => '[Ɓåçķ ţö Ɓûĝš & Îɱþŕöṽéɱéñţš one two t]';
+  String get boardBackToBoard => '[Ɓåçķ ţö Ɓûĝš & îɱþŕöṽéɱéñţš one two t]';
 
   @override
   String get boardAdminActions => '[Åðɱîñ on]';
@@ -8880,7 +8880,7 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String get cmdBoardDismissSuggestion => '[Ðîšɱîšš šûĝĝéšţîöñ one tw]';
 
   @override
-  String get notifyBoard => '[Ɓûĝš & Îɱþŕöṽéɱéñţš one tw]';
+  String get notifyBoard => '[Ɓûĝš & îɱþŕöṽéɱéñţš one tw]';
 
   @override
   String get notifyBoardHint =>

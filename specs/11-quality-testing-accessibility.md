@@ -36,12 +36,12 @@ has an integration test through `/mcp`. Every endpoint has permission tests for 
     *Open with* a CSV in Sheets; app homes show only their kind ([Drive 05 §6](wonky_drive/05-implementation-plan.md)).
 12. (v2) Quota: fill the 50 MB, see the refusal and the banners in every app, empty trash, the
     banner disappears live.
-13. (v2) Settings split and *Report a bug* in all four apps (since M12 the entry opens *Bugs & Improvements*, J-B1).
+13. (v2) Settings split and *Report a bug* in all four apps (since M12 the entry opens *Bugs & improvements*, J-B1).
 14. (v2) Slides: create a deck offline with groups, builds and a code block with type-in;
     present it; export PDF; insert a linked Sheets chart and update it after the source
     changed ([Slides 12](wonky_slides/12-implementation-plan.md)).
 15. (v2) Two users co-edit a deck; soft lock on a text box; each undoes only their own edits.
-16. (M12) **J-B1**, Bugs & Improvements ([16 §15](16-bugs-and-improvements.md)): sign in; open the
+16. (M12) **J-B1**, Bugs & improvements ([16 §15](16-bugs-and-improvements.md)): sign in; open the
     dialog from the Sheets editor; add a screenshot and cover an area; see a similar post and
     post anyway; the post is visible (fake triage); a second user votes and comments; an admin
     (`@serverpod.dev` test account in the `e2eSupport` allowlist) selects it, edits and publishes

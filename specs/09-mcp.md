@@ -60,7 +60,7 @@ land on undo stacks as described in [08-commands-and-undo.md](08-commands-and-un
   | `slides:read` / `slides:edit` | (v2) Read presentations / edit presentations ([Slides 11](wonky_slides/11-mcp-and-ai.md)) |
   | `scripts:run` | Run Sheets scripts/macros |
   | `ui:control` | Use `ui.*` bridge tools |
-  | `board` | (M12) Use the `board.*` tools of Bugs & Improvements: read, post, vote, comment, claim (read and write in one scope; no admin rights, [16 §14](16-bugs-and-improvements.md)) |
+  | `board` | (M12) Use the `board.*` tools of Bugs & improvements: read, post, vote, comment, claim (read and write in one scope; no admin rights, [16 §14](16-bugs-and-improvements.md)) |
 - OAuth 2.1 (authorization code + PKCE, with Protected Resource Metadata) is a later milestone;
   `mcp_dart`'s server auth hooks are used so it can be added without changing tools.
 - Every tool call resolves the token → user → effective role on the target item; the tool is

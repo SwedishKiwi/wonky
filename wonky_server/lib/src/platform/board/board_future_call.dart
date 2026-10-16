@@ -4,7 +4,7 @@ import 'board_pipeline.dart';
 import 'board_sweep.dart';
 import 'board_tasks.dart';
 
-/// Background work of Bugs & Improvements (specs/16 §6.3, §8.2): the
+/// Background work of Bugs & improvements (specs/16 §6.3, §8.2): the
 /// background triage with retries, the writing pass, the task prompt
 /// (specs/16 §10.1) and the recurring sweep (`wonky.boardSweep`, every 10
 /// minutes).

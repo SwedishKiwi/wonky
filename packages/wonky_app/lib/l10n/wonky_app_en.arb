@@ -1677,7 +1677,7 @@
   "mcpScopeSlidesEdit": "Presentations: edit",
   "mcpScopeScriptsRun": "Scripts: run",
   "mcpScopeUiControl": "Control app windows (ui.* tools)",
-  "mcpScopeBoard": "Bugs & Improvements: read, post, vote, claim tasks",
+  "mcpScopeBoard": "Bugs & improvements: read, post, vote, claim tasks",
   "tokenCreateHint": "The token acts as you with the permissions you choose. You can revoke it at any time.",
   "tokenNameRequired": "Give the token a name.",
   "tokenScopesRequired": "Choose at least one permission.",
@@ -1994,21 +1994,21 @@
   "lightboxZoomIn": "Zoom in",
   "lightboxZoomOut": "Zoom out",
   "lightboxFit": "Fit to screen",
-  "cmdBoardReport": "Bugs & Improvements…",
+  "cmdBoardReport": "Bugs & improvements…",
   "@cmdBoardReport": {
     "description": "Help menu and palette: opens the report dialog (specs/16 §4.1)."
   },
-  "cmdBoardOpen": "Browse Bugs & Improvements",
+  "cmdBoardOpen": "Browse Bugs & improvements",
   "@cmdBoardOpen": {
-    "description": "Help menu and palette: opens the Bugs & Improvements board page."
+    "description": "Help menu and palette: opens the Bugs & improvements board page."
   },
-  "boardReportName": "Bugs & Improvements",
+  "boardReportName": "Bugs & improvements",
+  "boardContributeNav": "Contribute",
+  "@boardContributeNav": {
+    "description": "Home left menu: opens the Bugs & improvements board, where people vote on posts and pick up tasks."
+  },
   "@boardReportName": {
     "description": "The product name of the public bug and idea board; title of the report dialog and the entry points."
-  },
-  "boardReportSeeAll": "See all posts",
-  "@boardReportSeeAll": {
-    "description": "Report dialog header link to the board page (keeps the draft)."
   },
   "boardReportKindLabel": "Kind",
   "boardReportKindBug": "Report a bug",
@@ -2147,8 +2147,8 @@
   "boardReportPostedHeld": "Posted. Waiting for review: a moderator will look at it.",
   "boardReportView": "View",
   "boardReportRateLimited": "You’ve posted a lot recently. Please try again later.",
-  "boardReportBlocked": "You can’t post on Bugs & Improvements.",
-  "boardReportBlockedReason": "You can’t post on Bugs & Improvements: {reason}",
+  "boardReportBlocked": "You can’t post on Bugs & improvements.",
+  "boardReportBlockedReason": "You can’t post on Bugs & improvements: {reason}",
   "@boardReportBlockedReason": {
     "placeholders": {
       "reason": {
@@ -2217,7 +2217,7 @@
       }
     }
   },
-  "boardTitle": "Bugs & Improvements",
+  "boardTitle": "Bugs & improvements",
   "@boardTitle": {
     "description": "Name of the board (specs/16), page title and command category."
   },
@@ -2231,7 +2231,7 @@
   },
   "boardSignInToComment": "Sign in to comment",
   "boardSignInToClaim": "Sign in to claim this task",
-  "boardBlocked": "You can't post on Bugs & Improvements.",
+  "boardBlocked": "You can't post on Bugs & improvements.",
   "boardContributeLink": "How to contribute",
   "boardTabImprovements": "Improvements",
   "boardTabBugs": "Bugs",
@@ -2326,7 +2326,7 @@
       }
     }
   },
-  "boardLoadFailed": "Couldn't load Bugs & Improvements",
+  "boardLoadFailed": "Couldn't load Bugs & improvements",
   "boardEmptyIdeas": "No improvements here yet",
   "boardEmptyBugs": "No bugs here",
   "boardEmptyDone": "Nothing finished yet",
@@ -2430,7 +2430,7 @@
       }
     }
   },
-  "boardBackToBoard": "Back to Bugs & Improvements",
+  "boardBackToBoard": "Back to Bugs & improvements",
   "boardAdminActions": "Admin",
   "@boardAdminActions": {
     "description": "Heading of the admin entries in the post's actions menu."
@@ -2866,7 +2866,7 @@
   "cmdBoardCancelTask": "Cancel task",
   "cmdBoardSuggestBundles": "Suggest bundles",
   "cmdBoardDismissSuggestion": "Dismiss suggestion",
-  "notifyBoard": "Bugs & Improvements",
+  "notifyBoard": "Bugs & improvements",
   "@notifyBoard": {
     "description": "Notification settings: replies, status changes and claims on the board."
   },

@@ -22,7 +22,7 @@ import 'item_actions.dart';
 /// section (four apps, the current one highlighted), *+ New* (Drive and v1
 /// homes only: the app homes create from their template strip), the app's
 /// navigation (`WonkyAppConfig.homeNav`, Drive: with the folder tree) and
-/// the bottom section (app settings, Wonky Work settings, *Bugs & Improvements*,
+/// the bottom section (app settings, Wonky Work settings, *Bugs & improvements*,
 /// storage meter). Below `md` it is shown in a drawer ([onNavigate] closes
 /// it after a navigation).
 class HomeSidebar extends StatefulWidget {
@@ -507,7 +507,7 @@ List<WonkyMenuEntry> homeNewMenuEntries(BuildContext context, ShellServices s) {
 }
 
 /// The bottom section of the left menu (Drive 04 §2): the app settings,
-/// *Wonky Work settings*, *Bugs & Improvements* and the storage meter.
+/// *Wonky Work settings*, *Bugs & improvements* and the storage meter.
 class HomeSidebarFooter extends StatelessWidget {
   const HomeSidebarFooter({
     super.key,
@@ -533,23 +533,18 @@ class HomeSidebarFooter extends StatelessWidget {
         SidebarNavButton(
           key: const ValueKey<String>('home.footer.appSettings'),
           icon: LucideIcons.settings,
-          label: l.cmdAppSettings(s.config.shortAppName),
+          label: l.cmdSettings,
           onPressed: () => onInvoke('shell.settings.openApp'),
         ),
         SidebarNavButton(
-          key: const ValueKey<String>('home.footer.workSettings'),
-          leading: const WonkyProductIcon(
-            WonkyProduct.work,
-            size: 18,
-            semanticLabel: '',
-          ),
-          label: l.cmdWorkSettings,
-          onPressed: () =>
-              onInvoke('shell.settings.open', const {'section': 'account'}),
+          key: const ValueKey<String>('home.footer.contribute'),
+          icon: LucideIcons.heartHandshake,
+          label: l.boardContributeNav,
+          onPressed: () => onInvoke('shell.board.open'),
         ),
         SidebarNavButton(
           key: const ValueKey<String>('home.footer.board'),
-          icon: LucideIcons.messageSquarePlus,
+          icon: LucideIcons.bug,
           label: l.boardReportName,
           onPressed: () => onInvoke('shell.board.report'),
         ),

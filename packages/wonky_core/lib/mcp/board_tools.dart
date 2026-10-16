@@ -3,7 +3,7 @@ import 'mcp_tool.dart';
 
 const _number = JsonSchema.integer(minimum: 1);
 
-/// Headless `board.*` tools for Bugs & Improvements (specs/16 §14): read
+/// Headless `board.*` tools for Bugs & improvements (specs/16 §14): read
 /// the board, post, vote, comment, and fetch and claim tasks. A
 /// contributor's agent uses `board.get_task` to read a task's prompt and
 /// its claim code.
@@ -12,7 +12,7 @@ abstract final class BoardTools {
     name: 'board.list_posts',
     title: 'List board posts',
     description:
-        'Lists bug reports and improvement ideas on Bugs & Improvements. '
+        'Lists bug reports and improvement ideas on Bugs & improvements. '
         'Filter by kind (bug, idea), status (open, planned, done, shipped, '
         'declined, duplicate; default open and planned) and area (drive, '
         'write, sheets, slides, suite, server); search with query; sort by '
@@ -117,7 +117,7 @@ abstract final class BoardTools {
     name: 'board.create_post',
     title: 'Report a bug or suggest an improvement',
     description:
-        'Posts to Bugs & Improvements (public). Check board.list_posts with '
+        'Posts to Bugs & improvements (public). Check board.list_posts with '
         'a query first and vote instead when the same thing exists. Never '
         'post security vulnerabilities: email the security contact instead. '
         'body is Markdown.',

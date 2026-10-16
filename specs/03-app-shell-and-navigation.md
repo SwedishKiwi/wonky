@@ -73,7 +73,7 @@ exception and must reuse the presentation-session state model.
 | Sheets: `/s/:uuid/script` | Script editor (full-screen) |
 | Slides (v2): `/p/:uuid` (+ `?slide=`, `?comment=`) · `/p/:uuid/present` · `/p/:uuid/print` · `/p/:uuid/history` | Deck editor · presenting · PDF/print preview · version history ([Slides 04](wonky_slides/04-screens-menus-toolbar.md)) |
 | Drive (v2): `/file/:uuid` · `/storage` | File preview · Storage page ([Drive 04](wonky_drive/04-screens-menus.md)) |
-| `/improvements`, `/improvements/bugs`, `/improvements/tasks`, `/improvements/done`, `/improvements/p/:number`, `/improvements/t/:number`, `/improvements/contribute` (M12, **public**) · `/improvements/review` (admins) | Bugs & Improvements board pages in every app ([16 §4.3](16-bugs-and-improvements.md)); the server redirects `/improvements/**` to `/drive/improvements/**` |
+| `/improvements`, `/improvements/bugs`, `/improvements/tasks`, `/improvements/done`, `/improvements/p/:number`, `/improvements/t/:number`, `/improvements/contribute` (M12, **public**) · `/improvements/review` (admins) | Bugs & improvements board pages in every app ([16 §4.3](16-bugs-and-improvements.md)); the server redirects `/improvements/**` to `/drive/improvements/**` |
 | `/invite/:token` | Share-link landing (request access / open) |
 
 Auth guard redirects to `/signin?next=…`, except for the auth routes and the `/improvements`
@@ -116,9 +116,9 @@ Row 1 (title row, 48 px):
 - Star toggle, *Move* (folder icon → Move dialog), `SyncStatusIndicator`.
 - Spacer.
 - `PresenceAvatarStack`.
-- (M12) **Bugs & Improvements** — ghost icon button (Lucide `messageSquarePlus`, 32 px, tooltip
-  "Bugs & Improvements", `shell.board.report`, §3.4; key `editor.board`), muted foreground;
-  hidden below 640 px width (still in Help). Replaces the v2 *Report a bug* bug icon.
+- (M12) **Bugs & improvements** — ghost button with the Lucide `bug` icon and the label
+  "Bugs & improvements" (`shell.board.report`, §3.4; key `editor.board`); between 640 and 900 px
+  only the icon (tooltip), hidden below 640 px (still in Help).
 - Comments button (shows/hides the comments, `shell.comments.togglePanel`; badge with open
   count). Comments show through the app's `CommentsHost` when it sets one
   (`ShellServices.commentsHost`; Write: the margin next to the page), otherwise in the comments
@@ -158,8 +158,8 @@ suggestions* toggle for its margin), App theme ▸ (System / Light / Dark).
 (`shell.settings.open`), Keyboard shortcuts (`Mod+/`), Accessibility settings.
 
 **Help**: Keyboard shortcuts, app items (Write: Markdown guide; Sheets: Function list; Slides:
-see Slides 04), separator, (M12) **Bugs & Improvements…** (`shell.board.report`, opens the
-report dialog) and **Browse Bugs & Improvements** (`shell.board.open`, §3.4), What's new, About. There is no in-app help center and no menu search (menu commands are found through the
+see Slides 04), separator, (M12) **Bugs & improvements…** (`shell.board.report`, opens the
+report dialog) and **Browse Bugs & improvements** (`shell.board.open`, §3.4), What's new, About. There is no in-app help center and no menu search (menu commands are found through the
 command palette).
 
 **Decided (v2 review, Q6):** *Report a bug* **replaces** *Report a problem* in the Help menu
@@ -199,9 +199,11 @@ The **left menu** (`HomeSidebar`, Drive 04 §2) is the same widget in every home
    *My files*, *Shared with me*, *Starred*, *Offline* (on-device availability, as today),
    *Trash*; Drive — Home, My Drive (+ folder tree), Shared with me, Recent, Starred, Trash,
    Storage.
-3. **Bottom section** — *<App> settings* (`shell.settings.openApp`), *Wonky Work settings*
-   (`shell.settings.open`), (M12) *Bugs & Improvements* (`shell.board.report`; key
-   `home.footer.board`; replaces *Report a bug*), and the storage meter
+3. **Bottom section** — *Settings* (the app's settings, `shell.settings.openApp`; Wonky Work
+   settings are reached from there), (M12) *Contribute* (`shell.board.open`, the board where
+   people vote and pick up tasks; key `home.footer.contribute`), *Bugs & improvements* (Lucide
+   `bug`, `shell.board.report`; key `home.footer.board`; replaces *Report a bug*), and the
+   storage meter
    ("12.3 MB of 50 MB used", [Drive 03 §6.1](wonky_drive/03-storage-quota.md)).
 
 The account menu (avatar) in homes and editors lists: name and email, *<App> settings*, *Wonky
@@ -240,7 +242,7 @@ history (`CrossAppNavigator.historyBack`, back to Drive after *Open with*), and 
 it stays in the app (home) so the toast is seen. Server-built folder links (MCP results,
 notification emails) are `/drive/f/<uuid>`.
 
-### 3.4 Report a bug → Bugs & Improvements (M12)
+### 3.4 Report a bug → Bugs & improvements (M12)
 
 M12 replaced *Report a bug* (the GitHub new-issue link, v2) and *Report a problem* with the
 in-app board; the specification is [16](16-bugs-and-improvements.md): entry points (§4.1), the

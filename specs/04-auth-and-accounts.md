@@ -191,7 +191,7 @@ Settings are split in two (decision D4):
 | Developer (`developer`) | Server status (Redis), personal access tokens, MCP connection JSON, UI-bridge switch | Wonky Work › **Developer** (unchanged) |
 | Offline & storage (`offline`) | Files on the device, pinned files, pending changes/uploads, local storage used, *Simulate offline*, *Clear local data* | Wonky Work › **Offline & device data** (same id `offline`, renamed so it isn't confused with the quota): the current app's device data in full, plus one summary row per other app on this device ("Wonky Sheets — 120 MB on this device · Manage in Wonky Sheets") |
 | — (new) | Storage quota | Wonky Work › **Storage** (`storage`): meter, breakdown by kind, "What counts", *Manage storage in Wonky Drive* (Drive 03 §6.5) |
-| About (`about`) | App/server/protocol versions, licenses, links | Wonky Work › **About** (shows the current app's version and the server version; (M12) a *Bugs & Improvements* button, `shell.board.report`, [16 §4.1](16-bugs-and-improvements.md), replaces the *Report a bug* link) |
+| About (`about`) | App/server/protocol versions, licenses, links | Wonky Work › **About** (shows the current app's version and the server version; (M12) a *Bugs & improvements* button, `shell.board.report`, [16 §4.1](16-bugs-and-improvements.md), replaces the *Report a bug* link) |
 | — (new) | Slides preferences | **Slides settings** (`slidesDefaults`; sections per [Slides 04](wonky_slides/04-screens-menus-toolbar.md)): default theme, slide size, presenter-view preferences, animation defaults (incl. reduced motion while presenting), code font size |
 | — (new) | Drive preferences | **Drive settings** (`driveDefaults`; [Drive 04 §8](wonky_drive/04-screens-menus.md)): default layout, sort, folders on top, show file extensions, ask on name conflicts, convert uploads (P1) |
 
@@ -271,7 +271,7 @@ all devices* are open, TODO.md), *Keyboard shortcuts* grouped *Shared* (`shell.*
 (`KeymapService.resetAll(where:)`) and removed overrides are sent as `null` so the server's
 key-by-key merge deletes them; *Storage* (D-11's `StorageMeter`, breakdown by kind incl. trash,
 "What counts", *Manage storage in Wonky Drive* = `shell.storage.open`); *Offline & device data*
-(renamed; the per-other-app summary rows are open, TODO.md); *About* + *Bugs & Improvements* (M12; was *Report a bug*). App
+(renamed; the per-other-app summary rows are open, TODO.md); *About* + *Bugs & improvements* (M12; was *Report a bug*). App
 sections: Write (`editor`, `page`, `themes`, `spelling`, Write 05 §13.3), Sheets (`defaults`,
 every control through `sheets.prefs.set {key, value}`), Drive (`drive`, a stub until D-17).
 `PreferencesController` exposes `driveDefaults`, `slidesDefaults`, `slidesPresenter` with
@@ -289,6 +289,6 @@ one item with the caller, or exact email matches), `deleteAccount(confirmation)`
 
 `AccessTokenEndpoint` (`accessToken`): `list()`, `create(name, scopes, expiresAt)` →
 `{token, secret}`, `revoke(id)`. (M12) The scope **`board`** (read and write in one, like
-`ui:control`) allows the `board.*` MCP tools of Bugs & Improvements ([09](09-mcp.md),
+`ui:control`) allows the `board.*` MCP tools of Bugs & improvements ([09](09-mcp.md),
 [16 §14](16-bugs-and-improvements.md)); it never grants admin rights, which come from the
 account's email domain ([16 §9.1](16-bugs-and-improvements.md)).

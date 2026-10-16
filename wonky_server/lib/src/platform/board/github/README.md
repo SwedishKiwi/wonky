@@ -1,4 +1,4 @@
-# Bugs & Improvements: the GitHub App
+# Bugs & improvements: the GitHub App
 
 The server side of [specs/16 §13](../../../../../../specs/16-bugs-and-improvements.md#13-github-integration):
 a GitHub App whose webhooks reach the Wonky server. It gates pull requests on a claimed task

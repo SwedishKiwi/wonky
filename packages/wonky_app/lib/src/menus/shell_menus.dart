@@ -180,7 +180,7 @@ class ShellMenus {
   MenuSubmenu get help => MenuSpec.submenu(ShellMenuIds.help, l10n.menuHelp, [
     MenuSpec.command('shell.help.shortcuts'),
     MenuSpec.separator(),
-    // Bugs & Improvements (specs/16 §4.1) replaces *Report a bug*;
+    // Bugs & improvements (specs/16 §4.1) replaces *Report a bug*;
     // `shell.help.reportBug` and `shell.help.feedback` stay registered as
     // aliases (palette hidden, MCP).
     MenuSpec.command('shell.board.report'),
