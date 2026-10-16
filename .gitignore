@@ -22,3 +22,5 @@ pubspec_overrides.yaml
 
 # Build outputs
 build/
+# ...but not source folders named build (wonky_sheets_script/lib/src/build/).
+!**/lib/**/build/

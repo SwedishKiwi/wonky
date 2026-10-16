@@ -21,11 +21,7 @@ void main() {
         final bytes = File('fonts/${f.file}').readAsBytesSync();
         // sfnt version 1.0 (TrueType outlines; the pdf package cannot embed
         // CFF-flavoured OTF).
-        expect(
-          bytes.sublist(0, 4),
-          [0x00, 0x01, 0x00, 0x00],
-          reason: f.file,
-        );
+        expect(bytes.sublist(0, 4), [0x00, 0x01, 0x00, 0x00], reason: f.file);
       }
     });
 
@@ -72,10 +68,7 @@ void main() {
         600,
       );
       expect(
-        BundledFonts.closestFace(
-          BundledFonts.robotoMono,
-          italic: true,
-        )?.italic,
+        BundledFonts.closestFace(BundledFonts.robotoMono, italic: true)?.italic,
         isFalse,
       );
       expect(

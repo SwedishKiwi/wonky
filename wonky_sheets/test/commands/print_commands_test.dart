@@ -121,11 +121,11 @@ void main() {
         expect(c.settings.orientation, PageOrientation.landscape);
         expect(v.sheet.record?.printSettingsJson, isNull);
         await expectLater(
-        v.run('sheets.print.updateSettings', {
-          'patch': {'gridlines': true},
-        }),
-        throwsA(isA<CommandException>()),
-      );
+          v.run('sheets.print.updateSettings', {
+            'patch': {'gridlines': true},
+          }),
+          throwsA(isA<CommandException>()),
+        );
       },
     );
   });

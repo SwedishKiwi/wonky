@@ -242,7 +242,10 @@ class _WonkyMarkdownState extends State<WonkyMarkdown> {
         return _table(b, base, cs);
       case MdKind.code:
       case MdKind.table:
-        final mono = base.copyWith(fontFamily: WonkyTheme.monoFamily, fontSize: 12);
+        final mono = base.copyWith(
+          fontFamily: WonkyTheme.monoFamily,
+          fontSize: 12,
+        );
         final copyKey = b.kind == MdKind.code ? p.codeCopyKey : null;
         return Container(
           decoration: BoxDecoration(

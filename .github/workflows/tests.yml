@@ -118,9 +118,9 @@ jobs:
         working-directory: ${{matrix.package.path}}
         run: |
           if [ "${{matrix.package.tool}}" = flutter ]; then
-            flutter test -x golden -x slow -x e2e
+            flutter test -x golden,slow,e2e
           else
-            dart test -x slow -x e2e
+            dart test -x slow,e2e
           fi
 
   # Own test suites of the vendored packages (specs/01-architecture.md §2.3

@@ -17,8 +17,9 @@ void main() {
   testWidgets(
     'Given the welcome document in the screen editor setup when typing then the change reaches the server and is undoable',
     (tester) async {
+      // Tests run in the package folder (wonky_write).
       final md = File(
-        '/Users/viktor/Projects/wonky/wonky_server/lib/src/platform/drive/templates/builtin_templates.dart',
+        '../wonky_server/lib/src/platform/drive/templates/builtin_templates.dart',
       ).readAsStringSync();
       final start = md.indexOf('# Welcome to Wonky Write');
       final welcome = md.substring(start, md.indexOf("'''", start));

@@ -546,11 +546,7 @@ class CellEditorController extends ChangeNotifier {
         ? text.selection.baseOffset
         : text.text.length;
     try {
-      return refInsertionPoint(
-        text.text,
-        caret,
-        locale: host.formulaLocale,
-      );
+      return refInsertionPoint(text.text, caret, locale: host.formulaLocale);
     } catch (_) {
       return false;
     }

@@ -167,9 +167,7 @@ class _ActivityFeedState extends State<ActivityFeed> {
                         if (activityDetail(l, e) case final detail?)
                           Text(
                             detail,
-                            style: theme.textTheme.muted.copyWith(
-                              fontSize: 12,
-                            ),
+                            style: theme.textTheme.muted.copyWith(fontSize: 12),
                           ),
                         ShadTooltip(
                           builder: (_) => Text(full.format(e.at.toLocal())),

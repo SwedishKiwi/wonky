@@ -40,7 +40,7 @@ members and `tool/`, plus the dependency-rule check `dart run tool/check_depende
 (§2.1); `format.yml` runs `dart format --output=none --set-exit-if-changed` over the same
 folders (generated code included — the generator formats its output); `tests.yml` runs the
 server tests (embedded Postgres, after `serverpod generate`), one matrix job per other member
-that has tests (`dart test -x slow -x e2e`, or `flutter test -x golden -x slow -x e2e` for
+that has tests (`dart test -x slow,e2e`, or `flutter test -x golden,slow,e2e` for
 Flutter packages; the list is derived from the root `workspace:`), and the vendored suites of
 `super_editor` (`flutter test -x golden`) and `attributed_text` (§2.3 rule 4;
 `serverpod_offline_sync` has none). `deploy.yml` deploys to Serverpod Cloud. All workflows pin
