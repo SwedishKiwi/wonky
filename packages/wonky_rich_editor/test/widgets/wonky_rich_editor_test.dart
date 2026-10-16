@@ -554,4 +554,22 @@ void main() {
       expect(r.md, 'helo wrold');
     });
   });
+
+  testWidgets('Given the caret in a code block when the block is removed and '
+      'the toolbar rebuilds before the selection moves then nothing throws', (
+    tester,
+  ) async {
+    // Board report #5: removing a code block showed "No such position in
+    // document" from the toolbar's state check (canFormatInline).
+    final rig = await _pump(tester, markdown: 'before\n\n```\ncode\n```');
+    await selectRichText(tester, _key('markdown.composer'), 2, block: 1);
+    final code = rig.controller.document.getNodeAt(1)!;
+    rig.controller.editor.execute([DeleteNodeRequest(nodeId: code.id)]);
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(rig.controller.canFormatInline, isFalse);
+    expect(rig.controller.selection, isNull);
+    expect(rig.md, 'before');
+  });
 }

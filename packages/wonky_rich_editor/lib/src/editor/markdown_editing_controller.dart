@@ -219,7 +219,21 @@ class MarkdownEditingController extends ChangeNotifier {
 
   // ---------------------------------------------------------- selection
 
-  DocumentSelection? get selection => composer.selection;
+  DocumentSelection? get selection => _liveSelection;
+
+  /// The composer's selection, or null when it points at a node that is no
+  /// longer in the document. After a block is deleted (a code block, a
+  /// selection across blocks) the toolbar can rebuild before the editor
+  /// moves the selection, and normalizing a stale selection throws.
+  DocumentSelection? get _liveSelection {
+    final s = composer.selection;
+    if (s == null) return null;
+    if (document.getNodeById(s.base.nodeId) == null ||
+        document.getNodeById(s.extent.nodeId) == null) {
+      return null;
+    }
+    return s;
+  }
 
   static DocumentPosition _endOf(DocumentNode node) =>
       DocumentPosition(nodeId: node.id, nodePosition: node.endPosition);
@@ -253,14 +267,14 @@ class MarkdownEditingController extends ChangeNotifier {
   }
 
   DocumentRange? get _range {
-    final s = composer.selection;
+    final s = _liveSelection;
     if (s == null || s.isCollapsed) return null;
     return s.normalize(document);
   }
 
   /// The text nodes of the selection (the caret's node when collapsed).
   List<TextNode> get _selectedTextNodes {
-    final s = composer.selection;
+    final s = _liveSelection;
     if (s == null) return const [];
     final r = s.normalize(document);
     return document
@@ -291,7 +305,7 @@ class MarkdownEditingController extends ChangeNotifier {
 
   /// Whether inline styles apply at the selection (not in code blocks).
   bool get canFormatInline {
-    final s = composer.selection;
+    final s = _liveSelection;
     if (s == null || readOnly) return false;
     return _selectedTextNodes.any((n) => !isCodeLike(n));
   }
@@ -398,7 +412,7 @@ class MarkdownEditingController extends ChangeNotifier {
         ],
       ],
       ChangeSelectionRequest(
-        composer.selection!,
+        _liveSelection!,
         SelectionChangeType.alteredContent,
         SelectionReason.userInteraction,
       ),
@@ -409,7 +423,7 @@ class MarkdownEditingController extends ChangeNotifier {
 
   /// The block kind at the caret (the selection's extent).
   BlockFormat? get blockFormat {
-    final s = composer.selection;
+    final s = _liveSelection;
     if (s == null) return null;
     return formatOf(document.getNodeById(s.extent.nodeId));
   }
@@ -433,7 +447,7 @@ class MarkdownEditingController extends ChangeNotifier {
 
   /// Whether [format] is supported here (features, read-only).
   bool canFormatBlock(BlockFormat format) {
-    if (readOnly || composer.selection == null) return false;
+    if (readOnly || _liveSelection == null) return false;
     return switch (format) {
       BlockFormat.heading1 ||
       BlockFormat.heading2 ||
@@ -454,7 +468,7 @@ class MarkdownEditingController extends ChangeNotifier {
     if (nodes.isEmpty) return;
     final off = nodes.every((n) => formatOf(n) == format);
     final target = off ? BlockFormat.paragraph : format;
-    final selection = composer.selection!;
+    final selection = _liveSelection!;
     if (target == BlockFormat.codeBlock && nodes.length > 1) {
       final first = nodes.first;
       final code = nodes.map((n) => n.text.toPlainText()).join('\n');
@@ -565,7 +579,7 @@ class MarkdownEditingController extends ChangeNotifier {
 
   /// The link at the selection's start (or the caret), or null.
   String? get link {
-    final s = composer.selection;
+    final s = _liveSelection;
     if (s == null) return null;
     final p = _range?.start ?? s.extent;
     final node = document.getNodeById(p.nodeId);
@@ -596,7 +610,7 @@ class MarkdownEditingController extends ChangeNotifier {
     if (!canLink) return;
     final target = url == null ? null : normalizeLinkTarget(url);
     if (url != null && target == null) return;
-    final s = composer.selection!;
+    final s = _liveSelection!;
     final range = _range ?? _linkRangeAt(s.extent);
     if (range == null) {
       if (target == null) return;
@@ -788,7 +802,7 @@ class MarkdownEditingController extends ChangeNotifier {
   /// selection makes it a link (Write 04 §11.1). Returns false when the
   /// paste was refused ([readOnly], [maxLength]).
   bool paste(String text, {bool plain = false}) {
-    final s = composer.selection;
+    final s = _liveSelection;
     if (s == null || readOnly || text.isEmpty) return false;
     final max = maxLength;
     if (max != null && length + text.length > max) return false;
@@ -803,7 +817,7 @@ class MarkdownEditingController extends ChangeNotifier {
     if (!s.isCollapsed) {
       editor.execute([DeleteSelectionRequest(TextAffinity.downstream)]);
     }
-    final caret = composer.selection!.extent;
+    final caret = _liveSelection!.extent;
     final node = document.getNodeById(caret.nodeId);
     if (node is! TextNode) return false;
     if (isCodeLike(node)) {
