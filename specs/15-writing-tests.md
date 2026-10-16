@@ -282,7 +282,9 @@ package that has tests, one job per package, on every PR: `dart test -x slow,e2e
 packages, `flutter test -x golden,slow,e2e` for Flutter packages and apps, `dart test` in
 `wonky_server`, plus the vendored packages' own suites (`third_party/super_editor`,
 `third_party/attributed_text`). Exclude tags in one comma-separated `-x`: `flutter test` keeps only
-the last of repeated `-x` options. Still to be added: one random property seed per run, image
+the last of repeated `-x` options. The job *All tests* passes only when every test job passed;
+it is the Tests check the `main` ruleset requires (with `analyze`, `format`, `dependencies`,
+`server` and *Wonky task*, 16 §13.4), so new packages need no ruleset change. Still to be added: one random property seed per run, image
 goldens on PRs that touch Flutter packages (needs the golden container of §7), and the nightly
 `slow`, `e2e`, long property, export-validation and perf runs.
 

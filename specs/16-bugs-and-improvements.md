@@ -1667,7 +1667,9 @@ a check re-run:
   in place. On success it becomes a one-line confirmation with a link to the task.
 - The label `wonky-task-missing` is set while the gate fails.
 - **Branch protection**: `Wonky task` is a required check on `main`, so a failing PR cannot be
-  merged. Maintainers pass the check, so they are not blocked.
+  merged. Maintainers pass the check, so they are not blocked. The `main` ruleset (repository
+  admins bypass it) also requires `analyze`, `format`, `dependencies`, `server` and *All tests*
+  (15 §10), allows squash merges only and keeps a linear history; `deploy` has no rules.
 - **Auto-close (G1)**: the sweep (`wonky.boardSweep`) closes PRs whose gate has failed
   continuously for `board.github.autoCloseDays` (7) days, counted from `gateFirstFailedAt`. It
   posts a closing comment, and reopening the PR re-runs the gate.

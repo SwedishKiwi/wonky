@@ -161,3 +161,21 @@ jobs:
           else
             dart test
           fi
+
+  # The one check the `main` ruleset requires for this workflow: it passes
+  # only when every job above passed, so packages can come and go without
+  # changing the ruleset (specs/15-writing-tests.md §10).
+  all-tests:
+    name: All tests
+    needs: [server, list-packages, package, third-party]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the test jobs
+        env:
+          RESULTS: ${{join(needs.*.result, ' ')}}
+        run: |
+          echo "Results: $RESULTS"
+          for result in $RESULTS; do
+            [ "$result" = success ] || exit 1
+          done
