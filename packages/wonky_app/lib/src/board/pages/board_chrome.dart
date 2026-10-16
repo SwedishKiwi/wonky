@@ -530,8 +530,9 @@ class BoardTabItem {
 /// strip (`muted` at 60 %, 20 px radius, the toolbar's height): the tabs on
 /// the left as toolbar toggles (the active one highlighted) with GitHub-like
 /// count badges, and [search] (compact, the toolbar's control height) on the
-/// right. Below [stackWidth] the search moves under the strip; the tabs
-/// scroll horizontally when they do not fit.
+/// right. When the tabs and a [minSearchWidth] search do not fit side by
+/// side (measured), the search moves under the strip; the tabs scroll
+/// horizontally when they still do not fit.
 class BoardTabsBar extends StatelessWidget {
   const BoardTabsBar({
     super.key,
@@ -546,8 +547,45 @@ class BoardTabsBar extends StatelessWidget {
   final ValueChanged<BoardTab> onChanged;
   final Widget search;
 
-  static const double stackWidth = 600;
   static const double searchWidth = 240;
+
+  /// Inner padding of the strip, and how far it reaches past the content
+  /// column on each side so the first tab's edge lines up with the content
+  /// below (the strip's rounded ends sit outside the column).
+  static const double padding = 8;
+  static const double bleed = 8;
+  static const double minSearchWidth = 180;
+
+  /// The natural width of the tabs (labels, badges, padding), measured with
+  /// the active weight so a tab switch never changes the layout.
+  double _tabsWidth(BuildContext context, ShadThemeData theme) {
+    final base = DefaultTextStyle.of(
+      context,
+    ).style.merge(theme.textTheme.small.copyWith(fontWeight: FontWeight.w600));
+    final scaler = MediaQuery.textScalerOf(context);
+    var width = 0.0;
+    for (final t in tabs) {
+      final label = TextPainter(
+        text: TextSpan(text: t.label, style: base),
+        textDirection: TextDirection.ltr,
+        textScaler: scaler,
+      )..layout();
+      width += label.width + 20; // ShadToggle horizontal padding.
+      if (t.count != null) {
+        final badge = TextPainter(
+          text: TextSpan(
+            text: '${t.count}',
+            style: base.copyWith(fontSize: (base.fontSize ?? 14) - 2),
+          ),
+          textDirection: TextDirection.ltr,
+          textScaler: scaler,
+        )..layout();
+        width += 6 + badge.width + 14; // gap + pill padding.
+      }
+      label.dispose();
+    }
+    return width + 2.0 * (tabs.length - 1); // tab spacing.
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -556,7 +594,7 @@ class BoardTabsBar extends StatelessWidget {
     final cs = theme.colorScheme;
     final ext = WonkyThemeScope.of(context);
     final size = ext.toolbarButtonSize;
-    final narrow = MediaQuery.sizeOf(context).width < stackWidth;
+    final tt = theme.tabsTheme;
     Widget tab(BoardTabItem t) {
       final active = t.tab == value;
       final count = t.count;
@@ -575,12 +613,24 @@ class BoardTabsBar extends StatelessWidget {
             const SingleActivator(LogicalKeyboardKey.space): () =>
                 onChanged(t.tab),
           },
-          child: ShadToggle(
-            value: active,
+          child: ShadButton.ghost(
             height: size,
             padding: const EdgeInsets.symmetric(horizontal: 10),
-            gap: 6,
-            onChanged: (_) => onChanged(t.tab),
+            backgroundColor: active
+                ? tt.tabSelectedBackgroundColor ?? cs.background
+                : tt.tabBackgroundColor ?? const Color(0x00000000),
+            hoverBackgroundColor: active
+                ? tt.tabSelectedHoverBackgroundColor ?? cs.background
+                : cs.background.withValues(alpha: 0.5),
+            // Like ShadTabs: unselected tabs keep the foreground color (the
+            // muted text would fail contrast on the muted strip).
+            foregroundColor: active
+                ? tt.tabSelectedForegroundColor ?? cs.foreground
+                : tt.tabForegroundColor ?? cs.foreground,
+            hoverForegroundColor: cs.foreground,
+            shadows: active ? tt.tabSelectedShadows : null,
+            decoration: tt.tabDecoration,
+            onPressed: () => onChanged(t.tab),
             textStyle: TextStyle(
               fontWeight: active ? FontWeight.w600 : FontWeight.w500,
             ),
@@ -611,37 +661,57 @@ class BoardTabsBar extends StatelessWidget {
         child: Row(spacing: 2, children: [for (final t in tabs) tab(t)]),
       ),
     );
-    final strip = Container(
-      key: const ValueKey<String>('board.tabsBar'),
-      height: ext.effectiveToolbarHeight,
-      padding: const EdgeInsets.symmetric(horizontal: 6),
-      decoration: BoxDecoration(
-        color: cs.muted.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: tabsRow,
-            ),
+    final tabsWidth = _tabsWidth(context, theme);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final inner = constraints.maxWidth + 2 * bleed - 2 * padding;
+        final narrow = inner < tabsWidth + 8 + minSearchWidth;
+        final searchW = (inner - tabsWidth - 8).clamp(
+          minSearchWidth,
+          searchWidth,
+        );
+        final strip = Container(
+          key: const ValueKey<String>('board.tabsBar'),
+          height: ext.effectiveToolbarHeight,
+          padding: const EdgeInsets.symmetric(horizontal: padding),
+          decoration: BoxDecoration(
+            color: cs.muted,
+            borderRadius: BorderRadius.circular(20),
           ),
-          if (!narrow) ...[
-            const SizedBox(width: 8),
-            SizedBox(width: searchWidth, height: size, child: search),
+          child: Row(
+            children: [
+              Expanded(
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: tabsRow,
+                ),
+              ),
+              if (!narrow) ...[
+                const SizedBox(width: 8),
+                SizedBox(width: searchW, height: size, child: search),
+              ],
+            ],
+          ),
+        );
+        // The strip is wider than the column by [bleed] on each side.
+        final wide = SizedBox(
+          height: ext.effectiveToolbarHeight,
+          child: OverflowBox(
+            maxWidth: constraints.maxWidth + 2 * bleed,
+            minWidth: constraints.maxWidth + 2 * bleed,
+            child: strip,
+          ),
+        );
+        if (!narrow) return wide;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: 8,
+          children: [
+            wide,
+            SizedBox(height: size + 4, child: search),
           ],
-        ],
-      ),
-    );
-    if (!narrow) return strip;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 8,
-      children: [
-        strip,
-        SizedBox(height: size + 4, child: search),
-      ],
+        );
+      },
     );
   }
 }

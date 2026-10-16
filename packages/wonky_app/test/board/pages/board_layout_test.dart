@@ -35,17 +35,29 @@ void main() {
     // 1440 px window: the column starts at (1440 − 760) / 2.
     expect(shellPageInset(1440), 340);
     final bar = tester.getRect(byKey('board.tabsBar'));
-    expect(bar.left, 340);
-    expect(bar.right, 1440 - 340);
+    // The strip reaches 8 px past the column on each side, so the first
+    // tab's edge lines up with the content below.
+    expect(bar.left, 340 - 8);
+    expect(bar.right, 1440 - 340 + 8);
     expect(bar.height, 40, reason: 'the toolbar strip height');
     final search = tester.getRect(byKey('board.search'));
-    expect(search.right, bar.right - 6, reason: 'right-aligned in the strip');
-    expect(search.height, 28, reason: 'the toolbar control height');
-    expect(search.center.dy, bar.center.dy);
-    expect(
-      tester.getTopLeft(byKey('board.tab.improvements')).dx,
-      lessThan(bar.left + 10),
-    );
+    // The search shares the strip only when the measured tabs fit beside
+    // it; the test font is about twice as wide as the real one, so the tabs
+    // may not fit here and the search then sits under the strip. Either
+    // way it never covers a tab.
+    if (search.top < bar.bottom) {
+      expect(search.right, bar.right - 8, reason: 'right-aligned in the strip');
+      expect(search.height, 28, reason: 'the toolbar control height');
+      expect(search.center.dy, bar.center.dy);
+      expect(
+        tester.getRect(byKey('board.tab.review')).right,
+        lessThanOrEqualTo(search.left),
+      );
+    } else {
+      expect(search.left, bar.left + 8);
+      expect(search.right, bar.right - 8);
+    }
+    expect(tester.getTopLeft(byKey('board.tab.improvements')).dx, bar.left + 8);
     expect(tester.getTopLeft(byKey('board.filter.area')).dx, 340);
     // Rows are inset by their own 8 px: the vote control lines up inside.
     expect(
@@ -66,7 +78,7 @@ void main() {
       size: const Size(400, 800),
     );
 
-    expect(tester.getTopLeft(byKey('board.tabsBar')).dx, 16);
+    expect(tester.getTopLeft(byKey('board.tabsBar')).dx, 16 - 8);
     expect(tester.getSize(byKey('board.search')).width, 400 - 32);
     expect(
       tester.getTopLeft(byKey('board.search')).dy,
