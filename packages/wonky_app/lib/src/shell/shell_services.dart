@@ -223,12 +223,22 @@ class ShellServices implements ActiveDocumentHost {
   final List<String> navHistory = [];
   int navIndex = -1;
   bool _navigatingHistory = false;
+  bool _replacingHistory = false;
 
   /// Records a visited location (called by the router listener).
   void recordLocation(String location) {
     if (_navigatingHistory) {
       _navigatingHistory = false;
       return;
+    }
+    if (_replacingHistory) {
+      _replacingHistory = false;
+      if (navIndex >= 0 && navIndex < navHistory.length) {
+        navHistory
+          ..[navIndex] = location
+          ..removeRange(navIndex + 1, navHistory.length);
+        return;
+      }
     }
     if (navIndex >= 0 && navHistory[navIndex] == location) return;
     if (navIndex < navHistory.length - 1) {
@@ -237,6 +247,21 @@ class ShellServices implements ActiveDocumentHost {
     navHistory.add(location);
     if (navHistory.length > 100) navHistory.removeAt(0);
     navIndex = navHistory.length - 1;
+  }
+
+  /// Goes to [location] in place of the current entry, in the shell's
+  /// history and (given a [context] below the router) the browser's: for
+  /// moves that stay at the same depth, such as switching tabs or opening a
+  /// sibling, so Back does not walk through them (specs/16 §4.3).
+  void goReplacing(String location, {BuildContext? context}) {
+    final here = router.routerDelegate.currentConfiguration.uri.toString();
+    if (here == location) return;
+    _replacingHistory = true;
+    if (context != null && Router.maybeOf(context) != null) {
+      Router.neglect(context, () => router.go(location));
+    } else {
+      router.go(location);
+    }
   }
 
   bool get canGoBack => navIndex > 0;

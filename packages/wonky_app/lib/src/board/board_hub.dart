@@ -97,17 +97,30 @@ class BoardHub {
   /// Last known post kinds (vote keyboard shortcuts).
   final Map<int, BoardPostKind> postKinds = {};
 
+  /// Last known task titles and statuses (the breadcrumb, specs/16 §4.3).
+  final Map<int, String> taskTitles = {};
+  final Map<int, BoardTaskStatus> taskStatuses = {};
+
   /// Remembers what a list or page showed.
   void notePosts(Iterable<BoardPostListItem> items) {
     for (final i in items) {
       myVotes[i.number] = i.myVote;
       postKinds[i.number] = i.kind;
+      if (i.task case final t?) taskTitles[t.number] = t.title;
     }
   }
 
   void notePost(BoardPostView p) {
     myVotes[p.number] = p.myVote;
     postKinds[p.number] = p.kind;
+    if (p.task case final t?) taskTitles[t.number] = t.title;
+  }
+
+  void noteTasks(Iterable<BoardTaskView> tasks) {
+    for (final t in tasks) {
+      taskTitles[t.number] = t.title;
+      taskStatuses[t.number] = t.status;
+    }
   }
 
   void noteComments(Iterable<BoardCommentView> comments) {

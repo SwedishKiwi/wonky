@@ -49,7 +49,14 @@ void main() {
     expect(countOf('bundles'), '1');
     expect(countOf('drafts'), '1');
     expect(find.text('#1 Held post'), findsOneWidget);
-    expect(find.text('Review 2'), findsOneWidget, reason: 'held badge');
+    expect(
+      find.descendant(
+        of: byKey('board.tab.review.count'),
+        matching: find.text('2'),
+      ),
+      findsOneWidget,
+      reason: 'held badge',
+    );
     await settleTooltips(tester);
   });
 
@@ -115,7 +122,7 @@ void main() {
     final task = b.tasks.values.last;
     expect(task.title, 'Merged-cell paste bugs');
     expect(task.posts, [2, 3]);
-    expect(t().location, '/improvements/t/${task.number}');
+    expect(t().location, '/improvements/t/${task.number}?list=review');
     await settleTooltips(tester);
   });
 

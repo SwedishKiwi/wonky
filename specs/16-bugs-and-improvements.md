@@ -54,7 +54,7 @@ PR gets an AI review against its task (§13). The integration is built and enabl
 | B10 | Grouping bugs | AI suggests bundles and admins confirm them. Admins can also group manually |
 | B11 | Ideas accepted | Duplicate check while typing, vetting at submit, separate vote types for bugs and ideas, one status flow, notifications when things ship, contributor guide in the repo |
 | B12 | Board AI | **Jev** (TypeSafe) for decisions, **Gemini** for writing. Internal keys `internalJevApiKey` and `internalGeminiApiKey`, kept apart from the in-app AI and its budgets (§6) |
-| B13 | License | BSD-3-Clause (`LICENSE` at the repository root). Contributions are accepted under the same license; no CLA |
+| B13 | License | BSD-3-Clause (`LICENSE` at the repository root). Contributors sign the Serverpod CLA (`CLA.md`, the one serverpod/serverpod uses) through the CLA Assistant workflow (`.github/workflows/cla.yaml`; signatures in `serverpod/cla_signatures`) |
 | B14 | Security contact | `security@serverpod.dev`, plus a `SECURITY.md` in the repository |
 | G1 | PR gate | A required check plus a bot comment; PRs without a valid task are closed automatically after 7 days |
 | G2 | Exempt from the gate | Members of the `serverpod` GitHub organization (for now) |
@@ -202,7 +202,8 @@ user saw it.
   Closing it (*Cancel* or `Esc`; the header has no close button) with content asks *Discard
   draft?*; *Keep draft* keeps it, and the next *Report* reopens it.
 - Signed out: the dialog is not offered. `shell.board.report` opens the board page with a
-  *Sign in to post* banner.
+  *Sign in to post* banner; invoked on a board page (the top bar's *Report a bug* / *Suggest an
+  improvement*), it goes to sign-in and back to that page.
 
 #### 4.2.2 Similar posts
 
@@ -275,37 +276,83 @@ The board routes are added to every app by `buildShellRouter`, next to `settings
 | `/improvements/t/:number` | Task page |
 | `/improvements/contribute` | How to contribute: renders the repo's `CONTRIBUTING.md` summary (§10.3) |
 
-- Back from a post, task or the contribute page returns to the board page it was opened from
-  (the shell's history, so the tab is kept), else to its list (*Improvements* for posts, *Up for
-  grabs* for tasks); back from a list leaves the board to the last non-board route, like
-  `settingsBackTarget` (`boardBack`).
-- **Page frame (as built):** every board page (board, post, task, contribute) uses the settings
-  page frame, `ShellPageFrame` (`shell/page_frame.dart`): the 56 px bar with back
-  (`shell.page.back`, to `boardBackTarget`), the app logo, the title in `large`, the page's
-  actions and the account menu; signed out, `ShellPageFrame.signedOutAction` shows *Sign in*
-  (`board.signIn`) in its place. There is no left menu (the board is not a home destination).
-  The content is the settings column: `shellPageMaxWidth` (760 px) centered, 24 px gutters
-  (16 px below `shellPageNarrowWidth`, 760 px), 24 px from the top. The post, task and
+- **Breadcrumb (as built, `BoardBreadcrumb` in `board/pages/board_chrome.dart`)** instead of a
+  back button, on every board page (lists, post, task, contribute, review): the current app's
+  icon (the app logo, 24 px; *Close Bugs & improvements*: back to the last route outside the
+  board, `boardBackTarget`, else home), *Bugs & improvements* (the root: the Improvements list),
+  the list the page belongs to (*Improvements*, *Bugs*, *Up for grabs*, *Done*, *Review*), then
+  the task (`T-1 Sorting by name…`) and the post (`#5 The small Markdown editor…`). Chevron
+  separators (Lucide `chevron-right`, 14 px, `mutedForeground`). Crumbs are `small` medium
+  weight: links in `mutedForeground`, the foreground and an underline on hover, the focus ring,
+  Enter / Space; link crumbs ellipsize at 220 px. The last crumb is the current page in the
+  foreground, not a link. Semantics: a navigation landmark named *Breadcrumb*, crumbs are links,
+  the current one is `selected` (`aria-current` on the web). When the whole trail does not fit
+  (the current crumb keeps at least 120 px), the crumbs between the app icon and the current page
+  collapse into a *…* button (*Show the full path*) with a menu of them (`board.crumb.more`,
+  `board.crumb.menu.<id>`).
+- **Trail rules (`BoardTrail`, `board/pages/board_trail.dart`).** The trail is the board's
+  hierarchy, never the browser history: root › list › task › post at most.
+  - A list opens a post or task under it: root › list › item. A list that cannot hold the item
+    (a post from *Up for grabs*, a task from *Improvements* or *Bugs*) gives the item's own list.
+  - A task opens one of its linked posts under itself: root › *Up for grabs* (or the list the task
+    came from) › T-n › #m.
+  - A post opens a task: the trail truncates to the task (root › list › T-n), never post › task ›
+    post › task; the list stays when it shows tasks (*Up for grabs*, *Done*, *Review*), else the
+    task's own list.
+  - A post opens another post (similar posts, merged duplicates, *Duplicate of*, the automatic
+    redirect of a merged duplicate): the new post replaces the current one (siblings, same
+    parent).
+  - Going to anything already in the trail (a crumb) truncates the trail to it.
+  - The trail is in the URL query, so reloads and shared links keep it:
+    `/improvements/p/5?list=tasks&task=1`, `/improvements/t/1?list=review`. Without a query (links
+    in emails, notifications, *Copy link*) a post is under its kind's list (*Bugs* or
+    *Improvements*; under a `task=`, *Up for grabs*), a task under *Up for grabs*, or *Done* when
+    done or shipped; the list crumb appears once the item is loaded. Unknown or contradictory
+    query values fall back to these defaults.
+  - Navigation is `router.go` to the computed location (`boardGo`). Moves at the same depth
+    (switching tabs, post → sibling post, task → task) replace the current history entry, in the
+    shell's history and the browser's (`ShellServices.goReplacing`, `Router.neglect`), so the
+    history never fills with loops; the shell's Back (`Mod+[`, the browser's back) still walks
+    the real history.
+- **Page frame (as built):** every board page uses the settings page frame, `ShellPageFrame`
+  (`shell/page_frame.dart`): the 56 px bar with, in its `navigation` slot, the breadcrumb and the
+  board's actions (`BoardBar`), then the account menu; signed out, `ShellPageFrame.signedOutAction`
+  shows *Sign in* (`board.signIn`) in its place. There is no left menu (the board is not a home
+  destination). The content is the settings column: `shellPageMaxWidth` (760 px) centered, 24 px
+  gutters (16 px below `shellPageNarrowWidth`, 760 px), 24 px from the top. The post, task and
   contribute pages scroll in `ShellPageBody` (shared with Settings); the board page aligns its
-  header, filter bar and list to the same column with `shellPageInset`, so the list's scrollbar
-  stays at the window edge.
+  tabs bar, filter bar and list to the same column with `shellPageInset`, so the list's
+  scrollbar stays at the window edge.
+- **Top bar actions (`BoardTopActions`):** *Report a bug* (Lucide `bug`), *Suggest an
+  improvement* (`lightbulb`; both `shell.board.report` with their kind) and *How to contribute*
+  (`git-pull-request`; not on the contribute page itself), all `ShadButton.outline` size `sm`
+  with their icons, after the breadcrumb (keys `board.reportBug`, `board.suggest`,
+  `board.howToContribute`). The breadcrumb has priority: the buttons keep their labels only while
+  the whole trail fits beside them, else they are outline icon buttons with tooltips; below a
+  520 px window they are one *More actions* menu (`board.actions.more`), so the bar never
+  overflows at 360 px.
 - Shared links use the current app's base (`/sheets/improvements/p/412`). The server's
   `/improvements/*` path redirects to `/drive/improvements/*` for links in emails and PRs.
 
 ### 4.4 Board page
 
 - **Header**:
-  - *Bugs & improvements*;
-  - *Report a bug* and *Suggest an improvement* buttons (the latter opens the dialog with kind
-    Improvement);
-  - a search field (`board.list` with `query`);
+  - the breadcrumb and the *Report a bug* / *Suggest an improvement* / *How to contribute*
+    buttons are in the page frame's bar (§4.3);
   - for signed-out visitors, *Sign in to vote and post*.
-- **Tabs**:
+- **Tabs bar** (`BoardTabsBar`), styled like the editors' toolbar strip (`muted` at 60 %, 20 px
+  radius, the toolbar height of 40 px): the tabs on the left as toolbar toggles (`ShadToggle`,
+  28 px, the active one highlighted, `tab` / `tabBar` semantics) and the search on the right
+  (compact 28 px `ShadInput` with the search icon, 240 px, `board.list` with `query`). Each tab
+  shows its count as a GitHub-like badge after the label (a rounded pill on `border`, stronger
+  on the active tab; screen readers hear *Bugs, 3*):
   - *Improvements* (count of open posts);
-  - *Bugs*;
+  - *Bugs* (count of open bugs);
   - *Up for grabs* (count of published tasks);
-  - *Done*;
-  - *Review* (admins only, with the held count as a badge).
+  - *Done* (no count: it is the archive);
+  - *Review* (admins only, with the held count as the badge).
+  Below 600 px the search goes under the strip at full width; the tabs scroll horizontally when
+  they do not fit.
 - **Filters** (chips): area (multi-select), size, status (default `open` + `planned`) and *Mine*
   (posts I wrote or voted on).
 - **Sort**:
@@ -323,9 +370,7 @@ The board routes are added to every app by `buildShellRouter`, next to `settings
   - a 📷 icon when the post has a screenshot.
 - Paging: 30 rows, *Load more*. Empty states per tab.
 - Width < 600: rows stack, and the vote control moves to the row's start.
-- **As built (consistency pass):** the header row has the two buttons and, at the end, a 280 px
-  search (below 600 px the search goes full width under the buttons). The filters are the
-  drive's filter bar: outline `sm` buttons with a chevron that open a `WonkyDropdownMenu`, the
+- **As built (consistency pass):** the filters, below the tabs bar, are the drive's filter bar: outline `sm` buttons with a chevron that open a `WonkyDropdownMenu`, the
   label naming the current value (*Area: Sheets, Write*, *Sort: Trending*), in one horizontally
   scrolling 48 px row (`board.filterBar`). The admin selection bar is the drive's: a
   `secondary` pill that replaces the filter bar in place (*Clear*, *N selected*, *Create task
@@ -336,6 +381,10 @@ The board routes are added to every app by `buildShellRouter`, next to `settings
   empty tabs are `WonkyEmptyState`s (the offline illustration when offline).
 
 ### 4.5 Post page
+
+The breadcrumb (§4.3) ends in `#412 Title` under its list, or under its task when opened from
+one (root › list › T-12 › #412). *Part of task T-12* and the status badge's task link truncate
+the trail to the task; *Similar posts*, merged duplicates and *Duplicate of* replace the post.
 
 - **Header**:
   - `#412`, title, kind, area and size chips, status badge;
@@ -358,6 +407,10 @@ The board routes are added to every app by `buildShellRouter`, next to `settings
   - admins: the moderation and selection actions (§9.2).
 
 ### 4.6 Task page
+
+The breadcrumb (§4.3) ends in `T-12 Title` under the list it came from (*Up for grabs*, *Done*,
+*Review*), else under *Up for grabs* (or *Done* once done or shipped). Linked posts open under the
+task.
 
 - **Header**:
   - `T-12`, title, area and size;
@@ -1043,26 +1096,29 @@ light and dark, the checklist after changes).
 
 - **`CONTRIBUTING.md`** (new, repository root, linked from the task page and
   `/improvements/contribute`) covers:
-  1. Prerequisites: Flutter (stable, the version from `.fvmrc` or the CI workflow), Docker for the
-     development database (P1: switch `config/development.yaml` to an embedded database through
-     `database.dataPath`, as `config/test.yaml` already does, so contributors need no Docker), and
-     an AI coding agent (Claude Code recommended, any agent that reads `AGENTS.md` works).
-  2. Install the Serverpod CLI: `dart install serverpod_cli@<VERSION>` (the version of the CI
-     workflow).
+  1. Prerequisites: the [Serverpod installation guide](https://docs.serverpod.dev/installation)
+     (Flutter, Dart and what Serverpod needs), Flutter at least the CI version, and an AI coding
+     agent (Claude Code recommended, any agent that reads `AGENTS.md` works).
+  2. Install or update the Serverpod CLI to the beta Wonky Work uses:
+     `dart install serverpod_cli@<VERSION>` (the version of the CI workflow).
   3. Fork the repository, clone the fork and run `flutter pub get`.
   4. In `wonky_server`, create `config/passwords.yaml` from `passwords.example.yaml` (development
-     defaults only; AI keys are optional) and run `docker compose up -d`.
-  5. Run `serverpod start` in `wonky_server` and start an app from its UI. Point the agent at the
+     defaults only; AI keys are optional).
+  5. Run `serverpod start` in `wonky_server` (it also starts the development database) and start
+     an app from its UI. Point the agent at the
      `serverpod` MCP server (`.mcp.json` is already in the repo).
   6. Pick a task, paste its prompt into the agent, and review the result.
   7. PR rules (§13.1): one task per PR, the `Wonky-Task:` and `Wonky-Claim:` lines, the
      checks *Wonky task* and *Wonky task review*, and auto-close after 7 days without a valid
      task.
-  8. License: contributions are accepted under the repository's BSD-3-Clause license (B13); no
-     CLA.
+  8. License and CLA (B13): BSD-3-Clause; the Serverpod CLA is signed once, on the first pull
+     request, by replying to the CLA Assistant bot.
   9. Security issues: email `security@serverpod.dev`, never a post or PR (`SECURITY.md`).
 - **In-app page** `/improvements/contribute`: a short version of steps 1–7 with copy buttons and
-  a link to the full file on GitHub. The text is part of the app's strings, not fetched, because
+  a link to the full file on GitHub. Step 1 (and the task page's *Set up Wonky Work locally*)
+  starts with *Install Flutter, Dart and the Serverpod CLI: Serverpod installation guide*, a link
+  through the external-link confirmation; the commands are `boardSetupCommands` (no Docker step);
+  under the license line, the CLA line (signed once, on the first pull request). The text is part of the app's strings, not fetched, because
   the board must work offline from GitHub.
 - **`.github/ISSUE_TEMPLATE/config.yml`** adds a contact link *Report bugs and suggest
   improvements in Wonky Work* (`https://wonky.work/improvements`) and sets

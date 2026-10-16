@@ -24,8 +24,11 @@ post it on the board first, where others can vote on it.
 
 ## 1. Prerequisites
 
-- **Flutter** 3.47.5 (stable). The version is pinned in `.github/workflows/tests.yml`.
-- **Docker**, for the development database and Redis (`wonky_server/docker-compose.yaml`).
+Follow the [Serverpod installation guide](https://docs.serverpod.dev/installation) to install
+Flutter, Dart and what Serverpod needs on your machine. You also need:
+
+- **Flutter** 3.47.5 (stable) or newer. The version CI uses is pinned in
+  `.github/workflows/tests.yml`.
 - **An AI coding agent.** [Claude Code](https://claude.com/claude-code) is recommended; any agent
   that reads `AGENTS.md` and can use MCP servers works.
 - Git and a GitHub account.
@@ -36,7 +39,8 @@ post it on the board first, where others can vote on it.
 dart install serverpod_cli@4.1.0-beta.3
 ```
 
-Use the version in `.github/workflows/tests.yml` (`VERSION`). `dart install` puts the
+This installs the CLI, or updates an existing install to the latest beta, which Wonky Work
+needs (the version is `VERSION` in `.github/workflows/tests.yml`). `dart install` puts the
 executable in Dart's install directory; add it to your `PATH` if `serverpod` is not found.
 
 ## 3. Get the code
@@ -54,10 +58,9 @@ flutter pub get
 ```bash
 cd wonky_server
 cp config/passwords.example.yaml config/passwords.yaml
-docker compose up -d
 ```
 
-The example passwords match `docker-compose.yaml`. Replace the `CHANGE_ME` values with random
+Replace the `CHANGE_ME` values with random
 strings (for example `openssl rand -base64 24`). AI keys are optional: without them, the in-app
 assistant asks each user for their own key, and the board skips its AI checks.
 
@@ -67,7 +70,7 @@ assistant asks each user for their own key, and the board skips its AI checks.
 serverpod start
 ```
 
-Run it in `wonky_server`. It starts the server, applies migrations, watches for changes and hot
+Run it in `wonky_server`. It starts the development database, the server, applies migrations, watches for changes and hot
 reloads. The apps are started on demand from its UI, or by your agent through the `serverpod` MCP
 server. `.mcp.json` in the repository root configures it, together with the `dart` MCP server.
 The apps run at http://localhost:8082/drive/ (and `/write/`, `/sheets/`, `/slides/`) once built,
@@ -106,10 +109,18 @@ Add a short summary of how each acceptance criterion is met (the PR template has
   advisory; maintainers make the call.
 - The normal CI (analyze, format, tests) must pass.
 
-## License
+## License and CLA
 
-Wonky Work is licensed under the [BSD 3-Clause License](LICENSE). By contributing, you agree that
-your contributions are licensed under the same license. There is no CLA to sign.
+Wonky Work is licensed under the [BSD 3-Clause License](LICENSE). Before your first pull request
+can be merged, you sign the [Serverpod Contributor License Agreement](CLA.md), the same one the
+[Serverpod](https://github.com/serverpod/serverpod) project uses. The CLA Assistant bot comments
+on your pull request; reply with:
+
+```
+I have read the CLA Document and I hereby sign the CLA
+```
+
+You sign once: the signature covers your later pull requests, here and in other Serverpod projects.
 
 ## Security issues
 

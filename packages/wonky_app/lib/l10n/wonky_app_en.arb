@@ -2221,6 +2221,20 @@
   "@boardTitle": {
     "description": "Name of the board (specs/16), page title and command category."
   },
+  "boardBreadcrumb": "Breadcrumb",
+  "boardClose": "Close Bugs & improvements",
+  "boardShowPath": "Show the full path",
+  "boardTabWithCount": "{name}, {count}",
+  "@boardTabWithCount": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "boardReportBug": "Report a bug",
   "boardSuggestImprovement": "Suggest an improvement",
   "boardSearch": "Search posts",
@@ -2685,6 +2699,8 @@
   "boardHowToBuild": "How to build it",
   "boardStepSetup": "1. Set up Wonky Work locally",
   "boardFullGuide": "Read the full guide",
+  "boardInstallTools": "Install Flutter, Dart and the Serverpod CLI:",
+  "boardInstallGuide": "Serverpod installation guide",
   "boardStepPrompt": "2. Give your coding agent the prompt",
   "boardStepPr": "3. Open a pull request",
   "boardPrRules": "One task per pull request, against main. Put these two lines in its description:",
@@ -2710,20 +2726,21 @@
   "boardContributeTitle": "How to contribute",
   "boardContributeIntro": "Anyone can build a task that is up for grabs. Claim it, let a coding agent do the work with the task's prompt, and open a pull request.",
   "boardContribStep1Title": "Get the tools",
-  "boardContribStep1": "Install Flutter (stable), Docker for the development database, and an AI coding agent that reads AGENTS.md, such as Claude Code.",
-  "boardContribStep2Title": "Install the Serverpod CLI",
-  "boardContribStep2": "It runs the server and the apps. Add Dart's install directory to your PATH if serverpod is not found.",
+  "boardContribStep1": "Install Flutter, Dart and the Serverpod CLI, and an AI coding agent that reads AGENTS.md, such as Claude Code.",
+  "boardContribStep2Title": "Install or update the Serverpod CLI",
+  "boardContribStep2": "It runs the server and the apps. The same command updates an installed CLI to this version. Add Dart's install directory to your PATH if serverpod is not found.",
   "boardContribStep3Title": "Fork and clone the repository",
   "boardContribStep3": "Fork the repository on GitHub, then clone your fork and get the packages.",
   "boardContribStep4Title": "Configure the server",
-  "boardContribStep4": "Create your passwords file and start the development database and Redis. The example passwords match docker-compose.yaml; replace the CHANGE_ME values. AI keys are optional.",
+  "boardContribStep4": "Create your passwords file in wonky_server and replace the CHANGE_ME values. AI keys are optional.",
   "boardContribStep5Title": "Start the server",
-  "boardContribStep5": "Run it in wonky_server: it applies the migrations and hot reloads. Start an app from its UI or let your agent do it through the serverpod MCP server (.mcp.json is in the repository). Sign up with any email; in development the code is in the server log.",
+  "boardContribStep5": "Run it in wonky_server: it starts the development database, applies the migrations and hot reloads. Start an app from its UI or let your agent do it through the serverpod MCP server (.mcp.json is in the repository). Sign up with any email; in development the code is in the server log.",
   "boardContribStep6Title": "Pick a task",
   "boardContribStep6": "Claim a task under Up for grabs, paste its prompt into your agent and review the result.",
   "boardContribStep7Title": "Open a pull request",
   "boardContribStep7": "One task per pull request. The description contains the Wonky-Task and Wonky-Claim lines from the task page. Pull requests without a valid task are closed after 7 days.",
-  "boardContribLicense": "Contributions are accepted under the repository's BSD-3-Clause license. No CLA.",
+  "boardContribLicense": "Contributions are accepted under the repository's BSD-3-Clause license.",
+  "boardContribCla": "Contributions need the Serverpod CLA. You sign it once, on your first pull request: the CLA Assistant bot asks for it.",
   "boardContribSecurity": "Found a security issue? Email {email}. Never post it on the board or in a pull request.",
   "@boardContribSecurity": {
     "placeholders": {

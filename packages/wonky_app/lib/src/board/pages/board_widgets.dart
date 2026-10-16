@@ -13,56 +13,9 @@ import '../../l10n/wonky_app_localizations.dart';
 import '../../shell/page_frame.dart';
 import '../../shell/shell_scope.dart';
 import '../../shell/shell_services.dart';
+import 'board_chrome.dart';
 import 'board_labels.dart';
-
-/// Whether [location] is a board route (`/improvements…`).
-bool isBoardLocation(String location) =>
-    location == '/improvements' ||
-    location.startsWith('/improvements/') ||
-    location.startsWith('/improvements?') ||
-    location.startsWith('/improvements#');
-
-/// Back from the board (specs/16 §4.3): the last visited route that is not
-/// a board page, else home.
-String boardBackTarget(ShellServices s) {
-  final h = s.navHistory;
-  for (var i = s.navIndex; i >= 0 && i < h.length; i--) {
-    if (!isBoardLocation(h[i])) return h[i];
-  }
-  return '/';
-}
-
-/// Whether [location] is a board page below a list (a post, a task, the
-/// contribute page) rather than one of the board's lists.
-bool isBoardDetailLocation(String location) =>
-    location.startsWith('/improvements/p/') ||
-    location.startsWith('/improvements/t/') ||
-    location.startsWith('/improvements/contribute');
-
-/// The back button of the board (specs/16 §4.3): from a post, task or the
-/// contribute page back to the board page it was opened from (the shell's
-/// history, so the tab is kept), else to its list; from a list out of the
-/// board ([boardBackTarget]).
-void boardBack(ShellServices s) {
-  final here = s.router.state.uri.toString();
-  if (!isBoardDetailLocation(here)) {
-    s.router.go(boardBackTarget(s));
-    return;
-  }
-  final i = s.navIndex;
-  if (s.canGoBack && i - 1 < s.navHistory.length) {
-    final previous = s.navHistory[i - 1];
-    if (isBoardLocation(previous) && previous != here) {
-      s.goBack();
-      return;
-    }
-  }
-  s.router.go(
-    here.startsWith('/improvements/t/')
-        ? '/improvements/tasks'
-        : '/improvements',
-  );
-}
+import 'board_trail.dart';
 
 /// Sends a signed-out visitor to sign-in, coming back to the current page.
 void boardSignIn(ShellServices s) {
@@ -92,22 +45,26 @@ Future<CommandResult?> boardInvoke(
 }
 
 /// The board's page chrome (specs/16 §4.3): the settings-like
-/// [ShellPageFrame] — back ([boardBack]: to the list, then out of the
-/// board), the app logo, the
-/// title, [actions], and the account menu or, signed out, *Sign in*.
+/// [ShellPageFrame] with the breadcrumb of [trail] ([BoardBreadcrumb]: the
+/// app icon closes the board, the crumbs lead up the board's hierarchy) in
+/// place of back, logo and title; the board's actions ([BoardBar]);
+/// and the account menu or, signed out, *Sign in*. [taskTitle] and
+/// [postTitle] complete the task and post crumbs once known.
 class BoardFrame extends StatelessWidget {
   const BoardFrame({
     super.key,
     required this.services,
-    required this.title,
+    required this.trail,
     required this.child,
-    this.actions = const [],
+    this.taskTitle,
+    this.postTitle,
   });
 
   final ShellServices services;
-  final String title;
+  final BoardTrail trail;
   final Widget child;
-  final List<Widget> actions;
+  final String? taskTitle;
+  final String? postTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -115,9 +72,17 @@ class BoardFrame extends StatelessWidget {
     final s = services;
     return ShellPageFrame(
       services: s,
-      title: title,
-      actions: actions,
-      onBack: () => boardBack(s),
+      title: l.boardTitle,
+      navigation: BoardBar(
+        services: s,
+        crumbs: boardCrumbs(
+          l,
+          trail,
+          taskTitle: taskTitle,
+          postTitle: postTitle,
+        ),
+        showContribute: !trail.contribute,
+      ),
       signedOutAction: ShadButton.outline(
         key: const ValueKey<String>('board.signIn'),
         size: ShadButtonSize.sm,
@@ -125,6 +90,93 @@ class BoardFrame extends StatelessWidget {
         child: Text(l.boardSignIn),
       ),
       child: child,
+    );
+  }
+}
+
+/// An inline text link (`small`, `primary`, underlined) that wraps like
+/// text, keyboard operable with the focus ring; [external] adds the
+/// external-link icon.
+class BoardTextLink extends StatefulWidget {
+  const BoardTextLink({
+    super.key,
+    required this.label,
+    required this.onTap,
+    this.external = false,
+  });
+
+  final String label;
+  final VoidCallback onTap;
+  final bool external;
+
+  @override
+  State<BoardTextLink> createState() => _BoardTextLinkState();
+}
+
+class _BoardTextLinkState extends State<BoardTextLink> {
+  bool _focus = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    final cs = theme.colorScheme;
+    return Semantics(
+      link: true,
+      label: widget.label,
+      excludeSemantics: true,
+      onTap: widget.onTap,
+      child: FocusableActionDetector(
+        mouseCursor: SystemMouseCursors.click,
+        onShowFocusHighlight: (v) => setState(() => _focus = v),
+        shortcuts: const {
+          SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
+          SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
+        },
+        actions: {
+          ActivateIntent: CallbackAction<ActivateIntent>(
+            onInvoke: (_) {
+              widget.onTap();
+              return null;
+            },
+          ),
+        },
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: widget.onTap,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(
+                color: _focus ? cs.ring : const Color(0x00000000),
+              ),
+            ),
+            child: Text.rich(
+              TextSpan(
+                text: widget.label,
+                children: [
+                  if (widget.external)
+                    WidgetSpan(
+                      alignment: PlaceholderAlignment.middle,
+                      child: Padding(
+                        padding: const EdgeInsetsDirectional.only(start: 4),
+                        child: Icon(
+                          LucideIcons.externalLink,
+                          size: 13,
+                          color: cs.primary,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              style: theme.textTheme.small.copyWith(
+                color: cs.primary,
+                decoration: TextDecoration.underline,
+                decorationColor: cs.primary,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

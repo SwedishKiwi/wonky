@@ -45,7 +45,13 @@ void main() {
       'code, the time left and the filled-in PR lines', (tester) async {
     final b = withTask();
     current = await pumpBoard(tester, '/improvements/t/1', board: b);
-    expect(find.text('Up for grabs'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: byKey('board.task'),
+        matching: find.text('Up for grabs'),
+      ),
+      findsOneWidget,
+    );
     expect(byKey('board.task.claimCode'), findsNothing);
     expect(
       find.text('Wonky-Task: T-1\nWonky-Claim: <your claim code>'),
@@ -117,12 +123,13 @@ void main() {
     await tester.tap(byKey('board.task.post.1'));
     await tester.pumpAndSettle();
 
-    expect(t().location, '/improvements/p/1');
+    expect(t().location, '/improvements/p/1?list=tasks&task=1');
     await settleTooltips(tester);
   });
 
   testWidgets('Given the task page then the setup steps are the commands of '
-      'CONTRIBUTING.md, each with a copy button', (tester) async {
+      'CONTRIBUTING.md, each with a copy button, after the link to the '
+      'Serverpod installation guide', (tester) async {
     final copied = recordClipboard(tester);
     current = await pumpBoard(tester, '/improvements/t/1', board: withTask());
 
@@ -132,12 +139,17 @@ void main() {
       'cd wonky && flutter pub get',
       'cd wonky_server',
       'cp config/passwords.example.yaml config/passwords.yaml',
-      'docker compose up -d',
       'serverpod start',
     ]) {
       expect(find.text(line), findsOneWidget, reason: line);
     }
     expect(find.textContaining('dart pub global'), findsNothing);
+    expect(find.textContaining('docker'), findsNothing);
+    expect(byKey('board.task.installGuide'), findsOneWidget);
+    expect(
+      find.textContaining('Serverpod installation guide', findRichText: true),
+      findsOneWidget,
+    );
     await tester.ensureVisible(byKey('board.task.setup.0'));
     await tester.tap(byKey('board.task.setup.0'));
     await tester.pumpAndSettle();

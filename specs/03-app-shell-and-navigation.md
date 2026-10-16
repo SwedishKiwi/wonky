@@ -31,11 +31,17 @@ commands, menus, editor screen builder; (v2) `homeScope`, `homeNav`, `appSetting
   browser is the user's own navigation, not a window the app opens.
 - Dialogs, pickers, previews (print preview, export preview, version compare, (v2) Drive file
   previews) are in-app overlays or full-screen in-app routes with a back/close affordance.
+  Full-screen pages such as Settings and Bugs & improvements share one page frame
+  (`ShellPageFrame`: a 56 px bar with back, the app logo, the title, actions and the account
+  menu). A page can put its own navigation in place of back, logo and title: the board shows a
+  breadcrumb whose app icon closes it ([16 §4.3](16-bugs-and-improvements.md)).
 - **Quick switcher** (`Mod+O`): dialog listing recent files of every kind (v2: incl.
   presentations and uploaded files) + search; Enter opens in the same window (other kinds
   navigate to their app; files open Drive's preview).
 - **Back/forward**: browser history (web) and `Mod+[` / `Mod+]` (desktop, deferred) navigate
-  between previously opened files and drive locations.
+  between previously opened files and drive locations. Moves that stay at the same depth of a page
+  hierarchy (the board's tabs and sibling posts) replace the history entry instead of adding one
+  (`ShellServices.goReplacing`).
 - Multi-tab browsing of the *same* app is allowed by the browser, but the app itself is designed
   as one window; two windows of the same user simply appear as two sessions (presence shows
   "You (2 tabs)").

@@ -14,6 +14,7 @@ import '../../shell/page_frame.dart';
 import '../../shell/shell_services.dart';
 import '../board_hub.dart';
 import 'board_labels.dart';
+import 'board_trail.dart';
 import 'board_widgets.dart';
 
 /// The claim state of a task: *Claimed by Ada · 31 h left*, *In review*,
@@ -106,6 +107,7 @@ class _BoardTaskListState extends State<BoardTaskList> {
       setState(() {
         if (!more) _items.clear();
         _items.addAll(page.items);
+        BoardHub.of(s).noteTasks(page.items);
         _cursor = page.nextCursor;
         _loading = false;
         _error = null;
@@ -201,7 +203,7 @@ class BoardTaskRow extends StatelessWidget {
     final theme = ShadTheme.of(context);
     final muted = theme.textTheme.muted.copyWith(fontSize: 12);
     final t = task;
-    void open() => services.router.go('/improvements/t/${t.number}');
+    void open() => boardOpenTask(services, t.number, context: context);
     return BoardListTile(
       key: ValueKey<String>('board.task.${t.number}'),
       semanticLabel: 'T-${t.number} ${t.title}, ${boardClaimState(l, t)}',

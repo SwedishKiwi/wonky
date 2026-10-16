@@ -11,6 +11,8 @@ import '../shell/dialogs.dart';
 import '../shell/shell_services.dart';
 import 'board_hub.dart';
 import 'board_undo.dart';
+import 'pages/board_trail.dart' show isBoardLocation;
+import 'pages/board_widgets.dart' show boardSignIn;
 import 'report/board_report_dialog.dart';
 import 'report/board_report_services.dart';
 
@@ -137,7 +139,8 @@ List<Command<CommandArgs>> boardReportCommands(ShellServices s) => [
 ///
 /// - board disabled (`config.json` `board: false`): the GitHub new-issue
 ///   link (`BugReportLink`) behind the external-link confirm;
-/// - signed out: the board page (it shows *Sign in to post*);
+/// - signed out: the board page (it shows *Sign in to post*), or sign-in
+///   (back to the page) when already on the board;
 /// - otherwise the app is captured **before** the dialog opens, then the
 ///   report dialog shows with [kind] (null: the draft's) and, with
 ///   [includeError], *Include the last error* ticked.
@@ -149,6 +152,11 @@ Future<CommandResult> openBoardReport(
 }) async {
   if (!s.urls.board) return _githubFallback(s, ctx);
   if (!s.auth.isSignedIn) {
+    final here = s.router.routerDelegate.currentConfiguration.uri.toString();
+    if (isBoardLocation(here)) {
+      boardSignIn(s);
+      return const CommandResult.ok({'signedIn': false, 'route': '/signin'});
+    }
     s.router.go(boardRoute);
     return const CommandResult.ok({'signedIn': false, 'route': boardRoute});
   }

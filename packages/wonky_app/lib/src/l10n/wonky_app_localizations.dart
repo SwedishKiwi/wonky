@@ -5902,6 +5902,30 @@ abstract class WonkyAppLocalizations {
   /// **'Bugs & improvements'**
   String get boardTitle;
 
+  /// No description provided for @boardBreadcrumb.
+  ///
+  /// In en, this message translates to:
+  /// **'Breadcrumb'**
+  String get boardBreadcrumb;
+
+  /// No description provided for @boardClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close Bugs & improvements'**
+  String get boardClose;
+
+  /// No description provided for @boardShowPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the full path'**
+  String get boardShowPath;
+
+  /// No description provided for @boardTabWithCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}, {count}'**
+  String boardTabWithCount(String name, int count);
+
   /// No description provided for @boardReportBug.
   ///
   /// In en, this message translates to:
@@ -7006,6 +7030,18 @@ abstract class WonkyAppLocalizations {
   /// **'Read the full guide'**
   String get boardFullGuide;
 
+  /// No description provided for @boardInstallTools.
+  ///
+  /// In en, this message translates to:
+  /// **'Install Flutter, Dart and the Serverpod CLI:'**
+  String get boardInstallTools;
+
+  /// No description provided for @boardInstallGuide.
+  ///
+  /// In en, this message translates to:
+  /// **'Serverpod installation guide'**
+  String get boardInstallGuide;
+
   /// No description provided for @boardStepPrompt.
   ///
   /// In en, this message translates to:
@@ -7075,19 +7111,19 @@ abstract class WonkyAppLocalizations {
   /// No description provided for @boardContribStep1.
   ///
   /// In en, this message translates to:
-  /// **'Install Flutter (stable), Docker for the development database, and an AI coding agent that reads AGENTS.md, such as Claude Code.'**
+  /// **'Install Flutter, Dart and the Serverpod CLI, and an AI coding agent that reads AGENTS.md, such as Claude Code.'**
   String get boardContribStep1;
 
   /// No description provided for @boardContribStep2Title.
   ///
   /// In en, this message translates to:
-  /// **'Install the Serverpod CLI'**
+  /// **'Install or update the Serverpod CLI'**
   String get boardContribStep2Title;
 
   /// No description provided for @boardContribStep2.
   ///
   /// In en, this message translates to:
-  /// **'It runs the server and the apps. Add Dart\'s install directory to your PATH if serverpod is not found.'**
+  /// **'It runs the server and the apps. The same command updates an installed CLI to this version. Add Dart\'s install directory to your PATH if serverpod is not found.'**
   String get boardContribStep2;
 
   /// No description provided for @boardContribStep3Title.
@@ -7111,7 +7147,7 @@ abstract class WonkyAppLocalizations {
   /// No description provided for @boardContribStep4.
   ///
   /// In en, this message translates to:
-  /// **'Create your passwords file and start the development database and Redis. The example passwords match docker-compose.yaml; replace the CHANGE_ME values. AI keys are optional.'**
+  /// **'Create your passwords file in wonky_server and replace the CHANGE_ME values. AI keys are optional.'**
   String get boardContribStep4;
 
   /// No description provided for @boardContribStep5Title.
@@ -7123,7 +7159,7 @@ abstract class WonkyAppLocalizations {
   /// No description provided for @boardContribStep5.
   ///
   /// In en, this message translates to:
-  /// **'Run it in wonky_server: it applies the migrations and hot reloads. Start an app from its UI or let your agent do it through the serverpod MCP server (.mcp.json is in the repository). Sign up with any email; in development the code is in the server log.'**
+  /// **'Run it in wonky_server: it starts the development database, applies the migrations and hot reloads. Start an app from its UI or let your agent do it through the serverpod MCP server (.mcp.json is in the repository). Sign up with any email; in development the code is in the server log.'**
   String get boardContribStep5;
 
   /// No description provided for @boardContribStep6Title.
@@ -7153,8 +7189,14 @@ abstract class WonkyAppLocalizations {
   /// No description provided for @boardContribLicense.
   ///
   /// In en, this message translates to:
-  /// **'Contributions are accepted under the repository\'s BSD-3-Clause license. No CLA.'**
+  /// **'Contributions are accepted under the repository\'s BSD-3-Clause license.'**
   String get boardContribLicense;
+
+  /// No description provided for @boardContribCla.
+  ///
+  /// In en, this message translates to:
+  /// **'Contributions need the Serverpod CLA. You sign it once, on your first pull request: the CLA Assistant bot asks for it.'**
+  String get boardContribCla;
 
   /// No description provided for @boardContribSecurity.
   ///

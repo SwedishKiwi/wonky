@@ -30,7 +30,9 @@ double shellPageInset(double width) =>
 ///
 /// The bar is 56 px: back, the app logo (home), the title (`large`),
 /// [actions], and the account menu — or, signed out, [signedOutAction]
-/// (pages that are public, like the board, offer *Sign in* there).
+/// (pages that are public, like the board, offer *Sign in* there). A page
+/// with its own [navigation] (the board's breadcrumb, specs/16 §4.3) shows
+/// it in place of back, logo and title.
 class ShellPageFrame extends StatelessWidget {
   const ShellPageFrame({
     super.key,
@@ -40,10 +42,16 @@ class ShellPageFrame extends StatelessWidget {
     this.actions = const [],
     this.onBack,
     this.signedOutAction,
+    this.navigation,
   });
 
   final ShellServices services;
+
+  /// The page title; with [navigation], unused in the bar.
   final String title;
+
+  /// Replaces back, the logo and the title (fills the bar's free width).
+  final Widget? navigation;
   final Widget child;
   final List<Widget> actions;
   final VoidCallback? onBack;
@@ -70,43 +78,49 @@ class ShellPageFrame extends StatelessWidget {
             ),
             child: Row(
               children: [
-                ShadTooltip(
-                  builder: (_) => Text(l.actionBack),
-                  child: ShadIconButton.ghost(
-                    key: const ValueKey<String>('shell.page.back'),
-                    semanticLabel: l.actionBack,
-                    icon: const Icon(LucideIcons.arrowLeft, size: 18),
-                    onPressed:
-                        onBack ??
-                        () => services.canGoBack
-                            ? services.goBack()
-                            : services.router.go('/'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Semantics(
-                  button: true,
-                  label: l.goHome,
-                  child: GestureDetector(
-                    onTap: () => services.router.go('/'),
-                    child: MouseRegion(
-                      cursor: SystemMouseCursors.click,
-                      child: services.config.logo(size: 28),
+                if (navigation case final nav?)
+                  Expanded(child: nav)
+                else ...[
+                  ShadTooltip(
+                    builder: (_) => Text(l.actionBack),
+                    child: ShadIconButton.ghost(
+                      key: const ValueKey<String>('shell.page.back'),
+                      semanticLabel: l.actionBack,
+                      icon: const Icon(LucideIcons.arrowLeft, size: 18),
+                      onPressed:
+                          onBack ??
+                          () => services.canGoBack
+                              ? services.goBack()
+                              : services.router.go('/'),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Semantics(
-                    container: true,
-                    header: true,
-                    child: Text(
-                      title,
-                      style: theme.textTheme.large,
-                      overflow: TextOverflow.ellipsis,
+                  const SizedBox(width: 8),
+                  Semantics(
+                    button: true,
+                    label: l.goHome,
+                    child: GestureDetector(
+                      onTap: () => services.router.go('/'),
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: services.config.logo(size: 28),
+                      ),
                     ),
                   ),
-                ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Semantics(
+                      container: true,
+                      header: true,
+                      child: Text(
+                        title,
+                        style: theme.textTheme.large,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ],
+                if (navigation != null && actions.isNotEmpty)
+                  const SizedBox(width: 12),
                 ...actions,
                 const SizedBox(width: 8),
                 if (signedIn)

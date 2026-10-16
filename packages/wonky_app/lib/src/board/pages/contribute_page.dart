@@ -8,6 +8,7 @@ import '../../shell/dialogs.dart';
 import '../../shell/page_frame.dart';
 import '../../shell/shell_services.dart';
 import '../board_hub.dart';
+import 'board_trail.dart';
 import 'board_widgets.dart';
 
 /// The repository the board's PRs go to (`BoardMe.repository`).
@@ -18,9 +19,15 @@ String boardRepository(ShellServices s) =>
 /// `.github/workflows/tests.yml`).
 const boardServerpodCliVersion = '4.1.0-beta.3';
 
-/// The setup commands of `CONTRIBUTING.md` steps 2–5 (specs/16 §10.3), one
-/// per copy button: install the CLI, clone your fork of [repository] and get
-/// the packages, configure the server, run it.
+/// Serverpod's installation guide (Flutter, Dart and the Serverpod CLI):
+/// the first setup step of `CONTRIBUTING.md` (specs/16 §10.3).
+const boardServerpodInstallUrl = 'https://docs.serverpod.dev/installation';
+
+/// The setup commands of `CONTRIBUTING.md` after the tools are installed
+/// (specs/16 §10.3), one per copy button: install (or update) the CLI,
+/// clone your fork of [repository] and get the packages, configure the
+/// server, run it. Serverpod starts the development database itself, so
+/// there is no Docker step.
 List<String> boardSetupCommands(String repository) {
   final name = repository.split('/').last;
   return [
@@ -29,9 +36,46 @@ List<String> boardSetupCommands(String repository) {
     'cd $name && flutter pub get',
     'cd wonky_server',
     'cp config/passwords.example.yaml config/passwords.yaml',
-    'docker compose up -d',
     'serverpod start',
   ];
+}
+
+/// *Install Flutter, Dart and the Serverpod CLI: Serverpod installation
+/// guide* — the first setup step, a link to [boardServerpodInstallUrl]
+/// through the external-link confirmation.
+class BoardInstallGuideLink extends StatelessWidget {
+  const BoardInstallGuideLink({
+    super.key,
+    required this.services,
+    required this.linkKey,
+  });
+
+  final ShellServices services;
+  final String linkKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = WonkyAppLocalizations.of(context);
+    final theme = ShadTheme.of(context);
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 4,
+      runSpacing: 2,
+      children: [
+        Text(l.boardInstallTools, style: theme.textTheme.small),
+        BoardTextLink(
+          key: ValueKey<String>(linkKey),
+          label: l.boardInstallGuide,
+          external: true,
+          onTap: () => confirmExternalLink(
+            context,
+            services,
+            url: boardServerpodInstallUrl,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 /// `/improvements/contribute` (specs/16 §10.3): the short version of
@@ -119,13 +163,18 @@ class _BoardContributePageState extends State<BoardContributePage> {
     );
     return BoardFrame(
       services: s,
-      title: l.boardContributeTitle,
+      trail: const BoardTrail(contribute: true),
       child: ShellPageBody(
         key: const ValueKey<String>('board.contribute'),
         children: [
           Text(l.boardContributeIntro, style: theme.textTheme.p),
           const SizedBox(height: 20),
-          step(1, l.boardContribStep1Title, l.boardContribStep1),
+          step(1, l.boardContribStep1Title, l.boardContribStep1, [
+            BoardInstallGuideLink(
+              services: s,
+              linkKey: 'board.contribute.installGuide',
+            ),
+          ]),
           step(2, l.boardContribStep2Title, l.boardContribStep2, [
             BoardCopyLine(text: cmds[0], copyKey: 'board.contribute.copy.0'),
           ]),
@@ -134,11 +183,11 @@ class _BoardContributePageState extends State<BoardContributePage> {
               BoardCopyLine(text: cmds[i], copyKey: 'board.contribute.copy.$i'),
           ]),
           step(4, l.boardContribStep4Title, l.boardContribStep4, [
-            for (final i in const [3, 4, 5])
+            for (final i in const [3, 4])
               BoardCopyLine(text: cmds[i], copyKey: 'board.contribute.copy.$i'),
           ]),
           step(5, l.boardContribStep5Title, l.boardContribStep5, [
-            BoardCopyLine(text: cmds[6], copyKey: 'board.contribute.copy.6'),
+            BoardCopyLine(text: cmds[5], copyKey: 'board.contribute.copy.5'),
           ]),
           step(6, l.boardContribStep6Title, l.boardContribStep6, [
             Align(
@@ -146,7 +195,7 @@ class _BoardContributePageState extends State<BoardContributePage> {
               child: ShadButton.outline(
                 key: const ValueKey<String>('board.contribute.tasks'),
                 size: ShadButtonSize.sm,
-                onPressed: () => s.router.go('/improvements/tasks'),
+                onPressed: () => boardOpenList(s, BoardTab.tasks),
                 child: Text(l.boardTabTasks),
               ),
             ),
@@ -158,6 +207,12 @@ class _BoardContributePageState extends State<BoardContributePage> {
             ),
           ]),
           Text(l.boardContribLicense, style: theme.textTheme.muted),
+          const SizedBox(height: 8),
+          Text(
+            l.boardContribCla,
+            key: const ValueKey<String>('board.contribute.cla'),
+            style: theme.textTheme.muted,
+          ),
           const SizedBox(height: 8),
           Text(l.boardContribSecurity(security), style: theme.textTheme.muted),
           const SizedBox(height: 20),

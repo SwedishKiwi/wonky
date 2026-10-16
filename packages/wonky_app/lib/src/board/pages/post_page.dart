@@ -19,6 +19,7 @@ import '../board_commands.dart';
 import '../board_hub.dart';
 import 'board_comment_actions.dart';
 import 'board_labels.dart';
+import 'board_trail.dart';
 import 'board_widgets.dart';
 
 /// The post page (`/improvements/p/:number`, specs/16 §4.5).
@@ -27,11 +28,16 @@ class BoardPostPage extends StatefulWidget {
     super.key,
     required this.services,
     required this.number,
+    this.trail,
     this.mergedFrom,
   });
 
   final ShellServices services;
   final int number;
+
+  /// The breadcrumb trail from the route (`?list=…&task=…`); null: the
+  /// post's own list (specs/16 §4.3).
+  final BoardTrail? trail;
 
   /// Arrived here from a merged duplicate (`?merged=388`).
   final int? mergedFrom;
@@ -46,6 +52,10 @@ class _BoardPostPageState extends State<BoardPostPage> {
   int get n => widget.number;
 
   BoardPostView? _post;
+
+  /// This page's breadcrumb trail, its list resolved from the post's kind.
+  BoardTrail get _trail =>
+      (widget.trail ?? BoardTrail(post: n)).resolve(hub, postKind: _post?.kind);
   List<BoardCommentView> _comments = const [];
   List<BoardSimilarPost> _similar = const [];
   String? _screenshotUrl;
@@ -111,7 +121,12 @@ class _BoardPostPageState extends State<BoardPostPage> {
           p.duplicateOfNumber != null &&
           !hub.isAdmin &&
           mounted) {
-        s.router.go('/improvements/p/${p.duplicateOfNumber}?merged=$n');
+        boardGo(
+          s,
+          _trail.openPost(p.duplicateOfNumber!),
+          replace: true,
+          merged: n,
+        );
         return;
       }
       final comments = await repo.listComments(n);
@@ -336,7 +351,7 @@ class _BoardPostPageState extends State<BoardPostPage> {
       'postNumbers': [n],
     }, context: context);
     final t = (r?.data as Map?)?['taskNumber'];
-    if (t is int && mounted) s.router.go('/improvements/t/$t');
+    if (t is int && mounted) boardOpenTask(s, t, context: context);
   }
 
   List<Widget> _notices(WonkyAppLocalizations l, BoardPostView p) {
@@ -401,7 +416,7 @@ class _BoardPostPageState extends State<BoardPostPage> {
           action: ShadButton.link(
             size: ShadButtonSize.sm,
             onPressed: () =>
-                s.router.go('/improvements/p/${p.duplicateOfNumber}'),
+                boardOpenPost(s, p.duplicateOfNumber!, context: context),
             child: Text(l.boardOpenPost(p.duplicateOfNumber!)),
           ),
         ),
@@ -666,8 +681,10 @@ class _BoardPostPageState extends State<BoardPostPage> {
                           label: l.boardStatusName(p.status),
                           onTap: task == null
                               ? null
-                              : () => s.router.go(
-                                  '/improvements/t/${task.number}',
+                              : () => boardOpenTask(
+                                  s,
+                                  task.number,
+                                  context: context,
                                 ),
                         ),
                       ],
@@ -749,7 +766,7 @@ class _BoardPostPageState extends State<BoardPostPage> {
               _link(
                 'task',
                 l.boardPartOfTask(task.number, task.title),
-                '/improvements/t/${task.number}',
+                () => boardOpenTask(s, task.number, context: context),
               ),
             if (p.mergedFrom.isNotEmpty)
               Wrap(
@@ -758,7 +775,11 @@ class _BoardPostPageState extends State<BoardPostPage> {
                 children: [
                   Text(l.boardMergedFrom, style: theme.textTheme.small),
                   for (final m in p.mergedFrom)
-                    _link('merged.$m', '#$m', '/improvements/p/$m'),
+                    _link(
+                      'merged.$m',
+                      '#$m',
+                      () => boardOpenPost(s, m, context: context),
+                    ),
                 ],
               ),
             if (_similar.isNotEmpty) ...[
@@ -767,7 +788,7 @@ class _BoardPostPageState extends State<BoardPostPage> {
                 _link(
                   'similar.${x.number}',
                   '#${x.number} ${x.title} (${l.boardScore(x.score)})',
-                  '/improvements/p/${x.number}',
+                  () => boardOpenPost(s, x.number, context: context),
                 ),
             ],
           ],
@@ -794,14 +815,26 @@ class _BoardPostPageState extends State<BoardPostPage> {
         ],
       );
     }
-    return BoardFrame(services: s, title: l.boardTitle, child: body);
+    final trail = _trail;
+    final taskNumber = trail.task;
+    return BoardFrame(
+      services: s,
+      trail: trail,
+      postTitle: p?.title,
+      taskTitle: taskNumber == null
+          ? null
+          : p?.task?.number == taskNumber
+          ? p!.task!.title
+          : hub.taskTitles[taskNumber],
+      child: body,
+    );
   }
 
-  Widget _link(String key, String text, String path) => Semantics(
+  Widget _link(String key, String text, VoidCallback onTap) => Semantics(
     link: true,
     child: GestureDetector(
       key: ValueKey<String>('board.post.link.$key'),
-      onTap: () => s.router.go(path),
+      onTap: onTap,
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         child: Text(

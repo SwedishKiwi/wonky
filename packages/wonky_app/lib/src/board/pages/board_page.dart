@@ -12,30 +12,19 @@ import '../../l10n/wonky_app_localizations.dart';
 import '../../shell/page_frame.dart';
 import '../../shell/shell_services.dart';
 import '../board_hub.dart';
+import 'board_chrome.dart';
 import 'board_labels.dart';
+import 'board_trail.dart';
 import 'board_widgets.dart';
 import 'review_tab.dart';
 import 'task_list.dart';
 
-/// The tabs of the board page (specs/16 §4.3–4.4).
-enum BoardTab {
-  improvements('/improvements'),
-  bugs('/improvements/bugs'),
-  tasks('/improvements/tasks'),
-  done('/improvements/done'),
-  review('/improvements/review');
-
-  const BoardTab(this.path);
-
-  final String path;
-}
-
 /// Page size of the board list (specs/16 §4.4).
 const boardPageSize = 30;
 
-/// The board page (`/improvements…`, specs/16 §4.4): header with *Report a
-/// bug* / *Suggest an improvement* and search, the tabs with counts, and
-/// the tab's content.
+/// The board page (`/improvements…`, specs/16 §4.4): the tabs bar (tabs
+/// with count badges, search on the right) and the tab's content; *Report a
+/// bug* / *Suggest an improvement* are in the frame's bar.
 class BoardPage extends StatefulWidget {
   const BoardPage({super.key, required this.services, required this.tab});
 
@@ -142,23 +131,19 @@ class _BoardPageState extends State<BoardPage> {
     });
   }
 
-  String _tabLabel(WonkyAppLocalizations l, BoardTab t) {
-    final (name, count) = switch (t) {
-      BoardTab.improvements => (l.boardTabImprovements, _counts.ideas),
-      BoardTab.bugs => (l.boardTabBugs, _counts.bugs),
-      BoardTab.tasks => (l.boardTabTasks, _counts.tasks),
-      BoardTab.done => (l.boardTabDone, null),
-      BoardTab.review => (l.boardTabReview, _counts.held),
-    };
-    return count == null ? name : '$name $count';
-  }
+  int? _count(BoardTab t) => switch (t) {
+    BoardTab.improvements => _counts.ideas,
+    BoardTab.bugs => _counts.bugs,
+    BoardTab.tasks => _counts.tasks,
+    BoardTab.done => null,
+    BoardTab.review => _counts.held,
+  };
 
   @override
   Widget build(BuildContext context) {
     final l = WonkyAppLocalizations.of(context);
     final theme = ShadTheme.of(context);
     final width = MediaQuery.sizeOf(context).width;
-    final narrow = width < 600;
     final inset = shellPageInset(width);
     final tab = widget.tab == BoardTab.review && !hub.isAdmin
         ? (hub.me.value == null ? BoardTab.review : BoardTab.improvements)
@@ -170,33 +155,16 @@ class _BoardPageState extends State<BoardPage> {
       BoardTab.done,
       if (hub.isAdmin) BoardTab.review,
     ];
-    final buttons = Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        ShadButton(
-          key: const ValueKey<String>('board.reportBug'),
-          leading: const Icon(LucideIcons.bug, size: 16),
-          onPressed: () => boardInvoke(s, 'shell.board.report', {
-            'kind': 'bug',
-          }, context: context),
-          child: Text(l.boardReportBug),
-        ),
-        ShadButton.outline(
-          key: const ValueKey<String>('board.suggest'),
-          leading: const Icon(LucideIcons.lightbulb, size: 16),
-          onPressed: () => boardInvoke(s, 'shell.board.report', {
-            'kind': 'idea',
-          }, context: context),
-          child: Text(l.boardSuggestImprovement),
-        ),
-      ],
-    );
+    final cs = theme.colorScheme;
     final search = ShadInput(
       key: const ValueKey<String>('board.search'),
       controller: _search,
       placeholder: Text(l.boardSearch),
-      leading: const Icon(LucideIcons.search, size: 16),
+      // 28 px with the border: the toolbar's control height.
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      gap: 6,
+      decoration: ShadDecoration(color: cs.background),
+      leading: Icon(LucideIcons.search, size: 14, color: cs.mutedForeground),
       onChanged: _onSearch,
       onSubmitted: (v) {
         _debounce?.cancel();
@@ -209,17 +177,6 @@ class _BoardPageState extends State<BoardPage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 12,
         children: [
-          if (narrow) ...[
-            buttons,
-            search,
-          ] else
-            Row(
-              children: [
-                Expanded(child: buttons),
-                const SizedBox(width: 12),
-                SizedBox(width: 280, child: search),
-              ],
-            ),
           if (!s.auth.isSignedIn)
             BoardNotice(
               key: const ValueKey<String>('board.signedOutBanner'),
@@ -239,20 +196,19 @@ class _BoardPageState extends State<BoardPage> {
               text: l.boardBlocked,
               tone: theme.colorScheme.destructive,
             ),
-          ShadTabs<BoardTab>(
+          BoardTabsBar(
             key: const ValueKey<String>('board.tabs'),
             value: tabs.contains(tab) ? tab : BoardTab.improvements,
-            scrollable: true,
-            expandTabs: false,
-            onChanged: (t) => s.router.go(t.path),
+            onChanged: (t) => boardOpenList(s, t, context: context),
             tabs: [
               for (final t in tabs)
-                ShadTab(
-                  key: ValueKey<String>('board.tab.${t.name}'),
-                  value: t,
-                  child: Text(_tabLabel(l, t)),
+                BoardTabItem(
+                  tab: t,
+                  label: boardTabName(l, t),
+                  count: _count(t),
                 ),
             ],
+            search: search,
           ),
         ],
       ),
@@ -281,17 +237,7 @@ class _BoardPageState extends State<BoardPage> {
     };
     return BoardFrame(
       services: s,
-      title: l.boardTitle,
-      actions: [
-        if (!narrow)
-          ShadButton.ghost(
-            key: const ValueKey<String>('board.contribute'),
-            size: ShadButtonSize.sm,
-            leading: const Icon(LucideIcons.gitPullRequest, size: 16),
-            onPressed: () => s.router.go('/improvements/contribute'),
-            child: Text(l.boardContributeLink),
-          ),
-      ],
+      trail: BoardTrail(list: tab),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -475,7 +421,7 @@ class _BoardPostListState extends State<BoardPostList> {
         _selected.clear();
         _selecting = false;
       });
-      if (n is int) s.router.go('/improvements/t/$n');
+      if (n is int) boardOpenTask(s, n, context: context);
     }
   }
 
@@ -872,7 +818,7 @@ class _BoardPostRowState extends State<BoardPostRow> {
       item.status == BoardPostStatus.open ||
       item.status == BoardPostStatus.planned;
 
-  void _open() => widget.services.router.go('/improvements/p/${item.number}');
+  void _open() => boardOpenPost(widget.services, item.number, context: context);
 
   KeyEventResult _onKey(FocusNode node, KeyEvent e) {
     if (e is! KeyDownEvent) return KeyEventResult.ignored;
@@ -930,7 +876,8 @@ class _BoardPostRowState extends State<BoardPostRow> {
             : l.boardStatusName(item.status),
         onTap: task == null
             ? null
-            : () => widget.services.router.go('/improvements/t/${task.number}'),
+            : () =>
+                  boardOpenTask(widget.services, task.number, context: context),
       ),
       if (item.moderation != BoardModeration.visible)
         BoardChip(label: l.boardModerationName(item.moderation)),

@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../auth/auth_controller.dart';
 import '../auth/screens/auth_layout.dart' show safeAuthNext;
 import '../board/pages/board_routes.dart';
-import '../board/pages/board_widgets.dart' show isBoardLocation;
+import '../board/pages/board_trail.dart' show isBoardLocation;
 import '../config/home_scope.dart';
 import '../auth/screens/reset_password_screen.dart';
 import '../auth/screens/sign_in_screen.dart';

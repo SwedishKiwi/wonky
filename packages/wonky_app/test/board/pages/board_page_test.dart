@@ -39,6 +39,17 @@ void main() {
   }
 
   Finder row(int n) => byKey('board.row.$n');
+  String? tabCount(String tab) =>
+      (find
+                  .descendant(
+                    of: byKey('board.tab.$tab.count'),
+                    matching: find.byType(Text),
+                  )
+                  .evaluate()
+                  .single
+                  .widget
+              as Text)
+          .data;
 
   testWidgets('Given the board when it opens then Improvements lists open '
       'ideas by trending score with counts on the tabs', (tester) async {
@@ -52,8 +63,8 @@ void main() {
       tester.getTopLeft(row(2)).dy,
       lessThan(tester.getTopLeft(row(1)).dy),
     );
-    expect(find.text('Improvements 3'), findsOneWidget);
-    expect(find.text('Bugs 1'), findsOneWidget);
+    expect(tabCount('improvements'), '3');
+    expect(tabCount('bugs'), '1');
     expect(byKey('board.signedOutBanner'), findsNothing);
     expect(byKey('board.tab.review'), findsNothing);
     await settleTooltips(tester);
@@ -147,6 +158,8 @@ void main() {
       scrollable: rows.first,
     );
     expect(find.text('30 of 35'), findsOneWidget);
+    await tester.ensureVisible(byKey('board.loadMore'));
+    await tester.pumpAndSettle();
     await tester.tap(byKey('board.loadMore'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(

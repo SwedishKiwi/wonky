@@ -24,18 +24,28 @@ void main() {
     ..seedPost(title: 'Comment threads in Sheets', score: 9);
 
   testWidgets('Given the board on a wide window then it is a settings-like '
-      'page: the shared page frame and the 760 px content column', (
-    tester,
-  ) async {
+      'page: the shared page frame with the breadcrumb, the 760 px content '
+      'column and the tabs bar with the search at its end', (tester) async {
     current = await pumpBoard(tester, '/improvements', board: seeded());
 
     expect(find.byType(ShellPageFrame), findsOneWidget);
-    expect(byKey('shell.page.back'), findsOneWidget);
+    expect(byKey('shell.page.back'), findsNothing);
+    expect(byKey('board.crumb.app'), findsOneWidget);
     expect(find.byType(AccountMenuButton), findsOneWidget);
     // 1440 px window: the column starts at (1440 − 760) / 2.
     expect(shellPageInset(1440), 340);
-    expect(tester.getTopLeft(byKey('board.reportBug')).dx, 340);
-    expect(tester.getTopRight(byKey('board.search')).dx, 1440 - 340);
+    final bar = tester.getRect(byKey('board.tabsBar'));
+    expect(bar.left, 340);
+    expect(bar.right, 1440 - 340);
+    expect(bar.height, 40, reason: 'the toolbar strip height');
+    final search = tester.getRect(byKey('board.search'));
+    expect(search.right, bar.right - 6, reason: 'right-aligned in the strip');
+    expect(search.height, 28, reason: 'the toolbar control height');
+    expect(search.center.dy, bar.center.dy);
+    expect(
+      tester.getTopLeft(byKey('board.tab.improvements')).dx,
+      lessThan(bar.left + 10),
+    );
     expect(tester.getTopLeft(byKey('board.filter.area')).dx, 340);
     // Rows are inset by their own 8 px: the vote control lines up inside.
     expect(
@@ -47,7 +57,8 @@ void main() {
   });
 
   testWidgets('Given a 400 px window then the page uses 16 px gutters, the '
-      'search goes full width and nothing overflows', (tester) async {
+      'search goes full width under the tabs, the actions collapse into a '
+      'menu and nothing overflows', (tester) async {
     current = await pumpBoard(
       tester,
       '/improvements',
@@ -55,9 +66,14 @@ void main() {
       size: const Size(400, 800),
     );
 
-    expect(tester.getTopLeft(byKey('board.reportBug')).dx, 16);
+    expect(tester.getTopLeft(byKey('board.tabsBar')).dx, 16);
     expect(tester.getSize(byKey('board.search')).width, 400 - 32);
-    expect(byKey('board.contribute'), findsNothing);
+    expect(
+      tester.getTopLeft(byKey('board.search')).dy,
+      greaterThan(tester.getBottomLeft(byKey('board.tabsBar')).dy),
+    );
+    expect(byKey('board.actions.more'), findsOneWidget);
+    expect(byKey('board.reportBug'), findsNothing);
     expect(tester.takeException(), isNull);
     await settleTooltips(tester);
   });

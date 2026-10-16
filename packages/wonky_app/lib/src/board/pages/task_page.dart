@@ -20,6 +20,7 @@ import '../board_commands.dart';
 import '../board_hub.dart';
 import 'board_comment_actions.dart';
 import 'board_labels.dart';
+import 'board_trail.dart';
 import 'board_widgets.dart';
 import 'contribute_page.dart';
 import 'task_list.dart';
@@ -33,10 +34,15 @@ class BoardTaskPage extends StatefulWidget {
     super.key,
     required this.services,
     required this.number,
+    this.trail,
   });
 
   final ShellServices services;
   final int number;
+
+  /// The breadcrumb trail from the route (`?list=…`); null: the task's own
+  /// list (specs/16 §4.3).
+  final BoardTrail? trail;
 
   @override
   State<BoardTaskPage> createState() => _BoardTaskPageState();
@@ -103,6 +109,7 @@ class _BoardTaskPageState extends State<BoardTaskPage> {
       final comments = await repo.listTaskComments(n);
       hub
         ..notePosts(t.posts)
+        ..noteTasks([t])
         ..noteComments(comments);
       if (!mounted) return;
       setState(() {
@@ -424,6 +431,10 @@ class _BoardTaskPageState extends State<BoardTaskPage> {
             spacing: 10,
             children: [
               Text(l.boardStepSetup, style: theme.textTheme.small),
+              BoardInstallGuideLink(
+                services: s,
+                linkKey: 'board.task.installGuide',
+              ),
               for (final (i, c) in boardSetupCommands(
                 boardRepository(s),
               ).indexed)
@@ -434,7 +445,7 @@ class _BoardTaskPageState extends State<BoardTaskPage> {
                   key: const ValueKey<String>('board.task.contribute'),
                   size: ShadButtonSize.sm,
                   padding: EdgeInsets.zero,
-                  onPressed: () => s.router.go('/improvements/contribute'),
+                  onPressed: () => boardOpenContribute(s),
                   child: Text(l.boardFullGuide),
                 ),
               ),
@@ -694,7 +705,15 @@ class _BoardTaskPageState extends State<BoardTaskPage> {
         ],
       );
     }
-    return BoardFrame(services: s, title: l.boardTitle, child: body);
+    return BoardFrame(
+      services: s,
+      trail: (widget.trail ?? BoardTrail(task: n)).resolve(
+        hub,
+        taskStatus: t?.status,
+      ),
+      taskTitle: t?.title ?? hub.taskTitles[n],
+      child: body,
+    );
   }
 }
 
@@ -717,7 +736,7 @@ class _LinkedPost extends StatelessWidget {
     return BoardListTile(
       key: ValueKey<String>('board.task.post.${p.number}'),
       semanticLabel: '#${p.number} ${p.title}',
-      onTap: () => services.router.go('/improvements/p/${p.number}'),
+      onTap: () => boardOpenPost(services, p.number, context: context),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       child: Row(
         spacing: 8,

@@ -112,8 +112,8 @@ void main() {
     await settleTooltips(tester);
   });
 
-  testWidgets('Given a post opened from the Bugs tab when Back is pressed '
-      'then the Bugs tab opens, and Back there leaves the board', (
+  testWidgets('Given a post opened from the Bugs tab when the app icon is '
+      'pressed then the board closes to the last route outside it', (
     tester,
   ) async {
     final board = FakeBoardRepository()..seedPost();
@@ -121,39 +121,25 @@ void main() {
     for (final l in ['/recent', '/improvements/bugs', '/improvements/p/1']) {
       t().s.recordLocation(l);
     }
-    await t().go(tester, '/improvements/p/1');
+    await t().go(tester, '/improvements/p/1?list=bugs');
 
-    await tester.tap(byKey('shell.page.back'));
-    await tester.pumpAndSettle();
-    expect(t().location, '/improvements/bugs');
-
-    await tester.tap(byKey('shell.page.back'));
+    expect(byKey('shell.page.back'), findsNothing);
+    await tester.tap(byKey('board.crumb.app'));
     await tester.pumpAndSettle();
     expect(t().location, '/recent');
     await settleTooltips(tester);
   });
 
-  testWidgets('Given a task opened from a link when Back is pressed then Up '
-      'for grabs opens', (tester) async {
+  testWidgets('Given the board opened first when the app icon is pressed '
+      'then it goes home', (tester) async {
     final board = FakeBoardRepository()..seedPost();
-    current = await pumpBoard(tester, '/recent', board: board);
-    for (final l in ['/recent', '/improvements/t/1']) {
-      t().s.recordLocation(l);
-    }
-    await t().go(tester, '/improvements/t/1');
+    current = await pumpBoard(tester, '/improvements', board: board);
+    t().s.recordLocation('/improvements');
 
-    await tester.tap(byKey('shell.page.back'));
+    await tester.tap(byKey('board.crumb.app'));
     await tester.pumpAndSettle();
-    expect(t().location, '/improvements/tasks');
+    expect(t().location, '/');
     await settleTooltips(tester);
-  });
-
-  test('isBoardDetailLocation matches posts, tasks and contribute only', () {
-    expect(isBoardDetailLocation('/improvements/p/3'), isTrue);
-    expect(isBoardDetailLocation('/improvements/t/2'), isTrue);
-    expect(isBoardDetailLocation('/improvements/contribute'), isTrue);
-    expect(isBoardDetailLocation('/improvements/bugs'), isFalse);
-    expect(isBoardDetailLocation('/improvements'), isFalse);
   });
 
   test('isBoardLocation matches the board routes only', () {

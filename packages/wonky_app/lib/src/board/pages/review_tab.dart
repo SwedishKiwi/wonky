@@ -13,6 +13,7 @@ import '../../shell/page_frame.dart';
 import '../../shell/shell_services.dart';
 import '../board_hub.dart';
 import 'board_labels.dart';
+import 'board_trail.dart';
 import 'board_widgets.dart';
 import 'task_list.dart';
 
@@ -100,7 +101,7 @@ class _BoardReviewTabState extends State<BoardReviewTab> {
     final r = await _invoke('shell.board.admin.createTask', args);
     final t = (r?.data as Map?)?['taskNumber'];
     if (r?.isOk == true && t is int && mounted) {
-      s.router.go('/improvements/t/$t');
+      boardOpenTask(s, t, context: context);
     }
   }
 
@@ -234,7 +235,7 @@ class _BoardReviewTabState extends State<BoardReviewTab> {
     return BoardListTile(
       key: ValueKey<String>('board.review.${section.name}.$n'),
       semanticLabel: '#$n ${p.title}',
-      onTap: () => s.router.go('/improvements/p/$n'),
+      onTap: () => boardOpenPost(s, n, context: context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 6,
@@ -284,12 +285,17 @@ class _BoardReviewTabState extends State<BoardReviewTab> {
       'commentUuid': id,
       'action': action,
     });
-    final where = c.postNumber != null
-        ? '/improvements/p/${c.postNumber}'
-        : '/improvements/t/${c.taskNumber}';
+    void open() {
+      if (c.postNumber case final p?) {
+        boardOpenPost(s, p, context: context);
+      } else if (c.taskNumber case final t?) {
+        boardOpenTask(s, t, context: context);
+      }
+    }
+
     return BoardListTile(
       key: ValueKey<String>('board.review.held.comment.$id'),
-      onTap: () => s.router.go(where),
+      onTap: open,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 6,
@@ -348,7 +354,7 @@ class _BoardReviewTabState extends State<BoardReviewTab> {
           Text(b.rationale, style: theme.textTheme.muted),
           for (final p in b.posts)
             GestureDetector(
-              onTap: () => s.router.go('/improvements/p/${p.number}'),
+              onTap: () => boardOpenPost(s, p.number, context: context),
               child: Text(
                 '#${p.number} ${p.title} (${l.boardScore(p.score)})',
                 style: theme.textTheme.small.copyWith(

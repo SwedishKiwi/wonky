@@ -4,12 +4,14 @@ import 'package:go_router/go_router.dart';
 import '../../routing/misc_pages.dart';
 import '../../shell/shell_services.dart';
 import 'board_page.dart';
+import 'board_trail.dart';
 import 'contribute_page.dart';
 import 'post_page.dart';
 import 'task_page.dart';
 
 /// The board routes of specs/16 §4.3, added to every app next to the
-/// settings routes. They are public: the router's auth redirect lets
+/// settings routes. A post's or task's breadcrumb trail comes from the
+/// query (`?list=…&task=…`, [BoardTrail.parse]). They are public: the router's auth redirect lets
 /// `/improvements` and everything below it through when signed out.
 List<RouteBase> boardRoutes(
   ShellServices s,
@@ -45,6 +47,7 @@ List<RouteBase> boardRoutes(
                       key: ValueKey<int>(n),
                       services: s,
                       number: n,
+                      trail: BoardTrail.parse(st.uri),
                       mergedFrom: int.tryParse(
                         st.uri.queryParameters['merged'] ?? '',
                       ),
@@ -64,6 +67,7 @@ List<RouteBase> boardRoutes(
                       key: ValueKey<int>(n),
                       services: s,
                       number: n,
+                      trail: BoardTrail.parse(st.uri),
                     ),
             );
           },

@@ -52,10 +52,10 @@ export 'src/board/board_commands.dart';
 export 'src/board/board_hub.dart';
 export 'src/board/board_repository.dart';
 export 'src/board/board_undo.dart';
-export 'src/board/pages/board_page.dart' show BoardPage, BoardTab;
+export 'src/board/pages/board_page.dart' show BoardPage;
 export 'src/board/pages/board_routes.dart';
-export 'src/board/pages/board_widgets.dart'
-    show isBoardLocation, isBoardDetailLocation, boardBack, boardBackTarget;
+export 'src/board/pages/board_trail.dart'
+    show BoardTab, BoardTrail, isBoardLocation, boardBackTarget, closeBoard;
 export 'src/board/pages/contribute_page.dart' show BoardContributePage;
 export 'src/board/pages/post_page.dart';
 export 'src/board/pages/prompt_editor.dart'
