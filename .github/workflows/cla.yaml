@@ -5,6 +5,16 @@ on:
   pull_request_target:
     types: [opened,closed,synchronize]
 
+# The built-in token comments on the pull request and sets its CLA status;
+# the signatures are written to serverpod/cla_signatures with
+# PERSONAL_ACCESS_TOKEN. Explicit, so the repository's default token
+# permissions (often read-only) don't break it.
+permissions:
+  actions: write
+  contents: read
+  pull-requests: write
+  statuses: write
+
 jobs:
   CLAssistant:
     runs-on: ubuntu-latest
