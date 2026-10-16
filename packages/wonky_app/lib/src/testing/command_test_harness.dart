@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -17,6 +20,8 @@ import '../data/collab_repositories.dart';
 import '../data/file_repository.dart';
 import '../data/sharing_repository.dart';
 import '../shell/shell_services.dart';
+import '../spellcheck/dictionaries.dart';
+import '../spellcheck/shell_spelling.dart';
 import '../storage/storage_controller.dart';
 import '../undo/undo_service.dart';
 import '../board/board_repository.dart';
@@ -111,6 +116,11 @@ class CommandTestHarness {
        users = users ?? FakeUserRepository(),
        authRepository = auth ?? FakeAuthRepository() {
     TestWidgetsFlutterBinding.ensureInitialized();
+    // Markdown composers check spelling. The bundled dictionaries are real
+    // I/O parsed one slice per frame, which made `pumpAndSettle` depend on
+    // the machine's load (wonky_slides/test/flutter_test_config.dart):
+    // tests start without dictionaries, spelling tests install fakes.
+    ShellSpelling.debugDictionaries ??= noSpellDictionaries();
     urls ??= AppUrls(
       apiUrl: 'http://localhost:8080/',
       apps: {for (final k in WonkyAppKind.values) k: k.devOrigin},
@@ -179,5 +189,20 @@ class CommandTestHarness {
   Future<void> dispose() async {
     services.dispose();
     await drive.dispose();
+  }
+}
+
+/// Spell dictionaries without any dictionary (tests that build their own
+/// [ShellServices] set `ShellSpelling.debugDictionaries` to it, like
+/// [CommandTestHarness] does).
+SpellDictionaries noSpellDictionaries() =>
+    SpellDictionaries(bundle: _NoDictionaries());
+
+/// An asset bundle whose dictionary index lists nothing.
+class _NoDictionaries extends CachingAssetBundle {
+  @override
+  Future<ByteData> load(String key) async {
+    final json = jsonEncode({'dictionaries': <Object>[]});
+    return ByteData.sublistView(Uint8List.fromList(utf8.encode(json)));
   }
 }

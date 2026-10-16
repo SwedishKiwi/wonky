@@ -1,7 +1,9 @@
 import 'package:flutter/widgets.dart';
-import 'package:shad/shad.dart' show LucideIcons;
 import 'package:super_editor/super_editor.dart'
     show Document, DocumentPosition, TextNode;
+import 'package:wonky_app/spellcheck.dart'
+    as shared
+    show SpellingMenuLabels, spellingMenuEntries;
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_slides_core/find.dart';
@@ -176,34 +178,24 @@ List<WonkyMenuEntry> spellingMenuEntriesWith(
   }
   final spelling = SlidesSpelling.of(ed);
   final l = slidesL10nOf(ed.services);
-  final suggestions = spelling.suggestionsFor(word);
   void run(String id, Map<String, Object?> args) {
     ed.invokeCommand(id, args).then((_) => after?.call());
   }
 
-  return [
-    if (suggestions.isEmpty)
-      WonkyMenuLabel(l.spellingNoSuggestions)
-    else
-      for (var i = 0; i < suggestions.length; i++)
-        WonkyMenuItem(
-          key: ValueKey<String>('menu.slides.spell.suggestion.$i'),
-          label: suggestions[i],
-          icon: i == 0 ? LucideIcons.spellCheck : null,
-          onSelected: () => onReplace(suggestions[i]),
-        ),
-    WonkyMenuItem(
-      key: const ValueKey<String>('menu.slides.spell.ignore'),
-      label: l.cmdSpellingIgnore,
-      onSelected: () => run('slides.spelling.ignore', {'word': word}),
+  return shared.spellingMenuEntries(
+    word: word,
+    suggestions: spelling.suggestionsFor(word),
+    onReplace: onReplace,
+    onIgnore: () => run('slides.spelling.ignore', {'word': word}),
+    onAddToDictionary: () =>
+        run('slides.spelling.addToDictionary', {'word': word}),
+    labels: shared.SpellingMenuLabels(
+      noSuggestions: l.spellingNoSuggestions,
+      ignore: l.cmdSpellingIgnore,
+      addToDictionary: l.spellingAddWordToDictionary,
     ),
-    WonkyMenuItem(
-      key: const ValueKey<String>('menu.slides.spell.add'),
-      label: l.spellingAddWordToDictionary(word),
-      onSelected: () => run('slides.spelling.addToDictionary', {'word': word}),
-    ),
-    const WonkyMenuSeparator(),
-  ];
+    keyPrefix: 'menu.slides.spell',
+  );
 }
 
 /// The spelling section of the canvas text context menu: the misspelled

@@ -301,14 +301,36 @@ void main() {
       expect(f.c.canRedo, isFalse);
     });
 
-    test('when undoing an autoformat then the typed text is back', () {
+    test('when undoing an autoformat then exactly the typed text is back, '
+        'trailing space and caret included', () {
       f = _Field();
       withClock(Clock.fixed(DateTime(2026)), () => f.type('##'));
       f.type(' ');
       expect(f.kinds, ['h2']);
       f.c.undo();
       expect(f.kinds, ['p']);
+      final p = f.c.document.first as ParagraphNode;
+      expect(p.text.toPlainText(), '## ');
+      expect(
+        (f.c.selection!.extent.nodePosition as TextNodePosition).offset,
+        3,
+      );
+      // Markdown has no trailing whitespace at the end of a block: the
+      // space shows up as soon as something follows it.
       expect(f.md, r'\##');
+      f.type('x');
+      expect(f.md, r'\## x');
+      expect(f.kinds, ['p']);
+    });
+
+    test('when undoing a list autoformat then "- " is back as text', () {
+      f = _Field();
+      withClock(Clock.fixed(DateTime(2026)), () => f.type('- '));
+      expect(f.kinds, ['ul']);
+      f.c.undo();
+      expect((f.c.document.first as ParagraphNode).text.toPlainText(), '- ');
+      f.type('a');
+      expect(f.md, r'\- a');
     });
   });
 
@@ -327,5 +349,129 @@ void main() {
       f.backspace();
       expect(f.md, 'abc');
     });
+  });
+
+  group('Given a selection to copy', () {
+    test(
+      'when it is inside one block then the copy is its inline Markdown',
+      () {
+        f = _Field('# **hello** world');
+        f.select(0, 2, 7);
+        expect(f.c.selectedMarkdown, '**llo** w');
+      },
+    );
+
+    test('when it is collapsed then there is nothing to copy', () {
+      f = _Field('text');
+      f.select(0, 2);
+      expect(f.c.selectedMarkdown, isNull);
+    });
+
+    test('when text that looks like a block is copied then it is escaped', () {
+      f = _Field(r'say \- this');
+      f.select(0, 4, 10);
+      expect(f.c.selectedMarkdown, r'\- this');
+    });
+
+    test(
+      'when it spans blocks then the blocks are copied, cut at the ends',
+      () {
+        f = _Field('# Plan\n\n- one\n- [x] two\n\n```dart\nmain() {}\n```');
+        final last = f.c.document.last.id;
+        final first = f.c.document.first.id;
+        f.c.editor.execute([
+          ChangeSelectionRequest(
+            DocumentSelection(
+              base: DocumentPosition(
+                nodeId: first,
+                nodePosition: const TextNodePosition(offset: 2),
+              ),
+              extent: DocumentPosition(
+                nodeId: last,
+                nodePosition: const TextNodePosition(offset: 4),
+              ),
+            ),
+            SelectionChangeType.expandSelection,
+            SelectionReason.userInteraction,
+          ),
+        ]);
+        expect(
+          f.c.selectedMarkdown,
+          '# an\n\n- one\n- [x] two\n\n```dart\nmain\n```',
+        );
+      },
+    );
+
+    test('when a whole block is selected then it keeps its kind and its '
+        'source', () {
+      f = _Field('*  item');
+      f.c.selectAll();
+      expect(f.c.selectedMarkdown, '*  item');
+    });
+
+    test('when part of a code block is selected then the copy is plain', () {
+      f = _Field('```\na **b** c\n```');
+      f.select(0, 2, 7);
+      expect(f.c.selectedMarkdown, '**b**');
+    });
+
+    for (final source in [
+      '**bold** and *it* `code` [link](https://wonky.work)',
+      '# Title\n\nText with ~~strike~~.\n\n1. one\n2. two\n\n> quote',
+      '- [ ] task\n  - nested\n\n---\n\nend',
+    ]) {
+      test('when the copy of "$source" is pasted then the content is the '
+          'same', () {
+        f = _Field(source);
+        f.c.selectAll();
+        final copied = f.c.selectedMarkdown!;
+        final g = _Field();
+        addTearDown(g.dispose);
+        expect(g.c.paste(copied), isTrue);
+        expect(g.md, f.c.codec.encode(f.c.document));
+      });
+    }
+
+    test('when a copied inline run is pasted mid-text then it keeps its '
+        'styles', () {
+      f = _Field('a **bold** move');
+      f.select(0, 2, 4);
+      final copied = f.c.selectedMarkdown!;
+      expect(copied, '**bo**');
+      final g = _Field('x y');
+      addTearDown(g.dispose);
+      g.select(0, 2);
+      g.c.paste(copied);
+      expect(g.md, 'x **bo**y');
+    });
+
+    test('when cut then the selection is deleted; read-only refuses', () {
+      f = _Field('hello world');
+      f.select(0, 5, 11);
+      expect(f.c.deleteSelection(), isTrue);
+      expect(f.md, 'hello');
+      f.c.readOnly = true;
+      f.select(0, 0, 2);
+      expect(f.c.deleteSelection(), isFalse);
+      expect(f.md, 'hello');
+    });
+  });
+
+  group('Given a word to correct', () {
+    test(
+      'when it is replaced then the styles stay and it is one undo step',
+      () {
+        f = _Field('a **helo** b');
+        final id = f.c.document.first.id;
+        expect(f.c.replaceText(id, 2, 6, 'hello'), isTrue);
+        expect(f.md, 'a **hello** b');
+        expect(
+          (f.c.selection!.extent.nodePosition as TextNodePosition).offset,
+          7,
+        );
+        f.c.undo();
+        expect(f.md, 'a **helo** b');
+      },
+    );
   });
 }

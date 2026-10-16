@@ -3,6 +3,8 @@ import 'package:wonky_rich_editor/wonky_rich_editor.dart';
 
 import '../l10n/wonky_app_localizations.dart';
 import '../shell/form_dialog.dart';
+import '../shell/shell_scope.dart';
+import '../spellcheck/shell_spelling.dart';
 import 'markdown_inline.dart';
 import 'wonky_markdown.dart';
 
@@ -28,7 +30,13 @@ import 'wonky_markdown.dart';
 /// (`package:wonky_rich_editor/testing.dart`).
 ///
 /// Edits, including the toolbar's, are undone with the field's own undo
-/// (`Mod+Z`, `Mod+Shift+Z`), never the shell's.
+/// (`Mod+Z`, `Mod+Shift+Z`), never the shell's. `Mod+C` / `Mod+X` copy the
+/// selection as Markdown, and pasting it gives the same content back.
+///
+/// With [spellcheck] (and a shell around it) misspelled words are
+/// underlined and a right-click offers suggestions, *Ignore* and *Add to
+/// dictionary* ([ShellSpelling]: the user's *Check spelling* setting,
+/// personal dictionary and device language).
 class MarkdownComposer extends StatefulWidget {
   const MarkdownComposer({
     super.key,
@@ -45,6 +53,7 @@ class MarkdownComposer extends StatefulWidget {
     this.onChanged,
     this.onSubmit,
     this.requestLink,
+    this.spellcheck = true,
   });
 
   /// The Markdown (created and owned by the composer when null). Setting
@@ -80,6 +89,10 @@ class MarkdownComposer extends StatefulWidget {
   /// link); null = cancelled.
   final Future<String?> Function(BuildContext context)? requestLink;
 
+  /// Whether misspelled words are underlined (when the user's setting is
+  /// on; needs the shell's services).
+  final bool spellcheck;
+
   /// The block features of [profile].
   static MarkdownBlockFeatures featuresOf(MarkdownProfile profile) =>
       MarkdownBlockFeatures(
@@ -97,6 +110,7 @@ class MarkdownComposerState extends State<MarkdownComposer> {
   late final MarkdownEditingController _rich;
   final _editor = GlobalKey<WonkyRichEditorState>();
   bool _syncing = false;
+  ShellSpelling? _spelling;
 
   /// The Markdown text.
   TextEditingController get controller =>
@@ -116,6 +130,20 @@ class MarkdownComposerState extends State<MarkdownComposer> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncSpelling();
+  }
+
+  /// One checker per composer, over the services' preferences.
+  void _syncSpelling() {
+    final prefs = widget.spellcheck ? ShellScope.maybeOf(context)?.prefs : null;
+    if (identical(prefs, _spelling?.prefs)) return;
+    _spelling?.dispose();
+    _spelling = prefs == null ? null : ShellSpelling(prefs);
+  }
+
+  @override
   void didUpdateWidget(MarkdownComposer oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.controller != widget.controller) {
@@ -124,10 +152,12 @@ class MarkdownComposerState extends State<MarkdownComposer> {
       _fromText();
     }
     _rich.features = MarkdownComposer.featuresOf(widget.profile);
+    if (oldWidget.spellcheck != widget.spellcheck) _syncSpelling();
   }
 
   @override
   void dispose() {
+    _spelling?.dispose();
     controller.removeListener(_fromText);
     _rich
       ..removeListener(_fromEditor)
@@ -240,6 +270,7 @@ class MarkdownComposerState extends State<MarkdownComposer> {
       maxLength: widget.maxLength,
       onSubmit: widget.onSubmit,
       requestLink: _requestLink,
+      spellChecker: _spelling,
       labels: RichEditorLabels(
         bold: l.markdownBold,
         italic: l.markdownItalic,
@@ -253,6 +284,14 @@ class MarkdownComposerState extends State<MarkdownComposer> {
         codeBlock: l.markdownCodeBlock,
         toolbar: l.markdownToolbar,
         length: l.markdownLength,
+        cut: l.cmdCut,
+        copy: l.cmdCopy,
+        paste: l.cmdPaste,
+        spelling: SpellingMenuLabels(
+          noSuggestions: l.spellingNoSuggestions,
+          ignore: l.spellingIgnore,
+          addToDictionary: (_) => l.spellingAddToDictionary,
+        ),
       ),
     );
   }

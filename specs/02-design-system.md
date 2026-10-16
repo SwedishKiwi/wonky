@@ -76,7 +76,7 @@ Icons: `LucideIcons.*` only, except the product icons (§5) that stand for a pro
 | Buttons, toggles | `ShadButton.*`, `ShadIconButton`, `ShadToggle`, `ShadToggleGroup` |
 | Selects / combobox | `ShadSelect`, `ShadSelect.withSearch` |
 | Text fields | `ShadInput`, `ShadTextarea`, `ShadInputOTP` |
-| Markdown text fields (board composer) | `WonkyRichEditor` (`wonky_rich_editor`): super_editor styled exactly like `ShadTextarea` (border, radius, padding, focus ring, disabled), with a `ShadToggle` formatting toolbar (16 §7.3) |
+| Markdown text fields (board composer) | `WonkyRichEditor` (`wonky_rich_editor`): super_editor styled exactly like `ShadTextarea` (border, radius, padding, focus ring, disabled), with a `ShadToggle` formatting toolbar, spelling squiggles and a right-click menu (suggestions, Cut / Copy / Paste) when given a spell checker (16 §7.3) |
 | Forms | `ShadForm` + `Shad*FormField` |
 | Dialogs | `ShadDialog`, `ShadDialog.alert`, `showShadDialog` |
 | Side sheets (mobile-ish / narrow) | `ShadSheet` |

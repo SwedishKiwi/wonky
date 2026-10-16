@@ -1,13 +1,17 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart'
+    show PointerDeviceKind, kSecondaryMouseButton;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:wonky_app/spellcheck.dart';
 import 'package:wonky_app/testing.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_rich_editor/wonky_rich_editor.dart'
     show MarkdownEditingController;
 import 'package:wonky_ui/testing.dart' show settleTooltips;
 
+import '../support/fake_spelling.dart';
 import '../support/screen_pump.dart';
 
 Finder _key(String k) => find.byKey(ValueKey<String>(k));
@@ -215,6 +219,98 @@ void main() {
       c.text = '123456789';
       await tester.pump();
       expect(find.text('9 / 10'), findsOneWidget);
+    });
+
+    testWidgets('when a selection is copied then the clipboard holds its '
+        'Markdown', (tester) async {
+      String? copied;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'Clipboard.setData') {
+            copied = (call.arguments as Map)['text'] as String?;
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      final c = await pump(tester, text: 'say **hello** `code` world');
+      await select(tester, 4, 14);
+      await chord(tester, LogicalKeyboardKey.keyC);
+      expect(copied, '**hello** `code`');
+      await chord(tester, LogicalKeyboardKey.keyX);
+      expect(c.text, 'say  world');
+    });
+
+    group('with spelling', () {
+      late FakeSpellEngine engine;
+      setUp(() => engine = installFakeShellSpelling());
+      tearDown(resetShellSpelling);
+
+      List<SpellRange> errors(WidgetTester tester) {
+        final state = richEditorStateOf(tester, _key('markdown.composer'));
+        return state.spelling!.errorsOf(state.controller.document.first.id);
+      }
+
+      testWidgets('when a word is misspelled then it is underlined, and the '
+          'right-click menu corrects it', (tester) async {
+        final c = await pump(tester, text: 'say helo world');
+        await tester.pumpAndSettle();
+        expect(errors(tester), [const SpellRange(4, 8, 'helo')]);
+        await tester.tapAt(
+          richTextCenter(tester, _key('markdown.composer'), 4, 8),
+          buttons: kSecondaryMouseButton,
+          kind: PointerDeviceKind.mouse,
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.descendant(
+            of: _key('menu.markdown.spell.suggestion.0'),
+            matching: find.text('hello'),
+          ),
+          findsOneWidget,
+        );
+        expect(find.text('Add to dictionary'), findsOneWidget);
+        await tester.tap(_key('menu.markdown.spell.suggestion.0'));
+        await tester.pumpAndSettle();
+        expect(c.text, 'say hello world');
+        expect(errors(tester), isEmpty);
+      });
+
+      testWidgets('when a word is added to the dictionary then it is no '
+          'longer flagged, and it lands in the personal dictionary', (
+        tester,
+      ) async {
+        await pump(tester, text: 'say helo');
+        await tester.pumpAndSettle();
+        await tester.tapAt(
+          richTextCenter(tester, _key('markdown.composer'), 4, 8),
+          buttons: kSecondaryMouseButton,
+          kind: PointerDeviceKind.mouse,
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(_key('menu.markdown.spell.add'));
+        await tester.pumpAndSettle();
+        expect(PersonalDictionary.wordsOf(h.services.prefs), ['helo']);
+        expect(engine.personal, {'helo'});
+        expect(errors(tester), isEmpty);
+      });
+
+      testWidgets('when the user turned spelling off then nothing is '
+          'underlined, and turning it on again checks', (tester) async {
+        await h.services.prefs.setWriteDefault('spellcheck', false);
+        await pump(tester, text: 'say helo');
+        await tester.pumpAndSettle();
+        expect(errors(tester), isEmpty);
+        await h.services.prefs.setWriteDefault('spellcheck', true);
+        await tester.pumpAndSettle();
+        expect(errors(tester), [const SpellRange(4, 8, 'helo')]);
+      });
     });
   });
 }

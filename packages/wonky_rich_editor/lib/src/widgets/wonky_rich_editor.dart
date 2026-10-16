@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart' show kSecondaryMouseButton;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
@@ -10,6 +11,8 @@ import 'package:wonky_ui/wonky_ui.dart';
 import '../codec/inline_codec.dart';
 import '../editor/markdown_editing_controller.dart';
 import '../editor/rich_editor_reactions.dart';
+import '../spelling/document_spelling.dart';
+import '../spelling/spelling_menu.dart';
 import 'rich_editor_style.dart';
 
 /// What the link dialog decided: a URL, or none to remove the link.
@@ -41,6 +44,10 @@ class RichEditorLabels {
     this.codeBlock = 'Code block',
     this.toolbar = 'Formatting',
     this.length = _length,
+    this.cut = 'Cut',
+    this.copy = 'Copy',
+    this.paste = 'Paste',
+    this.spelling = const SpellingMenuLabels(),
   });
 
   final String bold;
@@ -60,6 +67,14 @@ class RichEditorLabels {
   /// The character counter (`120 / 500`).
   final String Function(int count, int max) length;
 
+  /// The context menu (with a spell checker).
+  final String cut;
+  final String copy;
+  final String paste;
+
+  /// The spelling section of the context menu.
+  final SpellingMenuLabels spelling;
+
   static String _length(int count, int max) => '$count / $max';
 }
 
@@ -76,8 +91,16 @@ class RichEditorLabels {
 ///   `Mod+Shift+X` (strikethrough), `Mod+K` (link), `Mod+Shift+7` / `8` /
 ///   `9` (numbered, bulleted, checklist), `Mod+Shift+.` (quote), `Tab` /
 ///   `Shift+Tab` (list levels; elsewhere they move the focus), `Mod+Z` /
-///   `Mod+Shift+Z` (the field's own undo), `Mod+V` (Markdown is converted;
-///   `Mod+Shift+V` pastes plain text), `Mod+Enter` ([onSubmit]).
+///   `Mod+Shift+Z` (the field's own undo), `Mod+C` / `Mod+X` (the selection
+///   as Markdown, [MarkdownEditingController.selectedMarkdown]), `Mod+V`
+///   (Markdown is converted; `Mod+Shift+V` pastes plain text), `Mod+Enter`
+///   ([onSubmit]).
+/// - **Spelling** with a [spellChecker]: misspelled words get red squiggles
+///   ([DocumentSpelling]; not in code), and a right-click opens a context
+///   menu with the suggestions, *Ignore* and *Add to dictionary* on a
+///   misspelled word, then *Cut*, *Copy*, *Paste* (the browser's own menu
+///   is off over the field). Keys: `menu.markdown.spell.suggestion.<i>`,
+///   `.ignore`, `.add`, `menu.markdown.cut`, `.copy`, `.paste`.
 /// - The field grows from [minHeight] to [maxHeight] and then scrolls.
 ///
 /// Stable keys from [fieldKey]: the field `<fieldKey>`, the toolbar
@@ -102,6 +125,7 @@ class WonkyRichEditor extends StatefulWidget {
     this.requestLink,
     this.labels = const RichEditorLabels(),
     this.customStylePhases = const [],
+    this.spellChecker,
   });
 
   final MarkdownEditingController controller;
@@ -139,8 +163,11 @@ class WonkyRichEditor extends StatefulWidget {
 
   final RichEditorLabels labels;
 
-  /// Extra style phases of the document (e.g. spelling squiggles).
+  /// Extra style phases of the document.
   final List<SingleColumnLayoutStylePhase> customStylePhases;
+
+  /// Checks the spelling (null: no spelling squiggles or menu).
+  final RichEditorSpellChecker? spellChecker;
 
   @override
   State<WonkyRichEditor> createState() => WonkyRichEditorState();
@@ -150,6 +177,19 @@ class WonkyRichEditorState extends State<WonkyRichEditor> {
   FocusNode? _ownFocus;
   final _scroll = ScrollController();
   final _layoutKey = GlobalKey();
+  final _menu = GlobalKey<WonkyPopupMenuHostState>();
+  DocumentSpelling? _spelling;
+  bool _secondaryDown = false;
+  bool _browserMenuOff = false;
+
+  /// The spelling squiggles (with a [WonkyRichEditor.spellChecker]).
+  DocumentSpelling? get spelling => _spelling;
+
+  /// The layout of the document (positions of the text on screen).
+  DocumentLayout? get documentLayout {
+    final s = _layoutKey.currentState;
+    return s is DocumentLayout ? s as DocumentLayout : null;
+  }
 
   FocusNode get focusNode =>
       widget.focusNode ??
@@ -167,6 +207,7 @@ class WonkyRichEditorState extends State<WonkyRichEditor> {
   void initState() {
     super.initState();
     _configure();
+    _attachSpelling();
     focusNode.addListener(_onFocus);
     if (widget.autofocus && widget.enabled) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -183,6 +224,27 @@ class WonkyRichEditorState extends State<WonkyRichEditor> {
       focusNode.addListener(_onFocus);
     }
     _configure();
+    _attachSpelling(force: oldWidget.controller != widget.controller);
+    if (!listEquals(oldWidget.customStylePhases, widget.customStylePhases)) {
+      // The layout takes style phases when it is created.
+      _styledTheme = null;
+    }
+  }
+
+  void _attachSpelling({bool force = false}) {
+    final checker = widget.spellChecker;
+    if (!force && identical(checker, _spelling?.checker)) return;
+    _spelling?.dispose();
+    _spelling = checker == null
+        ? null
+        : DocumentSpelling(
+            document: controller.document,
+            composer: controller.composer,
+            checker: checker,
+            checks: (node) => !isCodeLike(node),
+          );
+    // The layout takes style phases when it is created.
+    _styledTheme = null;
   }
 
   void _configure() {
@@ -193,6 +255,8 @@ class WonkyRichEditorState extends State<WonkyRichEditor> {
 
   @override
   void dispose() {
+    _spelling?.dispose();
+    _browserMenu(off: false);
     focusNode.removeListener(_onFocus);
     _ownFocus?.dispose();
     _scroll.dispose();
@@ -244,6 +308,15 @@ class WonkyRichEditorState extends State<WonkyRichEditor> {
     focus();
   }
 
+  /// Copies the selection as Markdown ([cut] also deletes it, unless the
+  /// field is read-only).
+  Future<void> _copy({bool cut = false}) async {
+    final markdown = controller.selectedMarkdown;
+    if (markdown == null) return;
+    if (cut && _editable) controller.deleteSelection();
+    await Clipboard.setData(ClipboardData(text: markdown));
+  }
+
   Future<void> _paste({bool plain = false}) async {
     final data = await Clipboard.getData(Clipboard.kTextPlain);
     final text = data?.text;
@@ -286,6 +359,10 @@ class WonkyRichEditorState extends State<WonkyRichEditor> {
           return run(shift ? controller.redo : controller.undo);
         case LogicalKeyboardKey.keyY when !_mac:
           return run(controller.redo);
+        case LogicalKeyboardKey.keyC when !shift:
+          return run(() => unawaited(_copy()));
+        case LogicalKeyboardKey.keyX when !shift:
+          return run(() => unawaited(_copy(cut: true)));
         case LogicalKeyboardKey.keyV:
           return run(() => unawaited(_paste(plain: shift)));
         case LogicalKeyboardKey.digit7 when shift:
@@ -402,6 +479,8 @@ class WonkyRichEditorState extends State<WonkyRichEditor> {
     cmdBToToggleBold,
     cmdIToToggleItalics,
     pasteWhenCmdVIsPressed,
+    copyWhenCmdCIsPressed,
+    cutWhenCmdXIsPressed,
     tabToIndentParagraph,
     shiftTabToUnIndentParagraph,
     backspaceToUnIndentParagraph,
@@ -443,11 +522,16 @@ class WonkyRichEditorState extends State<WonkyRichEditor> {
         label: widget.hint,
         child: Listener(
           behavior: HitTestBehavior.translucent,
+          onPointerDown: (e) {
+            _secondaryDown = e.buttons & kSecondaryMouseButton != 0;
+            if (_secondaryDown) _contextMenu(e.position);
+          },
           onPointerUp: (_) {
-            // A tap below the text (inside the field) focuses it too.
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted && !focusNode.hasFocus) focus();
-            });
+            // A tap below the text (inside the field) focuses it too — at
+            // once: the IME connection opens with the focus, and keys typed
+            // before it exists are lost on the web (a post-frame focus
+            // waited for an unrelated frame, up to a caret blink).
+            if (!_secondaryDown && mounted && !focusNode.hasFocus) focus();
           },
           child: ConstrainedBox(
             constraints: BoxConstraints(
@@ -462,6 +546,7 @@ class WonkyRichEditorState extends State<WonkyRichEditor> {
         ),
       ),
     );
+    final spelling = widget.spellChecker != null;
     return ShadDisabled(
       disabled: !widget.enabled,
       child: Column(
@@ -476,7 +561,15 @@ class WonkyRichEditorState extends State<WonkyRichEditor> {
             ),
             const SizedBox(height: 4),
           ],
-          field,
+          if (spelling)
+            MouseRegion(
+              // The browser's context menu would cover ours (web).
+              onEnter: (_) => _browserMenu(off: widget.enabled),
+              onExit: (_) => _browserMenu(off: false),
+              child: WonkyPopupMenuHost(key: _menu, child: field),
+            )
+          else
+            field,
           if (max != null)
             ListenableBuilder(
               listenable: controller,
@@ -539,7 +632,10 @@ class WonkyRichEditorState extends State<WonkyRichEditor> {
               clearSelectionWhenImeConnectionCloses: false,
             ),
             stylesheet: _stylesheet,
-            customStylePhases: widget.customStylePhases,
+            customStylePhases: [
+              ...widget.customStylePhases,
+              ?_spelling?.stylePhase,
+            ],
             componentBuilders: _builders,
             selectionStyle: SelectionStyles(
               selectionColor: theme.colorScheme.selection,
@@ -560,6 +656,94 @@ class WonkyRichEditorState extends State<WonkyRichEditor> {
           ),
         ],
       ),
+    );
+  }
+
+  // ------------------------------------------------------- context menu
+
+  /// Turns the browser's context menu off while the pointer is over the
+  /// field (web; restored as it was).
+  void _browserMenu({required bool off}) {
+    if (!kIsWeb) return;
+    if (off && !_browserMenuOff && BrowserContextMenu.enabled) {
+      _browserMenuOff = true;
+      unawaited(BrowserContextMenu.disableContextMenu());
+    } else if (!off && _browserMenuOff) {
+      _browserMenuOff = false;
+      unawaited(BrowserContextMenu.enableContextMenu());
+    }
+  }
+
+  /// A right-click at [global]: the spelling menu of the misspelled word
+  /// there, then Cut, Copy and Paste.
+  void _contextMenu(Offset global) {
+    final checker = widget.spellChecker;
+    final host = _menu.currentState;
+    if (checker == null || host == null || !widget.enabled) return;
+    final layout = documentLayout;
+    final position = layout?.getDocumentPositionNearestToOffset(
+      layout.getDocumentOffsetFromAncestorOffset(global),
+    );
+    final hit = position == null ? null : _spelling?.errorAt(position);
+    final nodeId = position?.nodeId;
+    final hasSelection = !(controller.selection?.isCollapsed ?? true);
+    final l = widget.labels;
+    host.show(
+      global,
+      () => [
+        if (hit != null && nodeId != null && _editable && checker.underline)
+          ...spellingMenuEntries(
+            word: hit.word,
+            suggestions: checker.suggestionsFor(hit.word),
+            onReplace: (word) {
+              controller.replaceText(nodeId, hit.start, hit.end, word);
+              focus();
+            },
+            onIgnore: () {
+              checker.ignore(hit.word);
+              focus();
+            },
+            onAddToDictionary: () {
+              unawaited(checker.addToDictionary(hit.word));
+              focus();
+            },
+            labels: l.spelling,
+            keyPrefix: 'menu.markdown.spell',
+          ),
+        WonkyMenuItem(
+          key: const ValueKey<String>('menu.markdown.cut'),
+          label: l.cut,
+          icon: LucideIcons.scissors,
+          enabled: _editable && hasSelection,
+          shortcut: _shortcut('X'),
+          onSelected: () {
+            unawaited(_copy(cut: true));
+            focus();
+          },
+        ),
+        WonkyMenuItem(
+          key: const ValueKey<String>('menu.markdown.copy'),
+          label: l.copy,
+          icon: LucideIcons.copy,
+          enabled: hasSelection,
+          shortcut: _shortcut('C'),
+          onSelected: () {
+            unawaited(_copy());
+            focus();
+          },
+        ),
+        WonkyMenuItem(
+          key: const ValueKey<String>('menu.markdown.paste'),
+          label: l.paste,
+          icon: LucideIcons.clipboardPaste,
+          enabled: _editable,
+          shortcut: _shortcut('V'),
+          onSelected: () {
+            focus();
+            unawaited(_paste());
+          },
+        ),
+      ],
     );
   }
 

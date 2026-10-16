@@ -93,7 +93,8 @@ wonky/
 │   │                                    #   package assets in dictionaries/ (Slides 03 §14)
 │   ├── wonky_code_flutter/              # (v2) Flutter: `CodeView`, `CodeTextStyler`, `CodeEditorField` (re_editor)
 │   ├── wonky_rich_editor/               # Flutter: lightweight WYSIWYG Markdown editor on super_editor (Markdown ⇄
-│   │                                    #   document codec, `WonkyRichEditor`, toolbar) — the board's composer (16 §7.3)
+│   │                                    #   document codec, `WonkyRichEditor`, toolbar) — the board's composer (16 §7.3);
+│   │                                    #   also the super_editor spelling glue shared with Slides (`DocumentSpelling`)
 │   ├── wonky_sync_kit/                  # (v2) pure Dart, extracted from Sheets: RowChange, MutationPlan, UndoInverter,
 │   │                                    #   SyncTxAdapter (Slides 12 §5.1)
 │   ├── wonky_sync_kit_flutter/          # (v2) Flutter client part: SyncReplica, AppSyncController, SyncWriter,

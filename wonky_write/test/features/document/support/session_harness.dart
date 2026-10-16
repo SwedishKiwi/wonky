@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart' show pumpEventQueue;
 import 'package:go_router/go_router.dart';
+import 'package:wonky_app/spellcheck.dart' show ShellSpelling;
+import 'package:wonky_app/testing.dart' show noSpellDictionaries;
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_write/features/document/write_document_api.dart';
@@ -225,6 +227,7 @@ class SessionHarness {
     int userId = 1,
     AccessRole role = AccessRole.editor,
   }) : comments = FakeComments() {
+    ShellSpelling.debugDictionaries ??= noSpellDictionaries();
     services = ShellServices(
       config: const _Config(),
       auth: AuthController(_FakeAuth()),

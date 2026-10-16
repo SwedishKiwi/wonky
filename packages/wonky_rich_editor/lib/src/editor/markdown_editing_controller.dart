@@ -683,6 +683,104 @@ class MarkdownEditingController extends ChangeNotifier {
     return null;
   }
 
+  // ---------------------------------------------------------- clipboard
+
+  /// The selection as Markdown (copy and cut, specs/16 §7.3), or null when
+  /// nothing is selected. Text inside one block is its inline Markdown (the
+  /// plain text inside a code block); a selection across blocks, or a whole
+  /// block, keeps the blocks (headings, lists, tasks, quotes, code, rules),
+  /// cut at the selection's ends. Untouched blocks keep their Markdown
+  /// source. [paste] reads it back into the same content.
+  String? get selectedMarkdown {
+    final r = _range;
+    if (r == null) return null;
+    final nodes = document.getNodesInside(r.start, r.end);
+    if (nodes.isEmpty) return null;
+    if (nodes.length == 1 && nodes.single is TextNode) {
+      final node = nodes.single as TextNode;
+      final (start, end) = _rangeIn(node, r);
+      if (start > 0 || end < node.text.length) {
+        final text = node.text.copyText(start, end);
+        if (isCodeLike(node)) return text.toPlainText();
+        final md = codec.encode(
+          MutableDocument(
+            nodes: [ParagraphNode(id: Editor.createNodeId(), text: text)],
+          ),
+        );
+        return md.isEmpty ? null : md;
+      }
+    }
+    final md = codec.encode(
+      MutableDocument(
+        nodes: [
+          for (final n in nodes)
+            if (n is TextNode)
+              _cut(n, r)
+            else
+              n.copyWithAddedMetadata(const {}),
+        ],
+      ),
+    );
+    return md.isEmpty ? null : md;
+  }
+
+  /// [node] cut to the part inside [r].
+  TextNode _cut(TextNode node, DocumentRange r) {
+    final (start, end) = _rangeIn(node, r);
+    if (start == 0 && end == node.text.length) return node.copyTextNodeWith();
+    return node.copyTextNodeWith(text: node.text.copyText(start, end));
+  }
+
+  /// Deletes the selection (cut); false when there is none or the field is
+  /// read-only.
+  bool deleteSelection() {
+    if (readOnly || _range == null) return false;
+    editor.execute([DeleteSelectionRequest(TextAffinity.downstream)]);
+    return true;
+  }
+
+  /// Replaces `[start, end)` of text node [nodeId] with [replacement] (a
+  /// spelling suggestion) keeping the styles at [start], caret after it;
+  /// one undo step. False when refused ([readOnly], a bad range).
+  bool replaceText(String nodeId, int start, int end, String replacement) {
+    if (readOnly) return false;
+    final node = document.getNodeById(nodeId);
+    if (node is! TextNode ||
+        start < 0 ||
+        end > node.text.length ||
+        start > end) {
+      return false;
+    }
+    DocumentPosition at(int offset) => DocumentPosition(
+      nodeId: nodeId,
+      nodePosition: TextNodePosition(offset: offset),
+    );
+    final styles = start < node.text.length
+        ? node.text.getAllAttributionsAt(start)
+        : const <Attribution>{};
+    // Run past the length guard (a correction may be a little longer),
+    // but as an edit of the user's.
+    _edited = true;
+    _cache = null;
+    _run([
+      if (end > start)
+        DeleteContentRequest(
+          documentRange: DocumentRange(start: at(start), end: at(end)),
+        ),
+      InsertTextRequest(
+        documentPosition: at(start),
+        textToInsert: replacement,
+        attributions: styles,
+      ),
+      ChangeSelectionRequest(
+        DocumentSelection.collapsed(position: at(start + replacement.length)),
+        SelectionChangeType.alteredContent,
+        SelectionReason.userInteraction,
+      ),
+    ]);
+    return true;
+  }
+
   // -------------------------------------------------------------- paste
 
   /// Pastes [text]: Markdown is converted into blocks and styles (in code

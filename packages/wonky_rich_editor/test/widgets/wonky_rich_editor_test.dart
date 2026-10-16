@@ -1,3 +1,5 @@
+import 'package:flutter/gestures.dart'
+    show PointerDeviceKind, kSecondaryMouseButton;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -31,6 +33,7 @@ Future<_Rig> _pump(
   RichLinkRequest? requestLink,
   MarkdownBlockFeatures features = MarkdownBlockFeatures.all,
   double width = 500,
+  RichEditorSpellChecker? spellChecker,
 }) async {
   final rig = _Rig(
     MarkdownEditingController(markdown: markdown, features: features),
@@ -54,6 +57,7 @@ Future<_Rig> _pump(
               readOnly: readOnly,
               requestLink: requestLink,
               onSubmit: () => rig.submitted++,
+              spellChecker: spellChecker,
             ),
             ShadButton(focusNode: rig.focus, child: const Text('Next')),
           ],
@@ -101,6 +105,72 @@ void _select(MarkdownEditingController c, int block, int start, int end) {
       SelectionReason.userInteraction,
     ),
   ]);
+}
+
+/// A clipboard on the platform channel.
+String? _mockClipboard(WidgetTester tester, [String? initial]) {
+  String? text = initial;
+  tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+    SystemChannels.platform,
+    (call) async {
+      if (call.method == 'Clipboard.setData') {
+        text = (call.arguments as Map)['text'] as String?;
+      }
+      if (call.method == 'Clipboard.getData') return {'text': text};
+      return null;
+    },
+  );
+  addTearDown(
+    () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      null,
+    ),
+  );
+  _clipboard = () => text;
+  return text;
+}
+
+String? Function() _clipboard = () => null;
+
+/// Knows a few words; suggests from a table.
+class _Checker extends ChangeNotifier implements RichEditorSpellChecker {
+  final known = {'hello', 'world', 'the', 'plan', 'code', 'say'};
+  final ignored = <String>{};
+  final added = <String>[];
+  @override
+  bool underline = true;
+
+  @override
+  List<SpellRange> check(String text, {List<(int, int)> skip = const []}) => [
+    for (final m in RegExp('[a-zA-Z]+').allMatches(text))
+      if (m.end - m.start > 1 &&
+          !skip.any((r) => m.start < r.$2 && m.end > r.$1) &&
+          !known.contains(m[0]!.toLowerCase()) &&
+          !ignored.contains(m[0]) &&
+          !added.contains(m[0]))
+        SpellRange(m.start, m.end, m[0]!),
+  ];
+
+  @override
+  List<String> suggestionsFor(String word, {int max = 5}) =>
+      const {
+        'helo': ['hello', 'help'],
+        'wrold': ['world'],
+      }[word] ??
+      const [];
+
+  @override
+  void ignore(String word) {
+    ignored.add(word);
+    notifyListeners();
+  }
+
+  @override
+  Future<bool> addToDictionary(String word) async {
+    added.add(word);
+    notifyListeners();
+    return true;
+  }
 }
 
 bool _toggled(WidgetTester tester, String id) =>
@@ -317,5 +387,171 @@ void main() {
     await enterMarkdown(tester, _key('markdown.composer'), '**done**');
     expect(r.md, '**done**');
     expect(find.text('done', findRichText: true), findsOneWidget);
+  });
+
+  group('Given a click into the field', () {
+    for (final (where, dy) in [
+      ('below the text', -8.0),
+      ('on the text', 0.0),
+    ]) {
+      testWidgets('when it lands $where and keys follow without a frame '
+          'between then the IME is open and the keys land', (tester) async {
+        final r = await _pump(tester);
+        // The focus is elsewhere first (a dialog's autofocused title).
+        r.focus.requestFocus();
+        await tester.pump();
+        final field = tester.getRect(_key('markdown.composer'));
+        final at = dy == 0
+            ? Offset(field.left + 20, field.top + 14)
+            : Offset(field.center.dx, field.bottom + dy);
+        tester.testTextInput.log.clear();
+        await tester.tapAt(at, kind: PointerDeviceKind.mouse);
+        // No pump: on the web the browser delivers the keys right away.
+        expect(
+          tester.testTextInput.log.map((c) => c.method),
+          containsAll(['TextInput.setClient', 'TextInput.show']),
+        );
+        expect(
+          richEditorStateOf(
+            tester,
+            _key('markdown.composer'),
+          ).focusNode.hasPrimaryFocus,
+          isTrue,
+        );
+        await tester.typeImeText('hi');
+        await tester.pump();
+        expect(r.md, 'hi');
+      });
+    }
+  });
+
+  group('Given the clipboard', () {
+    testWidgets('when a selection is copied then the clipboard holds its '
+        'Markdown, and pasting it gives the same content', (tester) async {
+      final r = await _pump(tester, markdown: '# Plan\n\n- **one**\n- two');
+      _mockClipboard(tester);
+      await _focus(tester);
+      r.controller.selectAll();
+      await tester.pump();
+      await _chord(tester, LogicalKeyboardKey.keyC);
+      expect(_clipboard(), '# Plan\n\n- **one**\n- two');
+      expect(r.md, '# Plan\n\n- **one**\n- two', reason: 'copy keeps it');
+      r.controller.markdown = '';
+      await tester.pump();
+      await _chord(tester, LogicalKeyboardKey.keyV);
+      await tester.pump();
+      expect(r.md, '# Plan\n\n- **one**\n- two');
+    });
+
+    testWidgets('when part of a line is cut then its inline Markdown is on '
+        'the clipboard and the text is gone', (tester) async {
+      final r = await _pump(tester, markdown: 'say *hello* world');
+      _mockClipboard(tester);
+      await _focus(tester);
+      _select(r.controller, 0, 4, 9);
+      await tester.pump();
+      await _chord(tester, LogicalKeyboardKey.keyX);
+      expect(_clipboard(), '*hello*');
+      expect(r.md, 'say  world');
+      await _chord(tester, LogicalKeyboardKey.keyZ);
+      expect(r.md, 'say *hello* world');
+    });
+
+    testWidgets('when plain text from another app is pasted then it is '
+        'inserted (Markdown in it converted)', (tester) async {
+      final r = await _pump(tester, markdown: 'say');
+      _mockClipboard(tester, 'plain *words*\nnext line');
+      await _focus(tester);
+      await _chord(tester, LogicalKeyboardKey.keyV);
+      await tester.pump();
+      expect(r.md, 'sayplain *words*\nnext line');
+    });
+  });
+
+  group('Given a spell checker', () {
+    testWidgets('when the text has misspelled words then they are '
+        'underlined, but not in code', (tester) async {
+      final checker = _Checker();
+      addTearDown(checker.dispose);
+      final r = await _pump(
+        tester,
+        markdown: 'say helo `wrold`\n\n```\nhelo\n```',
+        spellChecker: checker,
+      );
+      await tester.pump();
+      final spelling = richEditorStateOf(
+        tester,
+        _key('markdown.composer'),
+      ).spelling!;
+      final p = r.controller.document.first.id;
+      expect(spelling.errorsOf(p), [const SpellRange(4, 8, 'helo')]);
+      expect(spelling.errorsOf(r.controller.document.last.id), isEmpty);
+      checker.underline = false;
+      checker.notifyListeners();
+      await tester.pump();
+      expect(spelling.errorsOf(p), isEmpty);
+    });
+
+    testWidgets('when a misspelled word is right-clicked then the menu '
+        'offers suggestions; one corrects it as one undo step', (tester) async {
+      final checker = _Checker();
+      addTearDown(checker.dispose);
+      final r = await _pump(
+        tester,
+        markdown: 'say **helo** world',
+        spellChecker: checker,
+      );
+      await _focus(tester);
+      await tester.pump();
+      await tester.tapAt(
+        richTextCenter(tester, _key('markdown.composer'), 4, 8),
+        buttons: kSecondaryMouseButton,
+        kind: PointerDeviceKind.mouse,
+      );
+      await tester.pumpAndSettle();
+      expect(_key('menu.markdown.spell.suggestion.1'), findsOneWidget);
+      expect(_key('menu.markdown.copy'), findsOneWidget);
+      await tester.tap(_key('menu.markdown.spell.suggestion.0'));
+      await tester.pumpAndSettle();
+      expect(r.md, 'say **hello** world');
+      await _chord(tester, LogicalKeyboardKey.keyZ);
+      expect(r.md, 'say **helo** world');
+    });
+
+    testWidgets('when Ignore or Add to dictionary is picked then the word is '
+        'no longer flagged', (tester) async {
+      final checker = _Checker();
+      addTearDown(checker.dispose);
+      final r = await _pump(
+        tester,
+        markdown: 'helo wrold',
+        spellChecker: checker,
+      );
+      await tester.pump();
+      final spelling = richEditorStateOf(
+        tester,
+        _key('markdown.composer'),
+      ).spelling!;
+      final id = r.controller.document.first.id;
+      expect(spelling.errorsOf(id), hasLength(2));
+      Future<void> pick(int start, int end, String item) async {
+        await tester.tapAt(
+          richTextCenter(tester, _key('markdown.composer'), start, end),
+          buttons: kSecondaryMouseButton,
+          kind: PointerDeviceKind.mouse,
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(_key('menu.markdown.spell.$item'));
+        await tester.pumpAndSettle();
+      }
+
+      await pick(0, 4, 'ignore');
+      expect(checker.ignored, {'helo'});
+      expect(spelling.errorsOf(id), [const SpellRange(5, 10, 'wrold')]);
+      await pick(5, 10, 'add');
+      expect(checker.added, ['wrold']);
+      expect(spelling.errorsOf(id), isEmpty);
+      expect(r.md, 'helo wrold');
+    });
   });
 }

@@ -5,7 +5,12 @@ library;
 
 // Typing into Markdown composers (`MarkdownComposer`, specs/16 §7.3).
 export 'package:wonky_rich_editor/testing.dart'
-    show enterMarkdown, richEditorStateOf, selectRichText, typeMarkdown;
+    show
+        enterMarkdown,
+        richEditorStateOf,
+        richTextCenter,
+        selectRichText,
+        typeMarkdown;
 
 export 'src/assistant/fake_assistant_api.dart';
 export 'src/testing/command_test_harness.dart';

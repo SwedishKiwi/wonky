@@ -87,7 +87,7 @@ committed and verified).
 - shad tooltips and popovers swallow Esc; the toolbar works around this with `ToolbarEscapeScope`.
 - Offline-sync patch OS-9: the background projection rebuild after a synced-schema change holds the server-wide CRDT node lock (the one every tracked write takes) for one space's projection at a time, so a release that changes a *Sheets* table would pause server writes for each big spreadsheet's rebuild (seconds); reads of a still-pending space serve its previous projection. Fine for the Slides releases S-2/S-3 (decks are small); a per-space lock would remove the pause (suite 12 §4).
 - PDF exports (client and server) cover Latin, Greek and Cyrillic with the bundled TTFs; CJK, Arabic and emoji fall back to placeholders until the fallback fonts are added.
-- WYSIWYG Markdown composer (`wonky_rich_editor`, specs/16 §7.3): ☐ spellcheck (move Slides' `EditorSpelling` glue into `wonky_app/spellcheck.dart`, attach through `WonkyRichEditor.customStylePhases`, plus the suggestions context menu); ☐ copy and cut as Markdown (they copy plain text today); ☐ a code block's language can only be set when typing the fence; ☐ load the editor with a deferred import if the `super_editor` weight in Drive and Sheets matters; ☐ browser check of IME typing, paste and the link dialog in the release builds.
+- WYSIWYG Markdown composer (`wonky_rich_editor`, specs/16 §7.3): ☐ a code block's language can only be set when typing the fence; ☐ browser check of IME typing (the first keys after a click, fixed in the widget, see §7.3), paste, copy as Markdown, the spelling menu and the link dialog in the release builds; ☐ the composer's spelling language is the device locale (no per-field language).
 
 ## Wonky Sheets — open items
 

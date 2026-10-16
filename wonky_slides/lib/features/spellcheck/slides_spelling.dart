@@ -12,34 +12,7 @@ import 'package:wonky_slides_core/ops.dart'
 import '../editor_screen/deck_editor_controller.dart';
 import '../settings/slides_user_defaults.dart';
 
-/// A misspelled word of one text, with UTF-16 offsets `[start, end)` in the
-/// text's plain text (a body: its paragraphs joined by `"\n"`).
-@immutable
-class SpellRange {
-  const SpellRange(this.start, this.end, this.word);
-
-  final int start;
-  final int end;
-  final String word;
-
-  int get length => end - start;
-
-  /// Whether [offset] is inside the word or at its end.
-  bool covers(int offset) => offset >= start && offset <= end;
-
-  @override
-  bool operator ==(Object other) =>
-      other is SpellRange &&
-      other.start == start &&
-      other.end == end &&
-      other.word == word;
-
-  @override
-  int get hashCode => Object.hash(start, end, word);
-
-  @override
-  String toString() => 'SpellRange($word $start..$end)';
-}
+export 'package:wonky_app/spellcheck.dart' show SpellRange;
 
 /// A misspelled word somewhere in the deck: a range of one text body
 /// (element text, table cell or speaker notes; 03 §14).
@@ -121,7 +94,7 @@ enum SlidesSpellingState {
 /// Skipped like Write (04 §28.2): links and inline code, URLs, e-mail
 /// addresses, words with digits, CamelCase, ALL-CAPS words and words under
 /// two letters; the word at the caret while typing.
-class SlidesSpelling extends ChangeNotifier {
+class SlidesSpelling extends ChangeNotifier implements DocumentSpellChecker {
   SlidesSpelling._(this.editor);
 
   /// The spelling of [editor] (created on first use).
@@ -163,6 +136,7 @@ class SlidesSpelling extends ChangeNotifier {
 
   /// Whether misspellings are underlined (Tools › Spelling › Underline
   /// errors, `slidesDefaults.underlineSpelling`, default on).
+  @override
   bool get underline => SlidesUserDefaults.of(
     editor.services,
   ).flag(SlidesUserDefaults.keyUnderlineSpelling);
@@ -263,6 +237,7 @@ class SlidesSpelling extends ChangeNotifier {
 
   /// The misspelled words of [text] (plain text), skipping [skip] ranges
   /// and the word around [caret] (being typed).
+  @override
   List<SpellRange> check(
     String text, {
     List<(int, int)> skip = const [],

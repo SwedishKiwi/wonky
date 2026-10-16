@@ -740,14 +740,29 @@ renderer.
     the closing delimiter is typed; URLs autolink. Not in code blocks.
   - **Shortcuts:** `Mod+B` / `I` / `E` (code), `Mod+Shift+X` (strikethrough), `Mod+K` (link
     dialog `dialog.markdown.link`: http(s) or mailto only, *Remove link* when editing one),
+    `Mod+C` / `Mod+X` (copy and cut as Markdown, below),
     `Mod+Shift+7` / `8` / `9` (numbered, bulleted, checklist), `Mod+Shift+.` (quote), `Tab` /
     `Shift+Tab` (list levels; elsewhere they move the focus like any input), `Mod+Enter` submits,
     `Esc` is left to the dialog or page.
+  - **Copy and cut** put the selection on the clipboard as Markdown
+    (`MarkdownEditingController.selectedMarkdown`, plain text flavor — Flutter's clipboard has one):
+    text inside one block is its inline Markdown (`say **bo**`, escaped where it would read as a
+    block), a selection across blocks or a whole block keeps the blocks cut at its ends, untouched
+    blocks their exact source; inside a code block the plain text. Pasting it back gives the same
+    content. Cut is one undo step; read-only fields copy.
   - **Paste:** Markdown is converted into blocks and styles; `Mod+Shift+V` pastes plain text; a
-    URL pasted over a selection makes it a link; code blocks always take plain text.
+    URL pasted over a selection makes it a link; code blocks always take plain text. Plain text
+    from other apps goes through the same path (Markdown in it is converted).
   - **Undo:** the field's own history (`Mod+Z`, `Mod+Shift+Z`): typing within a second is one
     step, every format change, autoformat and paste another; the shell's undo stack is not
-    involved (08: text fields keep their own local undo).
+    involved (08: text fields keep their own local undo). Undo right after an autoformat restores
+    exactly what was typed, caret after it, like Write (04 §7): `## ` comes back as the text
+    `## `. The Markdown reads `\##` until something follows the space — Markdown has no trailing
+    whitespace at the end of a block, for any text.
+  - **Focus:** a click anywhere in the field focuses it at once, so the IME connection (the
+    browser's hidden textarea) exists before the next key arrives; a click below the text puts
+    the caret at the end. (A post-frame focus waited for an unrelated frame — up to a caret blink
+    of another field — and the first keys went to the previously focused field or nowhere.)
   - **Look:** the border, radius, padding, focus ring and disabled state of `ShadTextarea`; the
     text in the renderer's styles (`small`, regular weight, 1.45 line height; code in the
     monospace style of `WonkyMarkdown`, quotes muted with a bar, code blocks in a muted box). A
@@ -757,12 +772,22 @@ renderer.
     Removed with the toggle: `<fieldKey>.write`, `.preview`, `.rendered` (and `MarkdownEdits`,
     the plain-text transforms). Tests type with `enterMarkdown` / `typeMarkdown`
     (`package:wonky_app/testing.dart`).
+  - **Spelling:** misspelled words get Write's red squiggles (not in code or literal blocks,
+    links or inline code; the word being typed is held back until the caret leaves it), and a
+    right-click opens the field's context menu: up to five suggestions (one replaces the word,
+    one local undo step), *Ignore* (this session, every composer), *Add to dictionary* (the
+    synced personal dictionary shared with Write and Slides), then *Cut*, *Copy*, *Paste*. The
+    browser's context menu is off while the pointer is over the field. The composer follows the
+    user's settings: off with Write's *Check spelling* off (`writeDefaults.spellcheck`), ALL-CAPS
+    words per *Ignore words in UPPERCASE*; the language is the device (browser) locale. The
+    super_editor glue is shared with Slides: `DocumentSpelling` (squiggles over a
+    `DocumentSpellChecker`) and `spellingMenuEntries` live in `wonky_rich_editor` with the engine
+    injected (`RichEditorSpellChecker`); the shell's checker is `ShellSpelling`
+    (`wonky_app/spellcheck.dart`, which re-exports the glue); Slides' `EditorSpelling` is a
+    `DocumentSpelling` over `SlidesSpelling`. Menu keys: `menu.markdown.spell.suggestion.<i>`,
+    `.ignore`, `.add`, `menu.markdown.cut`, `.copy`, `.paste`.
   - **Bundle:** the shell depends on `wonky_rich_editor`, so Drive and Sheets now ship
-    `super_editor` too (Write and Slides already did), also to signed-out board visitors. A
-    deferred import of the editor is a follow-up if the size matters (`TODO.md`).
-- Spellcheck in the composer: P2. `WonkyRichEditor.customStylePhases` takes the spelling
-  squiggles of Slides' `EditorSpelling`; moving that glue (engine, language, context menu) into
-  `wonky_app/spellcheck.dart` is the remaining work.
+    `super_editor` too (Write and Slides already did), also to signed-out board visitors.
 
 ### 7.4 Duplicates and merging (admin)
 
@@ -1731,6 +1756,10 @@ Built but not complete, found in the code:
   reactions, `CodeView` in Markdown, *Copy setup + prompt*, admin MCP tools (`board.moderate`,
   `board.create_task`, `board.set_prompt`, `board.publish_task`) and a `board.search` tool (search
   is the `query` of `board.list_posts`). P2: the Jev screenshot check.
+- **Markdown composer** (§7.3): spelling, copy and cut as Markdown and the focus fix are built
+  and covered by widget tests, but not yet checked in the browser (release builds: the first keys
+  after a click, IME typing, paste, copy, the spelling menu, the link dialog). A code block's
+  language can only be set while typing the fence. The spelling language is the device locale.
 - **Goldens** for the dialog, row, post page and editor, and the fresh-clone dry run of
   `CONTRIBUTING.md`, are not done; the browser walkthrough of J-B1 is tracked in
   [14 §2.1a](14-roadmap.md).

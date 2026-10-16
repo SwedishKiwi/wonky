@@ -1375,7 +1375,9 @@ master editing (SL-28), highlights inside the notes pane.
   stored body (links and inline code skipped, results cached per body JSON) and the whole deck in
   `DeckFind.bodies` order), `EditorSpelling` (squiggles of a super_editor document through
   `SpellingAndGrammarStyler`: the canvas text overlay — boxes, shapes, placeholders, table cells —
-  and the speaker notes), `SpellingCanvasLayer` (a `CanvasInteraction` painting the squiggles of
+  and the speaker notes; a `DocumentSpelling` of `wonky_rich_editor`, shared with the suite's
+  Markdown composer, suite 16 §7.3, with `SlidesSpelling` as its checker; the context-menu
+  section is the shared `spellingMenuEntries`), `SpellingCanvasLayer` (a `CanvasInteraction` painting the squiggles of
   the current slide's visible text from the stage scene's own paragraph boxes, token
   `spellingError`), `SlidesSpellingSession` (the shell's Check spelling dialog over the deck),
   `spelling_actions.dart` (replacements, the context-menu section), `text_inserts.dart`;

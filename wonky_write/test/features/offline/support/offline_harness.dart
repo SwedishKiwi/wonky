@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
+import 'package:wonky_app/spellcheck.dart' show ShellSpelling;
 import 'package:wonky_app/testing.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_client/wonky_client.dart';
@@ -387,6 +388,7 @@ class OfflineApp {
       connectivity: connectivity,
       currentUser: () => s.me,
     );
+    ShellSpelling.debugDictionaries ??= noSpellDictionaries();
     s = services = ShellServices(
       config: const _Config(),
       auth: AuthController(FakeAuthRepository()),

@@ -81,3 +81,23 @@ Future<void> selectRichText(
   ]);
   await tester.pump();
 }
+
+/// The global centre of `[start, end)` in block [block] of the rich editor
+/// at [finder] (to tap or right-click a word).
+Offset richTextCenter(
+  WidgetTester tester,
+  Finder finder,
+  int start,
+  int end, {
+  int block = 0,
+}) {
+  final state = richEditorStateOf(tester, finder);
+  final layout = state.documentLayout!;
+  final id = state.controller.document.getNodeAt(block)!.id;
+  DocumentPosition at(int offset) => DocumentPosition(
+    nodeId: id,
+    nodePosition: TextNodePosition(offset: offset),
+  );
+  final rect = layout.getRectForSelection(at(start), at(end))!;
+  return layout.getGlobalOffsetFromDocumentOffset(rect.center);
+}
