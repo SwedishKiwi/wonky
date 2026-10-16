@@ -66,7 +66,9 @@ class WonkyAvatar extends StatelessWidget {
                 applyHeightToFirstAscent: false,
                 applyHeightToLastDescent: false,
               ),
-              style: TextStyle(
+              // The app font: the inherited default text style may carry no
+              // family (then the browser's default font, wider, is used).
+              style: ShadTheme.of(context).textTheme.small.copyWith(
                 color: fg,
                 fontSize: inner * 0.4,
                 fontWeight: FontWeight.w600,

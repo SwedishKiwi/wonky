@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:clock/clock.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_client/wonky_client.dart';
@@ -260,7 +259,6 @@ class _BoardTaskPageState extends State<BoardTaskPage> {
     final admin = hub.isAdmin;
     final signedIn = s.auth.isSignedIn;
     final claimable = t.status == BoardTaskStatus.published;
-    final until = t.claimExpiresAt;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: 10,
@@ -376,49 +374,6 @@ class _BoardTaskPageState extends State<BoardTaskPage> {
             ],
           ],
         ),
-        // Like the *Copy this token now* alert of Settings › Developer.
-        if (t.isMine && t.claimCode != null)
-          ShadAlert(
-            key: const ValueKey<String>('board.task.claimCode'),
-            icon: const Icon(LucideIcons.keyRound, size: 16),
-            titleStyle: theme.textTheme.small,
-            title: Text(l.boardYourClaimCode),
-            description: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 6,
-              children: [
-                const SizedBox(height: 2),
-                Row(
-                  spacing: 8,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        t.claimCode!,
-                        key: const ValueKey<String>(
-                          'board.task.claimCode.text',
-                        ),
-                        style: boardCodeStyle(theme).copyWith(fontSize: 16),
-                      ),
-                    ),
-                    ShadButton.outline(
-                      key: const ValueKey<String>('board.task.copyClaimCode'),
-                      size: ShadButtonSize.sm,
-                      leading: const Icon(LucideIcons.copy, size: 14),
-                      onPressed: () => _invoke('shell.board.copyClaimCode'),
-                      child: Text(l.boardCopy),
-                    ),
-                  ],
-                ),
-                if (until != null && t.status == BoardTaskStatus.claimed)
-                  Text(
-                    l.boardTimeLeft(
-                      until.difference(clock.now()).inHours.clamp(0, 999),
-                    ),
-                  ),
-                Text(l.boardClaimCodeHint),
-              ],
-            ),
-          ),
       ],
     );
   }

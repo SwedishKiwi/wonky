@@ -68,8 +68,9 @@ void main() {
     await tester.pumpAndSettle();
 
     final code = b.tasks[1]!.claimCode!;
-    expect(byKey('board.task.claimCode'), findsOneWidget);
-    expect(find.text(code), findsOneWidget);
+    // The claim code is in the PR lines (step 3) and the prompt; there is
+    // no separate claim-code box.
+    expect(byKey('board.task.claimCode'), findsNothing);
     expect(find.text('Claimed by Anna Berg · 47 h left'), findsOneWidget);
     expect(find.text('Wonky-Task: T-1\nWonky-Claim: $code'), findsOneWidget);
     expect(byKey('board.task.release'), findsOneWidget);

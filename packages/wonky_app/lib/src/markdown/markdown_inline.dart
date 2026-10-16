@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
+import 'package:wonky_ui/wonky_ui.dart' show WonkyTheme;
 
 /// Creates the tap recognizer of a link to [url] (already checked with
 /// [MarkdownInline.safeUrl]); null renders links styled but inert.
@@ -96,7 +97,7 @@ abstract final class MarkdownInline {
           TextSpan(
             text: c,
             style: TextStyle(
-              fontFamily: 'JetBrains Mono',
+              fontFamily: WonkyTheme.monoFamily,
               fontSize: (base.fontSize ?? 14) - 1,
               backgroundColor: cs.muted,
             ),

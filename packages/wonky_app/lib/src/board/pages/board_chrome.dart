@@ -603,7 +603,10 @@ class BoardTabsBar extends StatelessWidget {
             shadows: active ? tt.tabSelectedShadows : null,
             decoration: tt.tabDecoration,
             onPressed: () => onChanged(t.tab),
-            textStyle: TextStyle(
+            // Extends the theme's text style (the app font, Geist): a bare
+            // TextStyle here would replace it and fall back to the browser's
+            // default font.
+            textStyle: theme.textTheme.small.copyWith(
               fontWeight: active ? FontWeight.w600 : FontWeight.w500,
             ),
             child: Row(
@@ -697,7 +700,7 @@ class BoardCountBadge extends StatelessWidget {
       ),
       child: Text(
         '$count',
-        style: TextStyle(
+        style: ShadTheme.of(context).textTheme.small.copyWith(
           fontSize: 11,
           height: 1,
           fontWeight: FontWeight.w600,
