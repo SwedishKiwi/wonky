@@ -7615,7 +7615,7 @@ abstract class WonkyAppLocalizations {
   /// No description provided for @cmdBoardRelease.
   ///
   /// In en, this message translates to:
-  /// **'Release'**
+  /// **'Unclaim this task'**
   String get cmdBoardRelease;
 
   /// No description provided for @cmdBoardCopyPrompt.

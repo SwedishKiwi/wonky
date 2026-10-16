@@ -433,7 +433,7 @@ List<Command<CommandArgs>> boardCommands(ShellServices s) {
     cmd(
       'shell.board.release',
       title: (l) => l.cmdBoardRelease,
-      icon: LucideIcons.undo2,
+      icon: LucideIcons.circleStop,
       args: const JsonSchema.object(
         properties: {'taskNumber': task},
         required: ['taskNumber'],

@@ -4381,7 +4381,7 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get cmdBoardClaim => 'Claim task';
 
   @override
-  String get cmdBoardRelease => 'Release';
+  String get cmdBoardRelease => 'Unclaim this task';
 
   @override
   String get cmdBoardCopyPrompt => 'Copy prompt';
@@ -8974,7 +8974,7 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String get cmdBoardClaim => '[Çļåîɱ ţåšķ one]';
 
   @override
-  String get cmdBoardRelease => '[Ŕéļéåšé one]';
+  String get cmdBoardRelease => '[Ûñçļåîɱ ţĥîš ţåšķ one tw]';
 
   @override
   String get cmdBoardCopyPrompt => '[Çöþý þŕöɱþţ one]';

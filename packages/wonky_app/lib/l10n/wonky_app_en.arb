@@ -2900,7 +2900,7 @@
   "cmdBoardDeleteComment": "Delete comment",
   "cmdBoardFlag": "Flag…",
   "cmdBoardClaim": "Claim task",
-  "cmdBoardRelease": "Release",
+  "cmdBoardRelease": "Unclaim this task",
   "cmdBoardCopyPrompt": "Copy prompt",
   "cmdBoardCopyClaimCode": "Copy claim code",
   "cmdBoardModerate": "Moderate",

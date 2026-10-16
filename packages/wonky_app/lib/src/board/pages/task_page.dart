@@ -326,7 +326,7 @@ class _BoardTaskPageState extends State<BoardTaskPage> {
             if (t.isMine)
               ShadButton.outline(
                 key: const ValueKey<String>('board.task.release'),
-                leading: const Icon(LucideIcons.undo2, size: 16),
+                leading: const Icon(LucideIcons.circleStop, size: 16),
                 onPressed: () => _invoke('shell.board.release'),
                 child: Text(l.cmdBoardRelease),
               ),
