@@ -811,7 +811,8 @@ List<Widget> boardLabelChips(
 ];
 
 /// A post or task number (`#5`, `T-1`) and its title as one text: the
-/// number grayed out, the title in bold, on one baseline, wrapping together
+/// number grayed out, the title semibold (like the selected tab), on one
+/// baseline, wrapping together
 /// (board rows, the task header; specs/16 §4.4).
 class BoardNumberedTitle extends StatelessWidget {
   const BoardNumberedTitle({
@@ -844,9 +845,11 @@ class BoardNumberedTitle extends StatelessWidget {
               fontWeight: FontWeight.w400,
             ),
           ),
+          // Semibold like the selected tab: Geist is a variable font, and a
+          // heavier weight than the theme uses rendered wider.
           TextSpan(
             text: title,
-            style: const TextStyle(fontWeight: FontWeight.w700),
+            style: const TextStyle(fontWeight: FontWeight.w600),
           ),
         ],
       ),
