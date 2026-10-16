@@ -134,7 +134,7 @@ void main() {
     current = await pumpBoard(tester, '/improvements/t/1', board: withTask());
 
     for (final line in const [
-      'dart install serverpod_cli@4.1.0-beta.3',
+      'dart install serverpod_cli 4.1.0-beta.3',
       'git clone https://github.com/<you>/wonky.git',
       'cd wonky && flutter pub get',
       'cd wonky_server',
@@ -153,7 +153,7 @@ void main() {
     await tester.ensureVisible(byKey('board.task.setup.0'));
     await tester.tap(byKey('board.task.setup.0'));
     await tester.pumpAndSettle();
-    expect(copied.single, 'dart install serverpod_cli@4.1.0-beta.3');
+    expect(copied.single, 'dart install serverpod_cli 4.1.0-beta.3');
     await settleTooltips(tester);
   });
 

@@ -31,7 +31,7 @@ const boardServerpodInstallUrl = 'https://docs.serverpod.dev/installation';
 List<String> boardSetupCommands(String repository) {
   final name = repository.split('/').last;
   return [
-    'dart install serverpod_cli@$boardServerpodCliVersion',
+    'dart install serverpod_cli $boardServerpodCliVersion',
     'git clone https://github.com/<you>/$name.git',
     'cd $name && flutter pub get',
     'cd wonky_server',

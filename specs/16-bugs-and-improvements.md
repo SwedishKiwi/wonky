@@ -1157,7 +1157,7 @@ light and dark, the checklist after changes).
      (Flutter, Dart and what Serverpod needs), Flutter at least the CI version, and an AI coding
      agent (Claude Code recommended, any agent that reads `AGENTS.md` works).
   2. Install or update the Serverpod CLI to the beta Wonky Work uses:
-     `dart install serverpod_cli@<VERSION>` (the version of the CI workflow).
+     `dart install serverpod_cli <VERSION>` (the version of the CI workflow).
   3. Fork the repository, clone the fork and run `flutter pub get`.
   4. In `wonky_server`, create `config/passwords.yaml` from `passwords.example.yaml` (development
      defaults only; AI keys are optional).
