@@ -25,7 +25,9 @@ void main() {
 
   testWidgets('Given the board on a wide window then it is a settings-like '
       'page: the shared page frame with the breadcrumb, the 760 px content '
-      'column and the tabs bar with the search at its end', (tester) async {
+      'column and the tabs bar with the search button at its end', (
+    tester,
+  ) async {
     current = await pumpBoard(tester, '/improvements', board: seeded());
 
     expect(find.byType(ShellPageFrame), findsOneWidget);
@@ -40,23 +42,11 @@ void main() {
     expect(bar.left, 340 - 8);
     expect(bar.right, 1440 - 340 + 8);
     expect(bar.height, 40, reason: 'the toolbar strip height');
+    // The search is a toolbar icon button at the end of the strip.
     final search = tester.getRect(byKey('board.search'));
-    // The search shares the strip only when the measured tabs fit beside
-    // it; the test font is about twice as wide as the real one, so the tabs
-    // may not fit here and the search then sits under the strip. Either
-    // way it never covers a tab.
-    if (search.top < bar.bottom) {
-      expect(search.right, bar.right - 8, reason: 'right-aligned in the strip');
-      expect(search.height, 28, reason: 'the toolbar control height');
-      expect(search.center.dy, bar.center.dy);
-      expect(
-        tester.getRect(byKey('board.tab.review')).right,
-        lessThanOrEqualTo(search.left),
-      );
-    } else {
-      expect(search.left, bar.left + 8);
-      expect(search.right, bar.right - 8);
-    }
+    expect(search.right, bar.right - 8, reason: 'right-aligned in the strip');
+    expect(search.size, const Size(28, 28), reason: 'the toolbar control');
+    expect(search.center.dy, bar.center.dy);
     expect(tester.getTopLeft(byKey('board.tab.improvements')).dx, bar.left + 8);
     expect(tester.getTopLeft(byKey('board.filter.area')).dx, 340);
     // Rows are inset by their own 8 px: the vote control lines up inside.
@@ -69,8 +59,10 @@ void main() {
   });
 
   testWidgets('Given a 400 px window then the page uses 16 px gutters, the '
-      'search goes full width under the tabs, the actions collapse into a '
-      'menu and nothing overflows', (tester) async {
+      'search button stays at the end of the strip and its popover is full '
+      'width, the actions collapse into a menu and nothing overflows', (
+    tester,
+  ) async {
     current = await pumpBoard(
       tester,
       '/improvements',
@@ -78,14 +70,17 @@ void main() {
       size: const Size(400, 800),
     );
 
-    expect(tester.getTopLeft(byKey('board.tabsBar')).dx, 16 - 8);
-    expect(tester.getSize(byKey('board.search')).width, 400 - 32);
-    expect(
-      tester.getTopLeft(byKey('board.search')).dy,
-      greaterThan(tester.getBottomLeft(byKey('board.tabsBar')).dy),
-    );
+    final bar = tester.getRect(byKey('board.tabsBar'));
+    expect(bar.left, 16 - 8);
+    expect(tester.getRect(byKey('board.search')).right, bar.right - 8);
     expect(byKey('board.actions.more'), findsOneWidget);
     expect(byKey('board.reportBug'), findsNothing);
+    await tester.tap(byKey('board.search'));
+    await tester.pumpAndSettle();
+    final panel = tester.getRect(byKey('board.search.panel'));
+    // The popover (with its 1 px border) spans the page's 16 px gutters.
+    expect(panel.left, 16 + 1);
+    expect(panel.right, 400 - 16 - 1);
     expect(tester.takeException(), isNull);
     await settleTooltips(tester);
   });

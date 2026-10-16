@@ -83,6 +83,25 @@ abstract final class BoardTasks {
     );
   }
 
+  /// (Up for grabs, Claimed): published tasks without a valid claim, and
+  /// claimed or in-review ones (specs/16 §4.4).
+  static Future<(int, int)> counts(Session session) async {
+    final now = nowUtc();
+    var open = 0;
+    var claimed = 0;
+    for (final t in await BoardTask.db.find(
+      session,
+      where: (t) => t.status.inSet(_activeStatuses),
+    )) {
+      if (BoardViews.effectiveStatus(t, now) == BoardTaskStatus.published) {
+        open++;
+      } else {
+        claimed++;
+      }
+    }
+    return (open, claimed);
+  }
+
   static Future<BoardTaskView> get(Session session, int number) async {
     final c = await BoardAccess.caller(session);
     return BoardViews.task(

@@ -18,17 +18,50 @@ abstract final class BoardSearch {
       'WHERE b."userId" = v."userId" AND b."blockedAt" IS NOT NULL '
       'AND (b."blockedUntil" IS NULL OR b."blockedUntil" > @now))';
 
-  /// An OR query over the words of [text] for `websearch_to_tsquery`
-  /// (similar posts: any shared term counts, ranking does the rest).
-  static String orQuery(String text) {
-    final words = <String>{};
+  /// The words of [text] for a tsquery: runs of letters and digits,
+  /// lowercased, without one-letter words, at most [max]. Everything else
+  /// (tsquery operators `& | ! : * ( ) <->`, quotes, LIKE wildcards) is a
+  /// separator, so the result is always a valid `to_tsquery` operand list.
+  static List<String> words(String text, {int max = 40}) {
+    final out = <String>{};
     for (final m in RegExp(r'[\p{L}\p{N}]+', unicode: true).allMatches(text)) {
       final w = m[0]!.toLowerCase();
-      if (w.length < 2 || w == 'or') continue;
-      words.add(w);
-      if (words.length >= 40) break;
+      if (w.length < 2) continue;
+      out.add(w);
+      if (out.length >= max) break;
     }
-    return words.join(' or ');
+    return [...out];
+  }
+
+  /// A `to_tsquery('english', …)` text over the [words] of [text], joined
+  /// by [op] (`&` or `|`). Words of three or more characters are prefixes
+  /// (`sort:*` finds *sorting*; the English config stems the prefix too).
+  /// Empty when [text] has no words. Passed as a query parameter, never
+  /// spliced into the SQL.
+  static String tsQuery(String text, {String op = '&', int max = 40}) => [
+    for (final w in words(text, max: max)) w.length >= 3 ? '$w:*' : w,
+  ].join(' $op ');
+
+  /// An OR query over the words of [text] (similar posts: any shared term
+  /// counts, ranking does the rest).
+  static String orQuery(String text) => tsQuery(text, op: '|');
+
+  /// [text] as an `ILIKE` pattern matching it anywhere (`%text%`), with
+  /// whitespace collapsed and the LIKE metacharacters `\`, `%` and `_`
+  /// escaped (the default escape character is the backslash).
+  static String likePattern(String text) {
+    final t = text.trim().replaceAll(RegExp(r'\s+'), ' ');
+    final escaped = t.replaceAllMapped(
+      RegExp(r'[\\%_]'),
+      (m) => '\\${m[0]}',
+    );
+    return '%$escaped%';
+  }
+
+  /// The post number in [text] (`12` or `#12`), or null.
+  static int? postNumber(String text) {
+    final m = RegExp(r'^#?\s*(\d{1,9})$').firstMatch(text.trim());
+    return m == null ? null : int.parse(m[1]!);
   }
 
   /// Ids of visible posts in [statuses] that match [text] best (OR over its
@@ -50,7 +83,7 @@ abstract final class BoardSearch {
     final rows = await session.db.unsafeQuery(
       '''
       SELECT p.id FROM board_post p,
-        websearch_to_tsquery('english', @q) query
+        to_tsquery('english', @q) query
       WHERE p.moderation = 'visible' AND p."deletedAt" IS NULL
         AND p.status IN (${_names(statuses)})
         ${kind == null ? '' : 'AND p.kind = @kind'}
@@ -103,6 +136,20 @@ abstract final class BoardSearch {
   static String _names(Iterable<Enum> values) =>
       values.map((v) => "'${v.name}'").join(', ');
 
+  /// Visible open and planned (ideas, bugs): the tab counts.
+  static Future<(int, int)> openCounts(Session session) async {
+    final rows = await session.db.unsafeQuery(
+      "SELECT p.kind, count(*) FROM board_post p "
+      "WHERE p.\"deletedAt\" IS NULL AND p.moderation = 'visible' "
+      "AND p.status IN ('open', 'planned') GROUP BY p.kind",
+    );
+    final byKind = {for (final r in rows) '${r[0]}': r[1] as int};
+    return (
+      byKind[BoardPostKind.idea.name] ?? 0,
+      byKind[BoardPostKind.bug.name] ?? 0,
+    );
+  }
+
   /// One page of the board list (specs/16 §4.4): ids in order and the
   /// total.
   static Future<(List<int>, int)> list(
@@ -115,7 +162,7 @@ abstract final class BoardSearch {
     final statuses = query.statuses.isEmpty
         ? const [BoardPostStatus.open, BoardPostStatus.planned]
         : query.statuses;
-    final text = query.query?.trim() ?? '';
+    final search = _Search.of(query.query ?? '');
     final where = <String>[
       'p."deletedAt" IS NULL',
       'p.status IN (${_names(statuses)})',
@@ -133,13 +180,13 @@ abstract final class BoardSearch {
             ? '(p."authorId" = @me OR EXISTS (SELECT 1 FROM board_vote mv '
                   'WHERE mv."postId" = p.id AND mv."userId" = @me))'
             : 'FALSE',
-      if (text.isNotEmpty) "$document @@ websearch_to_tsquery('english', @q)",
+      if (search != null) search.where,
     ];
     final now = nowUtc();
     final params = <String, Object?>{
       if (query.mine && c.signedIn) 'me': c.userId,
       'kind': ?query.kind?.name,
-      if (text.isNotEmpty) 'q': text,
+      ...?search?.parameters,
     };
     final whereSql = where.join(' AND ');
     final countRows = await session.db.unsafeQuery(
@@ -151,24 +198,21 @@ abstract final class BoardSearch {
         '(SELECT COALESCE(SUM(v.value), 0) FROM board_vote v '
         'WHERE v."postId" = p.id AND v."createdAt" > @since '
         'AND $activeVoter)';
-    final rank = text.isEmpty
-        ? null
-        : "ts_rank_cd($document, websearch_to_tsquery('english', @q))";
-    final order = switch (query.sort) {
-      BoardSort.trending => [
-        ?rank,
-        '$trending DESC',
-        'p.score DESC',
-        'p.id DESC',
-      ],
-      BoardSort.top => ['p.score DESC', 'p.id DESC'],
-      BoardSort.newest => ['p."createdAt" DESC', 'p.id DESC'],
-      BoardSort.discussed => [
-        'p."commentCount" DESC',
-        'p.score DESC',
-        'p.id DESC',
-      ],
-    }.map((o) => o == rank ? '$o DESC' : o).join(', ');
+    // A search ranks first (the post number, full-text rank, a title
+    // substring hit), then the list's sort.
+    final order = [
+      ...?search?.order,
+      ...switch (query.sort) {
+        BoardSort.trending => ['$trending DESC', 'p.score DESC', 'p.id DESC'],
+        BoardSort.top => ['p.score DESC', 'p.id DESC'],
+        BoardSort.newest => ['p."createdAt" DESC', 'p.id DESC'],
+        BoardSort.discussed => [
+          'p."commentCount" DESC',
+          'p.score DESC',
+          'p.id DESC',
+        ],
+      },
+    ].join(', ');
     final rows = await session.db.unsafeQuery(
       'SELECT p.id FROM board_post p WHERE $whereSql '
       'ORDER BY $order LIMIT @limit OFFSET @offset',
@@ -184,4 +228,52 @@ abstract final class BoardSearch {
     );
     return ([for (final r in rows) r[0] as int], total);
   }
+}
+
+/// The search of a board list (specs/16 §6.4): a post matches when its
+/// document matches every word as a prefix (full-text), its title contains
+/// the text (`ILIKE`, metacharacters escaped), or the text is its number.
+/// All user text travels as query parameters.
+class _Search {
+  _Search._(this.tsQuery, this.like, this.number);
+
+  /// Null when [text] is blank.
+  static _Search? of(String text) {
+    final t = text.trim();
+    if (t.isEmpty) return null;
+    return _Search._(
+      BoardSearch.tsQuery(t, max: 16),
+      BoardSearch.likePattern(t),
+      BoardSearch.postNumber(t),
+    );
+  }
+
+  final String tsQuery;
+  final String like;
+  final int? number;
+
+  static const _fts = "${BoardSearch.document} @@ to_tsquery('english', @sq)";
+  static const _title = 'p.title ILIKE @slike';
+
+  String get where {
+    final any = [
+      if (tsQuery.isNotEmpty) _fts,
+      _title,
+      if (number != null) 'p.id = @snum',
+    ];
+    return '(${any.join(' OR ')})';
+  }
+
+  List<String> get order => [
+    if (number != null) '(p.id = @snum) DESC',
+    if (tsQuery.isNotEmpty)
+      "ts_rank_cd(${BoardSearch.document}, to_tsquery('english', @sq)) DESC",
+    '($_title) DESC',
+  ];
+
+  Map<String, Object?> get parameters => {
+    if (tsQuery.isNotEmpty) 'sq': tsQuery,
+    'slike': like,
+    'snum': ?number,
+  };
 }

@@ -3418,6 +3418,65 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get boardTabTasks => 'Up for grabs';
 
   @override
+  String get boardTabClaimed => 'Claimed';
+
+  @override
+  String get boardSearchButton => 'Search';
+
+  @override
+  String boardSearchActive(String query) {
+    return 'Search: “$query”';
+  }
+
+  @override
+  String get boardSearchRemove => 'Clear the search';
+
+  @override
+  String get boardSearchIn => 'Search in';
+
+  @override
+  String get boardSearchInAll => 'All posts';
+
+  @override
+  String get boardSearchIncludeClosed => 'Include closed';
+
+  @override
+  String get boardSearchIncludeClosedHint =>
+      'Done, shipped, declined and duplicates';
+
+  @override
+  String get boardSearchKind => 'Kind';
+
+  @override
+  String get boardSearchKindAll => 'Bugs and improvements';
+
+  @override
+  String get boardSearchResults => 'Search';
+
+  @override
+  String boardSearchResultsFor(String query) {
+    return 'Results for “$query”';
+  }
+
+  @override
+  String get boardSearchStartTitle => 'Search the board';
+
+  @override
+  String get boardSearchStartHint =>
+      'Find posts by their words, part of a title or their number.';
+
+  @override
+  String get boardEmptySearchHint =>
+      'Try fewer words or part of a word, or include closed posts.';
+
+  @override
+  String get boardEmptyClaimed => 'No claimed tasks';
+
+  @override
+  String get boardEmptyClaimedHint =>
+      'Tasks show here while someone works on them, and while their pull request is in review.';
+
+  @override
   String get boardTabDone => 'Done';
 
   @override
@@ -7936,6 +7995,65 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get boardTabTasks => '[Ûþ ƒöŕ ĝŕåƀš one]';
+
+  @override
+  String get boardTabClaimed => '[Çļåîɱéð one]';
+
+  @override
+  String get boardSearchButton => '[Šéåŕçĥ one]';
+
+  @override
+  String boardSearchActive(String query) {
+    return '[Šéåŕçĥ: “$query” one]';
+  }
+
+  @override
+  String get boardSearchRemove => '[Çļéåŕ ţĥé šéåŕçĥ one t]';
+
+  @override
+  String get boardSearchIn => '[Šéåŕçĥ îñ one]';
+
+  @override
+  String get boardSearchInAll => '[Åļļ þöšţš one]';
+
+  @override
+  String get boardSearchIncludeClosed => '[Îñçļûðé çļöšéð one t]';
+
+  @override
+  String get boardSearchIncludeClosedHint =>
+      '[Ðöñé, šĥîþþéð, ðéçļîñéð åñð ðûþļîçåţéš one two thre]';
+
+  @override
+  String get boardSearchKind => '[Ķîñð on]';
+
+  @override
+  String get boardSearchKindAll => '[Ɓûĝš åñð îɱþŕöṽéɱéñţš one two]';
+
+  @override
+  String get boardSearchResults => '[Šéåŕçĥ one]';
+
+  @override
+  String boardSearchResultsFor(String query) {
+    return '[Ŕéšûļţš ƒöŕ “$query” one t]';
+  }
+
+  @override
+  String get boardSearchStartTitle => '[Šéåŕçĥ ţĥé ƀöåŕð one t]';
+
+  @override
+  String get boardSearchStartHint =>
+      '[Ƒîñð þöšţš ƀý ţĥéîŕ ŵöŕðš, þåŕţ öƒ å ţîţļé öŕ ţĥéîŕ ñûɱƀéŕ. one two three fou]';
+
+  @override
+  String get boardEmptySearchHint =>
+      '[Ţŕý ƒéŵéŕ ŵöŕðš öŕ þåŕţ öƒ å ŵöŕð, öŕ îñçļûðé çļöšéð þöšţš. one two three fou]';
+
+  @override
+  String get boardEmptyClaimed => '[Ñö çļåîɱéð ţåšķš one t]';
+
+  @override
+  String get boardEmptyClaimedHint =>
+      '[Ţåšķš šĥöŵ ĥéŕé ŵĥîļé šöɱéöñé ŵöŕķš öñ ţĥéɱ, åñð ŵĥîļé ţĥéîŕ þûļļ ŕéǫûéšţ îš îñ ŕéṽîéŵ. one two three four five si]';
 
   @override
   String get boardTabDone => '[Ðöñé on]';

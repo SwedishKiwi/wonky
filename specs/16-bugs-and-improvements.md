@@ -125,8 +125,8 @@ draft ──► published ──► claimed ──► inReview ──► done �
 - `draft`: created by an admin from one or more posts. The AI prompt is generated (§10), and the task
   is visible to admins only.
 - `published`: open for claims and listed under *Up for grabs*. Its posts become `planned`.
-- `claimed`: reserved by one user until `claimExpiresAt`. On expiry it goes back to `published`
-  (§8.2).
+- `claimed`: reserved by one user until `claimExpiresAt`, listed under *Claimed* (with
+  `inReview`). On expiry it goes back to `published` (§8.2).
 - `inReview`: a PR passed the gate (§13.4), or an admin linked one. The claim no longer expires
   while the PR is open.
 - `done`, `shipped`: as for posts, and they carry over to all linked posts.
@@ -269,9 +269,11 @@ The board routes are added to every app by `buildShellRouter`, next to `settings
 |-------|------|
 | `/improvements` | Board, tab *Improvements* |
 | `/improvements/bugs` | Board, tab *Bugs* |
-| `/improvements/tasks` | *Up for grabs* (published and claimed tasks) |
+| `/improvements/tasks` | *Up for grabs* (published tasks nobody holds) |
+| `/improvements/claimed` | *Claimed* (claimed and in-review tasks) |
 | `/improvements/done` | Done and shipped (posts and tasks) |
 | `/improvements/review` | Admins only: moderation queue, bundles, drafts (§9.2) |
+| `/improvements/search?q=…` | Search results across all posts (§4.4); also `closed=1`, `kind=bug` or `kind=idea` |
 | `/improvements/p/:number` | Post page |
 | `/improvements/t/:number` | Task page |
 | `/improvements/contribute` | How to contribute: renders the repo's `CONTRIBUTING.md` summary (§10.3) |
@@ -280,7 +282,8 @@ The board routes are added to every app by `buildShellRouter`, next to `settings
   back button, on every board page (lists, post, task, contribute, review): the current app's
   icon (the app logo, 24 px; *Close Bugs & improvements*: back to the last route outside the
   board, `boardBackTarget`, else home), *Bugs & improvements* (the root: the Improvements list),
-  the list the page belongs to (*Improvements*, *Bugs*, *Up for grabs*, *Done*, *Review*), then
+  the list the page belongs to (*Improvements*, *Bugs*, *Up for grabs*, *Claimed*, *Done*,
+  *Review*, or *Results for “sort”* for a search of all posts), then
   the task (`T-1 Sorting by name…`) and the post (`#5 The small Markdown editor…`). Chevron
   separators (Lucide `chevron-right`, 14 px, `mutedForeground`). Crumbs are `small` medium
   weight: links in `mutedForeground`, the foreground and an underline on hover, the focus ring,
@@ -293,12 +296,19 @@ The board routes are added to every app by `buildShellRouter`, next to `settings
 - **Trail rules (`BoardTrail`, `board/pages/board_trail.dart`).** The trail is the board's
   hierarchy, never the browser history: root › list › task › post at most.
   - A list opens a post or task under it: root › list › item. A list that cannot hold the item
-    (a post from *Up for grabs*, a task from *Improvements* or *Bugs*) gives the item's own list.
+    (a post from *Up for grabs* or *Claimed*, a task from *Improvements*, *Bugs* or the search
+    results) gives the item's own list.
+  - *Claimed* is treated like *Up for grabs* (a task list). A task's own list follows its status
+    (`BoardTab.ofTask`): *Claimed* while claimed or in review, *Up for grabs* when published (an
+    expired claim is published), *Done* when done or shipped.
+  - A search belongs to its list (`BoardTrail.search`): a post opened from search results keeps
+    the search in its URL (`/improvements/p/5?list=search&q=sort`), so the list crumb returns to
+    the results; a task opened from them goes under its own list.
   - A task opens one of its linked posts under itself: root › *Up for grabs* (or the list the task
     came from) › T-n › #m.
   - A post opens a task: the trail truncates to the task (root › list › T-n), never post › task ›
-    post › task; the list stays when it shows tasks (*Up for grabs*, *Done*, *Review*), else the
-    task's own list.
+    post › task; the list stays when it shows tasks (*Up for grabs*, *Claimed*, *Done*, *Review*),
+    else the task's own list.
   - A post opens another post (similar posts, merged duplicates, *Duplicate of*, the automatic
     redirect of a merged duplicate): the new post replaces the current one (siblings, same
     parent).
@@ -306,14 +316,15 @@ The board routes are added to every app by `buildShellRouter`, next to `settings
   - The trail is in the URL query, so reloads and shared links keep it:
     `/improvements/p/5?list=tasks&task=1`, `/improvements/t/1?list=review`. Without a query (links
     in emails, notifications, *Copy link*) a post is under its kind's list (*Bugs* or
-    *Improvements*; under a `task=`, *Up for grabs*), a task under *Up for grabs*, or *Done* when
-    done or shipped; the list crumb appears once the item is loaded. Unknown or contradictory
-    query values fall back to these defaults.
+    *Improvements*; under a `task=`, the task's list, *Up for grabs* while it is unknown), a task
+    under its own list (above); the list crumb appears once the item is loaded. Unknown or
+    contradictory query values fall back to these defaults.
   - Navigation is `router.go` to the computed location (`boardGo`). Moves at the same depth
     (switching tabs, post → sibling post, task → task) replace the current history entry, in the
     shell's history and the browser's (`ShellServices.goReplacing`, `Router.neglect`), so the
     history never fills with loops; the shell's Back (`Mod+[`, the browser's back) still walks
-    the real history.
+    the real history. Starting, changing or clearing a search is not a sibling move: it pushes,
+    so Back returns to the list as it was.
 - **Page frame (as built):** every board page uses the settings page frame, `ShellPageFrame`
   (`shell/page_frame.dart`): the 56 px bar with, in its `navigation` slot, the breadcrumb and the
   board's actions (`BoardBar`), then the account menu; signed out, `ShellPageFrame.signedOutAction`
@@ -342,17 +353,45 @@ The board routes are added to every app by `buildShellRouter`, next to `settings
   - for signed-out visitors, *Sign in to vote and post*.
 - **Tabs bar** (`BoardTabsBar`), styled like the editors' toolbar strip (`muted` at 60 %, 20 px
   radius, the toolbar height of 40 px): the tabs on the left as toolbar toggles (`ShadToggle`,
-  28 px, the active one highlighted, `tab` / `tabBar` semantics) and the search on the right
-  (compact 28 px `ShadInput` with the search icon, 240 px, `board.list` with `query`). Each tab
-  shows its count as a GitHub-like badge after the label (a rounded pill on `border`, stronger
-  on the active tab; screen readers hear *Bugs, 3*):
-  - *Improvements* (count of open posts);
-  - *Bugs* (count of open bugs);
-  - *Up for grabs* (count of published tasks);
+  28 px, the active one highlighted, `tab` / `tabBar` semantics) and the search button at the end
+  (below). Each tab shows its count as a GitHub-like badge after the label (a rounded pill on
+  `border`, stronger on the active tab; screen readers hear *Bugs, 3*). The counts come from one
+  call, `board.counts()` → `BoardCounts` (the held count from `reviewCounts`), reloaded when a
+  board command changes lists and on every `watchTasks` event:
+  - *Improvements* (count of open and planned ideas);
+  - *Bugs* (count of open and planned bugs);
+  - *Up for grabs* (published tasks without a valid claim);
+  - *Claimed* (claimed and in-review tasks; in review = a PR is linked);
   - *Done* (no count: it is the archive);
   - *Review* (admins only, with the held count as the badge).
-  Below 600 px the search goes under the strip at full width; the tabs scroll horizontally when
-  they do not fit.
+  The tabs scroll horizontally when they do not fit. *Up for grabs* and *Claimed* follow
+  `watchTasks` live: a claim, release, expiry or linked PR moves a task between them. Each has its
+  own empty state (*No tasks up for grabs*; *No claimed tasks*).
+- **Search** (as built, `board/pages/board_search.dart`): a toolbar icon button (Lucide `search`,
+  28 px, tooltip *Search*, key `board.search`) at the end of the tabs strip, highlighted like the
+  selected tab while a search is active (a toggle in semantics, named *Search: “sort”*). `/` on a
+  board list page opens it (not while a text field has the focus). It opens a `ShadPopover`
+  anchored to the button (360 px; on windows below 600 px it spans the page's 16 px gutters) with:
+  - the search field (focused; Enter searches; *Search posts*);
+  - *Search in*: *All posts* or the current tab (only on *Improvements*, *Bugs* and *Done*; from
+    the task tabs and Review the search covers all posts). Default: all posts, or the tab when
+    its search is the active one;
+  - *Kind* (all posts only): *Bugs and improvements*, *Bugs*, *Improvements*;
+  - *Include closed* (done, shipped, declined, duplicates; default off);
+  - *Clear* and *Search*. Esc closes the popover; searching with an empty field clears.
+
+  A search in a tab filters that tab (`/improvements/bugs?q=sort&closed=1`) and the tab stays
+  selected. A search of all posts opens the **results view** `/improvements/search?q=…`
+  (`BoardTab.search`, not a tab): the tabs show no selection, a header names it (*Results for
+  “sort”*, also the list crumb), and the rows are posts of both kinds (or the chosen kind) with
+  the usual filters and sort; the admin selection mode is off there. Without a `q` the results
+  view shows *Search the board* with a button that opens the popover. While searching, Done
+  shows only the matching posts (not the finished tasks). The active search is the first chip of
+  the filter row, *Search: “sort”* with ✕ (`board.filter.search`): pressing it clears the search
+  (back to the tab, or to *Improvements* from the results). The search lives in the URL (`q`,
+  `closed=1`, `kind=bug|idea`; `BoardSearchQuery`), so it can be shared and survives a reload.
+  Empty results: *No posts match your search* with *Try fewer words or part of a word, or include
+  closed posts.* Matching and ranking are in §6.4.
 - **Filters** (chips): area (multi-select), size, status (default `open` + `planned`) and *Mine*
   (posts I wrote or voted on).
 - **Sort**:
@@ -408,8 +447,9 @@ the trail to the task; *Similar posts*, merged duplicates and *Duplicate of* rep
 
 ### 4.6 Task page
 
-The breadcrumb (§4.3) ends in `T-12 Title` under the list it came from (*Up for grabs*, *Done*,
-*Review*), else under *Up for grabs* (or *Done* once done or shipped). Linked posts open under the
+The breadcrumb (§4.3) ends in `T-12 Title` under the list it came from (*Up for grabs*,
+*Claimed*, *Done*, *Review*), else under its own list (*Claimed* while claimed or in review,
+*Done* once done or shipped, else *Up for grabs*). Linked posts open under the
 task.
 
 - **Header**:
@@ -684,8 +724,25 @@ flattened screenshot) to catch readable emails, names or document text the autho
   `list(query)` compute `setweight(to_tsvector('english', title), 'A') ||
   setweight(to_tsvector('english', body), 'B')` in a raw SQL query. Even at tens of thousands of
   posts this takes milliseconds, and the query is limited to visible posts.
-- `similar(text, kind)` uses `websearch_to_tsquery` OR-joined over the terms, `ts_rank_cd`, and
-  only `visible` posts in `open`/`planned`/`done`. It returns up to 5.
+- **Board search** (`list(query)`, as built in `BoardSearch`): a post matches when any of these
+  holds (OR):
+  - **full-text, word prefixes**: the query's words (runs of letters and digits, lowercased,
+    one-letter words dropped, at most 16) AND-joined, each word of 3+ characters as a prefix
+    (`sort:* & col:*`), through `to_tsquery('english', @sq)`: *sort* finds *sorting* and *sorted*
+    (the prefix is stemmed like the document). Every other character, including the tsquery
+    operators `& | ! : * ( ) <->` and quotes, only separates words, so the tsquery is always
+    valid;
+  - **title substring**: `p.title ILIKE @slike` with `%text%` (whitespace collapsed; `\`, `%`
+    and `_` escaped): *ort* finds *Sorting*;
+  - **post number**: `12` or `#12` matches post #12.
+
+  All user text is a query parameter, never spliced into SQL. **Ranking**: the number match, then
+  `ts_rank_cd` (title words before body words), then title substring hits, then the list's sort
+  (*Trending*, *Top*, *New*, *Most discussed*). The other filters (kind, statuses, area, size,
+  *Mine*, visibility) still apply.
+- `similar(text, kind)` uses the same words OR-joined as prefixes (`paste:* | cells:*` through
+  `to_tsquery`), `ts_rank_cd`, and only `visible` posts in `open`/`planned`/`done`. It returns up
+  to 5.
 - **Jev rerank** (when configured): full-text search returns the top 10 candidates, and one Jev
   request with a `same_<n>` Noul per candidate ("Do `draft` and `candidate` describe the same
   problem or request?") reorders them. Only candidates with p ≥ 0.3 are shown, at most 5. This is
@@ -874,7 +931,7 @@ ClusterBus channels ([07](07-collaboration.md) mechanism):
 | Method | Use |
 |--------|-----|
 | `board.watchPost(number) → Stream<BoardPostEvent>` | The post page, including the author's `checking` → `visible`/`held` transition |
-| `board.watchTasks() → Stream<BoardTaskEvent>` | The *Up for grabs* tab |
+| `board.watchTasks() → Stream<BoardTaskEvent>` | The *Up for grabs* and *Claimed* tabs and the tab counts |
 
 The board list itself is not live: it refreshes on focus and on *Load more*.
 
@@ -1386,6 +1443,7 @@ only) lists the moderation scores at or above their review band (§9.2).
 **Endpoint** `BoardEndpoint` (`board`). `requireLogin` is false: read methods work signed out,
 and write methods call `BoardService.requireWriter(session)` (signed in, not blocked). **As built**,
 the method names differ from the groups below in a few places: `listTaskComments`, `unflag`,
+`counts` (the tab badges, `BoardCounts`: open ideas and bugs, *Up for grabs*, *Claimed*),
 `reviewCounts`, `listSuggestions` and `dismissDuplicateHint` exist besides the listed ones;
 `moderate` is split into `moderatePost` and `moderateComment`; *Edit and approve* is
 `adminEditPost`; and `markDone`, `markShipped` and `cancelTask` are one method,

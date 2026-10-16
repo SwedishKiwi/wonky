@@ -32,6 +32,7 @@ assistant:
 board:
   - me:
   - list:
+  - counts:
   - getPost:
   - listComments:
   - listTaskComments:

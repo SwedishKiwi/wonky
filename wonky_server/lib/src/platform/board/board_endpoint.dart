@@ -16,6 +16,9 @@ class BoardEndpoint extends Endpoint {
   Future<BoardPostPage> list(Session session, BoardListQuery query) =>
       BoardService.list(session, query);
 
+  /// The tab counts: open ideas and bugs, *Up for grabs* and *Claimed*.
+  Future<BoardCounts> counts(Session session) => BoardService.counts(session);
+
   Future<BoardPostView> getPost(Session session, int number) =>
       BoardService.getPost(session, number);
 
@@ -41,7 +44,8 @@ class BoardEndpoint extends Endpoint {
   Future<String?> getScreenshotUrl(Session session, int number) =>
       BoardService.getScreenshotUrl(session, number);
 
-  /// Tasks with [statuses] (empty: published, claimed and inReview).
+  /// Tasks with [statuses] (empty: published, claimed and inReview). An
+  /// expired claim counts as published.
   Future<BoardTaskPage> listTasks(
     Session session,
     List<BoardTaskStatus> statuses,
@@ -56,7 +60,8 @@ class BoardEndpoint extends Endpoint {
   Stream<BoardPostEvent> watchPost(Session session, int number) =>
       BoardService.watchPost(session, number);
 
-  /// Live task changes (claims, status) for the Up for grabs tab.
+  /// Live task changes (claims, status) for the Up for grabs and Claimed
+  /// tabs.
   Stream<BoardPostEvent> watchTasks(Session session) =>
       BoardService.watchTasks(session);
 

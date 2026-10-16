@@ -2253,6 +2253,48 @@
   "@boardTabTasks": {
     "description": "Board tab with the tasks contributors can claim."
   },
+  "boardTabClaimed": "Claimed",
+  "@boardTabClaimed": {
+    "description": "Board tab with the tasks someone has claimed or that are in review."
+  },
+  "boardSearchButton": "Search",
+  "@boardSearchButton": {
+    "description": "Tooltip of the board's search button (opens the search popover; shortcut /)."
+  },
+  "boardSearchActive": "Search: “{query}”",
+  "@boardSearchActive": {
+    "description": "The active board search: the search button's label and the removable chip in the filter row.",
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "boardSearchRemove": "Clear the search",
+  "boardSearchIn": "Search in",
+  "boardSearchInAll": "All posts",
+  "boardSearchIncludeClosed": "Include closed",
+  "boardSearchIncludeClosedHint": "Done, shipped, declined and duplicates",
+  "boardSearchKind": "Kind",
+  "boardSearchKindAll": "Bugs and improvements",
+  "boardSearchResults": "Search",
+  "@boardSearchResults": {
+    "description": "Breadcrumb of the board's search results page without a query."
+  },
+  "boardSearchResultsFor": "Results for “{query}”",
+  "@boardSearchResultsFor": {
+    "description": "Header and breadcrumb of the board's search results across all posts.",
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "boardSearchStartTitle": "Search the board",
+  "boardSearchStartHint": "Find posts by their words, part of a title or their number.",
+  "boardEmptySearchHint": "Try fewer words or part of a word, or include closed posts.",
+  "boardEmptyClaimed": "No claimed tasks",
+  "boardEmptyClaimedHint": "Tasks show here while someone works on them, and while their pull request is in review.",
   "boardTabDone": "Done",
   "boardTabReview": "Review",
   "@boardTabReview": {

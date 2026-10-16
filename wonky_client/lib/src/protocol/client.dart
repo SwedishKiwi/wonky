@@ -51,6 +51,8 @@ import 'package:wonky_client/src/protocol/platform/board/models/board_bundle_sug
     as _i94c7q23;
 import 'package:wonky_client/src/protocol/platform/board/models/board_comment_view.dart'
     as _iesojpvb;
+import 'package:wonky_client/src/protocol/platform/board/models/board_counts.dart'
+    as _iwgo3mc7;
 import 'package:wonky_client/src/protocol/platform/board/models/board_flag_reason.dart'
     as _iqqu23qj;
 import 'package:wonky_client/src/protocol/platform/board/models/board_list_query.dart'
@@ -757,6 +759,14 @@ class EndpointBoard extends _isc.EndpointRef {
         {'query': query},
       );
 
+  /// The tab counts: open ideas and bugs, *Up for grabs* and *Claimed*.
+  _ida.Future<_iwgo3mc7.BoardCounts> counts() =>
+      caller.callServerEndpoint<_iwgo3mc7.BoardCounts>(
+        'board',
+        'counts',
+        {},
+      );
+
   _ida.Future<_ichg96zd.BoardPostView> getPost(int number) =>
       caller.callServerEndpoint<_ichg96zd.BoardPostView>(
         'board',
@@ -803,7 +813,8 @@ class EndpointBoard extends _isc.EndpointRef {
         {'number': number},
       );
 
-  /// Tasks with [statuses] (empty: published, claimed and inReview).
+  /// Tasks with [statuses] (empty: published, claimed and inReview). An
+  /// expired claim counts as published.
   _ida.Future<_i5hp59xb.BoardTaskPage> listTasks(
     List<_i325i6jq.BoardTaskStatus> statuses,
     String? cursor,
@@ -837,7 +848,8 @@ class EndpointBoard extends _isc.EndpointRef {
         {},
       );
 
-  /// Live task changes (claims, status) for the Up for grabs tab.
+  /// Live task changes (claims, status) for the Up for grabs and Claimed
+  /// tabs.
   _ida.Stream<_i0ceh4xz.BoardPostEvent> watchTasks() =>
       caller.callStreamingServerEndpoint<
         _ida.Stream<_i0ceh4xz.BoardPostEvent>,

@@ -15,8 +15,10 @@ String boardTabName(WonkyAppLocalizations l, BoardTab tab) => switch (tab) {
   BoardTab.improvements => l.boardTabImprovements,
   BoardTab.bugs => l.boardTabBugs,
   BoardTab.tasks => l.boardTabTasks,
+  BoardTab.claimed => l.boardTabClaimed,
   BoardTab.done => l.boardTabDone,
   BoardTab.review => l.boardTabReview,
+  BoardTab.search => l.boardSearchResults,
 };
 
 /// One step of the board's breadcrumb: its [label] and where it leads
@@ -52,8 +54,13 @@ List<BoardCrumb> boardCrumbs(
     if (list != null)
       BoardCrumb(
         id: 'list',
-        label: boardTabName(l, list),
-        target: BoardTrail(list: list),
+        label: switch (trail.search) {
+          final q? when list == BoardTab.search => l.boardSearchResultsFor(
+            q.text,
+          ),
+          _ => boardTabName(l, list),
+        },
+        target: BoardTrail(list: list, search: trail.search),
       ),
     if (task != null)
       BoardCrumb(
@@ -528,64 +535,29 @@ class BoardTabItem {
 
 /// The board's tabs bar (specs/16 §4.4), styled like the editors' toolbar
 /// strip (`muted` at 60 %, 20 px radius, the toolbar's height): the tabs on
-/// the left as toolbar toggles (the active one highlighted) with GitHub-like
-/// count badges, and [search] (compact, the toolbar's control height) on the
-/// right. When the tabs and a [minSearchWidth] search do not fit side by
-/// side (measured), the search moves under the strip; the tabs scroll
-/// horizontally when they still do not fit.
+/// the left as toolbar toggles (the active one highlighted; none while a
+/// search of all posts shows, [value] null) with GitHub-like count badges,
+/// and [trailing] (the search button) at the end. The tabs scroll
+/// horizontally when they do not fit.
 class BoardTabsBar extends StatelessWidget {
   const BoardTabsBar({
     super.key,
     required this.tabs,
     required this.value,
     required this.onChanged,
-    required this.search,
+    this.trailing,
   });
 
   final List<BoardTabItem> tabs;
-  final BoardTab value;
+  final BoardTab? value;
   final ValueChanged<BoardTab> onChanged;
-  final Widget search;
-
-  static const double searchWidth = 240;
+  final Widget? trailing;
 
   /// Inner padding of the strip, and how far it reaches past the content
   /// column on each side so the first tab's edge lines up with the content
   /// below (the strip's rounded ends sit outside the column).
   static const double padding = 8;
   static const double bleed = 8;
-  static const double minSearchWidth = 180;
-
-  /// The natural width of the tabs (labels, badges, padding), measured with
-  /// the active weight so a tab switch never changes the layout.
-  double _tabsWidth(BuildContext context, ShadThemeData theme) {
-    final base = DefaultTextStyle.of(
-      context,
-    ).style.merge(theme.textTheme.small.copyWith(fontWeight: FontWeight.w600));
-    final scaler = MediaQuery.textScalerOf(context);
-    var width = 0.0;
-    for (final t in tabs) {
-      final label = TextPainter(
-        text: TextSpan(text: t.label, style: base),
-        textDirection: TextDirection.ltr,
-        textScaler: scaler,
-      )..layout();
-      width += label.width + 20; // ShadToggle horizontal padding.
-      if (t.count != null) {
-        final badge = TextPainter(
-          text: TextSpan(
-            text: '${t.count}',
-            style: base.copyWith(fontSize: (base.fontSize ?? 14) - 2),
-          ),
-          textDirection: TextDirection.ltr,
-          textScaler: scaler,
-        )..layout();
-        width += 6 + badge.width + 14; // gap + pill padding.
-      }
-      label.dispose();
-    }
-    return width + 2.0 * (tabs.length - 1); // tab spacing.
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -661,15 +633,9 @@ class BoardTabsBar extends StatelessWidget {
         child: Row(spacing: 2, children: [for (final t in tabs) tab(t)]),
       ),
     );
-    final tabsWidth = _tabsWidth(context, theme);
+    final trailing = this.trailing;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final inner = constraints.maxWidth + 2 * bleed - 2 * padding;
-        final narrow = inner < tabsWidth + 8 + minSearchWidth;
-        final searchW = (inner - tabsWidth - 8).clamp(
-          minSearchWidth,
-          searchWidth,
-        );
         final strip = Container(
           key: const ValueKey<String>('board.tabsBar'),
           height: ext.effectiveToolbarHeight,
@@ -686,30 +652,18 @@ class BoardTabsBar extends StatelessWidget {
                   child: tabsRow,
                 ),
               ),
-              if (!narrow) ...[
-                const SizedBox(width: 8),
-                SizedBox(width: searchW, height: size, child: search),
-              ],
+              if (trailing != null) ...[const SizedBox(width: 4), trailing],
             ],
           ),
         );
         // The strip is wider than the column by [bleed] on each side.
-        final wide = SizedBox(
+        return SizedBox(
           height: ext.effectiveToolbarHeight,
           child: OverflowBox(
             maxWidth: constraints.maxWidth + 2 * bleed,
             minWidth: constraints.maxWidth + 2 * bleed,
             child: strip,
           ),
-        );
-        if (!narrow) return wide;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: 8,
-          children: [
-            wide,
-            SizedBox(height: size + 4, child: search),
-          ],
         );
       },
     );

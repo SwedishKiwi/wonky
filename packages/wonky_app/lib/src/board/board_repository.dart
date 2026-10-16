@@ -7,6 +7,9 @@ import '../data/api.dart';
 abstract class BoardRepository {
   Future<BoardMe> me();
   Future<BoardPostPage> list(BoardListQuery query);
+
+  /// The tab counts: open ideas and bugs, *Up for grabs*, *Claimed*.
+  Future<BoardCounts> counts();
   Future<BoardPostView> getPost(int number);
   Future<List<BoardCommentView>> listComments(int number);
   Future<List<BoardCommentView>> listTaskComments(int number);
@@ -117,6 +120,9 @@ class ServerBoardRepository implements BoardRepository {
   @override
   Future<BoardPostPage> list(BoardListQuery query) =>
       api.guard((c) => c.board.list(query));
+
+  @override
+  Future<BoardCounts> counts() => api.guard((c) => c.board.counts());
 
   @override
   Future<BoardPostView> getPost(int number) =>

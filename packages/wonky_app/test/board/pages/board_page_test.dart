@@ -126,20 +126,6 @@ void main() {
     await settleTooltips(tester);
   });
 
-  testWidgets('Given a search when typing then the list is filtered', (
-    tester,
-  ) async {
-    current = await pumpBoard(tester, '/improvements', board: seeded());
-
-    await tester.enterText(byKey('board.search'), 'dark');
-    await tester.pump(const Duration(milliseconds: 400));
-    await tester.pumpAndSettle();
-
-    expect(row(1), findsOneWidget);
-    expect(row(2), findsNothing);
-    await settleTooltips(tester);
-  });
-
   testWidgets('Given 35 ideas when Load more is pressed then the next page '
       'is appended', (tester) async {
     final b = FakeBoardRepository();

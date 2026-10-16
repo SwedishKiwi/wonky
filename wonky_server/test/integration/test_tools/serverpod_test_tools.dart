@@ -68,6 +68,8 @@ import 'package:wonky_server/src/generated/platform/board/models/board_bundle_su
     as _i8qikgvy;
 import 'package:wonky_server/src/generated/platform/board/models/board_comment_view.dart'
     as _ilh4w69x;
+import 'package:wonky_server/src/generated/platform/board/models/board_counts.dart'
+    as _imokftek;
 import 'package:wonky_server/src/generated/platform/board/models/board_flag_reason.dart'
     as _i0z7k09i;
 import 'package:wonky_server/src/generated/platform/board/models/board_list_query.dart'
@@ -1678,6 +1680,36 @@ class _BoardEndpoint {
                   _localCallContext.arguments,
                 )
                 as _ida.Future<_imlue0yd.BoardPostPage>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_imokftek.BoardCounts> counts(
+    _ist.TestSessionBuilder sessionBuilder,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'counts',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'counts',
+          parameters: _ist.testObjectToJson({}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_imokftek.BoardCounts>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

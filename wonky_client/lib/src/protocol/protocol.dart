@@ -104,6 +104,7 @@ import 'platform/board/models/board_bundle_suggestion.dart' as _ilo15wk2;
 import 'platform/board/models/board_bundle_suggestion_view.dart' as _iin47lv0;
 import 'platform/board/models/board_comment.dart' as _ijz5flk6;
 import 'platform/board/models/board_comment_view.dart' as _ipkjmsg5;
+import 'platform/board/models/board_counts.dart' as _iswbp1jv;
 import 'platform/board/models/board_event_kind.dart' as _ita8snxr;
 import 'platform/board/models/board_flag.dart' as _i0y7d0xd;
 import 'platform/board/models/board_flag_reason.dart' as _iwc3b6vo;
@@ -338,6 +339,7 @@ export 'platform/board/models/board_bundle_suggestion.dart';
 export 'platform/board/models/board_bundle_suggestion_view.dart';
 export 'platform/board/models/board_comment.dart';
 export 'platform/board/models/board_comment_view.dart';
+export 'platform/board/models/board_counts.dart';
 export 'platform/board/models/board_event_kind.dart';
 export 'platform/board/models/board_flag.dart';
 export 'platform/board/models/board_flag_reason.dart';
@@ -588,6 +590,7 @@ class Protocol extends _isd.DatabaseSerializationManager
           _isc.getType<_iin47lv0.BoardBundleSuggestionView>,
           _isc.getType<_ijz5flk6.BoardComment>,
           _isc.getType<_ipkjmsg5.BoardCommentView>,
+          _isc.getType<_iswbp1jv.BoardCounts>,
           _isc.getType<_ita8snxr.BoardEventKind>,
           _isc.getType<_i0y7d0xd.BoardFlag>,
           _isc.getType<_iwc3b6vo.BoardFlagReason>,
@@ -861,6 +864,7 @@ class Protocol extends _isd.DatabaseSerializationManager
           _isc.getType<_iin47lv0.BoardBundleSuggestionView?>,
           _isc.getType<_ijz5flk6.BoardComment?>,
           _isc.getType<_ipkjmsg5.BoardCommentView?>,
+          _isc.getType<_iswbp1jv.BoardCounts?>,
           _isc.getType<_ita8snxr.BoardEventKind?>,
           _isc.getType<_i0y7d0xd.BoardFlag?>,
           _isc.getType<_iwc3b6vo.BoardFlagReason?>,
@@ -1507,6 +1511,9 @@ class Protocol extends _isd.DatabaseSerializationManager
     }
     if (t == _ipkjmsg5.BoardCommentView) {
       return _ipkjmsg5.BoardCommentView.fromJson(data) as T;
+    }
+    if (t == _iswbp1jv.BoardCounts) {
+      return _iswbp1jv.BoardCounts.fromJson(data) as T;
     }
     if (t == _ita8snxr.BoardEventKind) {
       return _ita8snxr.BoardEventKind.fromJson(data) as T;
@@ -2362,6 +2369,9 @@ class Protocol extends _isd.DatabaseSerializationManager
     if (t == _isc.getType<_ipkjmsg5.BoardCommentView?>()) {
       return (data != null ? _ipkjmsg5.BoardCommentView.fromJson(data) : null)
           as T;
+    }
+    if (t == _isc.getType<_iswbp1jv.BoardCounts?>()) {
+      return (data != null ? _iswbp1jv.BoardCounts.fromJson(data) : null) as T;
     }
     if (t == _isc.getType<_ita8snxr.BoardEventKind?>()) {
       return (data != null ? _ita8snxr.BoardEventKind.fromJson(data) : null)
@@ -3896,6 +3906,7 @@ class Protocol extends _isd.DatabaseSerializationManager
       _iin47lv0.BoardBundleSuggestionView => 'BoardBundleSuggestionView',
       _ijz5flk6.BoardComment => 'BoardComment',
       _ipkjmsg5.BoardCommentView => 'BoardCommentView',
+      _iswbp1jv.BoardCounts => 'BoardCounts',
       _ita8snxr.BoardEventKind => 'BoardEventKind',
       _i0y7d0xd.BoardFlag => 'BoardFlag',
       _iwc3b6vo.BoardFlagReason => 'BoardFlagReason',
@@ -4215,6 +4226,8 @@ class Protocol extends _isd.DatabaseSerializationManager
         return 'BoardComment';
       case _ipkjmsg5.BoardCommentView():
         return 'BoardCommentView';
+      case _iswbp1jv.BoardCounts():
+        return 'BoardCounts';
       case _ita8snxr.BoardEventKind():
         return 'BoardEventKind';
       case _i0y7d0xd.BoardFlag():
@@ -4826,6 +4839,9 @@ class Protocol extends _isd.DatabaseSerializationManager
     }
     if (dataClassName == 'BoardCommentView') {
       return deserialize<_ipkjmsg5.BoardCommentView>(data['data']);
+    }
+    if (dataClassName == 'BoardCounts') {
+      return deserialize<_iswbp1jv.BoardCounts>(data['data']);
     }
     if (dataClassName == 'BoardEventKind') {
       return deserialize<_ita8snxr.BoardEventKind>(data['data']);

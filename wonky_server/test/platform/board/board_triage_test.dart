@@ -221,10 +221,11 @@ void main() {
   });
 
   group('Given text helpers', () {
-    test('when building a similar query then the words are OR-joined', () {
+    test('when building a similar query then the words are OR-joined '
+        'prefixes', () {
       expect(
         BoardSearch.orQuery('Paste into merged-cells, or not!'),
-        'paste or into or merged or cells or not',
+        'paste:* | into:* | merged:* | cells:* | or | not:*',
       );
     });
 

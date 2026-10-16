@@ -655,9 +655,7 @@ class FakeBoardRepository implements BoardRepository {
             (!query.mine ||
                 (userId != null &&
                     (p.authorId == userId || p.votes.containsKey(userId)))) &&
-            (q.isEmpty ||
-                p.title.toLowerCase().contains(q) ||
-                p.body.toLowerCase().contains(q)))
+            (q.isEmpty || _searchRank(p, q) > 0))
           p,
     ];
     int byScore(FakeBoardPost a, FakeBoardPost b) {
@@ -665,13 +663,22 @@ class FakeBoardRepository implements BoardRepository {
       return c != 0 ? c : b.number.compareTo(a.number);
     }
 
-    rows.sort(switch (query.sort) {
+    final bySort = switch (query.sort) {
       BoardSort.top || BoardSort.trending => byScore,
-      BoardSort.newest => (a, b) => b.createdAt.compareTo(a.createdAt),
-      BoardSort.discussed => (a, b) {
+      BoardSort.newest =>
+        (FakeBoardPost a, FakeBoardPost b) =>
+            b.createdAt.compareTo(a.createdAt),
+      BoardSort.discussed => (FakeBoardPost a, FakeBoardPost b) {
         final c = _commentCount(b.number).compareTo(_commentCount(a.number));
         return c != 0 ? c : byScore(a, b);
       },
+    };
+    rows.sort((a, b) {
+      if (q.isNotEmpty) {
+        final r = _searchRank(b, q).compareTo(_searchRank(a, q));
+        if (r != 0) return r;
+      }
+      return bySort(a, b);
     });
     final offset = int.tryParse(query.cursor ?? '') ?? 0;
     final limit = query.limit <= 0 ? 30 : query.limit;
@@ -681,6 +688,50 @@ class FakeBoardRepository implements BoardRepository {
       items: [for (final p in page) _listItem(p)],
       nextCursor: next < rows.length ? '$next' : null,
       total: rows.length,
+    );
+  }
+
+  /// Like the server's search (specs/16 §6.4), 0 when [p] does not match
+  /// [q] (lowercase): 3 for its number (`12`, `#12`), 2 when every word of
+  /// [q] starts a word of the title or body, 1 for a title substring.
+  int _searchRank(FakeBoardPost p, String q) {
+    final number = RegExp(r'^#?\s*(\d+)$').firstMatch(q);
+    if (number != null && int.parse(number[1]!) == p.number) return 3;
+    final words = [
+      for (final m in RegExp(r'[\p{L}\p{N}]+', unicode: true).allMatches(q))
+        if (m[0]!.length > 1) m[0]!,
+    ];
+    final text = RegExp(
+      r'[\p{L}\p{N}]+',
+      unicode: true,
+    ).allMatches('${p.title} ${p.body}'.toLowerCase()).map((m) => m[0]!);
+    if (words.isNotEmpty &&
+        words.every((w) => text.any((t) => t.startsWith(w)))) {
+      return 2;
+    }
+    return p.title.toLowerCase().contains(q) ? 1 : 0;
+  }
+
+  @override
+  Future<BoardCounts> counts() async {
+    _log('counts');
+    int open(BoardPostKind kind) => posts.values
+        .where(
+          (p) =>
+              p.deletedAt == null &&
+              p.moderation == BoardModeration.visible &&
+              p.kind == kind &&
+              (p.status == BoardPostStatus.open ||
+                  p.status == BoardPostStatus.planned),
+        )
+        .length;
+    int tasksIn(Set<BoardTaskStatus> statuses) =>
+        tasks.values.where((t) => statuses.contains(_status(t))).length;
+    return BoardCounts(
+      ideas: open(BoardPostKind.idea),
+      bugs: open(BoardPostKind.bug),
+      upForGrabs: tasksIn({BoardTaskStatus.published}),
+      claimed: tasksIn({BoardTaskStatus.claimed, BoardTaskStatus.inReview}),
     );
   }
 

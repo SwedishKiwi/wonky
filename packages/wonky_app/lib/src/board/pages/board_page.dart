@@ -7,6 +7,7 @@ import 'package:shad/shad.dart';
 import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
+import '../../core/stream_supervisor.dart';
 import '../../data/api.dart';
 import '../../l10n/wonky_app_localizations.dart';
 import '../../shell/page_frame.dart';
@@ -14,6 +15,7 @@ import '../../shell/shell_services.dart';
 import '../board_hub.dart';
 import 'board_chrome.dart';
 import 'board_labels.dart';
+import 'board_search.dart';
 import 'board_trail.dart';
 import 'board_widgets.dart';
 import 'review_tab.dart';
@@ -23,34 +25,35 @@ import 'task_list.dart';
 const boardPageSize = 30;
 
 /// The board page (`/improvements…`, specs/16 §4.4): the tabs bar (tabs
-/// with count badges, search on the right) and the tab's content; *Report a
-/// bug* / *Suggest an improvement* are in the frame's bar.
+/// with count badges, the search button at the end) and the tab's content;
+/// *Report a bug* / *Suggest an improvement* are in the frame's bar. A
+/// [search] (from the URL) filters a post tab, or, on [BoardTab.search],
+/// lists the results across all posts.
 class BoardPage extends StatefulWidget {
-  const BoardPage({super.key, required this.services, required this.tab});
+  const BoardPage({
+    super.key,
+    required this.services,
+    required this.tab,
+    this.search,
+  });
 
   final ShellServices services;
   final BoardTab tab;
+  final BoardSearchQuery? search;
 
   @override
   State<BoardPage> createState() => _BoardPageState();
-}
-
-class _Counts {
-  int? ideas;
-  int? bugs;
-  int? tasks;
-  int? held;
 }
 
 class _BoardPageState extends State<BoardPage> {
   ShellServices get s => widget.services;
   BoardHub get hub => BoardHub.of(s);
 
-  final _search = TextEditingController();
-  Timer? _debounce;
-  String _query = '';
-  final _counts = _Counts();
+  BoardCounts? _counts;
+  int? _held;
   StreamSubscription<BoardChange>? _changes;
+  SupervisedStream? _watch;
+  final _searchPopover = ShadPopoverController();
 
   @override
   void initState() {
@@ -58,17 +61,27 @@ class _BoardPageState extends State<BoardPage> {
     hub.me.addListener(_onMe);
     unawaited(hub.loadMe());
     _changes = hub.changes.listen((c) {
-      if (c.lists) unawaited(_loadCounts());
+      if (c.lists || c.task != null) unawaited(_loadCounts());
     });
+    // Claims, releases, expiries and linked PRs move tasks between Up for
+    // grabs and Claimed: their counts follow live. A key per page: the next
+    // page starts before this one is disposed.
+    _watch = s.supervisor.supervise<BoardPostEvent>(
+      'board.tasks.counts.${identityHashCode(this)}',
+      () => s.repositories.board.watchTasks(),
+      (_) => unawaited(_loadCounts()),
+    );
+    HardwareKeyboard.instance.addHandler(_onKey);
     unawaited(_loadCounts());
   }
 
   @override
   void dispose() {
+    HardwareKeyboard.instance.removeHandler(_onKey);
     hub.me.removeListener(_onMe);
     _changes?.cancel();
-    _debounce?.cancel();
-    _search.dispose();
+    unawaited(_watch?.cancel());
+    _searchPopover.dispose();
     super.dispose();
   }
 
@@ -78,65 +91,58 @@ class _BoardPageState extends State<BoardPage> {
     unawaited(_loadCounts());
   }
 
+  /// `/` opens the search popover, unless a text field has the focus or
+  /// another page or dialog is in front.
+  bool _onKey(KeyEvent e) {
+    if (e is! KeyDownEvent || e.character != '/') return false;
+    final keys = HardwareKeyboard.instance;
+    if (keys.isControlPressed || keys.isMetaPressed || keys.isAltPressed) {
+      return false;
+    }
+    if (!mounted || _searchPopover.isOpen) return false;
+    if (ModalRoute.of(context)?.isCurrent == false) return false;
+    final focus = FocusManager.instance.primaryFocus?.context;
+    if (focus != null &&
+        (focus.widget is EditableText ||
+            focus.findAncestorWidgetOfExactType<EditableText>() != null)) {
+      return false;
+    }
+    // Only when the board page is the shown route (not a dialog over it).
+    final location = s.router.routerDelegate.currentConfiguration.uri.path;
+    if (location != widget.tab.path &&
+        !(widget.tab == BoardTab.improvements && location == '/improvements')) {
+      return false;
+    }
+    _searchPopover.show();
+    return true;
+  }
+
   Future<void> _loadCounts() async {
     final repo = s.repositories.board;
-    Future<int?> total(BoardPostKind kind) async {
-      try {
-        return (await repo.list(
-          BoardListQuery(
-            kind: kind,
-            statuses: const [BoardPostStatus.open, BoardPostStatus.planned],
-            areas: const [],
-            sizes: const [],
-            sort: BoardSort.trending,
-            mine: false,
-            limit: 1,
-          ),
-        )).total;
-      } catch (_) {
-        return null;
-      }
-    }
-
-    final ideas = total(BoardPostKind.idea);
-    final bugs = total(BoardPostKind.bug);
-    int? tasks;
-    try {
-      tasks = (await repo.listTasks(const [
-        BoardTaskStatus.published,
-      ], limit: 50)).items.length;
-    } catch (_) {}
+    BoardCounts? counts;
     int? held;
+    try {
+      counts = await repo.counts();
+    } catch (_) {}
     if (hub.isAdmin) {
       try {
         held = (await repo.reviewCounts()).held;
       } catch (_) {}
     }
-    final i = await ideas;
-    final b = await bugs;
     if (!mounted) return;
     setState(() {
-      _counts
-        ..ideas = i
-        ..bugs = b
-        ..tasks = tasks
-        ..held = held;
-    });
-  }
-
-  void _onSearch(String v) {
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 300), () {
-      if (mounted) setState(() => _query = v.trim());
+      _counts = counts ?? _counts;
+      _held = held;
     });
   }
 
   int? _count(BoardTab t) => switch (t) {
-    BoardTab.improvements => _counts.ideas,
-    BoardTab.bugs => _counts.bugs,
-    BoardTab.tasks => _counts.tasks,
-    BoardTab.done => null,
-    BoardTab.review => _counts.held,
+    BoardTab.improvements => _counts?.ideas,
+    BoardTab.bugs => _counts?.bugs,
+    BoardTab.tasks => _counts?.upForGrabs,
+    BoardTab.claimed => _counts?.claimed,
+    BoardTab.done || BoardTab.search => null,
+    BoardTab.review => _held,
   };
 
   @override
@@ -148,29 +154,15 @@ class _BoardPageState extends State<BoardPage> {
     final tab = widget.tab == BoardTab.review && !hub.isAdmin
         ? (hub.me.value == null ? BoardTab.review : BoardTab.improvements)
         : widget.tab;
+    final search = widget.search;
     final tabs = [
       BoardTab.improvements,
       BoardTab.bugs,
       BoardTab.tasks,
+      BoardTab.claimed,
       BoardTab.done,
       if (hub.isAdmin) BoardTab.review,
     ];
-    final cs = theme.colorScheme;
-    final search = ShadInput(
-      key: const ValueKey<String>('board.search'),
-      controller: _search,
-      placeholder: Text(l.boardSearch),
-      // 28 px with the border: the toolbar's control height.
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      gap: 6,
-      decoration: ShadDecoration(color: cs.background),
-      leading: Icon(LucideIcons.search, size: 14, color: cs.mutedForeground),
-      onChanged: _onSearch,
-      onSubmitted: (v) {
-        _debounce?.cancel();
-        setState(() => _query = v.trim());
-      },
-    );
     final header = Padding(
       padding: EdgeInsets.fromLTRB(inset, 24, inset, 0),
       child: Column(
@@ -198,7 +190,10 @@ class _BoardPageState extends State<BoardPage> {
             ),
           BoardTabsBar(
             key: const ValueKey<String>('board.tabs'),
-            value: tabs.contains(tab) ? tab : BoardTab.improvements,
+            // The results of a search of all posts: no tab is selected.
+            value: tab == BoardTab.search
+                ? null
+                : (tabs.contains(tab) ? tab : BoardTab.improvements),
             onChanged: (t) => boardOpenList(s, t, context: context),
             tabs: [
               for (final t in tabs)
@@ -208,27 +203,52 @@ class _BoardPageState extends State<BoardPage> {
                   count: _count(t),
                 ),
             ],
-            search: search,
+            trailing: BoardSearchButton(
+              services: s,
+              controller: _searchPopover,
+              tab: tab,
+              search: search,
+            ),
           ),
         ],
       ),
     );
     final Widget body = switch (tab) {
-      BoardTab.improvements || BoardTab.bugs || BoardTab.done => BoardPostList(
+      BoardTab.search when search == null => WonkyEmptyState(
+        key: const ValueKey<String>('board.search.start'),
+        illustration: EmptyIllustration.search,
+        title: l.boardSearchStartTitle,
+        description: l.boardSearchStartHint,
+        actions: [
+          ShadButton.outline(
+            leading: const Icon(LucideIcons.search, size: 16),
+            onPressed: _searchPopover.show,
+            child: Text(l.boardSearchButton),
+          ),
+        ],
+      ),
+      BoardTab.improvements ||
+      BoardTab.bugs ||
+      BoardTab.done ||
+      BoardTab.search => BoardPostList(
         key: ValueKey<String>('board.list.${tab.name}'),
         services: s,
         tab: tab,
-        query: _query,
+        search: search,
       ),
       BoardTab.tasks => BoardTaskList(
         key: const ValueKey<String>('board.tasks'),
         services: s,
-        statuses: const [
-          BoardTaskStatus.published,
-          BoardTaskStatus.claimed,
-          BoardTaskStatus.inReview,
-        ],
+        statuses: const [BoardTaskStatus.published],
         live: true,
+      ),
+      BoardTab.claimed => BoardTaskList(
+        key: const ValueKey<String>('board.claimed'),
+        services: s,
+        statuses: const [BoardTaskStatus.claimed, BoardTaskStatus.inReview],
+        live: true,
+        emptyTitle: l.boardEmptyClaimed,
+        emptyDescription: l.boardEmptyClaimedHint,
       ),
       BoardTab.review =>
         hub.me.value == null
@@ -237,7 +257,7 @@ class _BoardPageState extends State<BoardPage> {
     };
     return BoardFrame(
       services: s,
-      trail: BoardTrail(list: tab),
+      trail: BoardTrail(list: tab, search: search),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -251,19 +271,23 @@ class _BoardPageState extends State<BoardPage> {
 
 // ---------------------------------------------------------------- posts
 
-/// The posts of a board tab (Improvements, Bugs, Done): filter chips, sort,
-/// rows, *Load more*, empty states, and the admin selection mode.
+/// The posts of a board tab (Improvements, Bugs, Done) or of a search of
+/// all posts ([BoardTab.search]): filter chips (with the active search as a
+/// removable chip), sort, rows, *Load more*, empty states, and the admin
+/// selection mode.
 class BoardPostList extends StatefulWidget {
   const BoardPostList({
     super.key,
     required this.services,
     required this.tab,
-    this.query = '',
+    this.search,
   });
 
   final ShellServices services;
   final BoardTab tab;
-  final String query;
+  final BoardSearchQuery? search;
+
+  String get query => search?.text ?? '';
 
   @override
   State<BoardPostList> createState() => _BoardPostListState();
@@ -294,9 +318,10 @@ class _BoardPostListState extends State<BoardPostList> {
 
   bool get _done => widget.tab == BoardTab.done;
 
-  Set<BoardPostStatus> get _defaultStatuses => _done
-      ? {BoardPostStatus.done, BoardPostStatus.shipped}
-      : {BoardPostStatus.open, BoardPostStatus.planned};
+  bool get _results => widget.tab == BoardTab.search;
+
+  Set<BoardPostStatus> get _defaultStatuses =>
+      BoardSearchQuery.statusesFor(widget.tab, widget.search);
 
   @override
   void initState() {
@@ -310,7 +335,10 @@ class _BoardPostListState extends State<BoardPostList> {
   @override
   void didUpdateWidget(BoardPostList old) {
     super.didUpdateWidget(old);
-    if (old.query != widget.query) unawaited(_load());
+    if (old.search != widget.search) {
+      _statuses = _defaultStatuses;
+      unawaited(_load());
+    }
   }
 
   @override
@@ -323,6 +351,7 @@ class _BoardPostListState extends State<BoardPostList> {
     kind: switch (widget.tab) {
       BoardTab.improvements => BoardPostKind.idea,
       BoardTab.bugs => BoardPostKind.bug,
+      BoardTab.search => widget.search?.kind,
       _ => null,
     },
     statuses: [..._statuses],
@@ -462,9 +491,17 @@ class _BoardPostListState extends State<BoardPostList> {
     String named(String name, Iterable<String> values) =>
         values.isEmpty ? name : '$name: ${values.join(', ')}';
     final statuses = _done
-        ? const [BoardPostStatus.done, BoardPostStatus.shipped]
+        ? [
+            BoardPostStatus.done,
+            BoardPostStatus.shipped,
+            if (widget.search?.closed ?? false) ...[
+              BoardPostStatus.declined,
+              BoardPostStatus.duplicate,
+            ],
+          ]
         : BoardPostStatus.values;
     final hub = this.hub;
+    final search = widget.search;
     return Padding(
       padding: EdgeInsetsDirectional.fromSTEB(inset, 8, inset, 8),
       child: SingleChildScrollView(
@@ -472,6 +509,20 @@ class _BoardPostListState extends State<BoardPostList> {
         scrollDirection: Axis.horizontal,
         child: Row(
           children: [
+            if (search != null)
+              Padding(
+                padding: const EdgeInsetsDirectional.only(end: 8),
+                child: _SearchChip(
+                  label: l.boardSearchActive(search.text),
+                  removeLabel: l.boardSearchRemove,
+                  onRemove: () => boardOpenSearch(
+                    s,
+                    null,
+                    tab: widget.tab.searchable ? widget.tab : null,
+                    context: context,
+                  ),
+                ),
+              ),
             chip(
               'area',
               named(l.boardFilterArea, [
@@ -563,7 +614,7 @@ class _BoardPostListState extends State<BoardPostList> {
                   ),
               ],
             ),
-            if (hub.isAdmin && !_done)
+            if (hub.isAdmin && !_done && !_results)
               ShadButton.ghost(
                 key: const ValueKey<String>('board.select'),
                 size: ShadButtonSize.sm,
@@ -679,7 +730,9 @@ class _BoardPostListState extends State<BoardPostList> {
                 BoardTab.done => l.boardEmptyDone,
                 _ => l.boardEmptyIdeas,
               },
-        description: widget.query.isNotEmpty || _done ? null : l.boardEmptyHint,
+        description: widget.query.isNotEmpty
+            ? l.boardEmptySearchHint
+            : (_done ? null : l.boardEmptyHint),
       );
     } else {
       // Rows are inset by their own 8 px padding: their text lines up with
@@ -733,9 +786,25 @@ class _BoardPostListState extends State<BoardPostList> {
         },
       );
     }
+    final search = widget.search;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // The results of a search of all posts: a header names the search.
+        if (_results && search != null)
+          Padding(
+            padding: EdgeInsetsDirectional.fromSTEB(inset, 16, inset, 0),
+            child: Semantics(
+              header: true,
+              child: Text(
+                l.boardSearchResultsFor(search.text),
+                key: const ValueKey<String>('board.search.header'),
+                style: theme.textTheme.large,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
         SizedBox(
           height: 48,
           child: _selecting && _selected.isNotEmpty
@@ -743,11 +812,50 @@ class _BoardPostListState extends State<BoardPostList> {
               : _filters(l, inset),
         ),
         Expanded(
-          child: _done ? _DoneLayout(services: s, posts: list) : list,
+          // While searching, Done shows only the matching posts.
+          child: _done && search == null
+              ? _DoneLayout(services: s, posts: list)
+              : list,
         ),
       ],
     );
   }
+}
+
+/// The active search in the filter row (specs/16 §4.4): *Search: “sort”*
+/// with ✕; pressing it clears the search.
+class _SearchChip extends StatelessWidget {
+  const _SearchChip({
+    required this.label,
+    required this.removeLabel,
+    required this.onRemove,
+  });
+
+  final String label;
+  final String removeLabel;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    label: '$label, $removeLabel',
+    excludeSemantics: true,
+    onTap: onRemove,
+    child: ShadTooltip(
+      builder: (_) => Text(removeLabel),
+      child: ShadButton.secondary(
+        key: const ValueKey<String>('board.filter.search'),
+        size: ShadButtonSize.sm,
+        leading: const Icon(LucideIcons.search, size: 14),
+        trailing: const Icon(LucideIcons.x, size: 14),
+        onPressed: onRemove,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 220),
+          child: Text(label, overflow: TextOverflow.ellipsis),
+        ),
+      ),
+    ),
+  );
 }
 
 bool _sameSet<T>(Set<T> a, Set<T> b) =>

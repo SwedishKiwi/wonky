@@ -508,6 +508,7 @@ void main() {
       expect(count('improvements'), '2');
       expect(count('bugs'), '1');
       expect(count('tasks'), '1');
+      expect(count('claimed'), '0');
       expect(byKey('board.tab.done.count'), findsNothing);
       expect(byKey('board.tab.review.count'), findsOneWidget);
 

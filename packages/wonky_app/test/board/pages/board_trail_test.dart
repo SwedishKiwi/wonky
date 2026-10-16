@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wonky_app/src/board/pages/board_trail.dart';
+import 'package:wonky_client/wonky_client.dart';
 
 /// The board's breadcrumb trail (specs/16 §4.3): derived from the board's
 /// hierarchy (root › list › task › post), carried in the URL query, and
@@ -57,10 +58,122 @@ void main() {
         '/improvements/p/5?list=tasks&task=1',
         '/improvements/t/2',
         '/improvements/t/2?list=review',
+        '/improvements/claimed',
+        '/improvements/t/3?list=claimed',
+        '/improvements/search?q=sort',
+        '/improvements/search?q=dark+mode&closed=1&kind=bug',
+        '/improvements/bugs?q=sort&closed=1',
+        '/improvements?q=sort',
+        '/improvements/p/5?list=search&q=sort&kind=idea',
       ]) {
         expect(parse(l).location, l);
       }
     });
+  });
+
+  group('Given a search in the URL', () {
+    test('when parsed then the search belongs to the list', () {
+      expect(
+        parse('/improvements/search?q=%20sort%20&closed=1&kind=idea'),
+        const BoardTrail(
+          list: BoardTab.search,
+          search: BoardSearchQuery(
+            'sort',
+            closed: true,
+            kind: BoardPostKind.idea,
+          ),
+        ),
+      );
+      expect(
+        parse('/improvements/bugs?q=x&kind=idea').search,
+        const BoardSearchQuery('x'),
+        reason: 'the kind applies to all posts only',
+      );
+      expect(
+        parse('/improvements/tasks?q=x').search,
+        isNull,
+        reason: 'task lists are not searched',
+      );
+      expect(parse('/improvements/search?q=').search, isNull);
+      expect(
+        parse('/improvements/p/5?list=tasks&task=1&q=x').search,
+        isNull,
+        reason: 'a search never sits under a task',
+      );
+    });
+
+    test('when a post opens from the results then the search travels with '
+        'it and the list crumb returns to the results', () {
+      const results = BoardTrail(
+        list: BoardTab.search,
+        search: BoardSearchQuery('sort'),
+      );
+      final post = results.openPost(5);
+      expect(post.location, '/improvements/p/5?list=search&q=sort');
+      expect(post.openPost(6).search, results.search, reason: 'siblings');
+      expect(
+        post.openTask(1).location,
+        '/improvements/t/1',
+        reason: 'the results hold no tasks: the task\'s own list',
+      );
+    });
+
+    test('when a search starts, changes or ends then it is not a sibling '
+        'move (Back returns to the list before it)', () {
+      const bugs = BoardTrail(list: BoardTab.bugs);
+      const searched = BoardTrail(
+        list: BoardTab.bugs,
+        search: BoardSearchQuery('x'),
+      );
+      expect(bugs.isSiblingOf(searched), isFalse);
+      expect(searched.isSiblingOf(bugs), isFalse);
+      expect(
+        bugs.isSiblingOf(const BoardTrail(list: BoardTab.claimed)),
+        isTrue,
+      );
+    });
+
+    test('when computing the statuses then Include closed adds the closed '
+        'ones', () {
+      expect(BoardSearchQuery.statusesFor(BoardTab.bugs, null), {
+        BoardPostStatus.open,
+        BoardPostStatus.planned,
+      });
+      expect(
+        BoardSearchQuery.statusesFor(
+          BoardTab.search,
+          const BoardSearchQuery('x', closed: true),
+        ),
+        BoardPostStatus.values.toSet(),
+      );
+      expect(
+        BoardSearchQuery.statusesFor(
+          BoardTab.done,
+          const BoardSearchQuery('x', closed: true),
+        ),
+        {
+          BoardPostStatus.done,
+          BoardPostStatus.shipped,
+          BoardPostStatus.declined,
+          BoardPostStatus.duplicate,
+        },
+      );
+    });
+  });
+
+  group('Given a task status', () {
+    final cases = {
+      BoardTaskStatus.published: BoardTab.tasks,
+      BoardTaskStatus.claimed: BoardTab.claimed,
+      BoardTaskStatus.inReview: BoardTab.claimed,
+      BoardTaskStatus.done: BoardTab.done,
+      BoardTaskStatus.shipped: BoardTab.done,
+    };
+    for (final MapEntry(key: status, value: tab) in cases.entries) {
+      test('when it is ${status.name} then its own list is ${tab.name}', () {
+        expect(BoardTab.ofTask(status), tab);
+      });
+    }
   });
 
   group('Given the trail rules', () {

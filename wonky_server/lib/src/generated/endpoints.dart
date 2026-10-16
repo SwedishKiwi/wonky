@@ -996,6 +996,17 @@ class Endpoints extends _is.EndpointDispatch {
                 params['query'],
               ),
         ),
+        'counts': _is.MethodConnector(
+          name: 'counts',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['board'] as _itoz815u.BoardEndpoint).counts(
+                session,
+              ),
+        ),
         'getPost': _is.MethodConnector(
           name: 'getPost',
           params: {

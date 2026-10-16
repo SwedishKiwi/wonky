@@ -11,14 +11,21 @@ import 'task_page.dart';
 
 /// The board routes of specs/16 §4.3, added to every app next to the
 /// settings routes. A post's or task's breadcrumb trail comes from the
-/// query (`?list=…&task=…`, [BoardTrail.parse]). They are public: the router's auth redirect lets
+/// query (`?list=…&task=…`, [BoardTrail.parse]); a search from
+/// `?q=…&closed=1&kind=…` ([BoardSearchQuery.parse]). They are public: the router's auth redirect lets
 /// `/improvements` and everything below it through when signed out.
 List<RouteBase> boardRoutes(
   ShellServices s,
   Page<void> Function(GoRouterState state, Widget child) page,
 ) {
-  Page<void> tab(GoRouterState st, BoardTab t) =>
-      page(st, BoardPage(services: s, tab: t));
+  Page<void> tab(GoRouterState st, BoardTab t) => page(
+    st,
+    BoardPage(
+      services: s,
+      tab: t,
+      search: BoardSearchQuery.parse(st.uri.queryParameters, t),
+    ),
+  );
   return [
     GoRoute(
       path: '/improvements',
@@ -26,10 +33,18 @@ List<RouteBase> boardRoutes(
       routes: [
         GoRoute(path: 'bugs', pageBuilder: (c, st) => tab(st, BoardTab.bugs)),
         GoRoute(path: 'tasks', pageBuilder: (c, st) => tab(st, BoardTab.tasks)),
+        GoRoute(
+          path: 'claimed',
+          pageBuilder: (c, st) => tab(st, BoardTab.claimed),
+        ),
         GoRoute(path: 'done', pageBuilder: (c, st) => tab(st, BoardTab.done)),
         GoRoute(
           path: 'review',
           pageBuilder: (c, st) => tab(st, BoardTab.review),
+        ),
+        GoRoute(
+          path: 'search',
+          pageBuilder: (c, st) => tab(st, BoardTab.search),
         ),
         GoRoute(
           path: 'contribute',

@@ -4,26 +4,38 @@ import 'package:wonky_client/wonky_client.dart';
 import '../../shell/shell_services.dart';
 import '../board_hub.dart';
 
-/// The lists (tabs) of the board page (specs/16 §4.3–4.4).
+/// The lists (tabs) of the board page (specs/16 §4.3–4.4), and [search],
+/// the results of a search across all posts (not a tab: the tabs show no
+/// selection while it is open).
 enum BoardTab {
   improvements('/improvements'),
   bugs('/improvements/bugs'),
   tasks('/improvements/tasks'),
+  claimed('/improvements/claimed'),
   done('/improvements/done'),
-  review('/improvements/review');
+  review('/improvements/review'),
+  search('/improvements/search');
 
   const BoardTab(this.path);
 
   final String path;
 
   /// Whether the list shows posts (a post opened from it stays under it).
-  bool get hasPosts => this != BoardTab.tasks;
+  bool get hasPosts => this != BoardTab.tasks && this != BoardTab.claimed;
 
   /// Whether the list shows tasks (a task opened from it stays under it).
   bool get hasTasks =>
       this == BoardTab.tasks ||
+      this == BoardTab.claimed ||
       this == BoardTab.done ||
       this == BoardTab.review;
+
+  /// Whether a search can be scoped to this list (*Search in*: the current
+  /// tab): the post lists.
+  bool get searchable =>
+      this == BoardTab.improvements ||
+      this == BoardTab.bugs ||
+      this == BoardTab.done;
 
   static BoardTab? byName(String? name) {
     for (final t in values) {
@@ -31,6 +43,96 @@ enum BoardTab {
     }
     return null;
   }
+
+  /// The list a task belongs to by its [status]: *Claimed* while claimed or
+  /// in review, *Done* when done or shipped, else *Up for grabs*.
+  static BoardTab ofTask(BoardTaskStatus status) => switch (status) {
+    BoardTaskStatus.claimed || BoardTaskStatus.inReview => BoardTab.claimed,
+    BoardTaskStatus.done || BoardTaskStatus.shipped => BoardTab.done,
+    _ => BoardTab.tasks,
+  };
+}
+
+/// A search of the board's posts (specs/16 §4.4, §6.4): the [text] (the
+/// server matches word prefixes, title substrings and post numbers), and
+/// the options of the search popover: [closed] adds done, shipped,
+/// declined and duplicate posts; [kind] narrows a search of all posts
+/// ([BoardTab.search]) to bugs or improvements. In the URL as
+/// `?q=sort&closed=1&kind=bug`.
+@immutable
+class BoardSearchQuery {
+  const BoardSearchQuery(this.text, {this.closed = false, this.kind});
+
+  final String text;
+  final bool closed;
+  final BoardPostKind? kind;
+
+  /// The search in [query] for list [tab]; null without a `q`, or when the
+  /// list cannot be searched. `kind` only applies to [BoardTab.search].
+  static BoardSearchQuery? parse(Map<String, String> query, BoardTab tab) {
+    final text = (query['q'] ?? '').trim();
+    if (text.isEmpty || !(tab.searchable || tab == BoardTab.search)) {
+      return null;
+    }
+    return BoardSearchQuery(
+      text,
+      closed: query['closed'] == '1',
+      kind: tab == BoardTab.search
+          ? switch (query['kind']) {
+              'bug' => BoardPostKind.bug,
+              'idea' => BoardPostKind.idea,
+              _ => null,
+            }
+          : null,
+    );
+  }
+
+  /// The URL query parameters of this search.
+  List<String> get queryParameters => [
+    'q=${Uri.encodeQueryComponent(text)}',
+    if (closed) 'closed=1',
+    if (kind case final k?) 'kind=${k.name}',
+  ];
+
+  /// The statuses the list [tab] shows with this search (null [search]:
+  /// the list's defaults): open and planned (Done: done and shipped), plus
+  /// the closed ones when [closed].
+  static Set<BoardPostStatus> statusesFor(
+    BoardTab tab,
+    BoardSearchQuery? search,
+  ) {
+    final closed = search?.closed ?? false;
+    if (tab == BoardTab.done) {
+      return {
+        BoardPostStatus.done,
+        BoardPostStatus.shipped,
+        if (closed) ...[BoardPostStatus.declined, BoardPostStatus.duplicate],
+      };
+    }
+    return {
+      BoardPostStatus.open,
+      BoardPostStatus.planned,
+      if (closed) ...[
+        BoardPostStatus.done,
+        BoardPostStatus.shipped,
+        BoardPostStatus.declined,
+        BoardPostStatus.duplicate,
+      ],
+    };
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is BoardSearchQuery &&
+      other.text == text &&
+      other.closed == closed &&
+      other.kind == kind;
+
+  @override
+  int get hashCode => Object.hash(text, closed, kind);
+
+  @override
+  String toString() => 'BoardSearchQuery(${queryParameters.join('&')})';
 }
 
 /// Whether [location] is a board route (`/improvements…`).
@@ -60,13 +162,19 @@ void closeBoard(ShellServices s) => s.router.go(boardBackTarget(s));
 /// reload or a shared link keeps it.
 ///
 /// A null [list] on a post or task means "the item's own list": the post's
-/// kind (*Bugs* or *Improvements*; *Up for grabs* under a task), the task's
-/// status (*Done* when done or shipped, else *Up for grabs*); see
-/// [resolve].
+/// kind (*Bugs* or *Improvements*; the task's list under a task), the
+/// task's status ([BoardTab.ofTask]); see [resolve]. A [search] belongs to
+/// the list (a searched list, or [BoardTab.search]) and travels with the
+/// items opened from it, so the list crumb returns to the results.
 @immutable
 class BoardTrail {
-  const BoardTrail({this.list, this.task, this.post, this.contribute = false})
-    : assert(!contribute || (list == null && task == null && post == null));
+  const BoardTrail({
+    this.list,
+    this.task,
+    this.post,
+    this.contribute = false,
+    this.search,
+  }) : assert(!contribute || (list == null && task == null && post == null));
 
   /// The board root (the *Improvements* list).
   static const root = BoardTrail(list: BoardTab.improvements);
@@ -75,6 +183,7 @@ class BoardTrail {
   final int? task;
   final int? post;
   final bool contribute;
+  final BoardSearchQuery? search;
 
   /// A list page (no item below the list).
   bool get isList => !contribute && task == null && post == null;
@@ -90,14 +199,19 @@ class BoardTrail {
     final seg = uri.pathSegments.where((x) => x.isNotEmpty).toList();
     if (seg.isEmpty || seg.first != 'improvements') return null;
     final q = uri.queryParameters;
-    if (seg.length == 1) return root;
+    if (seg.length == 1) {
+      final search = BoardSearchQuery.parse(q, BoardTab.improvements);
+      return search == null
+          ? root
+          : BoardTrail(list: BoardTab.improvements, search: search);
+    }
     if (seg.length == 2) {
       if (seg[1] == 'contribute') return const BoardTrail(contribute: true);
       final tab = BoardTab.byName(seg[1]);
       // `/improvements` itself is the Improvements list.
       return tab == null || tab == BoardTab.improvements
           ? null
-          : BoardTrail(list: tab);
+          : BoardTrail(list: tab, search: BoardSearchQuery.parse(q, tab));
     }
     if (seg.length != 3) return null;
     final n = int.tryParse(seg[2]);
@@ -108,7 +222,14 @@ class BoardTrail {
         final task = int.tryParse(q['task'] ?? '');
         if (task != null && list != null && !list.hasTasks) list = null;
         if (list != null && task == null && !list.hasPosts) list = null;
-        return BoardTrail(list: list, task: task, post: n);
+        return BoardTrail(
+          list: list,
+          task: task,
+          post: n,
+          search: list == null || task != null
+              ? null
+              : BoardSearchQuery.parse(q, list),
+        );
       case 't':
         if (list != null && !list.hasTasks) list = null;
         return BoardTrail(list: list, task: n);
@@ -124,8 +245,9 @@ class BoardTrail {
   }
 
   /// Fills in a missing [list] from the item: a post under a task is in
-  /// *Up for grabs*; a post in its kind's list; a task in *Done* when done
-  /// or shipped, else *Up for grabs*. Stays null while the item is unknown.
+  /// the task's list (*Up for grabs* while the task is unknown); a post in
+  /// its kind's list; a task in its status's list ([BoardTab.ofTask]).
+  /// Stays null while the item is unknown.
   BoardTrail resolve(
     BoardHub hub, {
     BoardPostKind? postKind,
@@ -134,8 +256,9 @@ class BoardTrail {
     if (list != null || contribute) return this;
     final BoardTab? l;
     if (post case final p?) {
-      if (task != null) {
-        l = BoardTab.tasks;
+      if (task case final t?) {
+        final status = hub.taskStatuses[t];
+        l = status == null ? BoardTab.tasks : BoardTab.ofTask(status);
       } else {
         l = switch (postKind ?? hub.postKinds[p]) {
           BoardPostKind.bug => BoardTab.bugs,
@@ -144,11 +267,8 @@ class BoardTrail {
         };
       }
     } else if (task case final t?) {
-      l = switch (taskStatus ?? hub.taskStatuses[t]) {
-        BoardTaskStatus.done || BoardTaskStatus.shipped => BoardTab.done,
-        null => null,
-        _ => BoardTab.tasks,
-      };
+      final status = taskStatus ?? hub.taskStatuses[t];
+      l = status == null ? null : BoardTab.ofTask(status);
     } else {
       l = null;
     }
@@ -161,6 +281,7 @@ class BoardTrail {
     final query = <String>[
       if (list != null && !isList) 'list=${list!.name}',
       if (post != null && task != null) 'task=$task',
+      ...?search?.queryParameters,
     ];
     final path = switch ((post, task)) {
       (final int p, _) => '/improvements/p/$p',
@@ -180,11 +301,16 @@ class BoardTrail {
   BoardTrail openPost(int number) {
     if (post == number) return this;
     if (post != null || task != null) {
-      return BoardTrail(list: list, task: task, post: number);
+      return BoardTrail(list: list, task: task, post: number, search: search);
     }
     if (contribute) return BoardTrail(post: number);
     final l = list;
-    return BoardTrail(list: l != null && l.hasPosts ? l : null, post: number);
+    final keep = l != null && l.hasPosts;
+    return BoardTrail(
+      list: keep ? l : null,
+      post: number,
+      search: keep ? search : null,
+    );
   }
 
   /// Opening task [number] from here: the task in the trail truncates the
@@ -202,9 +328,10 @@ class BoardTrail {
 
   /// Whether going from here to [next] stays at the same depth (switching
   /// tabs, a post to a sibling post, a task to another task): such moves
-  /// replace the history entry, so Back never walks through loops.
+  /// replace the history entry, so Back never walks through loops. A new or
+  /// cleared search is not a sibling: Back returns to the list before it.
   bool isSiblingOf(BoardTrail next) {
-    if (isList && next.isList) return true;
+    if (isList && next.isList) return search == next.search;
     if (isPost && next.isPost) return task == next.task && post != next.post;
     if (isTask && next.isTask) return task != next.task;
     return false;
@@ -216,10 +343,11 @@ class BoardTrail {
       other.list == list &&
       other.task == task &&
       other.post == post &&
-      other.contribute == contribute;
+      other.contribute == contribute &&
+      other.search == search;
 
   @override
-  int get hashCode => Object.hash(list, task, post, contribute);
+  int get hashCode => Object.hash(list, task, post, contribute, search);
 
   @override
   String toString() => 'BoardTrail($location)';
@@ -268,6 +396,25 @@ void boardOpenTask(ShellServices s, int number, {BuildContext? context}) =>
 /// Opens list [tab] (a tab switch replaces the history entry).
 void boardOpenList(ShellServices s, BoardTab tab, {BuildContext? context}) =>
     boardGo(s, BoardTrail(list: tab), context: context);
+
+/// Opens [search]: across all posts ([BoardTab.search]) when [tab] is
+/// null, else within list [tab]; a null [search] clears it (back to [tab],
+/// or the Improvements list).
+void boardOpenSearch(
+  ShellServices s,
+  BoardSearchQuery? search, {
+  BoardTab? tab,
+  BuildContext? context,
+}) => boardGo(
+  s,
+  BoardTrail(
+    list: search == null
+        ? (tab ?? BoardTab.improvements)
+        : (tab ?? BoardTab.search),
+    search: search,
+  ),
+  context: context,
+);
 
 /// Opens *How to contribute*.
 void boardOpenContribute(ShellServices s) =>

@@ -5,6 +5,7 @@ import 'board_comments.dart';
 import 'board_live_streams.dart';
 import 'board_moderation.dart';
 import 'board_posts.dart';
+import 'board_search.dart';
 import 'board_tasks.dart';
 import 'board_votes.dart';
 
@@ -15,6 +16,17 @@ abstract final class BoardService {
   static Future<BoardMe> me(Session session) => BoardPosts.me(session);
   static Future<BoardPostPage> list(Session session, BoardListQuery q) =>
       BoardPosts.list(session, q);
+  static Future<BoardCounts> counts(Session session) async {
+    final (ideas, bugs) = await BoardSearch.openCounts(session);
+    final (upForGrabs, claimed) = await BoardTasks.counts(session);
+    return BoardCounts(
+      ideas: ideas,
+      bugs: bugs,
+      upForGrabs: upForGrabs,
+      claimed: claimed,
+    );
+  }
+
   static Future<BoardPostView> getPost(Session session, int number) =>
       BoardPosts.getPost(session, number);
   static Future<List<BoardCommentView>> listComments(

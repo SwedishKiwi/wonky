@@ -5998,6 +5998,108 @@ abstract class WonkyAppLocalizations {
   /// **'Up for grabs'**
   String get boardTabTasks;
 
+  /// Board tab with the tasks someone has claimed or that are in review.
+  ///
+  /// In en, this message translates to:
+  /// **'Claimed'**
+  String get boardTabClaimed;
+
+  /// Tooltip of the board's search button (opens the search popover; shortcut /).
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get boardSearchButton;
+
+  /// The active board search: the search button's label and the removable chip in the filter row.
+  ///
+  /// In en, this message translates to:
+  /// **'Search: “{query}”'**
+  String boardSearchActive(String query);
+
+  /// No description provided for @boardSearchRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear the search'**
+  String get boardSearchRemove;
+
+  /// No description provided for @boardSearchIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Search in'**
+  String get boardSearchIn;
+
+  /// No description provided for @boardSearchInAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All posts'**
+  String get boardSearchInAll;
+
+  /// No description provided for @boardSearchIncludeClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Include closed'**
+  String get boardSearchIncludeClosed;
+
+  /// No description provided for @boardSearchIncludeClosedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Done, shipped, declined and duplicates'**
+  String get boardSearchIncludeClosedHint;
+
+  /// No description provided for @boardSearchKind.
+  ///
+  /// In en, this message translates to:
+  /// **'Kind'**
+  String get boardSearchKind;
+
+  /// No description provided for @boardSearchKindAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Bugs and improvements'**
+  String get boardSearchKindAll;
+
+  /// Breadcrumb of the board's search results page without a query.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get boardSearchResults;
+
+  /// Header and breadcrumb of the board's search results across all posts.
+  ///
+  /// In en, this message translates to:
+  /// **'Results for “{query}”'**
+  String boardSearchResultsFor(String query);
+
+  /// No description provided for @boardSearchStartTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Search the board'**
+  String get boardSearchStartTitle;
+
+  /// No description provided for @boardSearchStartHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Find posts by their words, part of a title or their number.'**
+  String get boardSearchStartHint;
+
+  /// No description provided for @boardEmptySearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Try fewer words or part of a word, or include closed posts.'**
+  String get boardEmptySearchHint;
+
+  /// No description provided for @boardEmptyClaimed.
+  ///
+  /// In en, this message translates to:
+  /// **'No claimed tasks'**
+  String get boardEmptyClaimed;
+
+  /// No description provided for @boardEmptyClaimedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks show here while someone works on them, and while their pull request is in review.'**
+  String get boardEmptyClaimedHint;
+
   /// No description provided for @boardTabDone.
   ///
   /// In en, this message translates to:

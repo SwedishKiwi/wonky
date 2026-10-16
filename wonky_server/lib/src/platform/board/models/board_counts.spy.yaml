@@ -1,0 +1,11 @@
+### The count badges of the board's tabs (specs/16 §4.4).
+class: BoardCounts
+fields:
+  ### Visible open and planned ideas (*Improvements*).
+  ideas: int
+  ### Visible open and planned bugs (*Bugs*).
+  bugs: int
+  ### Published tasks without a valid claim (*Up for grabs*).
+  upForGrabs: int
+  ### Claimed and in-review tasks (*Claimed*).
+  claimed: int

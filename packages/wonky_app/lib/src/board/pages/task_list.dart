@@ -35,8 +35,10 @@ String boardClaimState(WonkyAppLocalizations l, BoardTaskView t) {
   }
 }
 
-/// Tasks with [statuses] (*Up for grabs*: published, claimed and in
-/// review; Done: done and shipped). [live] follows `board.watchTasks`.
+/// Tasks with [statuses] (*Up for grabs*: published; *Claimed*: claimed
+/// and in review; Done: done and shipped). [live] follows
+/// `board.watchTasks`, so a claim, a release, an expiry or a linked PR
+/// moves a task between the tabs.
 class BoardTaskList extends StatefulWidget {
   const BoardTaskList({
     super.key,
@@ -46,6 +48,8 @@ class BoardTaskList extends StatefulWidget {
     this.compact = false,
     this.title,
     this.horizontalPadding,
+    this.emptyTitle,
+    this.emptyDescription,
   });
 
   final ShellServices services;
@@ -59,6 +63,10 @@ class BoardTaskList extends StatefulWidget {
   /// The list's side padding (default: the page's content column, less
   /// the rows' own 8 px).
   final double? horizontalPadding;
+
+  /// The empty state (default: *No tasks up for grabs*).
+  final String? emptyTitle;
+  final String? emptyDescription;
 
   @override
   State<BoardTaskList> createState() => _BoardTaskListState();
@@ -81,8 +89,10 @@ class _BoardTaskListState extends State<BoardTaskList> {
       if (c.task != null || c.lists) unawaited(_load());
     });
     if (widget.live) {
+      // A key per list: the next tab's list starts before this one is
+      // disposed, and a shared key would cancel it.
       _watch = s.supervisor.supervise<BoardPostEvent>(
-        'board.tasks.list',
+        'board.tasks.list.${identityHashCode(this)}',
         () => s.repositories.board.watchTasks(),
         (_) => unawaited(_load()),
       );
@@ -166,8 +176,10 @@ class _BoardTaskListState extends State<BoardTaskList> {
       return WonkyEmptyState(
         key: const ValueKey<String>('board.tasks.empty'),
         illustration: EmptyIllustration.documents,
-        title: l.boardEmptyTasks,
-        description: l.boardEmptyTasksHint,
+        title: widget.emptyTitle ?? l.boardEmptyTasks,
+        description: widget.emptyTitle == null
+            ? l.boardEmptyTasksHint
+            : widget.emptyDescription,
       );
     }
     return ListView(
