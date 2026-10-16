@@ -8,7 +8,7 @@ import 'package:wonky_app/spellcheck.dart';
 import 'package:wonky_app/testing.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_rich_editor/wonky_rich_editor.dart'
-    show MarkdownEditingController;
+    show MarkdownDocumentCodec, MarkdownEditingController;
 import 'package:wonky_ui/testing.dart' show settleTooltips;
 
 import '../support/fake_spelling.dart';
@@ -158,6 +158,52 @@ void main() {
       await select(tester, 0, 1);
       await chord(tester, LogicalKeyboardKey.keyB);
       expect(c.text, '**#** not a title');
+    });
+
+    for (final profile in [MarkdownProfile.comment, MarkdownProfile.post]) {
+      testWidgets('when a ${profile.name} has fenced code then it is literal '
+          'text without a Code block button, inline code stays, and the '
+          'block is deleted like a paragraph', (tester) async {
+        final c = await pump(
+          tester,
+          text: 'before\n\n```dart\nx = 1;\n```\n\nafter',
+          profile: profile,
+        );
+        expect(_key('markdown.composer.codeBlock'), findsNothing);
+        expect(_key('markdown.composer.code'), findsOneWidget);
+        final r = rich(tester);
+        expect(r.document.map(MarkdownDocumentCodec.kindOf), ['p', 'raw', 'p']);
+        expect(c.text, 'before\n\n```dart\nx = 1;\n```\n\nafter');
+
+        // Select the block and delete it.
+        await selectRichText(
+          tester,
+          _key('markdown.composer'),
+          0,
+          end: '```dart\nx = 1;\n```'.length,
+          block: 1,
+        );
+        expect(r.deleteSelection(), isTrue);
+        await tester.pump();
+        expect(tester.takeException(), isNull);
+        expect(c.text, 'before\n\nafter');
+        await chord(tester, LogicalKeyboardKey.keyZ);
+        expect(c.text, 'before\n\n```dart\nx = 1;\n```\n\nafter');
+        await settleTooltips(tester);
+      });
+    }
+
+    testWidgets('when a fence is typed then it stays text', (tester) async {
+      final c = await pump(tester);
+      await typeMarkdown(tester, _key('markdown.composer'), '```dart x');
+      expect(rich(tester).document.map(MarkdownDocumentCodec.kindOf), ['p']);
+      expect(c.text, isNot(startsWith('```')), reason: 'escaped, not a fence');
+      // Read back, it is the same paragraph again.
+      final back = MarkdownEditingController(markdown: c.text);
+      addTearDown(back.dispose);
+      expect(back.document.map(MarkdownDocumentCodec.kindOf), ['p']);
+      back.selectAll();
+      expect(back.selectedMarkdown, c.text);
     });
 
     testWidgets('when pressing Mod+K then the URL dialog makes the selection '

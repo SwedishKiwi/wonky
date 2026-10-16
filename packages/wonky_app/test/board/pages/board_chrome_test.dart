@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' show SemanticsRole, Tristate;
 
 import 'package:flutter/services.dart';
@@ -519,6 +520,54 @@ void main() {
       await settleTooltips(tester);
       semantics.dispose();
     });
+
+    for (final br in Brightness.values) {
+      testWidgets('in ${br.name} then the count badges are small and bold '
+          'with readable contrast, active or not', (tester) async {
+        current = await pumpBoard(
+          tester,
+          '/improvements/bugs',
+          board: seeded(),
+          brightness: br,
+        );
+        final background = ShadTheme.of(
+          tester.element(byKey('board.tabs')),
+        ).colorScheme.background;
+        double contrast(Color a, Color b) {
+          final la = a.computeLuminance(), lb = b.computeLuminance();
+          return (math.max(la, lb) + 0.05) / (math.min(la, lb) + 0.05);
+        }
+
+        for (final tab in ['bugs', 'improvements']) {
+          final badge = byKey('board.tab.$tab.count');
+          final style = tester
+              .widget<Text>(
+                find.descendant(of: badge, matching: find.byType(Text)),
+              )
+              .style!;
+          expect(style.fontSize, 11, reason: tab);
+          expect(style.fontWeight, FontWeight.w600, reason: tab);
+          final fill =
+              (tester
+                          .widget<Container>(
+                            find.descendant(
+                              of: badge,
+                              matching: find.byType(Container),
+                            ),
+                          )
+                          .decoration!
+                      as BoxDecoration)
+                  .color!;
+          final behind = Color.alphaBlend(fill, background);
+          expect(
+            contrast(Color.alphaBlend(style.color!, behind), behind),
+            greaterThanOrEqualTo(4.5),
+            reason: '$tab in ${br.name}',
+          );
+        }
+        await settleTooltips(tester);
+      });
+    }
 
     testWidgets('when a tab is focused with the keyboard then Enter opens it', (
       tester,

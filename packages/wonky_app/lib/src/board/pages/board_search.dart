@@ -6,7 +6,6 @@ import 'package:wonky_ui/wonky_ui.dart';
 
 import '../../l10n/wonky_app_localizations.dart';
 import '../../shell/shell_services.dart';
-import 'board_chrome.dart';
 import 'board_trail.dart';
 
 /// The board's search button (specs/16 §4.4): a toolbar icon button at the
@@ -18,17 +17,13 @@ class BoardSearchButton extends StatelessWidget {
     super.key,
     required this.services,
     required this.controller,
-    required this.tab,
     this.search,
   });
 
   final ShellServices services;
   final ShadPopoverController controller;
 
-  /// The list shown ([BoardTab.search] for the results of all posts).
-  final BoardTab tab;
-
-  /// The active search, if any.
+  /// The active search (the results view), if any.
   final BoardSearchQuery? search;
 
   @override
@@ -50,7 +45,6 @@ class BoardSearchButton extends StatelessWidget {
       ),
       popover: (context) => BoardSearchPanel(
         services: services,
-        tab: tab,
         search: search,
         // Full width on phones (the page's 16 px gutters, less the
         // popover's 1 px border), else compact.
@@ -93,21 +87,19 @@ class BoardSearchButton extends StatelessWidget {
 }
 
 /// The search popover (specs/16 §4.4): the search field (focused; Enter
-/// searches) and the options: *Search in* (all posts, or the current tab
-/// when it lists posts), *Kind* (all posts only) and *Include closed*;
-/// then *Clear* and *Search*. Esc closes it.
+/// searches) and the options *Kind* (all, bugs, improvements) and *Include
+/// closed*; then *Clear* and *Search*. A search always covers all posts and
+/// opens the results view. Esc closes it.
 class BoardSearchPanel extends StatefulWidget {
   const BoardSearchPanel({
     super.key,
     required this.services,
-    required this.tab,
     required this.onClose,
     this.search,
     this.width = 360,
   });
 
   final ShellServices services;
-  final BoardTab tab;
   final BoardSearchQuery? search;
   final VoidCallback onClose;
   final double width;
@@ -120,10 +112,6 @@ class _BoardSearchPanelState extends State<BoardSearchPanel> {
   late final _text = TextEditingController(text: widget.search?.text ?? '');
   final _focus = FocusNode(debugLabel: 'board.search.input');
 
-  /// Search all posts (else the current tab, when it can be searched).
-  late bool _all = !widget.tab.searchable || widget.tab == BoardTab.search
-      ? true
-      : widget.search == null;
   late bool _closed = widget.search?.closed ?? false;
   late BoardPostKind? _kind = widget.search?.kind;
 
@@ -154,8 +142,7 @@ class _BoardSearchPanelState extends State<BoardSearchPanel> {
     widget.onClose();
     boardOpenSearch(
       widget.services,
-      BoardSearchQuery(text, closed: _closed, kind: _all ? _kind : null),
-      tab: _all ? null : widget.tab,
+      BoardSearchQuery(text, closed: _closed, kind: _kind),
       context: context,
     );
   }
@@ -163,12 +150,7 @@ class _BoardSearchPanelState extends State<BoardSearchPanel> {
   void _clear() {
     widget.onClose();
     if (widget.search == null) return;
-    boardOpenSearch(
-      widget.services,
-      null,
-      tab: widget.tab.searchable ? widget.tab : null,
-      context: context,
-    );
+    boardOpenSearch(widget.services, null, context: context);
   }
 
   @override
@@ -184,7 +166,6 @@ class _BoardSearchPanelState extends State<BoardSearchPanel> {
         child,
       ],
     );
-    final canScope = widget.tab.searchable;
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.escape): widget.onClose,
@@ -213,60 +194,35 @@ class _BoardSearchPanelState extends State<BoardSearchPanel> {
                 textInputAction: TextInputAction.search,
                 onSubmitted: (_) => _submit(),
               ),
-              if (canScope)
-                section(
-                  l.boardSearchIn,
-                  ShadRadioGroup<bool>(
-                    key: const ValueKey<String>('board.search.in'),
-                    initialValue: _all,
-                    axis: Axis.horizontal,
-                    spacing: 16,
-                    runSpacing: 6,
-                    onChanged: (v) => setState(() => _all = v ?? true),
-                    items: [
-                      ShadRadio(
-                        key: const ValueKey<String>('board.search.in.all'),
-                        value: true,
-                        label: Text(l.boardSearchInAll),
-                      ),
-                      ShadRadio(
-                        key: const ValueKey<String>('board.search.in.tab'),
-                        value: false,
-                        label: Text(boardTabName(l, widget.tab)),
-                      ),
-                    ],
+              section(
+                l.boardSearchKind,
+                ShadRadioGroup<String>(
+                  key: const ValueKey<String>('board.search.kind'),
+                  initialValue: _kind?.name ?? 'any',
+                  axis: Axis.horizontal,
+                  spacing: 16,
+                  runSpacing: 6,
+                  onChanged: (v) => setState(
+                    () => _kind = switch (v) {
+                      'bug' => BoardPostKind.bug,
+                      'idea' => BoardPostKind.idea,
+                      _ => null,
+                    },
                   ),
+                  items: [
+                    for (final (value, text) in [
+                      ('any', l.boardSearchKindAll),
+                      ('bug', l.boardTabBugs),
+                      ('idea', l.boardTabImprovements),
+                    ])
+                      ShadRadio(
+                        key: ValueKey<String>('board.search.kind.$value'),
+                        value: value,
+                        label: Text(text),
+                      ),
+                  ],
                 ),
-              if (_all)
-                section(
-                  l.boardSearchKind,
-                  ShadRadioGroup<String>(
-                    key: const ValueKey<String>('board.search.kind'),
-                    initialValue: _kind?.name ?? 'any',
-                    axis: Axis.horizontal,
-                    spacing: 16,
-                    runSpacing: 6,
-                    onChanged: (v) => setState(
-                      () => _kind = switch (v) {
-                        'bug' => BoardPostKind.bug,
-                        'idea' => BoardPostKind.idea,
-                        _ => null,
-                      },
-                    ),
-                    items: [
-                      for (final (value, text) in [
-                        ('any', l.boardSearchKindAll),
-                        ('bug', l.boardTabBugs),
-                        ('idea', l.boardTabImprovements),
-                      ])
-                        ShadRadio(
-                          key: ValueKey<String>('board.search.kind.$value'),
-                          value: value,
-                          label: Text(text),
-                        ),
-                    ],
-                  ),
-                ),
+              ),
               ShadCheckbox(
                 key: const ValueKey<String>('board.search.closed'),
                 value: _closed,

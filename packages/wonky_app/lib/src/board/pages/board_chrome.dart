@@ -671,7 +671,9 @@ class BoardTabsBar extends StatelessWidget {
 }
 
 /// A tab's count: a small rounded pill (`border` fill; stronger on the
-/// active tab), tabular figures — like GitHub's tab counters.
+/// active tab), tabular figures — like GitHub's tab counters. The figures
+/// are one step smaller than the tab label (11 px) but semibold, in the
+/// foreground color (muted text on `border` is too faint at that size).
 class BoardCountBadge extends StatelessWidget {
   const BoardCountBadge({super.key, required this.count, this.active = false});
 
@@ -688,19 +690,19 @@ class BoardCountBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 6),
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: active
-            ? cs.mutedForeground.withValues(alpha: 0.22)
-            : cs.border.withValues(alpha: 0.9),
+        // `border` as it is: in dark it is a translucent white, and setting
+        // its alpha made an opaque white pill.
+        color: active ? cs.mutedForeground.withValues(alpha: 0.22) : cs.border,
         borderRadius: BorderRadius.circular(9),
       ),
       child: Text(
         '$count',
         style: TextStyle(
-          fontSize: 12,
+          fontSize: 11,
           height: 1,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
           fontFeatures: const [FontFeature.tabularFigures()],
-          color: active ? cs.foreground : cs.mutedForeground,
+          color: active ? cs.foreground : cs.foreground.withValues(alpha: 0.8),
         ),
       ),
     );

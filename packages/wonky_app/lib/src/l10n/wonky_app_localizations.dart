@@ -5290,12 +5290,6 @@ abstract class WonkyAppLocalizations {
   /// **'Quote'**
   String get markdownQuote;
 
-  /// No description provided for @markdownCodeBlock.
-  ///
-  /// In en, this message translates to:
-  /// **'Code block'**
-  String get markdownCodeBlock;
-
   /// Screen reader label of the Markdown composer's formatting toolbar.
   ///
   /// In en, this message translates to:
@@ -6022,18 +6016,6 @@ abstract class WonkyAppLocalizations {
   /// **'Clear the search'**
   String get boardSearchRemove;
 
-  /// No description provided for @boardSearchIn.
-  ///
-  /// In en, this message translates to:
-  /// **'Search in'**
-  String get boardSearchIn;
-
-  /// No description provided for @boardSearchInAll.
-  ///
-  /// In en, this message translates to:
-  /// **'All posts'**
-  String get boardSearchInAll;
-
   /// No description provided for @boardSearchIncludeClosed.
   ///
   /// In en, this message translates to:
@@ -6055,7 +6037,7 @@ abstract class WonkyAppLocalizations {
   /// No description provided for @boardSearchKindAll.
   ///
   /// In en, this message translates to:
-  /// **'Bugs and improvements'**
+  /// **'All'**
   String get boardSearchKindAll;
 
   /// Breadcrumb of the board's search results page without a query.
@@ -6496,23 +6478,17 @@ abstract class WonkyAppLocalizations {
   /// **'Remove downvote'**
   String get boardRemoveDownvote;
 
-  /// No description provided for @boardHitThisToo.
+  /// Tooltip of the disabled down-vote arrow on bugs.
   ///
   /// In en, this message translates to:
-  /// **'I hit this too'**
-  String get boardHitThisToo;
+  /// **'Bugs can only be upvoted'**
+  String get boardBugsUpvoteOnly;
 
-  /// No description provided for @boardHitThisTooLabel.
+  /// Semantics label of the disabled down-vote arrow on bugs.
   ///
   /// In en, this message translates to:
-  /// **'I hit this too, {score} people'**
-  String boardHitThisTooLabel(int score);
-
-  /// No description provided for @boardHitThisTooRemove.
-  ///
-  /// In en, this message translates to:
-  /// **'Remove I hit this too, {score} people'**
-  String boardHitThisTooRemove(int score);
+  /// **'Downvote, unavailable: bugs can only be upvoted'**
+  String get boardDownvoteUnavailable;
 
   /// Marker on labels set by AI and not yet confirmed by an admin.
   ///
@@ -7120,17 +7096,17 @@ abstract class WonkyAppLocalizations {
   /// **'How to build it'**
   String get boardHowToBuild;
 
-  /// No description provided for @boardStepSetup.
+  /// The number of the first step of How to build it, before the link boardStepSetupLink.
   ///
   /// In en, this message translates to:
-  /// **'1. Set up Wonky Work locally'**
-  String get boardStepSetup;
+  /// **'1.'**
+  String get boardStepSetupNumber;
 
-  /// No description provided for @boardFullGuide.
+  /// Step 1 of How to build it: a link to the How to contribute page.
   ///
   /// In en, this message translates to:
-  /// **'Read the full guide'**
-  String get boardFullGuide;
+  /// **'Set up your development environment'**
+  String get boardStepSetupLink;
 
   /// No description provided for @boardInstallTools.
   ///
@@ -7186,11 +7162,23 @@ abstract class WonkyAppLocalizations {
   /// **'Latest review'**
   String get boardLatestReview;
 
-  /// No description provided for @boardActivityAndDiscussion.
+  /// Heading of a task's activity rows (claimed, released, PR linked …), shown to admins.
   ///
   /// In en, this message translates to:
-  /// **'Activity and discussion'**
-  String get boardActivityAndDiscussion;
+  /// **'Activity'**
+  String get boardActivity;
+
+  /// No description provided for @boardNoActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'No activity yet'**
+  String get boardNoActivity;
+
+  /// No description provided for @boardClaimForPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Claim this task to get the prompt.'**
+  String get boardClaimForPrompt;
 
   /// No description provided for @boardContributeTitle.
   ///

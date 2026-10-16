@@ -8,7 +8,6 @@ import 'package:shad/shad.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../codec/markdown_document_codec.dart';
-import '../codec/markdown_features.dart';
 import '../editor/rich_editor_reactions.dart';
 
 /// The monospace family of code (as in the shell's Markdown renderer).
@@ -216,12 +215,7 @@ class _ParagraphBuilder implements ComponentBuilder {
       );
     }
     if (blockType == codeAttribution) {
-      final node = document.getNodeById(viewModel.nodeId);
-      return _CodeBox(
-        literal: node?.getMetadataValue(MarkdownNodeMetadata.raw) == true,
-        style: style,
-        child: component,
-      );
+      return _CodeBox(style: style, child: component);
     }
     final level = MarkdownDocumentCodec.headingLevelOf(
       _BlockTypeNode(blockType),
@@ -265,18 +259,13 @@ class _QuoteBar extends CustomPainter {
   bool shouldRepaint(_QuoteBar oldDelegate) => oldDelegate.color != color;
 }
 
-/// A code block (or a block kept as literal Markdown) as one muted box. The
-/// box ignores pointers and its padding is outside the component, so taps,
-/// caret and selection stay aligned with the text (like Write's code
-/// blocks).
+/// A block kept as literal Markdown (fenced code, tables, HTML …) as one
+/// muted, bordered box. The box ignores pointers and its padding is outside
+/// the component, so taps, caret and selection stay aligned with the text
+/// (like Write's code blocks).
 class _CodeBox extends StatelessWidget {
-  const _CodeBox({
-    required this.literal,
-    required this.style,
-    required this.child,
-  });
+  const _CodeBox({required this.style, required this.child});
 
-  final bool literal;
   final RichEditorStyle style;
   final Widget child;
 
@@ -284,7 +273,7 @@ class _CodeBox extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = RichEditorStyle.codePadding;
     return Semantics(
-      label: literal ? 'Markdown' : 'code block',
+      label: 'Markdown',
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -298,9 +287,7 @@ class _CodeBox extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: style.colors.muted,
                   borderRadius: BorderRadius.circular(6),
-                  border: literal
-                      ? Border.all(color: style.colors.border)
-                      : null,
+                  border: Border.all(color: style.colors.border),
                 ),
               ),
             ),

@@ -26,7 +26,9 @@ class BoardEndpoint extends Endpoint {
   Future<List<BoardCommentView>> listComments(Session session, int number) =>
       BoardService.listComments(session, postNumber: number);
 
-  /// Discussion and activity rows of a task, oldest first.
+  /// The activity rows of a task (claimed, released, PR linked …), oldest
+  /// first; for admins only (empty for everyone else). Tasks have no
+  /// discussion.
   Future<List<BoardCommentView>> listTaskComments(
     Session session,
     int number,
@@ -103,7 +105,9 @@ class BoardEndpoint extends Endpoint {
   Future<BoardVoteResult> vote(Session session, int number, int value) =>
       BoardService.vote(session, number, value);
 
-  /// Adds a comment to a post or a task; idempotent on [uuid].
+  /// Adds a comment to post [postNumber]; idempotent on [uuid]. Tasks have
+  /// no discussion: a [taskNumber] is refused (`invalidArgument`); the
+  /// parameter stays for older clients.
   Future<BoardCommentView> addComment(
     Session session,
     UuidValue uuid,

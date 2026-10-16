@@ -72,7 +72,7 @@ PR gets an AI review against its task (§13). The integration is built and enabl
 | **Kind** | `bug` or `idea` (user-visible: *Bug* / *Improvement*) |
 | **Area** | Where the post belongs: `drive`, `write`, `sheets`, `slides`, `suite` (shell, sign-in, settings, cross-app), `server` (performance, sync, email; not visible UI) |
 | **Size** | `small` (one focused change, roughly one agent session), `medium` (one feature area, several files and tests), `large` (cross-package work, or a spec change needed first) |
-| **Vote** | Ideas: up (+1) or down (−1). Bugs: *I hit this too* (+1 only) |
+| **Vote** | Ideas: up (+1) or down (−1). Bugs: up (+1) only — the same ▲ score ▼ control, ▼ disabled |
 | **Score** | The sum of votes. The author's own automatic vote counts |
 | **Task** | A unit of work an admin selected: one idea, one bug, or a **bundle** of related small bugs. Numbered `T-12`. Holds the contributor prompt and the claim |
 | **Claim** | A signed-in user reserving a published task for 48 hours (§8) |
@@ -301,7 +301,8 @@ The board routes are added to every app by `buildShellRouter`, next to `settings
   - *Claimed* is treated like *Up for grabs* (a task list). A task's own list follows its status
     (`BoardTab.ofTask`): *Claimed* while claimed or in review, *Up for grabs* when published (an
     expired claim is published), *Done* when done or shipped.
-  - A search belongs to its list (`BoardTrail.search`): a post opened from search results keeps
+  - A search belongs to the results view (`BoardTrail.search`; the tabs are never searched): a
+    post opened from search results keeps
     the search in its URL (`/improvements/p/5?list=search&q=sort`), so the list crumb returns to
     the results; a task opened from them goes under its own list.
   - A task opens one of its linked posts under itself: root › *Up for grabs* (or the list the task
@@ -355,7 +356,9 @@ The board routes are added to every app by `buildShellRouter`, next to `settings
   radius, the toolbar height of 40 px): the tabs on the left as toolbar toggles (`ShadToggle`,
   28 px, the active one highlighted, `tab` / `tabBar` semantics) and the search button at the end
   (below). Each tab shows its count as a GitHub-like badge after the label (a rounded pill on
-  `border`, stronger on the active tab; screen readers hear *Bugs, 3*). The counts come from one
+  `border`, stronger on the active tab; the figures 11 px semibold in the foreground color — one
+  step smaller than the label, at least 4.5:1 contrast in light and dark; screen readers hear
+  *Bugs, 3*). The counts come from one
   call, `board.counts()` → `BoardCounts` (the held count from `reviewCounts`), reloaded when a
   board command changes lists and on every `watchTasks` event:
   - *Improvements* (count of open and planned ideas);
@@ -373,23 +376,20 @@ The board routes are added to every app by `buildShellRouter`, next to `settings
   board list page opens it (not while a text field has the focus). It opens a `ShadPopover`
   anchored to the button (360 px; on windows below 600 px it spans the page's 16 px gutters) with:
   - the search field (focused; Enter searches; *Search posts*);
-  - *Search in*: *All posts* or the current tab (only on *Improvements*, *Bugs* and *Done*; from
-    the task tabs and Review the search covers all posts). Default: all posts, or the tab when
-    its search is the active one;
-  - *Kind* (all posts only): *Bugs and improvements*, *Bugs*, *Improvements*;
+  - *Kind*: *All*, *Bugs*, *Improvements*;
   - *Include closed* (done, shipped, declined, duplicates; default off);
   - *Clear* and *Search*. Esc closes the popover; searching with an empty field clears.
 
-  A search in a tab filters that tab (`/improvements/bugs?q=sort&closed=1`) and the tab stays
-  selected. A search of all posts opens the **results view** `/improvements/search?q=…`
+  A search always covers all posts, from whichever tab it starts (there is no *Search in*: the
+  tab-scoped search was dropped), and opens the **results view** `/improvements/search?q=…`
   (`BoardTab.search`, not a tab): the tabs show no selection, a header names it (*Results for
   “sort”*, also the list crumb), and the rows are posts of both kinds (or the chosen kind) with
   the usual filters and sort; the admin selection mode is off there. Without a `q` the results
-  view shows *Search the board* with a button that opens the popover. While searching, Done
-  shows only the matching posts (not the finished tasks). The active search is the first chip of
-  the filter row, *Search: “sort”* with ✕ (`board.filter.search`): pressing it clears the search
-  (back to the tab, or to *Improvements* from the results). The search lives in the URL (`q`,
-  `closed=1`, `kind=bug|idea`; `BoardSearchQuery`), so it can be shared and survives a reload.
+  view shows *Search the board* with a button that opens the popover. The active search is the
+  first chip of the filter row, *Search: “sort”* with ✕ (`board.filter.search`): pressing it
+  clears the search (back to *Improvements*). The search lives in the results view's URL (`q`,
+  `closed=1`, `kind=bug|idea`; `BoardSearchQuery`), so it can be shared and survives a reload; a
+  `q` on a tab's URL (the old tab search) is ignored and the tab shows unfiltered.
   Empty results: *No posts match your search* with *Try fewer words or part of a word, or include
   closed posts.* Matching and ranking are in §6.4.
 - **Filters** (chips): area (multi-select), size, status (default `open` + `planned`) and *Mine*
@@ -400,7 +400,10 @@ The board routes are added to every app by `buildShellRouter`, next to `settings
   - *New*;
   - *Most discussed*.
 - **Row**:
-  - the vote control (ideas: ▲ score ▼; bugs: a `+1` pill *I hit this too* with the count);
+  - the vote control, the same for both kinds: ▲ score ▼. Bugs can only be upvoted: their ▼ is
+    greyed out and disabled, with the tooltip *Bugs can only be upvoted* (semantics: *Downvote,
+    unavailable: bugs can only be upvoted*). The `+1` pill *I hit this too* is gone (it read as
+    "+1" next to the count);
   - title;
   - area and size chips, labelled with *AI* until an admin confirms them;
   - a status badge (`planned` links to the task);
@@ -425,11 +428,14 @@ The breadcrumb (§4.3) ends in `#412 Title` under its list, or under its task wh
 one (root › list › T-12 › #412). *Part of task T-12* and the status badge's task link truncate
 the trail to the task; *Similar posts*, merged duplicates and *Duplicate of* replace the post.
 
-- **Header**:
-  - `#412`, title, kind, area and size chips, status badge;
+- **Header**: the vote control (large, ▲ score ▼ for both kinds, as in the rows: on bugs ▼ is
+  disabled) at the start; next to it:
+  - one line, top-aligned: `#412` (muted, at the title's size), the title (wrapping) and the ⋮
+    actions menu at the end (`board.post.header`);
+  - below it the kind, area and size chips and the status badge;
   - author (avatar, display name, an *Admin* badge for admins) and time, plus *edited* with the
-    time;
-  - the vote control, large.
+    time.
+  There is no separate *I hit this too* button: a bug is voted with the ▲ of the vote control.
 - **Body**: the Markdown body (§7.3 renderer).
   - Screenshot: a thumbnail (max 480 px wide); click opens the **image lightbox**. Write's
     `ImageLightbox` moves to `wonky_app` (`showImageLightbox`).
@@ -455,22 +461,32 @@ task.
 - **Header**:
   - `T-12`, title, area and size;
   - status, and the claim state (*Claimed by Ada · 31 h left*, or *Up for grabs*);
-  - the buttons *Claim this task* / *Release* (§8); admins also get *Link pull request…*;
+  - the buttons *Claim this task* / *Unclaim this task* (Lucide `ban`, also the icon of
+    `shell.board.release`; §8); admins also get *Link pull request…*;
   - for the claimant: the **claim code** (`7Q4F-K2M9`) with *Copy*, and the time left.
 - **Linked posts**: one row per post with its score and its screenshots.
 - **How to build it** (collapsible, open by default on the first visit):
-  1. Set up Wonky Work locally: a short list with copy buttons for each command and a link to
-     the full guide (`/improvements/contribute`, §10.3).
-  2. **The prompt**: the published prompt in a monospaced card with *Copy prompt*. P1:
-     *Copy setup + prompt* puts the setup steps and the prompt in one clipboard text for an agent
-     that starts from an empty folder.
+  1. A single link, *Set up your development environment* (`board.task.setup`), that opens
+     *How to contribute* (`/improvements/contribute`, §10.3) in the same tab, under the board's
+     breadcrumb (Back returns to the task). The setup commands are only there.
+  2. **The prompt** — for the claimant and admins only: the prompt in a monospaced card with
+     *Copy prompt*. Everyone else sees *Claim this task to get the prompt.*
+     (`board.task.promptLocked`) with *Claim this task* while the task is up for grabs (*Sign in
+     to claim* when signed out). The server sends the prompt to the claimant and admins only
+     (§8.1), so it is not merely hidden. The claimant's prompt has their claim code in its PR
+     lines (§10.1). P1: *Copy setup + prompt* puts the setup steps and the prompt in one
+     clipboard text for an agent that starts from an empty folder.
   3. Open a PR: the PR rules (§13.1), with the two lines to put in the description, already
      filled in for the claimant (`Wonky-Task: T-12`, `Wonky-Claim: 7Q4F-K2M9`) and a *Copy*
      button.
 - **Pull request** (once linked): the PR link, its state, and the latest task review (§13.5) with
   the per-criterion verdicts.
-- **Activity**: claimed, released, expired, PR linked, done. These are system rows in the task's
-  comment list.
+- **No discussion.** Tasks have no comments or composer: questions go on the posts the task
+  comes from. The server refuses comments on tasks (§7.3).
+- **Activity** (admins only, under the heading *Activity*): claimed, released, expired, PR
+  linked, done, shipped — one muted line per row with its age (`board.task.event.<uuid>`), *No
+  activity yet* when there is none. These are the system rows of the task (`board_comment` with
+  a `taskId`); `listTaskComments` returns them to admins only (empty for everyone else).
 - **Admins**: *Edit prompt* (§10.2), *Regenerate prompt*, *Add/remove posts*, *Release claim*,
   *Mark done*, *Mark shipped*, *Cancel task*.
 
@@ -488,8 +504,11 @@ task.
   the shell toast. *Details* and *How to build it* are keyboard-operable disclosures
   (`BoardDisclosure`). Section headings are `h4`, page titles (post, task) `h3`.
 - Vote control:
-  - two buttons with labels ("Upvote, 14 votes", "Remove upvote") and `aria-pressed`;
-  - keyboard: `+`/`-` on a focused row (`shell.board.vote` with up/down).
+  - two buttons with labels ("Upvote, 14 votes", "Remove upvote") and `aria-pressed`; on bugs the
+    down button is disabled ("Downvote, unavailable: bugs can only be upvoted", tooltip *Bugs can
+    only be upvoted*);
+  - keyboard: `+`/`-` on a focused row (`shell.board.vote` with up/down; `-` on a bug removes
+    its upvote).
 - The screenshot editor needs a pointer for drawing. Keyboard users can still post without a
   screenshot. The editor's tool buttons, undo and *Done* are keyboard operable.
 - Light and dark are verified with goldens for the dialog, the board row, the post page and the
@@ -769,7 +788,8 @@ Users blocked from the board (§9.2) can read but not write. Their writing endpo
 
 ### 7.2 Votes
 
-- One row per `(postId, userId)` with `value` +1 or −1. Down votes (−1) are allowed on ideas only.
+- One row per `(postId, userId)` with `value` +1 or −1. Down votes (−1) are allowed on ideas only:
+  bugs show the same ▲ score ▼ control with ▼ disabled (§4.4).
 - `board.vote(postNumber, value)`, where `value` ∈ {−1, 0, +1} and 0 removes the vote. It is
   idempotent and returns the new score and the caller's vote.
 - The author's +1 is added on creation and can be removed like any vote.
@@ -785,6 +805,11 @@ Users blocked from the board (§9.2) can read but not write. Their writing endpo
 does not fit: its `itemId` is a required drive-item FK, and its access checks are drive roles.
 
 - The comments are flat, oldest first, with no resolve, assignment or anchors.
+- Comments are on posts only. Tasks have no discussion (§4.6): `addComment` with a `taskNumber`
+  answers `invalidArgument` (the parameter stays for older clients), for admins too. A task's
+  `board_comment` rows are the system activity rows the server writes itself (claimed,
+  released, expired, PR linked, done, shipped …), and `listTaskComments` returns them to admins
+  only.
 - Reactions use the same JSON shape as document comments (P1).
 - Mentions are P2. `@name` is plain text in v1.
 
@@ -831,13 +856,28 @@ renderer.
     writes it back: paragraphs (their lines stay lines, like the renderer's `hardBreaks`),
     headings 1–6 (drawn at most at h3 size, like posts), bullet and numbered items with levels
     (nested items at the parent's content column: 2 spaces under `- `, 3 under `1. `), task
-    items (`- [ ]`, `- [x]`, for prompts' acceptance criteria), quotes, fenced code blocks
-    (info string kept), rules, and inline bold, italic, strikethrough, code and links through
-    `wonky_rich_text`'s inline reader and writer (the suite's syntax).
-  - **Nothing is lost.** Tables, HTML, indented code, link reference definitions and any block
-    whose inline content the editor can't represent (images, inline HTML, link titles, links with
-    other schemes, styles across lines, a quote inside a list item …) become a *literal* block,
-    shown as Markdown source in a bordered code box and written back verbatim.
+    items (`- [ ]`, `- [x]`, for prompts' acceptance criteria), quotes, rules, and inline bold,
+    italic, strikethrough, code and links through `wonky_rich_text`'s inline reader and writer
+    (the suite's syntax).
+  - **No code blocks** (*decided*: editing and removing them broke the field). Inline code
+    stays. There is no *Code block* button, no ```` ``` ```` autoformat (typed, a fence is text:
+    written escaped, read back as the same paragraph) and no code-block shortcut. Fenced code that
+    is set or pasted as Markdown is a *literal* block (below), fences included, so nothing is
+    lost and the renderer still shows it as code. The code-block capability is removed from
+    `wonky_rich_editor` too (no `BlockFormat.codeBlock`, no fence metadata): no other field
+    needed it.
+  - **Nothing is lost.** Fenced and indented code, tables, HTML, link reference definitions and
+    any block whose inline content the editor can't represent (images, inline HTML, link titles,
+    links with other schemes, styles across lines, a quote inside a list item …) become a
+    *literal* block, shown as Markdown source in a bordered code box and written back verbatim.
+    A literal block is edited and deleted like a paragraph: Backspace at its start makes it a
+    paragraph and then joins it to the one before, Delete at the end of the block before (or of
+    the literal block) joins the next block, a selection across it deletes or is typed over
+    like any other, Enter inserts a line break at the caret (super_editor's code-block newline
+    appended it at the block's end; `MarkdownEditingController` handles it), Enter twice at its
+    end leaves it, and cut / paste and undo restore it. Every path is covered by
+    `wonky_rich_editor/test/widgets/literal_blocks_test.dart` (keys through the hardware
+    keyboard and the IME) and none throws.
   - **Untouched text stays as it was.** Until the user edits, the text is exactly what was set;
     afterwards only the edited blocks are rewritten (each block remembers its source and the
     Markdown the codec would write for it). The prompt editor's diff and lint therefore keep
@@ -845,12 +885,12 @@ renderer.
   - **Profiles.** The `profile` sets the blocks: comments have no headings, quotes or rules
     (those lines stay text, as the comment renderer shows them; no Quote button).
   - **Toolbar** (above the field, wraps at 360 px): Bold, Italic, Strikethrough, Code, Link |
-    Bulleted list, Numbered list, Checklist | Quote, Code block — `ShadToggle`s like Write's
-    toolbar, checked for the selection, tooltips with the shortcut, screen-reader labels.
+    Bulleted list, Numbered list, Checklist | Quote — `ShadToggle`s like Write's toolbar, checked
+    for the selection, tooltips with the shortcut, screen-reader labels.
   - **Typing** follows Write's autoformat (Write 04 §7): `# ` headings, `- ` `* ` `+ ` bullets,
-    `1. ` numbers, `[] ` `[x] ` tasks, `> ` quotes, ```` ```lang ```` + space or Enter code blocks,
-    `---` rules; `**b**` `__b__`, `*i*` `_i_`, `~~s~~`, `` `c` `` and `[text](url)` convert when
-    the closing delimiter is typed; URLs autolink. Not in code blocks.
+    `1. ` numbers, `[] ` `[x] ` tasks, `> ` quotes, `---` rules; `**b**` `__b__`, `*i*` `_i_`,
+    `~~s~~`, `` `c` `` and `[text](url)` convert when the closing delimiter is typed; URLs
+    autolink. Not in literal blocks.
   - **Shortcuts:** `Mod+B` / `I` / `E` (code), `Mod+Shift+X` (strikethrough), `Mod+K` (link
     dialog `dialog.markdown.link`: http(s) or mailto only, *Remove link* when editing one),
     `Mod+C` / `Mod+X` (copy and cut as Markdown, below),
@@ -861,11 +901,12 @@ renderer.
     (`MarkdownEditingController.selectedMarkdown`, plain text flavor — Flutter's clipboard has one):
     text inside one block is its inline Markdown (`say **bo**`, escaped where it would read as a
     block), a selection across blocks or a whole block keeps the blocks cut at its ends, untouched
-    blocks their exact source; inside a code block the plain text. Pasting it back gives the same
-    content. Cut is one undo step; read-only fields copy.
-  - **Paste:** Markdown is converted into blocks and styles; `Mod+Shift+V` pastes plain text; a
-    URL pasted over a selection makes it a link; code blocks always take plain text. Plain text
-    from other apps goes through the same path (Markdown in it is converted).
+    blocks their exact source; inside a literal block the plain text. Pasting it back gives the
+    same content. Cut is one undo step; read-only fields copy.
+  - **Paste:** Markdown is converted into blocks and styles (fenced code becomes a literal
+    block); `Mod+Shift+V` pastes plain text; a URL pasted over a selection makes it a link;
+    literal blocks always take plain text. Plain text from other apps goes through the same path
+    (Markdown in it is converted).
   - **Undo:** the field's own history (`Mod+Z`, `Mod+Shift+Z`): typing within a second is one
     step, every format change, autoformat and paste another; the shell's undo stack is not
     involved (08: text fields keep their own local undo). Undo right after an autoformat restores
@@ -878,15 +919,18 @@ renderer.
     of another field — and the first keys went to the previously focused field or nowhere.)
   - **Look:** the border, radius, padding, focus ring and disabled state of `ShadTextarea`; the
     text in the renderer's styles (`small`, regular weight, 1.45 line height; code in the
-    monospace style of `WonkyMarkdown`, quotes muted with a bar, code blocks in a muted box). A
-    max length counts the Markdown (counter from 80%; typing and pastes past it are refused).
+    monospace style of `WonkyMarkdown`, quotes muted with a bar, literal blocks in a muted,
+    bordered box). A max length counts the Markdown (counter from 80%; typing and pastes past it
+    are refused). Placeholders that open into a composer use its corner radius
+    (`composerRadius`, the shad input/textarea decoration): the collapsed *Add a comment* /
+    *Reply* field of `CommentThreadBody` is no longer a pill (18 px).
   - **Keys:** `<fieldKey>` (the field), `<fieldKey>.bold`, `.italic`, `.strike`, `.code`,
-    `.link`, `.bullets`, `.numbers`, `.tasks`, `.quote`, `.codeBlock`, `<fieldKey>.count`.
-    Removed with the toggle: `<fieldKey>.write`, `.preview`, `.rendered` (and `MarkdownEdits`,
-    the plain-text transforms). Tests type with `enterMarkdown` / `typeMarkdown`
-    (`package:wonky_app/testing.dart`).
-  - **Spelling:** misspelled words get Write's red squiggles (not in code or literal blocks,
-    links or inline code; the word being typed is held back until the caret leaves it), and a
+    `.link`, `.bullets`, `.numbers`, `.tasks`, `.quote`, `<fieldKey>.count` (`.codeBlock` is
+    gone with code blocks). Removed with the toggle: `<fieldKey>.write`, `.preview`, `.rendered`
+    (and `MarkdownEdits`, the plain-text transforms). Tests type with `enterMarkdown` /
+    `typeMarkdown` (`package:wonky_app/testing.dart`).
+  - **Spelling:** misspelled words get Write's red squiggles (not in literal blocks, links or
+    inline code; the word being typed is held back until the caret leaves it), and a
     right-click opens the field's context menu: up to five suggestions (one replaces the word,
     one local undo step), *Ignore* (this session, every composer), *Add to dictionary* (the
     synced personal dictionary shared with Write and Slides), then *Cut*, *Copy*, *Paste*. The
@@ -946,10 +990,15 @@ The board list itself is not live: it refreshes on focus and on *Load more*.
   - sets `claimedById`, `claimedAt` and `claimExpiresAt = now + board.claimHours` (48), and
     generates a new **claim code** (§13.7). The code is returned only to the claimant (task
     page, `board.getTask`, MCP `board.get_task`) and goes into the PR description (§13.1).
+- **The prompt is the claimant's.** `BoardTaskView.prompt` and `promptBody` are empty for
+  everyone but the claimant (a valid claim) and admins — in every read (`getTask`, `listTasks`,
+  `claimTask`/`releaseTask` results, MCP `board.get_task`), so the prompt is not merely hidden in
+  the UI. The claimant's prompt carries their claim code in its PR lines (§10.1); admins see the
+  placeholder. After a release or expiry the former claimant gets none either.
 - The claimant's GitHub login is learned from the first PR that passes the gate and stored on
   their board profile. It is shown on the task page.
-- **Release**: `board.releaseTask(taskNumber)`, by the claimant or an admin. The task goes back to
-  `published`.
+- **Release** (*Unclaim this task* on the task page): `board.releaseTask(taskNumber)`, by the
+  claimant or an admin. The task goes back to `published`.
 - **Extend**: P1, `board.extendClaim` (+24 h, once, only in the last 12 h, only without a PR).
 - Undo: claim ↔ release (`shell.board.claim` / `shell.board.release`), only while still valid.
 
@@ -1131,10 +1180,22 @@ light and dark, the checklist after changes).
 ## When you are done
 - Run the checklist in AGENTS.md (analyze, format, tests).
 - Update the specs if behavior changed.
-- Open a pull request against `main`. Its description contains the lines
-  `Wonky-Task: T-12` and `Wonky-Claim: <your claim code from the task page>`, and a short
-  summary of how each acceptance criterion is met.
+
+Open a pull request against `main`. Its description contains these two lines:
+
+~~~
+Wonky-Task: T-12
+Wonky-Claim: 7Q4F-K2M9
+~~~
+
+and a short summary of how each acceptance criterion is met.
 ```
+
+The "When you are done" part is built in code (`TaskPromptTemplate.wrap`, with the two lines in
+a ```` ``` ```` block). For the claimant the server builds it with their actual claim code
+(`claimCode:`), as above; admins' views keep the placeholder
+`Wonky-Claim: <your claim code from the task page>`. Nobody else gets the prompt (§8.1), so the
+claim code still reaches no one but the claimant.
 
 ### 10.2 Admin review (mandatory)
 
@@ -1289,7 +1350,7 @@ table: board_comment
 fields:
   uuid: UuidValue                      # client-supplied, idempotent create
   postId: int?, relation(parent=board_post, onDelete=Cascade)
-  taskId: int?, relation(parent=board_task, onDelete=Cascade)   # task activity and discussion
+  taskId: int?, relation(parent=board_task, onDelete=Cascade)   # task activity (system rows only, admins read them)
   authorId: int?, relation(parent=user_profile, onDelete=SetNull)
   body: String                         # Markdown, ≤ 10,000 chars
   systemEvent: String?                 # claimed, released, expired, prLinked, done, merged, …
@@ -1424,8 +1485,9 @@ Views sent to clients: `BoardPostView`, `BoardPostListItem`, `BoardCommentView`,
 include the author display name, avatar and an `isAdmin` flag, and never emails.
 `BoardTaskView` carries two prompt fields: `promptBody` (the editable AI-written body, §10.2) and
 `prompt` (the full prompt: the fixed template around the body, §10.1, which the task page copies
-and `board.get_task` returns), plus `promptPending` and, for admins, `promptNote` (§10.1),
-`reviewJson` (§13.5) and, for the claimant only, `claimCode`. `BoardPostView.reviewScores` (admins
+and `board.get_task` returns; the claimant's has their claim code in its PR lines). Both are
+empty for everyone but the claimant and admins (§8.1). Plus `promptPending` and, for admins,
+`promptNote` (§10.1), `reviewJson` (§13.5) and, for the claimant only, `claimCode`. `BoardPostView.reviewScores` (admins
 only) lists the moderation scores at or above their review band (§9.2).
 
 **Feedback fold-in (B9).**
@@ -1442,7 +1504,8 @@ only) lists the moderation scores at or above their review band (§9.2).
 
 **Endpoint** `BoardEndpoint` (`board`). `requireLogin` is false: read methods work signed out,
 and write methods call `BoardService.requireWriter(session)` (signed in, not blocked). **As built**,
-the method names differ from the groups below in a few places: `listTaskComments`, `unflag`,
+the method names differ from the groups below in a few places: `listTaskComments` (a task's
+activity rows, admins only; empty for everyone else), `unflag`,
 `counts` (the tab badges, `BoardCounts`: open ideas and bugs, *Up for grabs*, *Claimed*),
 `reviewCounts`, `listSuggestions` and `dismissDuplicateHint` exist besides the listed ones;
 `moderate` is split into `moderatePost` and `moderateComment`; *Edit and approve* is
@@ -1452,7 +1515,7 @@ the method names differ from the groups below in a few places: `listTaskComments
 | Group | Methods |
 |-------|---------|
 | Read | `me()`, `list(BoardListQuery)` → page, `getPost(number)`, `listComments(postNumber, cursor)`, `similar(text, kind)`, `getScreenshotUrl(postNumber)`, `listTasks(filter, cursor)`, `getTask(number)`, `watchPost(number)`, `watchTasks()` |
-| Write | `createScreenshotUpload(…)`, `createPost(BoardPostDraft)`, `editPost(number, title, body)`, `deletePost(number)`, `restorePost(number)` (undo), `removeScreenshot(number)`, `vote(number, value)`, `addComment(uuid, postNumber?, taskNumber?, body)`, `editComment(uuid, body)`, `deleteComment(uuid)`, `restoreComment(uuid)`, `flag(target, reason, note)`, `claimTask(number)`, `releaseTask(number)` |
+| Write | `createScreenshotUpload(…)`, `createPost(BoardPostDraft)`, `editPost(number, title, body)`, `deletePost(number)`, `restorePost(number)` (undo), `removeScreenshot(number)`, `vote(number, value)`, `addComment(uuid, postNumber?, taskNumber?, body)` (posts only: a `taskNumber` is refused), `editComment(uuid, body)`, `deleteComment(uuid)`, `restoreComment(uuid)`, `flag(target, reason, note)`, `claimTask(number)`, `releaseTask(number)` |
 | Admin | `reviewQueue(section, cursor)`, `moderate(target, action, reason?)`, `setLabels(number, kind?, area?, size?)`, `applySuggestedTitle(number)`, `merge(source, target)`, `unmerge(source)`, `decline(number, reason)`, `reopen(number)`, `blockUser(userId, reason, until?)`, `unblockUser(userId)`, `createTask(postNumbers, title, area, size)`, `updateTask(number, …)`, `setTaskPosts(number, postNumbers)`, `regeneratePrompt(number)`, `setPrompt(number, body)`, `publishTask(number)`, `linkPullRequest(number, url)`, `markDone(number)`, `markShipped(number)`, `cancelTask(number)`, `suggestBundles()`, `dismissSuggestion(id)` |
 
 **Config** (`wonky: board:`, parsed in `BoardConfig.fromMap`, env overrides `WONKY_BOARD_*`):
@@ -1702,10 +1765,12 @@ tools defined in `packages/wonky_core/lib/mcp/board_tools.dart` and handlers in
 `platform/mcp/board_tool_handlers.dart`:
 
 - `board.list_posts` (with a `query` for search), `board.get_post`, `board.list_tasks`;
-- `board.get_task`, which returns the full prompt (and, for the claimant, the claim code and the
-  two PR lines), so a contributor's agent can fetch the task by number and fill in the PR
-  description;
-- `board.create_post` (no screenshot), `board.vote`, `board.comment`, `board.claim_task`,
+- `board.get_task`, which returns the posts and the claim state, and for the claimant the full
+  prompt (with their claim code in its PR lines), the claim code and the two PR lines, so a
+  contributor's agent can claim the task, fetch it by number and fill in the PR description.
+  Admins get the prompt with the placeholder; everyone else no `prompt` key (§8.1);
+- `board.create_post` (no screenshot), `board.vote`, `board.comment` (posts only:
+  `post_number` is required; tasks have no discussion), `board.claim_task`,
   `board.release_task`;
 - admin tools (P1, not built): `board.moderate`, `board.create_task`, `board.set_prompt`,
   `board.publish_task`.
@@ -1723,11 +1788,11 @@ The tools are read and write in one scope and are not offered to the in-app assi
 | `editPost` | ✓ |
 | `deletePost` | ✓ |
 | `vote {postNumber, value}` | ✓ |
-| `comment.add` / `comment.edit` / `comment.delete` | ✓ |
+| `comment.add` (posts only) / `comment.edit` / `comment.delete` | ✓ |
 | `flag` | ✓ |
-| `claim` / `release` | ✓ |
+| `claim` / `release` (*Unclaim this task*, Lucide `ban`) | ✓ |
 | `copyClaimCode` | – |
-| `copyPrompt` | – |
+| `copyPrompt` (fails with *Claim this task to get the prompt.* without one) | – |
 | `removeScreenshot` | – (the bytes are deleted at once; confirmed) |
 | `admin.moderate` / `admin.setLabels` / `admin.editPost` (*Edit and approve*) / `admin.applySuggestedTitle` / `admin.merge` / `admin.unmerge` / `admin.decline` / `admin.reopen` / `admin.block` / `admin.createTask` / `admin.updateTask` / `admin.setTaskPosts` / `admin.regeneratePrompt` / `admin.setPrompt` / `admin.publishTask` / `admin.linkPullRequest` / `admin.markDone` / `admin.markShipped` / `admin.cancelTask` | ✓ (inverse calls, §9.2) |
 | `admin.suggestBundles` / `admin.dismissSuggestion` / `admin.dismissDuplicate` (*Not a duplicate*) | – (no server inverse) |

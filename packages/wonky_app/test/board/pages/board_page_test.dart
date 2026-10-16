@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -71,15 +72,54 @@ void main() {
   });
 
   testWidgets('Given the board when the Bugs tab is chosen then the route '
-      'changes and bugs show the I hit this too pill', (tester) async {
-    current = await pumpBoard(tester, '/improvements', board: seeded());
+      'changes and bugs have the up and down vote control, the down arrow '
+      'greyed out and unavailable', (tester) async {
+    final b = seeded();
+    current = await pumpBoard(tester, '/improvements', board: b);
+    final semantics = tester.ensureSemantics();
 
     await tester.tap(byKey('board.tab.bugs'));
     await tester.pumpAndSettle();
 
     expect(t().location, '/improvements/bugs');
     expect(row(4), findsOneWidget);
-    expect(byKey('board.vote.4.hit'), findsOneWidget);
+    expect(byKey('board.vote.4.hit'), findsNothing);
+    expect(find.textContaining('+1'), findsNothing);
+    expect(byKey('board.vote.4.up'), findsOneWidget);
+    expect(byKey('board.vote.4.score'), findsOneWidget);
+    expect(
+      tester.getSemantics(byKey('board.vote.4.down')),
+      isSemantics(
+        isButton: true,
+        hasEnabledState: true,
+        isEnabled: false,
+        hasTapAction: false,
+        label: 'Downvote, unavailable: bugs can only be upvoted',
+      ),
+    );
+
+    // The disabled arrow explains itself on hover.
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    addTearDown(mouse.removePointer);
+    await mouse.addPointer(location: Offset.zero);
+    await mouse.moveTo(tester.getCenter(byKey('board.vote.4.down')));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Bugs can only be upvoted'), findsOneWidget);
+    await mouse.moveTo(Offset.zero);
+
+    await tester.tap(byKey('board.vote.4.down'), warnIfMissed: false);
+    await tester.pumpAndSettle();
+    expect(b.posts[4]!.votes.containsKey(1), isFalse);
+
+    await tester.tap(byKey('board.vote.4.up'));
+    await tester.pumpAndSettle();
+    expect(b.posts[4]!.votes[1], 1);
+    expect(
+      tester.getSemantics(byKey('board.vote.4.up')).label,
+      'Remove upvote',
+    );
+    semantics.dispose();
     await settleTooltips(tester);
   });
 

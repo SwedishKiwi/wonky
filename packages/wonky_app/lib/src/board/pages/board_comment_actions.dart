@@ -64,20 +64,18 @@ String boardActivityText(WonkyAppLocalizations l, BoardCommentView c) {
   return '$who · $what';
 }
 
-/// [CommentThreadActions] of a post's or a task's discussion: the
-/// `shell.board.comment.*` commands, Markdown composer (no mentions),
-/// author edits, author or admin deletes, *Link to comment*.
+/// [CommentThreadActions] of a post's discussion (tasks have none, specs/16
+/// §4.6): the `shell.board.comment.*` commands, Markdown composer (no
+/// mentions), author edits, author or admin deletes, *Link to comment*.
 class BoardCommentActions extends CommentThreadActions {
   BoardCommentActions({
     required this.services,
-    this.postNumber,
-    this.taskNumber,
+    required this.postNumber,
     this.open = true,
-  }) : assert((postNumber == null) != (taskNumber == null));
+  });
 
   final ShellServices services;
-  final int? postNumber;
-  final int? taskNumber;
+  final int postNumber;
 
   /// Whether new comments are accepted (not on removed or deleted posts).
   final bool open;
@@ -87,10 +85,7 @@ class BoardCommentActions extends CommentThreadActions {
   BoardCommentView? _view(ThreadComment c) =>
       c.source is BoardCommentView ? c.source! as BoardCommentView : null;
 
-  Map<String, Object?> get _target => {
-    'postNumber': ?postNumber,
-    'taskNumber': ?taskNumber,
-  };
+  Map<String, Object?> get _target => {'postNumber': postNumber};
 
   Future<void> _invoke(String id, Map<String, Object?> args) async {
     final r = await services.dispatcher.invoke(
@@ -102,8 +97,7 @@ class BoardCommentActions extends CommentThreadActions {
   }
 
   @override
-  String get threadId =>
-      postNumber != null ? 'post-$postNumber' : 'task-$taskNumber';
+  String get threadId => 'post-$postNumber';
 
   @override
   String get keyPrefix => 'board';
@@ -147,9 +141,7 @@ class BoardCommentActions extends CommentThreadActions {
   @override
   Future<void> Function(ThreadComment c)? get copyLink => (c) async {
     final s = services;
-    final base = postNumber != null
-        ? boardPostUrl(s, postNumber!)
-        : boardTaskUrl(s, taskNumber!);
+    final base = boardPostUrl(s, postNumber);
     await Clipboard.setData(ClipboardData(text: '$base#comment-${c.id}'));
     final l = s.l10n;
     if (l != null) s.toasts.show(l.toastLinkCopied);

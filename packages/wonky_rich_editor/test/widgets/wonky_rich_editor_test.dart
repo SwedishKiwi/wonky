@@ -216,9 +216,8 @@ void main() {
     await tester.tap(_key('markdown.composer.quote'));
     await tester.pump();
     expect(r.md, '> hello **~~world~~**');
-    await tester.tap(_key('markdown.composer.codeBlock'));
-    await tester.pump();
-    expect(r.md, '```\nhello world\n```');
+    // No code blocks (specs/16 §7.3).
+    expect(_key('markdown.composer.codeBlock'), findsNothing);
     await settleTooltips(tester);
   });
 
@@ -365,10 +364,10 @@ void main() {
 
   testWidgets('Given a narrow field (360 px dialog) then the toolbar wraps '
       'without overflowing', (tester) async {
-    await _pump(tester, width: 300);
+    await _pump(tester, width: 220);
     expect(tester.takeException(), isNull);
     final bold = tester.getTopLeft(_key('markdown.composer.bold'));
-    final block = tester.getTopLeft(_key('markdown.composer.codeBlock'));
+    final block = tester.getTopLeft(_key('markdown.composer.quote'));
     expect(block.dy, greaterThan(bold.dy));
   });
 
@@ -470,7 +469,7 @@ void main() {
 
   group('Given a spell checker', () {
     testWidgets('when the text has misspelled words then they are '
-        'underlined, but not in code', (tester) async {
+        'underlined, but not in inline code or literal blocks', (tester) async {
       final checker = _Checker();
       addTearDown(checker.dispose);
       final r = await _pump(
@@ -553,23 +552,5 @@ void main() {
       expect(spelling.errorsOf(id), isEmpty);
       expect(r.md, 'helo wrold');
     });
-  });
-
-  testWidgets('Given the caret in a code block when the block is removed and '
-      'the toolbar rebuilds before the selection moves then nothing throws', (
-    tester,
-  ) async {
-    // Board report #5: removing a code block showed "No such position in
-    // document" from the toolbar's state check (canFormatInline).
-    final rig = await _pump(tester, markdown: 'before\n\n```\ncode\n```');
-    await selectRichText(tester, _key('markdown.composer'), 2, block: 1);
-    final code = rig.controller.document.getNodeAt(1)!;
-    rig.controller.editor.execute([DeleteNodeRequest(nodeId: code.id)]);
-    await tester.pump();
-
-    expect(tester.takeException(), isNull);
-    expect(rig.controller.canFormatInline, isFalse);
-    expect(rig.controller.selection, isNull);
-    expect(rig.md, 'before');
   });
 }

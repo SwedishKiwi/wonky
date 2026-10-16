@@ -42,7 +42,8 @@ void main() {
   }
 
   testWidgets('Given a published task when I claim it then I see my claim '
-      'code, the time left and the filled-in PR lines', (tester) async {
+      'code, the time left, the prompt with my code and the filled-in PR '
+      'lines', (tester) async {
     final b = withTask();
     current = await pumpBoard(tester, '/improvements/t/1', board: b);
     expect(
@@ -57,6 +58,11 @@ void main() {
       find.text('Wonky-Task: T-1\nWonky-Claim: <your claim code>'),
       findsOneWidget,
     );
+    // No prompt before claiming.
+    expect(byKey('board.task.prompt'), findsNothing);
+    expect(byKey('board.task.copyPrompt'), findsNothing);
+    expect(find.text('Claim this task to get the prompt.'), findsOneWidget);
+    expect(find.textContaining('Keep styles when pasting.'), findsNothing);
 
     await tester.tap(byKey('board.task.claim'));
     await tester.pumpAndSettle();
@@ -68,8 +74,17 @@ void main() {
     expect(find.text('Wonky-Task: T-1\nWonky-Claim: $code'), findsOneWidget);
     expect(byKey('board.task.release'), findsOneWidget);
     expect(byKey('board.task.claim'), findsNothing);
-    // The activity row of the claim.
-    expect(find.textContaining('claimed the task'), findsOneWidget);
+    expect(byKey('board.task.promptLocked'), findsNothing);
+    expect(
+      find.descendant(
+        of: byKey('board.task.prompt'),
+        matching: find.textContaining('Wonky-Claim: $code'),
+      ),
+      findsOneWidget,
+    );
+    // Activity rows are for admins; tasks have no discussion.
+    expect(find.textContaining('claimed the task'), findsNothing);
+    expect(byKey('board.reply.task-1.open'), findsNothing);
     await settleTooltips(tester);
   });
 
@@ -85,6 +100,9 @@ void main() {
     expect(byKey('board.task.claimCode'), findsNothing);
     expect(byKey('board.task.claim'), findsNothing);
     expect(byKey('board.task.release'), findsNothing);
+    expect(byKey('board.task.prompt'), findsNothing);
+    expect(byKey('board.task.promptLocked'), findsOneWidget);
+    expect(byKey('board.task.promptClaim'), findsNothing, reason: 'claimed');
     await settleTooltips(tester);
   });
 
@@ -98,20 +116,50 @@ void main() {
     );
 
     expect(byKey('board.task.signInToClaim'), findsOneWidget);
-    expect(byKey('board.task.prompt'), findsOneWidget);
+    expect(byKey('board.task.prompt'), findsNothing);
+    expect(byKey('board.task.promptLocked'), findsOneWidget);
+    expect(byKey('board.task.promptSignIn'), findsOneWidget);
     await settleTooltips(tester);
   });
 
-  testWidgets('Given a task when Copy prompt is pressed then the full '
-      'wrapped prompt is on the clipboard', (tester) async {
+  testWidgets('Given an unclaimed task when Claim is pressed next to the '
+      'locked prompt then the claim gives the prompt, and Copy prompt puts '
+      'the wrapped prompt with my claim code on the clipboard', (tester) async {
     final copied = recordClipboard(tester);
-    current = await pumpBoard(tester, '/improvements/t/1', board: withTask());
+    final b = withTask();
+    current = await pumpBoard(tester, '/improvements/t/1', board: b);
 
+    await tester.ensureVisible(byKey('board.task.promptClaim'));
+    await tester.tap(byKey('board.task.promptClaim'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(byKey('board.task.copyPrompt'));
     await tester.tap(byKey('board.task.copyPrompt'));
     await tester.pumpAndSettle();
 
     expect(copied.single, startsWith('# Wonky task T-1: Merged cells keep'));
     expect(copied.single, contains('Keep styles when pasting.'));
+    expect(copied.single, contains('Wonky-Claim: ${b.tasks[1]!.claimCode}'));
+    await settleTooltips(tester);
+  });
+
+  testWidgets('Given an admin then the prompt shows with the placeholder '
+      'claim line, without claiming', (tester) async {
+    current = await pumpBoard(
+      tester,
+      '/improvements/t/1',
+      board: withTask(admin: true),
+    );
+
+    expect(byKey('board.task.promptLocked'), findsNothing);
+    expect(
+      find.descendant(
+        of: byKey('board.task.prompt'),
+        matching: find.textContaining(
+          'Wonky-Claim: <your claim code from the task page>',
+        ),
+      ),
+      findsOneWidget,
+    );
     await settleTooltips(tester);
   });
 
@@ -127,33 +175,40 @@ void main() {
     await settleTooltips(tester);
   });
 
-  testWidgets('Given the task page then the setup steps are the commands of '
-      'CONTRIBUTING.md, each with a copy button, after the link to the '
-      'Serverpod installation guide', (tester) async {
-    final copied = recordClipboard(tester);
-    current = await pumpBoard(tester, '/improvements/t/1', board: withTask());
+  testWidgets('Given the task page then step 1 is one link that opens How '
+      'to contribute in the same tab, under the board, and Back returns', (
+    tester,
+  ) async {
+    current = await pumpBoard(
+      tester,
+      '/improvements/t/1',
+      board: withTask(),
+      size: const Size(2400, 1000),
+    );
 
+    expect(find.text('Set up your development environment'), findsOneWidget);
     for (final line in const [
       'dart install serverpod_cli 4.1.0-beta.3',
-      'git clone https://github.com/<you>/wonky.git',
-      'cd wonky && flutter pub get',
-      'cd wonky_server',
-      'cp config/passwords.example.yaml config/passwords.yaml',
       'serverpod start',
     ]) {
-      expect(find.text(line), findsOneWidget, reason: line);
+      expect(
+        find.text(line),
+        findsNothing,
+        reason: 'the setup is on Contribute',
+      );
     }
-    expect(find.textContaining('dart pub global'), findsNothing);
-    expect(find.textContaining('docker'), findsNothing);
-    expect(byKey('board.task.installGuide'), findsOneWidget);
+    expect(byKey('board.task.installGuide'), findsNothing);
+
+    await tester.ensureVisible(byKey('board.task.setup'));
+    await tester.tap(byKey('board.task.setup'));
+    await tester.pumpAndSettle();
+
+    expect(t().location, '/improvements/contribute');
     expect(
-      find.textContaining('Serverpod installation guide', findRichText: true),
+      find.text('dart install serverpod_cli 4.1.0-beta.3'),
       findsOneWidget,
     );
-    await tester.ensureVisible(byKey('board.task.setup.0'));
-    await tester.tap(byKey('board.task.setup.0'));
-    await tester.pumpAndSettle();
-    expect(copied.single, 'dart install serverpod_cli 4.1.0-beta.3');
+    expect(byKey('board.crumb.contribute'), findsOneWidget);
     await settleTooltips(tester);
   });
 
@@ -309,8 +364,9 @@ void main() {
   });
 
   testWidgets('Given a reviewed pull request and GitHub activity then the '
-      'review verdicts and the activity rows show', (tester) async {
-    final b = withTask();
+      'review verdicts show, and an admin sees the activity rows under '
+      'Activity', (tester) async {
+    final b = withTask(admin: true);
     b.tasks[1]!
       ..status = BoardTaskStatus.inReview
       ..pullRequestUrl = 'https://github.com/serverpod/wonky/pull/345'
@@ -341,13 +397,30 @@ void main() {
     expect(find.text('Reviewed at abcdef1'), findsOneWidget);
     expect(find.text('Pull request #345'), findsOneWidget);
     expect(
-      find.text(
+      find.textContaining(
         'Pull request closed without merge: '
         'https://github.com/serverpod/wonky/pull/300. The task is open again.',
       ),
       findsOneWidget,
     );
-    expect(find.text('Bob Stone · claimed the task'), findsOneWidget);
+    expect(find.text('Activity'), findsOneWidget);
+    expect(find.textContaining('Bob Stone · claimed the task'), findsOneWidget);
+    // No discussion: no comment composer.
+    expect(byKey('board.reply.task-1.open'), findsNothing);
+    expect(byKey('board.task.comments.1'), findsNothing);
+    await settleTooltips(tester);
+  });
+
+  testWidgets('Given a non-admin then the task has no activity rows, no '
+      'Activity heading and no comment composer', (tester) async {
+    final b = withTask();
+    b.seedComment(taskNumber: 1, authorId: 2, systemEvent: 'claimed', body: '');
+    current = await pumpBoard(tester, '/improvements/t/1', board: b);
+
+    expect(find.text('Activity'), findsNothing);
+    expect(find.textContaining('claimed the task'), findsNothing);
+    expect(byKey('board.reply.task-1.open'), findsNothing);
+    expect(b.calls, isNot(contains('listTaskComments 1')));
     await settleTooltips(tester);
   });
 

@@ -62,8 +62,6 @@ void main() {
         '/improvements/t/3?list=claimed',
         '/improvements/search?q=sort',
         '/improvements/search?q=dark+mode&closed=1&kind=bug',
-        '/improvements/bugs?q=sort&closed=1',
-        '/improvements?q=sort',
         '/improvements/p/5?list=search&q=sort&kind=idea',
       ]) {
         expect(parse(l).location, l);
@@ -84,16 +82,14 @@ void main() {
           ),
         ),
       );
-      expect(
-        parse('/improvements/bugs?q=x&kind=idea').search,
-        const BoardSearchQuery('x'),
-        reason: 'the kind applies to all posts only',
-      );
-      expect(
-        parse('/improvements/tasks?q=x').search,
-        isNull,
-        reason: 'task lists are not searched',
-      );
+      for (final tab in ['bugs', 'done', 'tasks']) {
+        expect(
+          parse('/improvements/$tab?q=x&kind=idea').search,
+          isNull,
+          reason: 'a search is always the results view, never a tab',
+        );
+      }
+      expect(parse('/improvements?q=x'), BoardTrail.root);
       expect(parse('/improvements/search?q=').search, isNull);
       expect(
         parse('/improvements/p/5?list=tasks&task=1&q=x').search,
@@ -122,7 +118,7 @@ void main() {
         'move (Back returns to the list before it)', () {
       const bugs = BoardTrail(list: BoardTab.bugs);
       const searched = BoardTrail(
-        list: BoardTab.bugs,
+        list: BoardTab.search,
         search: BoardSearchQuery('x'),
       );
       expect(bugs.isSiblingOf(searched), isFalse);
@@ -146,18 +142,10 @@ void main() {
         ),
         BoardPostStatus.values.toSet(),
       );
-      expect(
-        BoardSearchQuery.statusesFor(
-          BoardTab.done,
-          const BoardSearchQuery('x', closed: true),
-        ),
-        {
-          BoardPostStatus.done,
-          BoardPostStatus.shipped,
-          BoardPostStatus.declined,
-          BoardPostStatus.duplicate,
-        },
-      );
+      expect(BoardSearchQuery.statusesFor(BoardTab.done, null), {
+        BoardPostStatus.done,
+        BoardPostStatus.shipped,
+      });
     });
   });
 

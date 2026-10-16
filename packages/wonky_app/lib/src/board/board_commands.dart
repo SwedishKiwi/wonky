@@ -119,8 +119,8 @@ List<Command<CommandArgs>> boardCommands(ShellServices s) {
             minimum: -1,
             maximum: 1,
             description:
-                '1 up (bugs: I hit this too), -1 down (ideas), 0 '
-                'removes the vote.',
+                '1 up, -1 down (ideas only: bugs can only be '
+                'upvoted), 0 removes the vote.',
           ),
         },
         required: ['postNumber', 'value'],
@@ -245,23 +245,17 @@ List<Command<CommandArgs>> boardCommands(ShellServices s) {
       'shell.board.comment.add',
       title: (l) => l.cmdBoardComment,
       icon: LucideIcons.messageSquare,
+      // Posts only: tasks have no discussion (specs/16 §4.6).
       args: const JsonSchema.object(
         properties: {
           'uuid': uuid,
           'postNumber': post,
-          'taskNumber': task,
           'body': JsonSchema.string(minLength: 1, maxLength: 10000),
         },
-        required: ['body'],
+        required: ['postNumber', 'body'],
       ),
       run: (ctx, a) async {
-        final p = a.integer('postNumber');
-        final t = a.integer('taskNumber');
-        if ((p == null) == (t == null)) {
-          return const CommandResult.failed(
-            'Pass exactly one of postNumber and taskNumber.',
-          );
-        }
+        final p = a.integer('postNumber')!;
         final id = switch (a.string('uuid')) {
           final String u => UuidValue.fromString(u),
           _ => s.ids.next(),
@@ -269,18 +263,13 @@ List<Command<CommandArgs>> boardCommands(ShellServices s) {
         final c = await repo().addComment(
           id,
           postNumber: p,
-          taskNumber: t,
           body: a.string('body')!,
         );
         hub.commentBodies[c.uuid.uuid] = c.body;
         ctx.record(
-          entry(BoardUndoOp.addComment, {
-            'uuid': c.uuid.uuid,
-            'post': p,
-            'task': t,
-          }),
+          entry(BoardUndoOp.addComment, {'uuid': c.uuid.uuid, 'post': p}),
         );
-        hub.changed(post: p, task: t, lists: false);
+        hub.changed(post: p, lists: false);
         return CommandResult.ok({'uuid': c.uuid.uuid});
       },
     ),
@@ -433,7 +422,7 @@ List<Command<CommandArgs>> boardCommands(ShellServices s) {
     cmd(
       'shell.board.release',
       title: (l) => l.cmdBoardRelease,
-      icon: LucideIcons.circleStop,
+      icon: LucideIcons.ban,
       args: const JsonSchema.object(
         properties: {'taskNumber': task},
         required: ['taskNumber'],
@@ -463,6 +452,12 @@ List<Command<CommandArgs>> boardCommands(ShellServices s) {
       ),
       run: (ctx, a) async {
         final t = await repo().getTask(a.integer('taskNumber')!);
+        // The server sends the prompt to the claimant and admins only.
+        if (t.prompt.isEmpty) {
+          return const CommandResult.failed(
+            'Claim this task to get the prompt.',
+          );
+        }
         await Clipboard.setData(ClipboardData(text: t.prompt));
         final l = s.l10n;
         if (l != null) s.toasts.show(l.boardPromptCopied);

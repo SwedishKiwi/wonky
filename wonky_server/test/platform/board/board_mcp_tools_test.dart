@@ -82,6 +82,11 @@ void main() {
           got['pr_description_lines'],
           'Wonky-Task: T-${task.number}\nWonky-Claim: $code',
         );
+        expect(
+          got['prompt'],
+          contains('```\n${got['pr_description_lines']}\n```'),
+          reason: 'the prompt has the claimant\'s PR lines',
+        );
 
         final other = await McpHarness.forUser(admin);
         final seen = await other.call('board.get_task', {
@@ -89,6 +94,19 @@ void main() {
         });
         expect(seen.containsKey('claim_code'), isFalse);
         expect(seen['claimed_by'], 'Anna');
+        expect(seen['prompt'], isNot(contains(code)));
+        expect(
+          seen['prompt'],
+          contains('Wonky-Claim: <your claim code from the task page>'),
+        );
+
+        final bo = await TestUsers.create(sessionBuilder, name: 'Bo');
+        final stranger = await McpHarness.forUser(bo);
+        final hidden = await stranger.call('board.get_task', {
+          'number': task.number,
+        });
+        expect(hidden.containsKey('prompt'), isFalse);
+        expect(hidden['claimed_by'], 'Anna');
 
         await mcp.call('board.release_task', {'number': task.number});
         final tasks = await mcp.call('board.list_tasks', {});
@@ -98,6 +116,27 @@ void main() {
         expect(row['status'], 'published');
       },
     );
+
+    test('when commenting on a task then it is refused: the tool takes a '
+        'post only', () async {
+      final p = await BoardHarness.post(endpoints, anna);
+      final task = await BoardHarness.publishedTask(endpoints, admin, [
+        p.number,
+      ]);
+
+      expect(
+        await mcp.error('board.comment', {
+          'task_number': task.number,
+          'body': 'Taking this',
+        }),
+        isNotEmpty,
+      );
+      final rows = await endpoints.board.listTaskComments(
+        admin.endpointSession,
+        task.number,
+      );
+      expect(rows.where((r) => r.systemEvent == null), isEmpty);
+    });
 
     test(
       'when a token lacks the board scope then the tools are refused',

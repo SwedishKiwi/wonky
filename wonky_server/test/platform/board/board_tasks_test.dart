@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:clock/clock.dart';
+import 'package:serverpod/serverpod.dart' show Uuid;
 import 'package:test/test.dart';
 import 'package:wonky_server/src/platform/board/ai/board_ai.dart';
 import 'package:wonky_server/src/platform/board/ai/jev_gemini_board_ai.dart';
@@ -63,6 +64,11 @@ void main() {
         expect(task.prompt, startsWith('# Wonky task T-${task.number}: '));
         expect(task.prompt, contains('/improvements/p/${p1.number}'));
         expect(task.prompt, contains('Wonky-Task: T-${task.number}'));
+        expect(
+          task.prompt,
+          contains('Wonky-Claim: ${TaskPromptTemplate.claimPlaceholder}'),
+          reason: 'admins see the placeholder',
+        );
         expect(task.posts.map((p) => p.number).toSet(), {
           p1.number,
           p2.number,
@@ -333,6 +339,81 @@ void main() {
         },
       );
 
+      test('when nobody claimed it then only admins get the prompt; others '
+          'get none, not just a hidden one', () async {
+        final forAdmin = await endpoints.board.getTask(
+          admin.endpointSession,
+          task.number,
+        );
+        final forBo = await endpoints.board.getTask(
+          bo.endpointSession,
+          task.number,
+        );
+        final signedOut = await endpoints.board.getTask(
+          TestUsers.unauthenticated(sessionBuilder),
+          task.number,
+        );
+        final listed = (await endpoints.board.listTasks(
+          bo.endpointSession,
+          const [],
+          null,
+          50,
+        )).items.firstWhere((t) => t.number == task.number);
+
+        expect(forAdmin.prompt, contains('Wonky task T-${task.number}'));
+        expect(forAdmin.promptBody, isNotEmpty);
+        for (final view in [forBo, signedOut, listed]) {
+          expect(view.prompt, isEmpty);
+          expect(view.promptBody, isEmpty);
+        }
+      });
+
+      test('when claimed then the claimant gets the prompt with their claim '
+          'code in its PR lines, admins the placeholder, others nothing; '
+          'after releasing the claimant has none either', () async {
+        final mine = await endpoints.board.claimTask(
+          bo.endpointSession,
+          task.number,
+        );
+        final code = mine.claimCode!;
+        final again = await endpoints.board.getTask(
+          bo.endpointSession,
+          task.number,
+        );
+        final forAdmin = await endpoints.board.getTask(
+          admin.endpointSession,
+          task.number,
+        );
+        final forCy = await endpoints.board.getTask(
+          cy.endpointSession,
+          task.number,
+        );
+
+        for (final view in [mine, again]) {
+          expect(
+            view.prompt,
+            contains(
+              '```\nWonky-Task: T-${task.number}\nWonky-Claim: $code\n```',
+            ),
+          );
+          expect(view.promptBody, isNotEmpty);
+        }
+        expect(forAdmin.prompt, isNot(contains(code)));
+        expect(
+          forAdmin.prompt,
+          contains('Wonky-Claim: ${TaskPromptTemplate.claimPlaceholder}'),
+        );
+        expect(forCy.prompt, isEmpty);
+        expect(forCy.promptBody, isEmpty);
+        expect(forCy.claimCode, isNull);
+
+        final released = await endpoints.board.releaseTask(
+          bo.endpointSession,
+          task.number,
+        );
+        expect(released.prompt, isEmpty);
+      });
+
       test(
         'when someone else claims a claimed task then it conflicts',
         () async {
@@ -407,6 +488,10 @@ void main() {
         );
         final after = await notes(bo, NotificationKind.boardClaim);
         final activity = await endpoints.board.listTaskComments(
+          admin.endpointSession,
+          task.number,
+        );
+        final forCy = await endpoints.board.listTaskComments(
           cy.endpointSession,
           task.number,
         );
@@ -421,8 +506,38 @@ void main() {
           'claimed',
           'expired',
         ]);
+        expect(forCy, isEmpty, reason: 'the activity is for admins');
         expect(row!.status, BoardTaskStatus.published);
         expect(row.claimCode, isNull);
+      });
+
+      test('when someone comments on the task then it is refused: tasks have '
+          'no discussion', () async {
+        await expectLater(
+          endpoints.board.addComment(
+            bo.endpointSession,
+            const Uuid().v4obj(),
+            null,
+            task.number,
+            'Can I take this?',
+          ),
+          _code(WonkyErrorCode.invalidArgument),
+        );
+        await expectLater(
+          endpoints.board.addComment(
+            admin.endpointSession,
+            const Uuid().v4obj(),
+            null,
+            task.number,
+            'Admins neither',
+          ),
+          _code(WonkyErrorCode.invalidArgument),
+        );
+        final rows = await endpoints.board.listTaskComments(
+          admin.endpointSession,
+          task.number,
+        );
+        expect(rows.every((r) => r.systemEvent != null), isTrue);
       });
 
       test('when the claimant releases then the task is published again and '

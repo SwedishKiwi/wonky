@@ -26,9 +26,9 @@ const boardPageSize = 30;
 
 /// The board page (`/improvements…`, specs/16 §4.4): the tabs bar (tabs
 /// with count badges, the search button at the end) and the tab's content;
-/// *Report a bug* / *Suggest an improvement* are in the frame's bar. A
-/// [search] (from the URL) filters a post tab, or, on [BoardTab.search],
-/// lists the results across all posts.
+/// *Report a bug* / *Suggest an improvement* are in the frame's bar. On
+/// [BoardTab.search], [search] (from the URL) lists the results across all
+/// posts.
 class BoardPage extends StatefulWidget {
   const BoardPage({
     super.key,
@@ -206,7 +206,6 @@ class _BoardPageState extends State<BoardPage> {
             trailing: BoardSearchButton(
               services: s,
               controller: _searchPopover,
-              tab: tab,
               search: search,
             ),
           ),
@@ -271,10 +270,10 @@ class _BoardPageState extends State<BoardPage> {
 
 // ---------------------------------------------------------------- posts
 
-/// The posts of a board tab (Improvements, Bugs, Done) or of a search of
-/// all posts ([BoardTab.search]): filter chips (with the active search as a
-/// removable chip), sort, rows, *Load more*, empty states, and the admin
-/// selection mode.
+/// The posts of a board tab (Improvements, Bugs, Done) or the results of a
+/// search ([BoardTab.search], all posts): filter chips (with the active
+/// search as a removable chip), sort, rows, *Load more*, empty states, and
+/// the admin selection mode (not on the results).
 class BoardPostList extends StatefulWidget {
   const BoardPostList({
     super.key,
@@ -491,14 +490,7 @@ class _BoardPostListState extends State<BoardPostList> {
     String named(String name, Iterable<String> values) =>
         values.isEmpty ? name : '$name: ${values.join(', ')}';
     final statuses = _done
-        ? [
-            BoardPostStatus.done,
-            BoardPostStatus.shipped,
-            if (widget.search?.closed ?? false) ...[
-              BoardPostStatus.declined,
-              BoardPostStatus.duplicate,
-            ],
-          ]
+        ? const [BoardPostStatus.done, BoardPostStatus.shipped]
         : BoardPostStatus.values;
     final hub = this.hub;
     final search = widget.search;
@@ -515,12 +507,7 @@ class _BoardPostListState extends State<BoardPostList> {
                 child: _SearchChip(
                   label: l.boardSearchActive(search.text),
                   removeLabel: l.boardSearchRemove,
-                  onRemove: () => boardOpenSearch(
-                    s,
-                    null,
-                    tab: widget.tab.searchable ? widget.tab : null,
-                    context: context,
-                  ),
+                  onRemove: () => boardOpenSearch(s, null, context: context),
                 ),
               ),
             chip(
@@ -812,10 +799,7 @@ class _BoardPostListState extends State<BoardPostList> {
               : _filters(l, inset),
         ),
         Expanded(
-          // While searching, Done shows only the matching posts.
-          child: _done && search == null
-              ? _DoneLayout(services: s, posts: list)
-              : list,
+          child: _done ? _DoneLayout(services: s, posts: list) : list,
         ),
       ],
     );

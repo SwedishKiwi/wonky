@@ -2994,9 +2994,6 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get markdownQuote => 'Quote';
 
   @override
-  String get markdownCodeBlock => 'Code block';
-
-  @override
   String get markdownToolbar => 'Formatting';
 
   @override
@@ -3432,12 +3429,6 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get boardSearchRemove => 'Clear the search';
 
   @override
-  String get boardSearchIn => 'Search in';
-
-  @override
-  String get boardSearchInAll => 'All posts';
-
-  @override
   String get boardSearchIncludeClosed => 'Include closed';
 
   @override
@@ -3448,7 +3439,7 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get boardSearchKind => 'Kind';
 
   @override
-  String get boardSearchKindAll => 'Bugs and improvements';
+  String get boardSearchKindAll => 'All';
 
   @override
   String get boardSearchResults => 'Search';
@@ -3693,17 +3684,11 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get boardRemoveDownvote => 'Remove downvote';
 
   @override
-  String get boardHitThisToo => 'I hit this too';
+  String get boardBugsUpvoteOnly => 'Bugs can only be upvoted';
 
   @override
-  String boardHitThisTooLabel(int score) {
-    return 'I hit this too, $score people';
-  }
-
-  @override
-  String boardHitThisTooRemove(int score) {
-    return 'Remove I hit this too, $score people';
-  }
+  String get boardDownvoteUnavailable =>
+      'Downvote, unavailable: bugs can only be upvoted';
 
   @override
   String get boardAiMarker => 'AI';
@@ -4094,10 +4079,10 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get boardHowToBuild => 'How to build it';
 
   @override
-  String get boardStepSetup => '1. Set up Wonky Work locally';
+  String get boardStepSetupNumber => '1.';
 
   @override
-  String get boardFullGuide => 'Read the full guide';
+  String get boardStepSetupLink => 'Set up your development environment';
 
   @override
   String get boardInstallTools =>
@@ -4133,7 +4118,13 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get boardLatestReview => 'Latest review';
 
   @override
-  String get boardActivityAndDiscussion => 'Activity and discussion';
+  String get boardActivity => 'Activity';
+
+  @override
+  String get boardNoActivity => 'No activity yet';
+
+  @override
+  String get boardClaimForPrompt => 'Claim this task to get the prompt.';
 
   @override
   String get boardContributeTitle => 'How to contribute';
@@ -7567,9 +7558,6 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String get markdownQuote => '[Ǫûöţé on]';
 
   @override
-  String get markdownCodeBlock => '[Çöðé ƀļöçķ one]';
-
-  @override
   String get markdownToolbar => '[Ƒöŕɱåţţîñĝ one]';
 
   @override
@@ -8011,12 +7999,6 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String get boardSearchRemove => '[Çļéåŕ ţĥé šéåŕçĥ one t]';
 
   @override
-  String get boardSearchIn => '[Šéåŕçĥ îñ one]';
-
-  @override
-  String get boardSearchInAll => '[Åļļ þöšţš one]';
-
-  @override
   String get boardSearchIncludeClosed => '[Îñçļûðé çļöšéð one t]';
 
   @override
@@ -8027,7 +8009,7 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String get boardSearchKind => '[Ķîñð on]';
 
   @override
-  String get boardSearchKindAll => '[Ɓûĝš åñð îɱþŕöṽéɱéñţš one two]';
+  String get boardSearchKindAll => '[Åļļ on]';
 
   @override
   String get boardSearchResults => '[Šéåŕçĥ one]';
@@ -8275,17 +8257,11 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String get boardRemoveDownvote => '[Ŕéɱöṽé ðöŵñṽöţé one t]';
 
   @override
-  String get boardHitThisToo => '[Î ĥîţ ţĥîš ţöö one]';
+  String get boardBugsUpvoteOnly => '[Ɓûĝš çåñ öñļý ƀé ûþṽöţéð one two]';
 
   @override
-  String boardHitThisTooLabel(int score) {
-    return '[Î ĥîţ ţĥîš ţöö, $score þéöþļé one two]';
-  }
-
-  @override
-  String boardHitThisTooRemove(int score) {
-    return '[Ŕéɱöṽé Î ĥîţ ţĥîš ţöö, $score þéöþļé one two t]';
-  }
+  String get boardDownvoteUnavailable =>
+      '[Ðöŵñṽöţé, ûñåṽåîļåƀļé: ƀûĝš çåñ öñļý ƀé ûþṽöţéð one two three f]';
 
   @override
   String get boardAiMarker => '[ÅÎ o]';
@@ -8679,10 +8655,11 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String get boardHowToBuild => '[Ĥöŵ ţö ƀûîļð îţ one t]';
 
   @override
-  String get boardStepSetup => '[1. Šéţ ûþ Ŵöñķý Ŵöŕķ ļöçåļļý one two t]';
+  String get boardStepSetupNumber => '[1. o]';
 
   @override
-  String get boardFullGuide => '[Ŕéåð ţĥé ƒûļļ ĝûîðé one tw]';
+  String get boardStepSetupLink =>
+      '[Šéţ ûþ ýöûŕ ðéṽéļöþɱéñţ éñṽîŕöñɱéñţ one two thr]';
 
   @override
   String get boardInstallTools =>
@@ -8719,7 +8696,14 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String get boardLatestReview => '[Ļåţéšţ ŕéṽîéŵ one t]';
 
   @override
-  String get boardActivityAndDiscussion => '[Åçţîṽîţý åñð ðîšçûššîöñ one two]';
+  String get boardActivity => '[Åçţîṽîţý one]';
+
+  @override
+  String get boardNoActivity => '[Ñö åçţîṽîţý ýéţ one t]';
+
+  @override
+  String get boardClaimForPrompt =>
+      '[Çļåîɱ ţĥîš ţåšķ ţö ĝéţ ţĥé þŕöɱþţ. one two th]';
 
   @override
   String get boardContributeTitle => '[Ĥöŵ ţö çöñţŕîƀûţé one tw]';

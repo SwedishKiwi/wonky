@@ -355,20 +355,27 @@ abstract final class BoardViews {
         () {
           final valid = claimValid(t, now);
           final mine = valid && c.isAuthor(t.claimedById);
+          // The prompt is for the claimant (with their claim code in its PR
+          // lines) and admins (with the placeholder) only: everyone else
+          // claims the task to get it (specs/16 §4.6, §10.1).
+          final seesPrompt = mine || c.isAdmin;
           return BoardTaskView(
             number: t.id!,
             title: t.title,
             area: t.area,
             size: t.size,
             status: effectiveStatus(t, now),
-            promptBody: t.promptBody,
-            prompt: TaskPromptTemplate.wrap(
-              task: t,
-              posts: postsByTask[t.id] ?? const [],
-              body: t.promptBody,
-              webOrigin: origin,
-              repository: config.repository,
-            ),
+            promptBody: seesPrompt ? t.promptBody : '',
+            prompt: seesPrompt
+                ? TaskPromptTemplate.wrap(
+                    task: t,
+                    posts: postsByTask[t.id] ?? const [],
+                    body: t.promptBody,
+                    webOrigin: origin,
+                    repository: config.repository,
+                    claimCode: mine ? t.claimCode : null,
+                  )
+                : '',
             promptGeneratedAt: t.promptGeneratedAt,
             promptPending: BoardTasks.promptPending(t, now),
             promptNote: c.isAdmin ? t.promptNote : null,

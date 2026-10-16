@@ -101,10 +101,12 @@ abstract final class BoardTools {
     name: 'board.get_task',
     title: 'Get a task',
     description:
-        'Returns task T-<number> with its full contributor prompt, the posts '
-        'it comes from and its claim state. For the claimant it also returns '
-        'the claim code and the two lines the pull request description must '
-        'contain (Wonky-Task, Wonky-Claim).',
+        'Returns task T-<number> with the posts it comes from and its claim '
+        'state. For the claimant (and admins) it also returns the full '
+        'contributor prompt; for the claimant also the claim code and the '
+        'two lines the pull request description must contain (Wonky-Task, '
+        'Wonky-Claim), which the prompt already includes. Claim the task '
+        'first (board.claim_task) to get the prompt.',
     inputSchema: ObjectSchema(
       properties: {'number': _number},
       required: ['number'],
@@ -139,8 +141,8 @@ abstract final class BoardTools {
     name: 'board.vote',
     title: 'Vote on a post',
     description:
-        'Votes on a post: 1 (upvote; on bugs "I hit this too"), -1 (ideas '
-        'only) or 0 (remove the vote).',
+        'Votes on a post: 1 (upvote), -1 (downvote, ideas only: bugs can '
+        'only be upvoted) or 0 (remove the vote).',
     inputSchema: ObjectSchema(
       properties: {
         'number': _number,
@@ -154,15 +156,16 @@ abstract final class BoardTools {
 
   static const comment = McpToolDefinition(
     name: 'board.comment',
-    title: 'Comment on a post or task',
-    description: 'Adds a public Markdown comment to post #number or task T-n.',
+    title: 'Comment on a post',
+    description:
+        'Adds a public Markdown comment to post #post_number. Tasks have no '
+        'discussion: comment on the posts a task comes from.',
     inputSchema: ObjectSchema(
       properties: {
         'post_number': _number,
-        'task_number': _number,
         'body': JsonSchema.string(minLength: 1, maxLength: 10000),
       },
-      required: ['body'],
+      required: ['post_number', 'body'],
     ),
     scopes: {McpScope.board},
   );

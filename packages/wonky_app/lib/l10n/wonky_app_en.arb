@@ -1948,7 +1948,6 @@
   "markdownNumberedList": "Numbered list",
   "markdownTaskList": "Checklist",
   "markdownQuote": "Quote",
-  "markdownCodeBlock": "Code block",
   "markdownToolbar": "Formatting",
   "@markdownToolbar": {
     "description": "Screen reader label of the Markdown composer's formatting toolbar."
@@ -2271,12 +2270,10 @@
     }
   },
   "boardSearchRemove": "Clear the search",
-  "boardSearchIn": "Search in",
-  "boardSearchInAll": "All posts",
   "boardSearchIncludeClosed": "Include closed",
   "boardSearchIncludeClosedHint": "Done, shipped, declined and duplicates",
   "boardSearchKind": "Kind",
-  "boardSearchKindAll": "Bugs and improvements",
+  "boardSearchKindAll": "All",
   "boardSearchResults": "Search",
   "@boardSearchResults": {
     "description": "Breadcrumb of the board's search results page without a query."
@@ -2410,22 +2407,13 @@
   },
   "boardRemoveUpvote": "Remove upvote",
   "boardRemoveDownvote": "Remove downvote",
-  "boardHitThisToo": "I hit this too",
-  "boardHitThisTooLabel": "I hit this too, {score} people",
-  "@boardHitThisTooLabel": {
-    "placeholders": {
-      "score": {
-        "type": "int"
-      }
-    }
+  "boardBugsUpvoteOnly": "Bugs can only be upvoted",
+  "@boardBugsUpvoteOnly": {
+    "description": "Tooltip of the disabled down-vote arrow on bugs."
   },
-  "boardHitThisTooRemove": "Remove I hit this too, {score} people",
-  "@boardHitThisTooRemove": {
-    "placeholders": {
-      "score": {
-        "type": "int"
-      }
-    }
+  "boardDownvoteUnavailable": "Downvote, unavailable: bugs can only be upvoted",
+  "@boardDownvoteUnavailable": {
+    "description": "Semantics label of the disabled down-vote arrow on bugs."
   },
   "boardAiMarker": "AI",
   "@boardAiMarker": {
@@ -2739,8 +2727,14 @@
   "boardAddPosts": "Add posts…",
   "boardFieldPostNumbers": "Post numbers",
   "boardHowToBuild": "How to build it",
-  "boardStepSetup": "1. Set up Wonky Work locally",
-  "boardFullGuide": "Read the full guide",
+  "boardStepSetupNumber": "1.",
+  "@boardStepSetupNumber": {
+    "description": "The number of the first step of How to build it, before the link boardStepSetupLink."
+  },
+  "boardStepSetupLink": "Set up your development environment",
+  "@boardStepSetupLink": {
+    "description": "Step 1 of How to build it: a link to the How to contribute page."
+  },
   "boardInstallTools": "Install Flutter, Dart and the Serverpod CLI:",
   "boardInstallGuide": "Serverpod installation guide",
   "boardStepPrompt": "2. Give your coding agent the prompt",
@@ -2764,7 +2758,12 @@
     }
   },
   "boardLatestReview": "Latest review",
-  "boardActivityAndDiscussion": "Activity and discussion",
+  "boardActivity": "Activity",
+  "@boardActivity": {
+    "description": "Heading of a task's activity rows (claimed, released, PR linked …), shown to admins."
+  },
+  "boardNoActivity": "No activity yet",
+  "boardClaimForPrompt": "Claim this task to get the prompt.",
   "boardContributeTitle": "How to contribute",
   "boardContributeIntro": "Anyone can build a task that is up for grabs. Claim it, let a coding agent do the work with the task's prompt, and open a pull request.",
   "boardContribStep1Title": "Get the tools",

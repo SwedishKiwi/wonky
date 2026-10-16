@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shad/shad.dart' show LucideIcons;
 import 'package:wonky_app/testing.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_client/wonky_client.dart';
@@ -274,17 +275,57 @@ void main() {
       expect(task.claimedById, 2);
     });
 
-    test(
-      'when copying the prompt then the full wrapped prompt is returned',
-      () async {
-        final r = await h.invoke('shell.board.copyPrompt', {
-          'taskNumber': task.number,
-        });
+    test('when copying the prompt as the claimant then the full wrapped '
+        'prompt with the claim code is returned', () async {
+      await h.invoke('shell.board.claim', {'taskNumber': task.number});
+      final r = await h.invoke('shell.board.copyPrompt', {
+        'taskNumber': task.number,
+      });
 
-        expect((r.data! as Map)['prompt'], startsWith('# Wonky task T-1:'));
-        expect(h.undoLabels, isEmpty);
-      },
-    );
+      final prompt = (r.data! as Map)['prompt'] as String;
+      expect(prompt, startsWith('# Wonky task T-1:'));
+      expect(prompt, contains('Wonky-Claim: ${task.claimCode}'));
+      expect(h.undoLabels, hasLength(1), reason: 'only the claim');
+    });
+
+    test('when copying the prompt without a claim then it fails: the prompt '
+        'comes with the claim', () async {
+      final r = await h.invoke('shell.board.copyPrompt', {
+        'taskNumber': task.number,
+      });
+
+      expect(r.status, CommandStatus.failed);
+      expect(r.message, 'Claim this task to get the prompt.');
+    });
+
+    test('when commenting on the task then it is refused: tasks have no '
+        'discussion', () async {
+      await expectLater(
+        h.invoke('shell.board.comment.add', {
+          'taskNumber': task.number,
+          'body': 'Can I take it?',
+        }),
+        throwsA(predicate((e) => '$e'.contains('taskNumber'))),
+        reason: 'the command takes a post only',
+      );
+      await expectLater(
+        board.addComment(
+          const Uuid().v4obj(),
+          taskNumber: task.number,
+          body: 'Directly',
+        ),
+        throwsA(isA<WonkyException>()),
+        reason: 'the server refuses it too',
+      );
+      expect(board.comments.values.where((c) => c.taskNumber != null), isEmpty);
+      expect(h.undoLabels, isEmpty);
+    });
+
+    test('when looking at Unclaim this task then its icon is ban', () {
+      final release = h.services.registry.byId('shell.board.release')!;
+
+      expect(release.icon, LucideIcons.ban);
+    });
 
     test('when copying the PR lines as the claimant then both lines are '
         'filled in', () async {

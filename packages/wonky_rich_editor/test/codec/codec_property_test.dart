@@ -107,10 +107,12 @@ DocumentNode _node(Random r, int i) {
         metadata: {NodeMetadata.blockType: blockquoteAttribution},
       );
     case 5:
+      // A fence typed as text stays text (the editor has no code blocks).
       return ParagraphNode(
         id: id,
-        text: AttributedText('${_words[r.nextInt(_words.length)]}\n  ```\nx'),
-        metadata: {NodeMetadata.blockType: codeAttribution},
+        text: AttributedText(
+          '${_words[r.nextInt(_words.length)]}\n```${r.nextBool() ? 'dart' : ''}\nx',
+        ),
       );
     case 6:
       return HorizontalRuleNode(id: id);

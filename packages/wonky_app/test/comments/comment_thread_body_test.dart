@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shad/shad.dart';
 import 'package:wonky_app/testing.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_client/wonky_client.dart';
@@ -132,6 +133,36 @@ void main() {
       );
       expect(find.textContaining('resolve'), findsNothing);
       await expectAccessible(tester);
+    });
+  }
+
+  for (final b in Brightness.values) {
+    testWidgets('Given the collapsed reply field in ${b.name} then its corners '
+        'are the composer\'s it opens into, not a pill', (tester) async {
+      await pump(tester, _FakeActions(), brightness: b);
+      final open = find.byKey(
+        const ValueKey<String>('board.comments.reply.post-7.open'),
+      );
+      final theme = ShadTheme.of(tester.element(open));
+      final collapsed =
+          (tester.widget<Container>(open).decoration! as BoxDecoration)
+              .borderRadius;
+      expect(collapsed, composerRadius(theme));
+      expect(collapsed, isNot(BorderRadius.circular(18)));
+
+      await tester.tap(open);
+      await tester.pumpAndSettle();
+      final field = tester.widget<ShadDecorator>(
+        find
+            .ancestor(
+              of: find.byKey(
+                const ValueKey<String>('board.comments.reply.post-7'),
+              ),
+              matching: find.byType(ShadDecorator),
+            )
+            .first,
+      );
+      expect(field.decoration?.border?.radius ?? theme.radius, collapsed);
     });
   }
 

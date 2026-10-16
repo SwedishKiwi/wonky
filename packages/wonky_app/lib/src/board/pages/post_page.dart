@@ -637,6 +637,9 @@ class _BoardPostPageState extends State<BoardPostPage> {
         spacing: 12,
         children: [
           ..._notices(l, p),
+          // The vote control at the start (ideas and bugs alike), then the
+          // header: `#412`, the title (wrapping) and ⋮ on one top-aligned
+          // line, the chips and the author below.
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             spacing: 14,
@@ -655,14 +658,49 @@ class _BoardPostPageState extends State<BoardPostPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   spacing: 8,
                   children: [
-                    Text('#${p.number}', style: theme.textTheme.muted),
-                    Semantics(
-                      header: true,
-                      child: Text(
-                        p.title,
-                        key: const ValueKey<String>('board.post.title'),
-                        style: theme.textTheme.h3,
-                      ),
+                    Row(
+                      key: const ValueKey<String>('board.post.header'),
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: 8,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            '#${p.number}',
+                            key: const ValueKey<String>('board.post.number'),
+                            style: theme.textTheme.h3.copyWith(
+                              color: theme.colorScheme.mutedForeground,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Semantics(
+                              header: true,
+                              child: Text(
+                                p.title,
+                                key: const ValueKey<String>('board.post.title'),
+                                style: theme.textTheme.h3,
+                              ),
+                            ),
+                          ),
+                        ),
+                        WonkyDropdownMenu(
+                          anchor: const ShadAnchor(
+                            childAlignment: AlignmentDirectional.bottomEnd,
+                            overlayAlignment: AlignmentDirectional.topEnd,
+                          ),
+                          entries: () => _menu(l, p),
+                          builder: (context, ctl) => ShadIconButton.ghost(
+                            key: const ValueKey<String>('board.post.menu'),
+                            semanticLabel: l.moreActions,
+                            icon: const Icon(LucideIcons.ellipsisVertical),
+                            onPressed: ctl.toggle,
+                          ),
+                        ),
+                      ],
                     ),
                     Wrap(
                       spacing: 8,
@@ -695,19 +733,6 @@ class _BoardPostPageState extends State<BoardPostPage> {
                       editedAt: p.editedAt,
                     ),
                   ],
-                ),
-              ),
-              WonkyDropdownMenu(
-                anchor: const ShadAnchor(
-                  childAlignment: AlignmentDirectional.bottomEnd,
-                  overlayAlignment: AlignmentDirectional.topEnd,
-                ),
-                entries: () => _menu(l, p),
-                builder: (context, ctl) => ShadIconButton.ghost(
-                  key: const ValueKey<String>('board.post.menu'),
-                  semanticLabel: l.moreActions,
-                  icon: const Icon(LucideIcons.ellipsisVertical),
-                  onPressed: ctl.toggle,
                 ),
               ),
             ],

@@ -562,14 +562,22 @@ class FakeBoardRepository implements BoardRepository {
   BoardTaskView _taskView(FakeBoardTask t) {
     final claimed = _claimValid(t);
     final mine = claimed && userId != null && t.claimedById == userId;
+    // Like the server: the prompt only for the claimant (with their claim
+    // code in the PR lines) and admins (with the placeholder).
+    final seesPrompt = mine || isAdmin;
+    final code = mine ? t.claimCode! : '<your claim code from the task page>';
     return BoardTaskView(
       number: t.number,
       title: t.title,
       area: t.area,
       size: t.size,
       status: _status(t),
-      promptBody: t.promptBody,
-      prompt: '# Wonky task T-${t.number}: ${t.title}\n\n${t.promptBody}',
+      promptBody: seesPrompt ? t.promptBody : '',
+      prompt: seesPrompt
+          ? '# Wonky task T-${t.number}: ${t.title}\n\n${t.promptBody}\n\n'
+                '## When you are done\n\n```\nWonky-Task: T-${t.number}\n'
+                'Wonky-Claim: $code\n```\n'
+          : '',
       promptEditedAt: t.promptEditedAt,
       promptPending: t.promptPending,
       promptNote: isAdmin ? t.promptNote : null,
@@ -768,6 +776,8 @@ class FakeBoardRepository implements BoardRepository {
   Future<List<BoardCommentView>> listTaskComments(int number) async {
     _log('listTaskComments $number');
     _task(number);
+    // A task's activity rows are for admins only.
+    if (!isAdmin) return const [];
     return _commentsWhere((c) => c.taskNumber == number);
   }
 
@@ -969,8 +979,13 @@ class FakeBoardRepository implements BoardRepository {
     if (comments[uuid.uuid] case final existing?) {
       return _commentView(existing);
     }
-    if (postNumber != null) _post(postNumber);
-    if (taskNumber != null) _task(taskNumber);
+    if (taskNumber != null || postNumber == null) {
+      throw _err(
+        WonkyErrorCode.invalidArgument,
+        'Tasks have no discussion: comment on a post.',
+      );
+    }
+    _post(postNumber);
     final c = FakeBoardComment(
       uuid: uuid,
       postNumber: postNumber,

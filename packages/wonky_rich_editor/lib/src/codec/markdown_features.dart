@@ -3,8 +3,10 @@ library;
 
 /// Which block kinds a field turns into structure (specs/16 §7.3): blocks a
 /// field does not support stay text, like the renderer's profiles do
-/// (`MarkdownProfile` in the shell). Paragraphs, lists, task lists, code
-/// blocks and inline styles are always supported.
+/// (`MarkdownProfile` in the shell). Paragraphs, lists, task lists and
+/// inline styles are always supported. Fenced code blocks are not edited
+/// as code: they are kept as literal Markdown
+/// ([MarkdownNodeMetadata.raw]), like tables and HTML.
 class MarkdownBlockFeatures {
   const MarkdownBlockFeatures({
     this.headings = true,
@@ -46,16 +48,10 @@ class MarkdownBlockFeatures {
 /// Node metadata keys of the codec. They live on the super_editor nodes the
 /// codec creates and never reach the Markdown.
 abstract final class MarkdownNodeMetadata {
-  /// `true` on a block kept as literal Markdown (tables, HTML, images,
-  /// anything the editor cannot represent): a code-styled paragraph whose
-  /// text is written back verbatim.
+  /// `true` on a block kept as literal Markdown (fenced code, tables,
+  /// HTML, images, anything the editor cannot represent): a code-styled
+  /// paragraph whose text is written back verbatim.
   static const raw = 'wonky.md.raw';
-
-  /// The info string of a fenced code block (`dart` in ```` ```dart ````).
-  static const info = 'wonky.md.info';
-
-  /// The fence of a code block as written (```` ``` ```` or `~~~`).
-  static const fence = 'wonky.md.fence';
 
   /// The block's Markdown as it was read.
   static const source = 'wonky.md.source';
@@ -72,6 +68,6 @@ abstract final class MarkdownNodeMetadata {
   static const previous = 'wonky.md.previous';
 
   /// The block kind when it was read (`p`, `h2`, `ul`, `ol`, `task`,
-  /// `quote`, `code`, `raw`, `hr`).
+  /// `quote`, `raw`, `hr`).
   static const kind = 'wonky.md.kind';
 }

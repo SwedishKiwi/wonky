@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:shad/shad.dart';
 import 'package:wonky_rich_editor/wonky_rich_editor.dart';
 
 import '../l10n/wonky_app_localizations.dart';
@@ -8,13 +9,25 @@ import '../spellcheck/shell_spelling.dart';
 import 'markdown_inline.dart';
 import 'wonky_markdown.dart';
 
+/// The corner radius of the [MarkdownComposer] (the suite's text inputs:
+/// the shad input and textarea decoration), for placeholders that open
+/// into one, like the collapsed *Add a comment* field.
+BorderRadius composerRadius(ShadThemeData theme) {
+  final decoration = (theme.inputTheme.decoration ?? const ShadDecoration())
+      .merge(theme.textareaTheme.decoration);
+  final radius = decoration.border?.radius;
+  return radius is BorderRadius ? radius : theme.radius;
+}
+
 /// The suite's Markdown composer (specs/16 §7.3): a WYSIWYG field
 /// ([WonkyRichEditor], `wonky_rich_editor`) over the Markdown in
 /// [controller], with a formatting toolbar — Bold `Mod+B`, Italic `Mod+I`,
 /// Strikethrough `Mod+Shift+X`, Code `Mod+E`, Link `Mod+K` (asks for an
 /// http(s) or mailto URL), Bulleted / Numbered / Checklist
-/// (`Mod+Shift+8` / `7` / `9`), Quote and Code block — and Write's
-/// Markdown autoformat while typing. `Mod+Enter` submits.
+/// (`Mod+Shift+8` / `7` / `9`) and Quote — and Write's Markdown autoformat
+/// while typing. `Mod+Enter` submits. There are no code blocks (inline code
+/// stays): a fence is text, and fenced code set or pasted as Markdown is a
+/// literal block written back as it was.
 ///
 /// The text stays Markdown: [controller] holds it, exactly as set until
 /// the user edits, and only the edited blocks are rewritten afterwards. The
@@ -24,7 +37,7 @@ import 'wonky_markdown.dart';
 /// Stable keys, from [fieldKey] (`markdown.composer` by default): the field
 /// is `<fieldKey>`, the toolbar buttons `<fieldKey>.bold`, `.italic`,
 /// `.strike`, `.code`, `.link`, `.bullets`, `.numbers`, `.tasks`, `.quote`,
-/// `.codeBlock`, the counter `<fieldKey>.count`. (The *Write | Preview*
+/// the counter `<fieldKey>.count`. (The *Write | Preview*
 /// toggle and its keys `.write`, `.preview`, `.rendered` are gone: the
 /// field is the preview.) Tests type with `enterMarkdown`
 /// (`package:wonky_rich_editor/testing.dart`).
@@ -281,7 +294,6 @@ class MarkdownComposerState extends State<MarkdownComposer> {
         numberedList: l.markdownNumberedList,
         taskList: l.markdownTaskList,
         quote: l.markdownQuote,
-        codeBlock: l.markdownCodeBlock,
         toolbar: l.markdownToolbar,
         length: l.markdownLength,
         cut: l.cmdCut,

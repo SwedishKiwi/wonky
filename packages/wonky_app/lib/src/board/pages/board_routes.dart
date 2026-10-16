@@ -11,9 +11,10 @@ import 'task_page.dart';
 
 /// The board routes of specs/16 §4.3, added to every app next to the
 /// settings routes. A post's or task's breadcrumb trail comes from the
-/// query (`?list=…&task=…`, [BoardTrail.parse]); a search from
-/// `?q=…&closed=1&kind=…` ([BoardSearchQuery.parse]). They are public: the router's auth redirect lets
-/// `/improvements` and everything below it through when signed out.
+/// query (`?list=…&task=…`, [BoardTrail.parse]); the search of the results
+/// view (`/improvements/search`) from `?q=…&closed=1&kind=…`
+/// ([BoardSearchQuery.parse]). They are public: the router's auth redirect
+/// lets `/improvements` and everything below it through when signed out.
 List<RouteBase> boardRoutes(
   ShellServices s,
   Page<void> Function(GoRouterState state, Widget child) page,

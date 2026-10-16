@@ -4,14 +4,21 @@ import '../../common/models.dart';
 /// only the body; the header and the "When you are done" part come from
 /// here and cannot be changed by the model.
 abstract final class TaskPromptTemplate {
+  /// The placeholder of the claim line in prompts read by anyone but the
+  /// claimant (admins).
+  static const claimPlaceholder = '<your claim code from the task page>';
+
   /// The full prompt shown on the task page: header, [body], the posts the
-  /// task comes from, and the PR instructions.
+  /// task comes from, and the PR instructions with the two description
+  /// lines — filled in with [claimCode] for the claimant, else the
+  /// [claimPlaceholder].
   static String wrap({
     required BoardTask task,
     required List<BoardPost> posts,
     required String body,
     required Uri webOrigin,
     String repository = 'serverpod/wonky',
+    String? claimCode,
   }) {
     final b = StringBuffer()
       ..writeln('# Wonky task T-${task.id}: ${task.title}')
@@ -38,11 +45,19 @@ abstract final class TaskPromptTemplate {
       ..writeln('## When you are done')
       ..writeln('- Run the checklist in AGENTS.md (analyze, format, tests).')
       ..writeln('- Update the specs if behavior changed.')
+      ..writeln()
       ..writeln(
-        '- Open a pull request against `main`. Its description contains the '
-        'lines `Wonky-Task: T-${task.id}` and `Wonky-Claim: <your claim code '
-        'from the task page>`, and a short summary of how each acceptance '
-        'criterion is met.',
+        'Open a pull request against `main`. Its description contains these '
+        'two lines:',
+      )
+      ..writeln()
+      ..writeln('```')
+      ..writeln('Wonky-Task: T-${task.id}')
+      ..writeln('Wonky-Claim: ${claimCode ?? claimPlaceholder}')
+      ..writeln('```')
+      ..writeln()
+      ..writeln(
+        'and a short summary of how each acceptance criterion is met.',
       );
     return b.toString();
   }

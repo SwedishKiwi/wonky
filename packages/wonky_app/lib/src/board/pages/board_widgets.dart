@@ -294,10 +294,12 @@ class BoardListLoading extends StatelessWidget {
   }
 }
 
-/// The vote control (specs/16 §4.4, §4.7). Ideas: ▲ score ▼ with
-/// "Upvote, 14 votes" / "Remove upvote" labels and a pressed state; bugs: a
-/// `+1` pill *I hit this too* with the count. [onVote] gets the new value
-/// (−1, 0, 1); null disables the buttons (voting closed).
+/// The vote control (specs/16 §4.4, §4.7): ▲ score ▼, the same for ideas
+/// and bugs, with "Upvote, 14 votes" / "Remove upvote" labels and a pressed
+/// state. Bugs can only be upvoted: their ▼ is greyed out and disabled,
+/// with the tooltip *Bugs can only be upvoted* (screen readers hear that it
+/// is unavailable). [onVote] gets the new value (−1, 0, 1); null disables
+/// the buttons (voting closed).
 class BoardVoteControl extends StatelessWidget {
   const BoardVoteControl({
     super.key,
@@ -323,63 +325,47 @@ class BoardVoteControl extends StatelessWidget {
     final l = WonkyAppLocalizations.of(context);
     final theme = ShadTheme.of(context);
     final cs = theme.colorScheme;
-    final enabled = onVote != null;
-    if (kind == BoardPostKind.bug) {
-      final pressed = myVote == 1;
-      final label = pressed
-          ? l.boardHitThisTooRemove(score)
-          : l.boardHitThisTooLabel(score);
-      return Semantics(
-        button: true,
-        toggled: pressed,
-        enabled: enabled,
-        label: label,
-        excludeSemantics: true,
-        onTap: enabled ? () => onVote?.call(pressed ? 0 : 1) : null,
-        child: ShadTooltip(
-          builder: (_) => Text(label),
-          child: ShadButton.raw(
-            key: ValueKey<String>('board.vote.$number.hit'),
-            variant: pressed
-                ? ShadButtonVariant.primary
-                : ShadButtonVariant.outline,
-            size: large ? ShadButtonSize.regular : ShadButtonSize.sm,
-            enabled: enabled,
-            onPressed: () => onVote?.call(pressed ? 0 : 1),
-            child: Text('+1 ${large ? '${l.boardHitThisToo} · ' : ''}$score'),
-          ),
-        ),
-      );
-    }
+    final upOnly = kind == BoardPostKind.bug;
     Widget arrow(int value) {
       final up = value == 1;
+      final unavailable = !up && upOnly;
+      final enabled = onVote != null && !unavailable;
       final pressed = myVote == value;
-      final label = up
+      final label = unavailable
+          ? l.boardDownvoteUnavailable
+          : up
           ? (pressed ? l.boardRemoveUpvote : l.boardUpvoteLabel(score))
           : (pressed ? l.boardRemoveDownvote : l.boardDownvoteLabel(score));
       return Semantics(
         button: true,
-        toggled: pressed,
+        toggled: unavailable ? null : pressed,
         enabled: enabled,
         label: label,
         excludeSemantics: true,
         onTap: enabled ? () => onVote?.call(pressed ? 0 : value) : null,
         child: ShadTooltip(
-          builder: (_) => Text(label),
-          child: ShadIconButton.raw(
-            key: ValueKey<String>('board.vote.$number.${up ? 'up' : 'down'}'),
-            variant: pressed
-                ? ShadButtonVariant.secondary
-                : ShadButtonVariant.ghost,
-            width: large ? 36 : 28,
-            height: large ? 30 : 24,
-            iconSize: large ? 20 : 16,
-            enabled: enabled,
-            icon: Icon(
-              up ? LucideIcons.chevronUp : LucideIcons.chevronDown,
-              color: pressed ? cs.primary : null,
+          builder: (_) => Text(unavailable ? l.boardBugsUpvoteOnly : label),
+          child: _HoverReport(
+            active: unavailable,
+            child: ShadIconButton.raw(
+              key: ValueKey<String>('board.vote.$number.${up ? 'up' : 'down'}'),
+              variant: pressed
+                  ? ShadButtonVariant.secondary
+                  : ShadButtonVariant.ghost,
+              width: large ? 36 : 28,
+              height: large ? 30 : 24,
+              iconSize: large ? 20 : 16,
+              enabled: enabled,
+              icon: Icon(
+                up ? LucideIcons.chevronUp : LucideIcons.chevronDown,
+                color: pressed
+                    ? cs.primary
+                    : unavailable
+                    ? cs.mutedForeground.withValues(alpha: 0.5)
+                    : null,
+              ),
+              onPressed: () => onVote?.call(pressed ? 0 : value),
             ),
-            onPressed: () => onVote?.call(pressed ? 0 : value),
           ),
         ),
       );
@@ -400,6 +386,26 @@ class BoardVoteControl extends StatelessWidget {
         ),
         arrow(-1),
       ],
+    );
+  }
+}
+
+/// Reports the pointer's hover to the [ShadTooltip] around it when [active]:
+/// a disabled shad button reports none, and its tooltip would never show.
+class _HoverReport extends StatelessWidget {
+  const _HoverReport({required this.active, required this.child});
+
+  final bool active;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!active) return child;
+    final hover = ShadTheme.of(context).hoverStrategies.onHoverChange;
+    return MouseRegion(
+      onEnter: (_) => hover?.call(true),
+      onExit: (_) => hover?.call(false),
+      child: child,
     );
   }
 }

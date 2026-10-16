@@ -159,10 +159,14 @@ abstract class BoardTaskView
 
   _isr33h3v.BoardTaskStatus status;
 
+  /// The AI-written (admin-reviewed) part of the prompt. Empty for
+  /// everyone but the claimant and admins (specs/16 §4.6).
   String promptBody;
 
   /// The full contributor prompt: the fixed frame around [promptBody]
-  /// (specs/16 §10.1).
+  /// (specs/16 §10.1), its PR lines filled in with the claimant's claim
+  /// code. Empty for everyone but the claimant and admins (admins see the
+  /// placeholder instead of a claim code).
   String prompt;
 
   DateTime? promptGeneratedAt;

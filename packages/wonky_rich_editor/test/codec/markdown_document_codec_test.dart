@@ -12,9 +12,7 @@ String _fresh(String markdown, {MarkdownDocumentCodec codec = _codec}) {
       n.copyAndReplaceMetadata({
         for (final e in n.metadata.entries)
           if (!e.key.startsWith('wonky.md.') ||
-              e.key == MarkdownNodeMetadata.raw ||
-              e.key == MarkdownNodeMetadata.info ||
-              e.key == MarkdownNodeMetadata.fence)
+              e.key == MarkdownNodeMetadata.raw)
             e.key: e.value,
       }),
   ];
@@ -99,8 +97,8 @@ A second line in the same paragraph.
 
 void main() {
   group('Given the codec when Markdown is read', () {
-    test('then paragraphs, headings, lists, tasks, quotes, code and rules '
-        'become their nodes', () {
+    test('then paragraphs, headings, lists, tasks, quotes and rules become '
+        'their nodes, and fenced code a literal block', () {
       final nodes = _codec.decodeNodes(
         '# One\n\npara\n\n- a\n  - b\n1. c\n- [x] d\n\n> q\n\n```dart\nx\n```\n\n---\n',
       );
@@ -112,13 +110,18 @@ void main() {
         'ol',
         'task',
         'quote',
-        'code',
+        'raw',
         'hr',
         'p',
       ]);
       expect((nodes[3] as ListItemNode).indent, 1);
       expect((nodes[5] as TaskNode).isComplete, isTrue);
-      expect(nodes[7].getMetadataValue(MarkdownNodeMetadata.info), 'dart');
+      expect(
+        (nodes[7] as ParagraphNode).text.toPlainText(),
+        '```dart\nx\n```',
+        reason: 'the fences are part of the literal text',
+      );
+      expect(nodes[7].getMetadataValue(MarkdownNodeMetadata.raw), isTrue);
     });
 
     test('then inline styles become attributions', () {
@@ -178,6 +181,10 @@ void main() {
       '    indented code',
       '[ref]: https://x.y',
       '  ```\n  indented fence\n  ```',
+      '```dart\nvoid main() {}\n```',
+      '````\n```\nnested fence\n```\n````',
+      '~~~\ntilde fence\n~~~',
+      '```\nan unclosed fence',
     ];
     for (final source in kept) {
       test('when "${source.split('\n').first}" is written back after an edit '
@@ -198,6 +205,58 @@ void main() {
       final nodes = _codec.decodeNodes('before\n\n| a |\n|---|\n\nafter');
       expect(nodes.map(MarkdownDocumentCodec.kindOf), ['p', 'raw', 'p']);
     });
+
+    test('when a fenced code block sits between paragraphs then it is one '
+        'literal block and the paragraphs stay editable', () {
+      final nodes = _codec.decodeNodes(
+        'before\n\n```dart\nfinal x = 1;\n# not a title\n```\n\nafter',
+      );
+      expect(nodes.map(MarkdownDocumentCodec.kindOf), ['p', 'raw', 'p']);
+      expect(
+        (nodes[1] as ParagraphNode).text.toPlainText(),
+        '```dart\nfinal x = 1;\n# not a title\n```',
+      );
+    });
+
+    test('when a literal fenced block is edited then its text is written '
+        'verbatim', () {
+      final doc = _codec.decode('a\n\n```\nx\n```\n\nb');
+      final code = doc.getNodeAt(1)! as ParagraphNode;
+      doc.replaceNodeById(
+        code.id,
+        code.copyParagraphWith(text: AttributedText('```\nx = 2\n```')),
+      );
+      expect(_codec.encode(doc), 'a\n\n```\nx = 2\n```\n\nb');
+    });
+
+    test('when a code-styled paragraph has no literal marker then it is '
+        'still a literal block (the editor has no code blocks)', () {
+      final doc = MutableDocument(
+        nodes: [
+          ParagraphNode(
+            id: '1',
+            text: AttributedText('x = 1'),
+            metadata: {NodeMetadata.blockType: codeAttribution},
+          ),
+        ],
+      );
+      expect(MarkdownDocumentCodec.kindOf(doc.first), 'raw');
+      expect(_codec.encode(doc), 'x = 1');
+    });
+
+    test('when a paragraph starts with a fence typed as text then it is '
+        'written escaped and read back as the same paragraph', () {
+      final doc = MutableDocument(
+        nodes: [
+          ParagraphNode(id: '1', text: AttributedText('```dart')),
+          ParagraphNode(id: '2', text: AttributedText('after')),
+        ],
+      );
+      final md = _codec.encode(doc);
+      final back = _codec.decodeNodes(md);
+      expect(back.map(MarkdownDocumentCodec.kindOf), ['p', 'p']);
+      expect((back.first as ParagraphNode).text.toPlainText(), '```dart');
+    });
   });
 
   group('Given Markdown written by the codec', () {
@@ -211,8 +270,6 @@ void main() {
       '- [ ] open\n- [x] done\n  - [ ] nested',
       '> quoted *text*\n> on two lines',
       '> one\n>\n> two',
-      '```dart\nvoid main() {}\n```',
-      '````\n```\nnested fence\n```\n````',
       'a\n\n---\n\nb',
       'Use [optional] args, a | b, ~/path, 2 * 3 and snake_case.',
       r'Literal \*stars\* and # not a title',
@@ -321,15 +378,18 @@ void main() {
           HorizontalRuleNode(id: '9'),
           ParagraphNode(
             id: '10',
-            text: AttributedText('x = 1'),
-            metadata: {NodeMetadata.blockType: codeAttribution},
+            text: AttributedText('| x = 1 |'),
+            metadata: {
+              NodeMetadata.blockType: codeAttribution,
+              MarkdownNodeMetadata.raw: true,
+            },
           ),
         ],
       );
       expect(
         _codec.encode(doc),
         '## Title\n\nIntro\n\n- a\n- [ ] b\n  1. c\n\n> q1\n>\n> q2\n\n'
-        '---\n\n```\nx = 1\n```',
+        '---\n\n| x = 1 |',
       );
     });
 

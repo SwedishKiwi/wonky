@@ -90,7 +90,6 @@ void main() {
       '[x] done': '- [x] done',
       '- [ ] task': '- [ ] task',
       '> quoted': '> quoted',
-      '```dart code': '```dart\ncode\n```',
     };
     for (final MapEntry(key: typed, value: written) in blocks.entries) {
       test('when typing "$typed" then the block is "$written"', () {
@@ -129,11 +128,31 @@ void main() {
       });
     }
 
-    test('when typing Markdown in a code block then it stays text', () {
+    test('when typing a fence then it stays text: there are no code '
+        'blocks', () {
       f = _Field();
-      f.type('``` # not **bold**');
-      expect(f.kinds, ['code']);
-      expect(f.md, '```\n# not **bold**\n```');
+      f.type('```dart code');
+      expect(f.kinds, ['p']);
+      f.type('\nx\n```\n');
+      expect(f.kinds, ['p', 'p', 'p', 'p']);
+      expect(f.c.document.first.asTextNode.text.toPlainText(), '```dart code');
+      // Read back, the text is the same paragraphs (no fenced block).
+      final back = MarkdownEditingController(markdown: f.md);
+      addTearDown(back.dispose);
+      expect(back.document.map(MarkdownDocumentCodec.kindOf).toList(), [
+        'p',
+        'p',
+        'p',
+      ]);
+      expect(back.document.first.asTextNode.text.toPlainText(), '```dart code');
+    });
+
+    test('when typing Markdown in a literal block then it stays text', () {
+      f = _Field('```\nx\n```');
+      f.select(0, 5);
+      f.type(' # not **bold**');
+      expect(f.kinds, ['raw']);
+      expect(f.md, '```\nx # not **bold**\n```');
     });
 
     test('when typing in a comment field then headings and quotes stay '
@@ -183,8 +202,8 @@ void main() {
       },
     );
 
-    test('when list, task, quote and code blocks are toggled then the '
-        'blocks change and change back', () {
+    test('when list, task and quote blocks are toggled then the blocks '
+        'change and change back', () {
       f = _Field('one\n\ntwo');
       f.c.selectAll();
       f.c.toggleBlock(BlockFormat.bulletList);
@@ -198,9 +217,17 @@ void main() {
       expect(f.md, 'one\n\ntwo');
       f.c.toggleBlock(BlockFormat.quote);
       expect(f.md, '> one\n>\n> two');
-      f.c.toggleBlock(BlockFormat.codeBlock);
-      expect(f.md, '```\none\ntwo\n```');
-      expect(f.kinds, ['code']);
+      f.c.toggleBlock(BlockFormat.quote);
+      expect(f.md, 'one\n\ntwo');
+    });
+
+    test('when a block format is toggled over a literal block then the '
+        'literal block stays as it is', () {
+      f = _Field('one\n\n```\ncode\n```');
+      f.c.selectAll();
+      f.c.toggleBlock(BlockFormat.bulletList);
+      expect(f.kinds, ['ul', 'raw']);
+      expect(f.md, '- one\n\n```\ncode\n```');
     });
 
     test('when a comment field is asked for a quote then nothing happens', () {
@@ -270,6 +297,27 @@ void main() {
       f.select(0, 4, 8);
       f.c.paste('https://wonky.work');
       expect(f.md, 'the [docs](https://wonky.work)');
+    });
+
+    test('when Markdown with a fenced block is pasted then the block is '
+        'literal text, and deleting it leaves the paragraphs', () {
+      f = _Field('start');
+      f.type(' ');
+      f.c.paste('a\n\n```dart\nx\n```\n\nb');
+      expect(f.kinds, ['p', 'raw', 'p']);
+      expect(f.md, 'start a\n\n```dart\nx\n```\n\nb');
+
+      final raw = f.c.document.getNodeAt(1)!.asTextNode;
+      f.select(1, 0, raw.text.length);
+      expect(f.c.deleteSelection(), isTrue);
+      expect(f.md, 'start a\n\nb');
+
+      f.c.undo();
+      expect(f.md, 'start a\n\n```dart\nx\n```\n\nb');
+      f.c.selectAll();
+      expect(f.c.deleteSelection(), isTrue);
+      expect(f.md, isEmpty);
+      expect(f.kinds, ['p']);
     });
 
     test('when the paste is too long then it is refused', () {
@@ -376,7 +424,7 @@ void main() {
     test(
       'when it spans blocks then the blocks are copied, cut at the ends',
       () {
-        f = _Field('# Plan\n\n- one\n- [x] two\n\n```dart\nmain() {}\n```');
+        f = _Field('# Plan\n\n- one\n- [x] two\n\n> main() {}');
         final last = f.c.document.last.id;
         final first = f.c.document.first.id;
         f.c.editor.execute([
@@ -395,10 +443,7 @@ void main() {
             SelectionReason.userInteraction,
           ),
         ]);
-        expect(
-          f.c.selectedMarkdown,
-          '# an\n\n- one\n- [x] two\n\n```dart\nmain\n```',
-        );
+        expect(f.c.selectedMarkdown, '# an\n\n- one\n- [x] two\n\n> main');
       },
     );
 
@@ -409,9 +454,10 @@ void main() {
       expect(f.c.selectedMarkdown, '*  item');
     });
 
-    test('when part of a code block is selected then the copy is plain', () {
+    test('when part of a literal block is selected then the copy is '
+        'plain', () {
       f = _Field('```\na **b** c\n```');
-      f.select(0, 2, 7);
+      f.select(0, 6, 11);
       expect(f.c.selectedMarkdown, '**b**');
     });
 

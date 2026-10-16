@@ -30,13 +30,6 @@ enum BoardTab {
       this == BoardTab.done ||
       this == BoardTab.review;
 
-  /// Whether a search can be scoped to this list (*Search in*: the current
-  /// tab): the post lists.
-  bool get searchable =>
-      this == BoardTab.improvements ||
-      this == BoardTab.bugs ||
-      this == BoardTab.done;
-
   static BoardTab? byName(String? name) {
     for (final t in values) {
       if (t.name == name) return t;
@@ -56,9 +49,10 @@ enum BoardTab {
 /// A search of the board's posts (specs/16 §4.4, §6.4): the [text] (the
 /// server matches word prefixes, title substrings and post numbers), and
 /// the options of the search popover: [closed] adds done, shipped,
-/// declined and duplicate posts; [kind] narrows a search of all posts
-/// ([BoardTab.search]) to bugs or improvements. In the URL as
-/// `?q=sort&closed=1&kind=bug`.
+/// declined and duplicate posts; [kind] narrows it to bugs or
+/// improvements. A search always covers all posts and is shown in the
+/// results view ([BoardTab.search]); in the URL as
+/// `/improvements/search?q=sort&closed=1&kind=bug`.
 @immutable
 class BoardSearchQuery {
   const BoardSearchQuery(this.text, {this.closed = false, this.kind});
@@ -67,23 +61,19 @@ class BoardSearchQuery {
   final bool closed;
   final BoardPostKind? kind;
 
-  /// The search in [query] for list [tab]; null without a `q`, or when the
-  /// list cannot be searched. `kind` only applies to [BoardTab.search].
+  /// The search in [query] for list [tab]; null without a `q`, or when
+  /// [tab] is not the results view (the tabs are never searched).
   static BoardSearchQuery? parse(Map<String, String> query, BoardTab tab) {
     final text = (query['q'] ?? '').trim();
-    if (text.isEmpty || !(tab.searchable || tab == BoardTab.search)) {
-      return null;
-    }
+    if (text.isEmpty || tab != BoardTab.search) return null;
     return BoardSearchQuery(
       text,
       closed: query['closed'] == '1',
-      kind: tab == BoardTab.search
-          ? switch (query['kind']) {
-              'bug' => BoardPostKind.bug,
-              'idea' => BoardPostKind.idea,
-              _ => null,
-            }
-          : null,
+      kind: switch (query['kind']) {
+        'bug' => BoardPostKind.bug,
+        'idea' => BoardPostKind.idea,
+        _ => null,
+      },
     );
   }
 
@@ -94,20 +84,16 @@ class BoardSearchQuery {
     if (kind case final k?) 'kind=${k.name}',
   ];
 
-  /// The statuses the list [tab] shows with this search (null [search]:
-  /// the list's defaults): open and planned (Done: done and shipped), plus
-  /// the closed ones when [closed].
+  /// The statuses the list [tab] shows (with [search] on the results
+  /// view): open and planned (Done: done and shipped), plus the closed ones
+  /// when the search includes them.
   static Set<BoardPostStatus> statusesFor(
     BoardTab tab,
     BoardSearchQuery? search,
   ) {
     final closed = search?.closed ?? false;
     if (tab == BoardTab.done) {
-      return {
-        BoardPostStatus.done,
-        BoardPostStatus.shipped,
-        if (closed) ...[BoardPostStatus.declined, BoardPostStatus.duplicate],
-      };
+      return {BoardPostStatus.done, BoardPostStatus.shipped};
     }
     return {
       BoardPostStatus.open,
@@ -164,8 +150,8 @@ void closeBoard(ShellServices s) => s.router.go(boardBackTarget(s));
 /// A null [list] on a post or task means "the item's own list": the post's
 /// kind (*Bugs* or *Improvements*; the task's list under a task), the
 /// task's status ([BoardTab.ofTask]); see [resolve]. A [search] belongs to
-/// the list (a searched list, or [BoardTab.search]) and travels with the
-/// items opened from it, so the list crumb returns to the results.
+/// the results view ([BoardTab.search]) and travels with the posts opened
+/// from it, so the list crumb returns to the results.
 @immutable
 class BoardTrail {
   const BoardTrail({
@@ -199,12 +185,7 @@ class BoardTrail {
     final seg = uri.pathSegments.where((x) => x.isNotEmpty).toList();
     if (seg.isEmpty || seg.first != 'improvements') return null;
     final q = uri.queryParameters;
-    if (seg.length == 1) {
-      final search = BoardSearchQuery.parse(q, BoardTab.improvements);
-      return search == null
-          ? root
-          : BoardTrail(list: BoardTab.improvements, search: search);
-    }
+    if (seg.length == 1) return root;
     if (seg.length == 2) {
       if (seg[1] == 'contribute') return const BoardTrail(contribute: true);
       final tab = BoardTab.byName(seg[1]);
@@ -397,22 +378,17 @@ void boardOpenTask(ShellServices s, int number, {BuildContext? context}) =>
 void boardOpenList(ShellServices s, BoardTab tab, {BuildContext? context}) =>
     boardGo(s, BoardTrail(list: tab), context: context);
 
-/// Opens [search]: across all posts ([BoardTab.search]) when [tab] is
-/// null, else within list [tab]; a null [search] clears it (back to [tab],
-/// or the Improvements list).
+/// Opens the results of [search] across all posts ([BoardTab.search]); a
+/// null [search] clears it (back to the Improvements list).
 void boardOpenSearch(
   ShellServices s,
   BoardSearchQuery? search, {
-  BoardTab? tab,
   BuildContext? context,
 }) => boardGo(
   s,
-  BoardTrail(
-    list: search == null
-        ? (tab ?? BoardTab.improvements)
-        : (tab ?? BoardTab.search),
-    search: search,
-  ),
+  search == null
+      ? const BoardTrail(list: BoardTab.improvements)
+      : BoardTrail(list: BoardTab.search, search: search),
   context: context,
 );
 

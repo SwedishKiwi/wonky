@@ -10,7 +10,7 @@ import 'package:wonky_ui/testing.dart';
 import 'support/board_pump.dart';
 
 /// The board's search (specs/16 §4.4): the search button and its popover
-/// (field, *Search in*, *Kind*, *Include closed*), the results across all
+/// (field, *Kind*, *Include closed*), the results across all
 /// posts, the search chip, the URL; and the *Up for grabs* / *Claimed*
 /// tabs with their counts and live moves.
 void main() {
@@ -143,35 +143,64 @@ void main() {
       await settleTooltips(tester);
     });
 
-    testWidgets('when searching in the current tab then only that list is '
-        'searched and removing the chip restores it', (tester) async {
+    testWidgets('when the popover opens on a tab then it offers only Kind '
+        '(All, Bugs, Improvements) and Include closed, and the search covers '
+        'all posts in the results view', (tester) async {
       current = await pumpBoard(tester, '/improvements/bugs', board: seeded());
       final semantics = tester.ensureSemantics();
 
       await tap(tester, 'board.search');
-      expect(byKey('board.search.in.tab'), findsOneWidget);
-      await tap(tester, 'board.search.in.tab');
-      expect(
-        byKey('board.search.kind'),
-        findsNothing,
-        reason: 'the tab sets the kind',
+      Finder inPanel(String text) => find.descendant(
+        of: byKey('board.search.panel'),
+        matching: find.text(text),
       );
+      expect(byKey('board.search.in'), findsNothing);
+      expect(inPanel('Search in'), findsNothing);
+      expect(inPanel('Kind'), findsOneWidget);
+      for (final (key, label) in [
+        ('any', 'All'),
+        ('bug', 'Bugs'),
+        ('idea', 'Improvements'),
+      ]) {
+        expect(
+          find.descendant(
+            of: byKey('board.search.kind.$key'),
+            matching: find.text(label),
+          ),
+          findsOneWidget,
+          reason: label,
+        );
+      }
+      expect(byKey('board.search.closed'), findsOneWidget);
+
       await tester.enterText(byKey('board.search.input'), 'dark');
       await tap(tester, 'board.search.closed');
       await tap(tester, 'board.search.submit');
 
-      expect(t().location, '/improvements/bugs?q=dark&closed=1');
-      expect(tabSelected(tester, 'bugs'), isTrue);
+      expect(t().location, '/improvements/search?q=dark&closed=1');
+      expect(tabSelected(tester, 'bugs'), isFalse);
+      expect(row(1), findsOneWidget, reason: 'an idea is found from Bugs');
+      expect(row(5), findsOneWidget);
       expect(row(6), findsOneWidget);
-      expect(row(1), findsNothing, reason: 'an idea');
-      expect(row(4), findsNothing);
 
       await tap(tester, 'board.filter.search');
 
-      expect(t().location, '/improvements/bugs');
+      expect(t().location, '/improvements');
+      semantics.dispose();
+      await settleTooltips(tester);
+    });
+
+    testWidgets('when a tab URL carries an old search then the tab shows '
+        'unfiltered', (tester) async {
+      current = await pumpBoard(
+        tester,
+        '/improvements/bugs?q=dark&closed=1',
+        board: seeded(),
+      );
+
+      expect(byKey('board.filter.search'), findsNothing);
       expect(row(4), findsOneWidget);
       expect(row(6), findsNothing);
-      semantics.dispose();
       await settleTooltips(tester);
     });
 

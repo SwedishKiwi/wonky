@@ -782,7 +782,9 @@ class EndpointBoard extends _isc.EndpointRef {
         {'number': number},
       );
 
-  /// Discussion and activity rows of a task, oldest first.
+  /// The activity rows of a task (claimed, released, PR linked …), oldest
+  /// first; for admins only (empty for everyone else). Tasks have no
+  /// discussion.
   _ida.Future<List<_iesojpvb.BoardCommentView>> listTaskComments(int number) =>
       caller.callServerEndpoint<List<_iesojpvb.BoardCommentView>>(
         'board',
@@ -936,7 +938,9 @@ class EndpointBoard extends _isc.EndpointRef {
     },
   );
 
-  /// Adds a comment to a post or a task; idempotent on [uuid].
+  /// Adds a comment to post [postNumber]; idempotent on [uuid]. Tasks have
+  /// no discussion: a [taskNumber] is refused (`invalidArgument`); the
+  /// parameter stays for older clients.
   _ida.Future<_iesojpvb.BoardCommentView> addComment(
     _isc.UuidValue uuid,
     int? postNumber,

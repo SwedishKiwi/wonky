@@ -1,3 +1,5 @@
+import 'dart:ui' show Tristate;
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wonky_app/testing.dart';
@@ -49,6 +51,82 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Sheets 2.3.1'), findsOneWidget);
     expect(find.text('/s/:id'), findsOneWidget);
+    await settleTooltips(tester);
+  });
+
+  for (final kind in BoardPostKind.values) {
+    testWidgets('Given a ${kind.name} post then #n, the title and ⋮ share one '
+        'top-aligned line, the chips sit below, and the vote control is ▲ n ▼ '
+        'at the start', (tester) async {
+      final b = FakeBoardRepository();
+      b.seedPost(
+        title: 'A rather long title that wraps onto a second line on the page',
+        kind: kind,
+        score: 3,
+      );
+      current = await pumpBoard(tester, '/improvements/p/1', board: b);
+      final semantics = tester.ensureSemantics();
+
+      final header = byKey('board.post.header');
+      for (final k in ['board.post.number', 'board.post.title']) {
+        expect(
+          find.descendant(of: header, matching: byKey(k)),
+          findsOneWidget,
+          reason: k,
+        );
+      }
+      expect(
+        find.descendant(of: header, matching: byKey('board.post.menu')),
+        findsOneWidget,
+      );
+      final number = tester.getRect(byKey('board.post.number'));
+      final title = tester.getRect(byKey('board.post.title'));
+      final menu = tester.getRect(byKey('board.post.menu'));
+      expect(title.top, number.top, reason: 'top-aligned');
+      expect(menu.top, lessThanOrEqualTo(title.top));
+      expect(number.right, lessThan(title.left));
+      expect(title.right, lessThanOrEqualTo(menu.left));
+      expect(
+        tester
+            .getTopLeft(
+              find.text(kind == BoardPostKind.bug ? 'Bug' : 'Improvement'),
+            )
+            .dy,
+        greaterThan(title.bottom - 1),
+        reason: 'the chips are below the title line',
+      );
+
+      // The same vote control for both kinds, before the header.
+      expect(byKey('board.vote.1.hit'), findsNothing);
+      expect(find.text('I hit this too'), findsNothing);
+      expect(byKey('board.vote.1.up'), findsOneWidget);
+      expect(tester.widget<Text>(byKey('board.vote.1.score')).data, '3');
+      expect(
+        tester.getTopLeft(byKey('board.vote.1.up')).dx,
+        lessThan(number.left),
+      );
+      final down = tester.getSemantics(byKey('board.vote.1.down'));
+      expect(
+        down.flagsCollection.isEnabled == Tristate.isTrue,
+        kind == BoardPostKind.idea,
+        reason: 'bugs can only be upvoted',
+      );
+      semantics.dispose();
+      await settleTooltips(tester);
+    });
+  }
+
+  testWidgets('Given a bug when its up arrow is pressed then it is voted '
+      'through shell.board.vote', (tester) async {
+    final b = FakeBoardRepository();
+    b.seedPost(title: 'Paste drops styles', kind: BoardPostKind.bug);
+    current = await pumpBoard(tester, '/improvements/p/1', board: b);
+
+    await tester.tap(byKey('board.vote.1.up'));
+    await tester.pumpAndSettle();
+
+    expect(b.posts[1]!.votes[1], 1);
+    expect(t().h.undoLabels, isNotEmpty);
     await settleTooltips(tester);
   });
 

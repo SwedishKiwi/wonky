@@ -25,7 +25,6 @@ enum BlockFormat {
   numberedList,
   taskList,
   quote,
-  codeBlock,
 }
 
 /// The Markdown of a rich text field, like a `TextEditingController` holds
@@ -60,6 +59,7 @@ class MarkdownEditingController extends ChangeNotifier {
         (editor, request) => request is ReplaceDocumentRequest
             ? ReplaceDocumentCommand(request.nodes)
             : null,
+        _literalNewline,
         ...defaultRequestHandlers.cast<EditRequestHandler>(),
       ],
       reactionPipeline: [
@@ -188,6 +188,20 @@ class MarkdownEditingController extends ChangeNotifier {
       r is InsertSoftNewlineAtCaretRequest ||
       r is PasteEditorRequest;
 
+  /// Enter in a literal block inserts a line break at the caret.
+  /// super_editor's code-block newline always appends it at the block's end
+  /// (and Enter over a selection there did the same); at the end of the
+  /// block its rules stay (a second Enter leaves the block).
+  EditCommand? _literalNewline(Editor editor, EditRequest request) {
+    if (request is! InsertNewlineAtCaretRequest) return null;
+    final s = composer.selection;
+    if (s == null) return null;
+    final base = document.getNodeById(s.base.nodeId);
+    final extent = document.getNodeById(s.extent.nodeId);
+    if (!isCodeLike(base) && !isCodeLike(extent)) return null;
+    return _LiteralNewlineCommand(request.newNodeId);
+  }
+
   // ------------------------------------------------------------ history
 
   bool _hasContent(CommandTransaction t) =>
@@ -222,7 +236,7 @@ class MarkdownEditingController extends ChangeNotifier {
   DocumentSelection? get selection => _liveSelection;
 
   /// The composer's selection, or null when it points at a node that is no
-  /// longer in the document. After a block is deleted (a code block, a
+  /// longer in the document. After a block is deleted (a literal block, a
   /// selection across blocks) the toolbar can rebuild before the editor
   /// moves the selection, and normalizing a stale selection throws.
   DocumentSelection? get _liveSelection {
@@ -303,14 +317,14 @@ class MarkdownEditingController extends ChangeNotifier {
     InlineFormat.code => codeAttribution,
   };
 
-  /// Whether inline styles apply at the selection (not in code blocks).
+  /// Whether inline styles apply at the selection (not in literal blocks).
   bool get canFormatInline {
     final s = _liveSelection;
     if (s == null || readOnly) return false;
     return _selectedTextNodes.any((n) => !isCodeLike(n));
   }
 
-  /// The selected ranges [format] applies to (Write 04 §10.2: not code
+  /// The selected ranges [format] applies to (Write 04 §10.2: not literal
   /// blocks; bold, italic and strikethrough not on inline code), as
   /// document ranges of single text nodes.
   List<DocumentRange> _eligible(InlineFormat format, DocumentRange r) {
@@ -440,7 +454,6 @@ class MarkdownEditingController extends ChangeNotifier {
       'ol' => BlockFormat.numberedList,
       'task' => BlockFormat.taskList,
       'quote' => BlockFormat.quote,
-      'code' => BlockFormat.codeBlock,
       _ => null,
     };
   }
@@ -458,8 +471,8 @@ class MarkdownEditingController extends ChangeNotifier {
   }
 
   /// Turns the selected blocks into [format], or back into paragraphs when
-  /// they all are one already (Write 04 §13.2). Several blocks made a code
-  /// block become one code block.
+  /// they all are one already (Write 04 §13.2). Literal blocks stay as they
+  /// are.
   void toggleBlock(BlockFormat format) {
     if (!canFormatBlock(format)) return;
     final nodes = _selectedTextNodes
@@ -469,28 +482,6 @@ class MarkdownEditingController extends ChangeNotifier {
     final off = nodes.every((n) => formatOf(n) == format);
     final target = off ? BlockFormat.paragraph : format;
     final selection = _liveSelection!;
-    if (target == BlockFormat.codeBlock && nodes.length > 1) {
-      final first = nodes.first;
-      final code = nodes.map((n) => n.text.toPlainText()).join('\n');
-      editor.execute([
-        for (final n in nodes.skip(1)) DeleteNodeRequest(nodeId: n.id),
-        ReplaceNodeRequest(
-          existingNodeId: first.id,
-          newNode: _convert(first, target, AttributedText(code)),
-        ),
-        ChangeSelectionRequest(
-          DocumentSelection.collapsed(
-            position: DocumentPosition(
-              nodeId: first.id,
-              nodePosition: TextNodePosition(offset: code.length),
-            ),
-          ),
-          SelectionChangeType.alteredContent,
-          SelectionReason.userInteraction,
-        ),
-      ]);
-      return;
-    }
     editor.execute([
       for (final n in nodes)
         ReplaceNodeRequest(
@@ -516,12 +507,8 @@ class MarkdownEditingController extends ChangeNotifier {
       TaskNode(:final indent) => indent,
       _ => 0,
     };
-    // Code has no inline styles.
-    final plain = format == BlockFormat.codeBlock
-        ? AttributedText(text.toPlainText())
-        : isCodeLike(node)
-        ? AttributedText(text.toPlainText())
-        : text;
+    // Literal text has no inline styles.
+    final plain = isCodeLike(node) ? AttributedText(text.toPlainText()) : text;
     ParagraphNode paragraph(Attribution type) => ParagraphNode(
       id: node.id,
       text: plain,
@@ -533,7 +520,6 @@ class MarkdownEditingController extends ChangeNotifier {
       BlockFormat.heading2 => paragraph(header2Attribution),
       BlockFormat.heading3 => paragraph(header3Attribution),
       BlockFormat.quote => paragraph(blockquoteAttribution),
-      BlockFormat.codeBlock => paragraph(codeAttribution),
       BlockFormat.bulletList => ListItemNode.unordered(
         id: node.id,
         text: plain,
@@ -701,8 +687,9 @@ class MarkdownEditingController extends ChangeNotifier {
 
   /// The selection as Markdown (copy and cut, specs/16 §7.3), or null when
   /// nothing is selected. Text inside one block is its inline Markdown (the
-  /// plain text inside a code block); a selection across blocks, or a whole
-  /// block, keeps the blocks (headings, lists, tasks, quotes, code, rules),
+  /// plain text inside a literal block); a selection across blocks, or a
+  /// whole block, keeps the blocks (headings, lists, tasks, quotes, literal
+  /// blocks, rules),
   /// cut at the selection's ends. Untouched blocks keep their Markdown
   /// source. [paste] reads it back into the same content.
   String? get selectedMarkdown {
@@ -797,8 +784,9 @@ class MarkdownEditingController extends ChangeNotifier {
 
   // -------------------------------------------------------------- paste
 
-  /// Pastes [text]: Markdown is converted into blocks and styles (in code
-  /// blocks, and with [plain], it is inserted as is). A URL pasted over a
+  /// Pastes [text]: Markdown is converted into blocks and styles (in
+  /// literal blocks, and with [plain], it is inserted as is; a fenced code
+  /// block becomes a literal block). A URL pasted over a
   /// selection makes it a link (Write 04 §11.1). Returns false when the
   /// paste was refused ([readOnly], [maxLength]).
   bool paste(String text, {bool plain = false}) {
@@ -907,6 +895,51 @@ class _HistoryPolicy implements HistoryGroupingPolicy {
     return _typing.shouldMergeLatestTransaction(
       newTransaction,
       previousTransaction,
+    );
+  }
+}
+
+/// Enter in (or over a selection touching) a literal block: the selection
+/// is deleted, then a line break goes in at the caret; at the end of a
+/// literal block, or when the caret is no longer in one, super_editor's
+/// rules apply.
+class _LiteralNewlineCommand extends EditCommand {
+  const _LiteralNewlineCommand(this.newNodeId);
+
+  final String newNodeId;
+
+  @override
+  HistoryBehavior get historyBehavior => HistoryBehavior.undoable;
+
+  @override
+  void execute(EditContext context, CommandExecutor executor) {
+    final composer = context.find<MutableDocumentComposer>(Editor.composerKey);
+    if (composer.selection case final s? when !s.isCollapsed) {
+      executor.executeCommand(
+        DeleteSelectionCommand(affinity: TextAffinity.downstream),
+      );
+    }
+    final s = composer.selection;
+    if (s == null) return;
+    final node = context.document.getNodeById(s.extent.nodeId);
+    final p = s.extent.nodePosition;
+    if (node is TextNode &&
+        isCodeLike(node) &&
+        p is TextNodePosition &&
+        p.offset < node.text.length) {
+      executor.executeCommand(
+        InsertTextCommand(
+          documentPosition: s.extent,
+          textToInsert: '\n',
+          attributions: const {},
+        ),
+      );
+      return;
+    }
+    executor.executeCommand(
+      isCodeLike(node)
+          ? InsertNewlineInCodeBlockAtCaretCommand(newNodeId)
+          : DefaultInsertNewlineAtCaretCommand(newNodeId),
     );
   }
 }

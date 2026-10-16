@@ -8,9 +8,9 @@ import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_core/wonky_core.dart' hide ActorKind;
 import 'package:wonky_ui/wonky_ui.dart';
 
-import '../../comments/comments_panel.dart';
 import '../../core/stream_supervisor.dart';
 import '../../data/api.dart';
+import '../../drive/drive_format.dart';
 import '../../l10n/wonky_app_localizations.dart';
 import '../../shell/dialogs.dart';
 import '../../shell/form_dialog.dart';
@@ -22,13 +22,14 @@ import 'board_comment_actions.dart';
 import 'board_labels.dart';
 import 'board_trail.dart';
 import 'board_widgets.dart';
-import 'contribute_page.dart';
 import 'task_list.dart';
 
 /// The task page (`/improvements/t/:number`, specs/16 §4.6): status and
-/// claim, *Claim this task* / *Release*, the claimant's claim code and PR
-/// lines, linked posts, *How to build it* with the prompt, the pull request
-/// and its review, activity and discussion, and the admin actions.
+/// claim, *Claim this task* / *Unclaim this task*, the claimant's claim
+/// code and PR lines, linked posts, *How to build it* (a link to set up the
+/// development environment, the prompt — for the claimant and admins only —
+/// and the PR lines), the pull request and its review, and for admins the
+/// activity rows and the admin actions. Tasks have no discussion.
 class BoardTaskPage extends StatefulWidget {
   const BoardTaskPage({
     super.key,
@@ -54,7 +55,10 @@ class _BoardTaskPageState extends State<BoardTaskPage> {
   int get n => widget.number;
 
   BoardTaskView? _task;
-  List<BoardCommentView> _comments = const [];
+
+  /// The activity rows (claimed, released, PR linked …), loaded for admins.
+  List<BoardCommentView> _activity = const [];
+  bool _activityLoaded = false;
   Object? _error;
   bool _loading = true;
   bool _howToOpen = true;
@@ -99,22 +103,31 @@ class _BoardTaskPageState extends State<BoardTaskPage> {
   }
 
   void _onMe() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    setState(() {});
+    // The admin flag can arrive after the first load.
+    if (hub.isAdmin && !_activityLoaded) unawaited(_load());
   }
 
   Future<void> _load() async {
     final repo = s.repositories.board;
     try {
       final t = await repo.getTask(n);
-      final comments = await repo.listTaskComments(n);
+      final admin = hub.isAdmin;
+      final activity = admin
+          ? [
+              for (final c in await repo.listTaskComments(n))
+                if (c.systemEvent != null) c,
+            ]
+          : const <BoardCommentView>[];
       hub
         ..notePosts(t.posts)
-        ..noteTasks([t])
-        ..noteComments(comments);
+        ..noteTasks([t]);
       if (!mounted) return;
       setState(() {
         _task = t;
-        _comments = comments;
+        _activity = activity;
+        _activityLoaded = admin;
         _error = null;
         _loading = false;
       });
@@ -326,7 +339,7 @@ class _BoardTaskPageState extends State<BoardTaskPage> {
             if (t.isMine)
               ShadButton.outline(
                 key: const ValueKey<String>('board.task.release'),
-                leading: const Icon(LucideIcons.circleStop, size: 16),
+                leading: const Icon(LucideIcons.ban, size: 16),
                 onPressed: () => _invoke('shell.board.release'),
                 child: Text(l.cmdBoardRelease),
               ),
@@ -412,6 +425,11 @@ class _BoardTaskPageState extends State<BoardTaskPage> {
 
   Widget _howTo(WonkyAppLocalizations l, ShadThemeData theme, BoardTaskView t) {
     final code = t.isMine ? t.claimCode : null;
+    // The server sends the prompt to the claimant and admins only.
+    final prompt = (t.isMine || hub.isAdmin) && t.prompt.isNotEmpty
+        ? t.prompt
+        : null;
+    final claimable = t.status == BoardTaskStatus.published;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -430,24 +448,21 @@ class _BoardTaskPageState extends State<BoardTaskPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: 10,
             children: [
-              Text(l.boardStepSetup, style: theme.textTheme.small),
-              BoardInstallGuideLink(
-                services: s,
-                linkKey: 'board.task.installGuide',
-              ),
-              for (final (i, c) in boardSetupCommands(
-                boardRepository(s),
-              ).indexed)
-                BoardCopyLine(text: c, copyKey: 'board.task.setup.$i'),
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: ShadButton.link(
-                  key: const ValueKey<String>('board.task.contribute'),
-                  size: ShadButtonSize.sm,
-                  padding: EdgeInsets.zero,
-                  onPressed: () => boardOpenContribute(s),
-                  child: Text(l.boardFullGuide),
-                ),
+              // Step 1: the setup is on How to contribute (same tab, under
+              // the board's breadcrumb).
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 4,
+                children: [
+                  Text(l.boardStepSetupNumber, style: theme.textTheme.small),
+                  Flexible(
+                    child: BoardTextLink(
+                      key: const ValueKey<String>('board.task.setup'),
+                      label: l.boardStepSetupLink,
+                      onTap: () => boardOpenContribute(s),
+                    ),
+                  ),
+                ],
               ),
               Row(
                 children: [
@@ -457,29 +472,58 @@ class _BoardTaskPageState extends State<BoardTaskPage> {
                       style: theme.textTheme.small,
                     ),
                   ),
-                  ShadButton.outline(
-                    key: const ValueKey<String>('board.task.copyPrompt'),
-                    size: ShadButtonSize.sm,
-                    leading: const Icon(LucideIcons.copy, size: 14),
-                    onPressed: () => _invoke('shell.board.copyPrompt'),
-                    child: Text(l.cmdBoardCopyPrompt),
-                  ),
+                  if (prompt != null)
+                    ShadButton.outline(
+                      key: const ValueKey<String>('board.task.copyPrompt'),
+                      size: ShadButtonSize.sm,
+                      leading: const Icon(LucideIcons.copy, size: 14),
+                      onPressed: () => _invoke('shell.board.copyPrompt'),
+                      child: Text(l.cmdBoardCopyPrompt),
+                    ),
                 ],
               ),
-              // The code block style of BoardCopyLine and the Markdown
-              // code blocks.
-              Container(
-                key: const ValueKey<String>('board.task.prompt'),
-                padding: const EdgeInsets.all(10),
-                constraints: const BoxConstraints(maxHeight: 420),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.muted,
-                  borderRadius: BorderRadius.circular(6),
+              if (prompt != null)
+                // The code block style of BoardCopyLine and the Markdown
+                // code blocks.
+                Container(
+                  key: const ValueKey<String>('board.task.prompt'),
+                  padding: const EdgeInsets.all(10),
+                  constraints: const BoxConstraints(maxHeight: 420),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.muted,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: SingleChildScrollView(
+                    child: Text(prompt, style: boardCodeStyle(theme)),
+                  ),
+                )
+              else
+                // Not claimed by the viewer: no prompt yet.
+                Wrap(
+                  key: const ValueKey<String>('board.task.promptLocked'),
+                  spacing: 10,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(l.boardClaimForPrompt, style: theme.textTheme.muted),
+                    if (claimable && s.auth.isSignedIn)
+                      ShadButton.outline(
+                        key: const ValueKey<String>('board.task.promptClaim'),
+                        size: ShadButtonSize.sm,
+                        leading: const Icon(LucideIcons.hand, size: 14),
+                        enabled: hub.canWrite,
+                        onPressed: () => _invoke('shell.board.claim'),
+                        child: Text(l.boardClaimTask),
+                      )
+                    else if (claimable)
+                      ShadButton.outline(
+                        key: const ValueKey<String>('board.task.promptSignIn'),
+                        size: ShadButtonSize.sm,
+                        onPressed: () => boardSignIn(s),
+                        child: Text(l.boardSignInToClaim),
+                      ),
+                  ],
                 ),
-                child: SingleChildScrollView(
-                  child: Text(t.prompt, style: boardCodeStyle(theme)),
-                ),
-              ),
               Text(l.boardStepPr, style: theme.textTheme.small),
               Text(l.boardPrRules, style: theme.textTheme.muted),
               BoardCopyLine(
@@ -494,6 +538,21 @@ class _BoardTaskPageState extends State<BoardTaskPage> {
       ],
     );
   }
+
+  /// The task's activity (claimed, released, expired, PR linked, done,
+  /// shipped), for admins: one muted line per row, oldest first.
+  List<Widget> _activityRows(WonkyAppLocalizations l, ShadThemeData theme) => [
+    BoardSectionTitle(l.boardActivity),
+    if (_activity.isEmpty)
+      Text(l.boardNoActivity, style: theme.textTheme.muted)
+    else
+      for (final c in _activity)
+        Text(
+          '${boardActivityText(l, c)} · ${timeAgo(l, c.createdAt)}',
+          key: ValueKey<String>('board.task.event.${c.uuid.uuid}'),
+          style: theme.textTheme.muted.copyWith(fontSize: 12),
+        ),
+  ];
 
   /// The latest PR review (specs/16 §13.5; shape in
   /// `platform/board/github/README.md`): summary, a verdict per acceptance
@@ -691,17 +750,7 @@ class _BoardTaskPageState extends State<BoardTaskPage> {
               _review(l, theme, json),
             ],
           ],
-          BoardSectionTitle(l.boardActivityAndDiscussion),
-          CommentThreadBody.custom(
-            key: ValueKey<String>('board.task.comments.$n'),
-            services: s,
-            actions: BoardCommentActions(
-              services: s,
-              taskNumber: n,
-              open: t.status != BoardTaskStatus.cancelled,
-            ),
-            comments: boardThreadComments(l, _comments),
-          ),
+          if (admin) ..._activityRows(l, theme),
         ],
       );
     }

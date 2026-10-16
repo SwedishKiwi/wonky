@@ -41,7 +41,6 @@ class RichEditorLabels {
     this.numberedList = 'Numbered list',
     this.taskList = 'Checklist',
     this.quote = 'Quote',
-    this.codeBlock = 'Code block',
     this.toolbar = 'Formatting',
     this.length = _length,
     this.cut = 'Cut',
@@ -59,7 +58,6 @@ class RichEditorLabels {
   final String numberedList;
   final String taskList;
   final String quote;
-  final String codeBlock;
 
   /// The toolbar's group label.
   final String toolbar;
@@ -84,9 +82,10 @@ class RichEditorLabels {
 /// Markdown rendering, with a formatting toolbar.
 ///
 /// - **Autoformat while typing** like Write (04 §7): `# ` headings, `- ` /
-///   `* ` bullets, `1. ` numbers, `[] ` tasks, `> ` quotes, ```` ``` ````
-///   code blocks, `---` rules, `**bold**`, `*italic*`, `~~strike~~`,
-///   `` `code` `` and `[text](url)`.
+///   `* ` bullets, `1. ` numbers, `[] ` tasks, `> ` quotes, `---` rules,
+///   `**bold**`, `*italic*`, `~~strike~~`, `` `code` `` and `[text](url)`.
+///   There are no code blocks: a fence (```` ``` ````) stays text, and
+///   fenced code set or pasted as Markdown is a literal block.
 /// - **Shortcuts** (Write 04 §10, §13): `Mod+B` / `I` / `E` (code),
 ///   `Mod+Shift+X` (strikethrough), `Mod+K` (link), `Mod+Shift+7` / `8` /
 ///   `9` (numbered, bulleted, checklist), `Mod+Shift+.` (quote), `Tab` /
@@ -96,7 +95,7 @@ class RichEditorLabels {
 ///   (Markdown is converted; `Mod+Shift+V` pastes plain text), `Mod+Enter`
 ///   ([onSubmit]).
 /// - **Spelling** with a [spellChecker]: misspelled words get red squiggles
-///   ([DocumentSpelling]; not in code), and a right-click opens a context
+///   ([DocumentSpelling]; not in literal blocks or inline code), and a right-click opens a context
 ///   menu with the suggestions, *Ignore* and *Add to dictionary* on a
 ///   misspelled word, then *Cut*, *Copy*, *Paste* (the browser's own menu
 ///   is off over the field). Keys: `menu.markdown.spell.suggestion.<i>`,
@@ -105,7 +104,7 @@ class RichEditorLabels {
 ///
 /// Stable keys from [fieldKey]: the field `<fieldKey>`, the toolbar
 /// buttons `<fieldKey>.bold`, `.italic`, `.strike`, `.code`, `.link`,
-/// `.bullets`, `.numbers`, `.tasks`, `.quote`, `.codeBlock`, the counter
+/// `.bullets`, `.numbers`, `.tasks`, `.quote`, the counter
 /// `<fieldKey>.count`.
 class WonkyRichEditor extends StatefulWidget {
   const WonkyRichEditor({
@@ -418,8 +417,7 @@ class WonkyRichEditorState extends State<WonkyRichEditor> {
     return isCodeLike(controller.document.getNodeById(s.extent.nodeId));
   }
 
-  /// ```` ```lang ```` + Enter makes a code block, `---` + Enter a rule
-  /// (Write 04 §7.1).
+  /// `---` + Enter makes a rule (Write 04 §7.1).
   bool _enterConversion() {
     final s = controller.selection;
     if (s == null || !s.isCollapsed) return false;
@@ -441,19 +439,6 @@ class WonkyRichEditorState extends State<WonkyRichEditor> {
         nodePosition: const TextNodePosition(offset: 0),
       ),
     );
-    final fence = RegExp(r'^```([\w+#.\-]*)$').firstMatch(text);
-    if (fence != null) {
-      controller.editor.execute([
-        DeleteContentRequest(documentRange: whole),
-        ...BlockPrefixReaction.codeBlockRequests(node.id, fence.group(1)!),
-        ChangeSelectionRequest(
-          caret,
-          SelectionChangeType.placeCaret,
-          SelectionReason.userInteraction,
-        ),
-      ]);
-      return true;
-    }
     if (controller.features.rules &&
         RegExp(r'^(---|\*\*\*|___)$').hasMatch(text)) {
       controller.editor.execute([
@@ -883,14 +868,6 @@ class WonkyRichEditorState extends State<WonkyRichEditor> {
               () => _block(BlockFormat.quote),
               shortcut: _shortcut('.', shift: true),
             ),
-          toggle(
-            'codeBlock',
-            LucideIcons.squareCode,
-            l.codeBlock,
-            block == BlockFormat.codeBlock,
-            on && c.canFormatBlock(BlockFormat.codeBlock),
-            () => _block(BlockFormat.codeBlock),
-          ),
         ],
       ),
     );

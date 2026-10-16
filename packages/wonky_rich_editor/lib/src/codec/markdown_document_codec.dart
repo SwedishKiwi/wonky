@@ -16,14 +16,15 @@ import 'markdown_features.dart';
 ///
 /// **Subset.** Paragraphs (their lines stay lines: `"\n"` in the node
 /// text), `#` headings 1–6, bullet and numbered items with nesting levels,
-/// task items (`- [ ]`, `- [x]`), `>` quotes, fenced code blocks (the info
-/// string is kept), `---` rules, and inline bold, italic, strikethrough,
-/// code and links (through `wonky_rich_text`'s inline reader and writer, so
+/// task items (`- [ ]`, `- [x]`), `>` quotes, `---` rules, and inline
+/// bold, italic, strikethrough, code and links (through `wonky_rich_text`'s inline reader and writer, so
 /// the syntax matches Write and Slides). [features] turns headings, quotes
 /// and rules off for comments: their lines then stay text.
 ///
-/// **Everything else is kept, never lost.** Tables, HTML blocks, indented
-/// code, link reference definitions, indented fences and any block whose
+/// **Everything else is kept, never lost.** Fenced and indented code (the
+/// editor has no code blocks: a fence is literal text the user edits or
+/// deletes like any other block), tables, HTML blocks, link reference
+/// definitions and any block whose
 /// inline content the editor cannot represent (images, raw inline HTML,
 /// links with titles or other schemes, styles spanning lines, a list item
 /// holding a quote …) become a *literal* block: a code-styled paragraph
@@ -150,7 +151,8 @@ class MarkdownDocumentCodec {
   static const _listKinds = {'ul', 'ol', 'task'};
 
   /// The block kind of [node] (`p`, `h1`…`h6`, `ul`, `ol`, `task`, `quote`,
-  /// `code`, `raw`, `hr`, or `other`).
+  /// `raw`, `hr`, or `other`). Every code-styled paragraph is a literal
+  /// block (`raw`): the editor has no code blocks.
   static String kindOf(DocumentNode node) {
     if (node is ListItemNode) {
       return node.type == ListItemType.ordered ? 'ol' : 'ul';
@@ -159,11 +161,7 @@ class MarkdownDocumentCodec {
     if (node is HorizontalRuleNode) return 'hr';
     if (node is ParagraphNode) {
       final type = node.getMetadataValue(NodeMetadata.blockType);
-      if (type == codeAttribution) {
-        return node.getMetadataValue(MarkdownNodeMetadata.raw) == true
-            ? 'raw'
-            : 'code';
-      }
+      if (type == codeAttribution) return 'raw';
       if (type == blockquoteAttribution) return 'quote';
       final h = headingLevelOf(node);
       if (h != null) return 'h$h';
@@ -241,16 +239,6 @@ class MarkdownDocumentCodec {
                 isComplete: b.checked,
                 indent: b.level,
               );
-      case _K.code:
-        return ParagraphNode(
-          id: Editor.createNodeId(),
-          text: AttributedText(b.content.join('\n')),
-          metadata: {
-            NodeMetadata.blockType: codeAttribution,
-            MarkdownNodeMetadata.info: b.info,
-            MarkdownNodeMetadata.fence: b.fence,
-          },
-        );
       case _K.rule:
         return HorizontalRuleNode(id: Editor.createNodeId());
       case _K.raw:
@@ -335,8 +323,6 @@ class _Encoder {
       case 'raw':
         final t = (node as ParagraphNode).text.toPlainText();
         return t.trim().isEmpty ? null : t;
-      case 'code':
-        return _code(node as ParagraphNode);
       case 'quote':
         final lines = _lines(node as ParagraphNode);
         if (lines.every((l) => l.isEmpty)) return null;
@@ -397,28 +383,6 @@ class _Encoder {
       for (final l in lines.skip(1)) '$continuation$l',
     ].join('\n');
   }
-
-  String _code(ParagraphNode node) {
-    final code = node.text.toPlainText();
-    final info =
-        (node.getMetadataValue(MarkdownNodeMetadata.info) as String?) ?? '';
-    final stored =
-        (node.getMetadataValue(MarkdownNodeMetadata.fence) as String?) ?? '';
-    final char = stored.startsWith('~') ? '~' : '`';
-    var length = math.max(3, stored.length);
-    // The fence must be longer than any fence-like line of the code.
-    for (final m in RegExp(
-      '^\\s*(${RegExp.escape(char)}{3,})',
-      multiLine: true,
-    ).allMatches(code)) {
-      length = math.max(length, m.group(1)!.length + 1);
-    }
-    final fence = char * length;
-    final infoText = char == '`' ? info.replaceAll('`', '') : info;
-    return code.isEmpty
-        ? '$fence$infoText\n$fence'
-        : '$fence$infoText\n$code\n$fence';
-  }
 }
 
 class _Lines {
@@ -431,7 +395,7 @@ class _Lines {
 
 // ------------------------------------------------------------------ scanning
 
-enum _K { paragraph, heading, bullet, ordered, task, quote, code, raw, rule }
+enum _K { paragraph, heading, bullet, ordered, task, quote, raw, rule }
 
 class _Block {
   _Block(
@@ -441,8 +405,6 @@ class _Block {
     this.level = 0,
     this.checked = false,
     this.content = const [],
-    this.info = '',
-    this.fence = '',
   });
 
   final _K kind;
@@ -455,10 +417,8 @@ class _Block {
   final int level;
   final bool checked;
 
-  /// Inline content lines (code lines for code blocks).
+  /// Inline content lines.
   final List<String> content;
-  final String info;
-  final String fence;
 }
 
 /// The line-based block scanner (see [startsBlock] for the patterns).
@@ -488,7 +448,8 @@ class _Scanner {
         continue;
       }
 
-      // Fenced code (an indented fence is kept literally).
+      // Fenced code is kept literally, fences included: the editor has no
+      // code blocks (specs/16 §7.3).
       final f = fenceOpen.firstMatch(line);
       if (f != null &&
           !(f.group(2)!.startsWith('`') && f.group(3)!.contains('`'))) {
@@ -502,18 +463,7 @@ class _Scanner {
         }
         final end = j < n ? j + 1 : n;
         _stack.clear();
-        out.add(
-          f.group(1)!.isNotEmpty
-              ? _Block(_K.raw, i, end)
-              : _Block(
-                  _K.code,
-                  i,
-                  end,
-                  content: lines.sublist(i + 1, j < n ? j : n),
-                  info: f.group(3)!.trim(),
-                  fence: fence,
-                ),
-        );
+        out.add(_Block(_K.raw, i, end));
         i = end;
         continue;
       }

@@ -949,9 +949,11 @@ class _CommentThreadBodyState extends State<CommentThreadBody> {
                           horizontal: 10,
                           vertical: 8,
                         ),
+                        // The radius of the composer it opens (the
+                        // suite's text inputs), not a pill.
                         decoration: BoxDecoration(
                           border: Border.all(color: theme.colorScheme.input),
-                          borderRadius: BorderRadius.circular(18),
+                          borderRadius: composerRadius(theme),
                         ),
                         child: Text(hint, style: theme.textTheme.muted),
                       ),

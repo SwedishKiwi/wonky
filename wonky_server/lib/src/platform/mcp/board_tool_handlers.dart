@@ -61,7 +61,8 @@ abstract final class BoardToolHandlers {
     'claim_expires_at': t.claimExpiresAt?.toIso8601String(),
     'pull_request': t.pullRequestUrl,
     'posts': [for (final p in t.posts) _item(p)],
-    if (full) 'prompt': t.prompt,
+    // The prompt only reaches the claimant and admins (empty otherwise).
+    if (full && t.prompt.isNotEmpty) 'prompt': t.prompt,
     if (t.claimCode != null) ...{
       'claim_code': t.claimCode,
       'pr_description_lines':
@@ -185,20 +186,12 @@ abstract final class BoardToolHandlers {
     });
   }
 
+  /// Comments on a post; tasks have no discussion (specs/16 §4.6).
   static Future<ToolResult> comment(ToolContext ctx, ToolArgs a) async {
-    final post = a.integer('post_number');
-    final task = a.integer('task_number');
-    if ((post == null) == (task == null)) {
-      throw McpToolException(
-        McpErrorCode.invalidArgs,
-        'Give exactly one of "post_number" and "task_number".',
-      );
-    }
     final c = await BoardService.addComment(
       ctx.session,
       uuid: const Uuid().v7obj(),
-      postNumber: post,
-      taskNumber: task,
+      postNumber: _number(a, 'post_number'),
       body: a.requireString('body'),
     );
     return ToolResult({

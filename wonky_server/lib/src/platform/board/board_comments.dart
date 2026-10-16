@@ -12,7 +12,9 @@ import 'board_pipeline.dart';
 import 'board_triage.dart';
 import 'board_views.dart';
 
-/// Comments on posts and tasks (specs/16 §7.3) and community flags (§7.5).
+/// Comments on posts (specs/16 §7.3), the activity rows of tasks (§4.6:
+/// tasks have no discussion; their rows are system rows, listed to admins)
+/// and community flags (§7.5).
 abstract final class BoardComments {
   static Future<List<BoardCommentView>> list(
     Session session, {
@@ -31,6 +33,8 @@ abstract final class BoardComments {
       );
     } else if (taskNumber != null) {
       final task = await BoardAccess.task(session, c, taskNumber);
+      // A task's activity is admin information.
+      if (!c.isAdmin) return const [];
       rows = await BoardComment.db.find(
         session,
         where: (t) => t.taskId.equals(task.id!),
@@ -134,9 +138,12 @@ abstract final class BoardComments {
     required String body,
   }) async {
     final c = await BoardAccess.requireWriter(session);
-    if ((postNumber == null) == (taskNumber == null)) {
-      throw Errors.invalid('Comment on a post or on a task.');
+    if (taskNumber != null) {
+      throw Errors.invalid(
+        'Tasks have no discussion: comment on one of its posts.',
+      );
     }
+    if (postNumber == null) throw Errors.invalid('Name the post.');
     final existing = await BoardComment.db.findFirstRow(
       session,
       where: (t) => t.uuid.equals(uuid),
@@ -148,34 +155,24 @@ abstract final class BoardComments {
       return _view(session, c, existing);
     }
     final clean = BoardText.body(body, what: 'comment');
-    BoardPost? post;
-    BoardTask? task;
-    if (postNumber != null) {
-      post = await BoardAccess.post(session, c, postNumber);
-      if (post.deletedAt != null ||
-          post.moderation == BoardModeration.removed) {
-        throw Errors.conflict('This post can no longer be commented on.');
-      }
-    } else {
-      task = await BoardAccess.task(session, c, taskNumber!);
+    final post = await BoardAccess.post(session, c, postNumber);
+    if (post.deletedAt != null || post.moderation == BoardModeration.removed) {
+      throw Errors.conflict('This post can no longer be commented on.');
     }
     await BoardRateLimits.check(BoardLimit.commentsPerHour, c.id);
     final verdict = await check(session, clean);
-    final earlier = post == null
-        ? const <BoardComment>[]
-        : await BoardComment.db.find(
-            session,
-            where: (t) =>
-                t.postId.equals(post!.id!) &
-                t.systemEvent.equals(null) &
-                t.authorId.notEquals(null),
-          );
+    final earlier = await BoardComment.db.find(
+      session,
+      where: (t) =>
+          t.postId.equals(post.id!) &
+          t.systemEvent.equals(null) &
+          t.authorId.notEquals(null),
+    );
     final comment = await BoardComment.db.insertRow(
       session,
       BoardComment(
         uuid: uuid,
-        postId: post?.id,
-        taskId: task?.id,
+        postId: post.id,
         authorId: c.id,
         body: clean,
         moderation: verdict.moderation,
@@ -184,8 +181,8 @@ abstract final class BoardComments {
         createdAt: nowUtc(),
       ),
     );
-    await recount(session, post?.id);
-    if (post != null && comment.moderation == BoardModeration.visible) {
+    await recount(session, post.id);
+    if (comment.moderation == BoardModeration.visible) {
       await BoardNotify.reply(
         session,
         to: {?post.authorId, for (final e in earlier) e.authorId!}

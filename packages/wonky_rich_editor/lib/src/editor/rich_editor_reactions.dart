@@ -7,8 +7,8 @@ import '../codec/inline_codec.dart';
 import '../codec/markdown_document_codec.dart';
 import '../codec/markdown_features.dart';
 
-/// Whether [node] is a code block or a literal Markdown block (no
-/// autoformat, no inline styles).
+/// Whether [node] is a literal Markdown block (fenced code, tables, HTML …:
+/// no autoformat, no inline styles).
 bool isCodeLike(DocumentNode? node) =>
     node is ParagraphNode &&
     node.getMetadataValue(NodeMetadata.blockType) == codeAttribution;
@@ -20,7 +20,8 @@ bool isPlainParagraph(DocumentNode? node) =>
 
 /// Markdown block prefixes typed at the start of a paragraph (Write 04
 /// §7.1): `# `…`###### `, `- ` `* ` `+ `, `1. ` `1) `, `> `, `[ ] ` `[] `
-/// `[x] ` `- [ ] `, ```` ```lang ```` + space and `---` `***` `___` + space.
+/// `[x] ` `- [ ] ` and `---` `***` `___` + space. A fence (```` ``` ````)
+/// stays text: the editor has no code blocks (specs/16 §7.3).
 /// The prefix must be exactly the text before the caret, right after the
 /// space that was just typed. A task or heading prefix also converts a list
 /// item. Headings, quotes and rules only where [features] allow them.
@@ -34,7 +35,6 @@ class BlockPrefixReaction extends EditReaction {
   static final _ordered = RegExp(r'^\d{1,9}[.)] $');
   static final _quote = RegExp(r'^> $');
   static final _task = RegExp(r'^(- )?\[( |x|X)?\] $');
-  static final _codeFence = RegExp(r'^```([\w+#.\-]*) $');
   static final _divider = RegExp(r'^(---|\*\*\*|___) $');
 
   @override
@@ -121,8 +121,6 @@ class BlockPrefixReaction extends EditReaction {
           ),
         ),
       );
-    } else if ((match = _codeFence.firstMatch(prefix)) != null && paragraph) {
-      requests.addAll(codeBlockRequests(node.id, match!.group(1) ?? ''));
     } else if (f.rules &&
         _divider.hasMatch(prefix) &&
         paragraph &&
@@ -164,18 +162,6 @@ class BlockPrefixReaction extends EditReaction {
       ),
     ]);
   }
-
-  /// The requests that make paragraph [nodeId] a code block in [language].
-  static List<EditRequest> codeBlockRequests(
-    String nodeId,
-    String language,
-  ) => [
-    ChangeParagraphBlockTypeRequest(nodeId: nodeId, blockType: codeAttribution),
-    ChangeNodeMetadataRequest(
-      nodeId: nodeId,
-      metadata: {MarkdownNodeMetadata.info: language.toLowerCase()},
-    ),
-  ];
 }
 
 /// The last change of [changeList] when it is one typed character (a paste
@@ -325,7 +311,7 @@ class InlineMarkdownReaction extends EditReaction {
   }
 }
 
-/// Runs [inner] only while the caret is outside code and literal blocks
+/// Runs [inner] only while the caret is outside literal blocks
 /// (inline Markdown and autolinks don't apply there).
 class OutsideCodeReaction extends EditReaction {
   const OutsideCodeReaction(this.inner);

@@ -6,9 +6,13 @@ fields:
   area: BoardArea
   size: BoardSize
   status: BoardTaskStatus
+  ### The AI-written (admin-reviewed) part of the prompt. Empty for
+  ### everyone but the claimant and admins (specs/16 §4.6).
   promptBody: String
   ### The full contributor prompt: the fixed frame around [promptBody]
-  ### (specs/16 §10.1).
+  ### (specs/16 §10.1), its PR lines filled in with the claimant's claim
+  ### code. Empty for everyone but the claimant and admins (admins see the
+  ### placeholder instead of a claim code).
   prompt: String
   promptGeneratedAt: DateTime?
   ### The AI is writing the prompt body (specs/16 §10.1); it arrives
