@@ -1669,7 +1669,10 @@ a check re-run:
 - **Branch protection**: `Wonky task` is a required check on `main`, so a failing PR cannot be
   merged. Maintainers pass the check, so they are not blocked. The `main` ruleset (repository
   admins bypass it) also requires `analyze`, `format`, `dependencies`, `server` and *All tests*
-  (15 §10), allows squash merges only and keeps a linear history; `deploy` has no rules.
+  (15 §10), allows squash merges only and keeps a linear history; `deploy` has no rules. A PR
+  need not be up to date with `main` to merge (many PRs land at once; CI on `main` after each
+  merge catches the rare clash). A merge queue would need the workflows on `merge_group` and
+  *Wonky task* reported for queued merges.
 - **Auto-close (G1)**: the sweep (`wonky.boardSweep`) closes PRs whose gate has failed
   continuously for `board.github.autoCloseDays` (7) days, counted from `gateFirstFailedAt`. It
   posts a closing comment, and reopening the PR re-runs the gate.
